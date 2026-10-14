@@ -54,3 +54,14 @@ compare the file sets and digests, parser provenance, missing list and graph has
 
 Parser references: [mvdan AST JSON output](https://github.com/mvdan/sh/blob/master/cmd/shfmt/main.go),
 [Tree-sitter Python API](https://github.com/xberg-io/tree-sitter-language-pack/blob/main/docs-site/src/content/docs/reference/api-python.md).
+
+`make tc-review` checks the original 87 WEMIX4 criterion IDs against
+`docs/dev/wemix4-tc-sufficiency-review.json`. It verifies criterion/source/evidence
+digests, exact JSON assertion anchors and real Go AST declarations, including
+methods and gated tests. Missing IDs, hidden conditions, cyclic merge references,
+stale sources and scoped proofs labelled as full acceptance fail the check.
+The guard also runs through `make check` and CI. When a referenced source changes,
+review its actual inputs/assertions and remaining conditions before updating the
+snapshot; changing a digest alone is not a semantic reassessment.
+`confirmed_scope` means only the explicitly recorded proof scope. This inventory
+does not execute chains or award Linux/mainnet, legacy or final Web acceptance.

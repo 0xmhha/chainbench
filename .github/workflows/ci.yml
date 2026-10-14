@@ -56,6 +56,8 @@ jobs:
         run: go build ./...
       - name: go test
         run: go test -race ./...
+      - name: Original criterion review guards
+        run: make tc-review
       # The e2e suites need chain binaries and never run here, so nothing else
       # compiles them. That is how two of them came to reference a type deleted
       # months earlier: the removal checked for callers, and a build tag hid
