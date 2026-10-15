@@ -26,15 +26,18 @@
       "source": "rpcCall"
     },
     {
-      "compare": "NotEqual",
+      "compare": "Regexp",
       "expect": "rpcCall",
-      "is": "0x",
+      "is": "^0x[0-9a-fA-F]{64}$",
       "method": "eth_getBlockByNumber",
       "params": [
         "0x0",
         false
       ],
-      "select": "hash"
+      "select": "hash",
+      "onEach": [
+        "all"
+      ]
     },
     {
       "block": "0x0",
@@ -49,7 +52,10 @@
         "0x0",
         false
       ],
-      "select": "parentHash"
+      "select": "parentHash",
+      "onEach": [
+        "all"
+      ]
     },
     {
       "compare": "Regexp",

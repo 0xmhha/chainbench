@@ -7237,7 +7237,7 @@
       "targets": [
         {
           "path": "tests/tc/common/node/CT-NODE-003-genesis-init.json",
-          "sha256": "0694307526564737b5d97f958fcd753383689cc44810f32e0f4d12b02246250f",
+          "sha256": "6f8229b59a5d322375bc0b06accfe1e7814543726e6ed6e4849ff9be70e18cd7",
           "id": "genesis-block-hash-consistent"
         },
         {
@@ -7249,6 +7249,16 @@
           "path": "internal/testengine/identity_epoch_native_test.go",
           "sha256": "cc6176881aae1b0803e9de6e2075fac77109071869e84ff38039c9e16c72c451",
           "function": "TestNativeIdentityEpochGenesisQueries"
+        },
+        {
+          "path": "internal/testengine/legacy_genesis_test.go",
+          "sha256": "4b0c481e4f7a855f9941fdae4949808da2d65a39c549d3a740e00f5333989cd3",
+          "function": "TestLegacyGenesisRejectsIncompleteNodeAgreement"
+        },
+        {
+          "path": "internal/testengine/legacy_genesis_native_test.go",
+          "sha256": "cbe67f7641e9e5593692b762324ecf8a3a94cde1485918d14ba87e2a61f1cca2",
+          "function": "TestNativeLegacyGenesisAgreement"
         }
       ],
       "observations": [
@@ -7259,15 +7269,18 @@
           "path": "tests/tc/common/node/CT-NODE-003-genesis-init.json",
           "pointer": "/steps/1",
           "statement": {
-            "compare": "NotEqual",
+            "compare": "Regexp",
             "expect": "rpcCall",
-            "is": "0x",
+            "is": "^0x[0-9a-fA-F]{64}$",
             "method": "eth_getBlockByNumber",
             "params": [
               "0x0",
               false
             ],
-            "select": "hash"
+            "select": "hash",
+            "onEach": [
+              "all"
+            ]
           }
         },
         {
@@ -7290,7 +7303,10 @@
               "0x0",
               false
             ],
-            "select": "parentHash"
+            "select": "parentHash",
+            "onEach": [
+              "all"
+            ]
           }
         },
         {
@@ -7321,6 +7337,12 @@
         },
         {
           "analysis": "생성된 실제 genesis config.chainId8284와5개 endpoint의 eth_chainId 일치·공개genesis case실행. 첫 actual 시도는 객체 대신 배열decode를 가정해 실패했으며 별도 accepted=false로 보존. 수정 후 실제/독립 대조 통과."
+        },
+        {
+          "analysis": "2026-10-16: 각 노드의64자리 genesis hash·0인 parentHash를onEach all로 검사한다. sameBlockHash가 누락 노드를 건너뛰어도 공개 케이스는 실패한다. 새 native 검증은 별도 증거에 기록하며 과거 verifiedEvidence를 재실행으로 간주하지 않는다."
+        },
+        {
+          "analysis": "후속 고정소스6018386f의 세 패밀리 BP4 공개3실행/15단언·직접12노드 genesis/chainID 대조와 독립 보존이 통과했다. 기존 다른3개 identity API와 epoch는 이 후속 실행에 포함하지 않는다."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
@@ -7332,6 +7354,10 @@
         {
           "path": "docs/dev/identity-epoch-evidence.json",
           "sha256": "5afb91674f74b45b956ea44e87e872b53a0cc1954587d4b49793a2263e5f2ada"
+        },
+        {
+          "path": "docs/dev/legacy-genesis-evidence.json",
+          "sha256": "4b438bf23b4410a523a65b8925b5243ca04168d0fe9575c709625aaf5538ca93"
         }
       ]
     },

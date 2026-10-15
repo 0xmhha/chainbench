@@ -1,0 +1,272 @@
+{
+  "scope": "Public genesis agreement hardened for all declared nodes; three current pinned native BP4 profiles. Not original testnet/private configurations, release-specific fixed genesis hashes, all legacy254/87, full Linux L1, or final Web acceptance.",
+  "sourceDigest": "6018386f8f5266ef04644f88642f1d793e2bfbf182c8b2f17519309e907a637e",
+  "headAtProof": "33bad2904405d870b24e73c695c6ccee4ed346bc",
+  "implementation": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/node/CT-NODE-003-genesis-init.json",
+      "sha256": "6f8229b59a5d322375bc0b06accfe1e7814543726e6ed6e4849ff9be70e18cd7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792106137094309038
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_genesis_test.go",
+      "sha256": "4b0c481e4f7a855f9941fdae4949808da2d65a39c549d3a740e00f5333989cd3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792106309320085885
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_genesis_native_test.go",
+      "sha256": "cbe67f7641e9e5593692b762324ecf8a3a94cde1485918d14ba87e2a61f1cca2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792106137170524734
+    }
+  ],
+  "original": {
+    "repository": "/Users/0xtopaz/work/github/stablenet/packages",
+    "commit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+    "gitPath": "chainbench/tests/stablenet/regression/ethereum/tests/01-test-genesis-init.sh",
+    "blobOID": "9b0a233760ffa33e6f99c54869141b1a1aa8c522",
+    "sha256": "070ab86cb725500f6136a4ef9af5c03e38cef9ab44ab9346665e40a6cba31b72",
+    "gitMode": "100755",
+    "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/ethereum/tests/01-test-genesis-init.sh",
+    "size": 1966
+  },
+  "originalDifferences": [
+    "Recovered original skips missing/null block hashes and only requires at least one returned hash; current public case requires every node to return a full 32-byte hash and zero parent hash.",
+    "Original chain IDs are testnet8283/private1010, queried on stablenet-bp1. Current BP4 fixture IDs are8283/8284/8285 and are checked on every node.",
+    "The existing case description mentions a historical fixed release hash; the recovered 13b5e12c shell instead compares cross-node hashes. No release-fixed hash was asserted by this proof.",
+    "Generated workspace-local identities change the genesis between fixtures. Agreement within each fixture, not a cross-family/shared fixed hash, is verified."
+  ],
+  "redGreen": {
+    "controls": 10,
+    "falsePassesReproduced": 5,
+    "falsePasses": [
+      "secondary empty hash",
+      "primary empty hash",
+      "secondary null block",
+      "all short hashes",
+      "secondary wrong parent"
+    ],
+    "allControlsGreen": true,
+    "relatedWholeRacePackages": [
+      "internal/testengine",
+      "internal/testhelper"
+    ],
+    "wholeCheckPassed": true,
+    "firstWholeCheckFailure": "New test comment began with Run, violating repository symbol naming rule; corrected to its actual test name.",
+    "productionCodeChanged": false,
+    "genericSameBlockHashSemanticsChanged": false
+  },
+  "native": {
+    "exitCode": 0,
+    "passed": [
+      "TestNativeLegacyGenesisAgreement/stablenet",
+      "TestNativeLegacyGenesisAgreement/wbft",
+      "TestNativeLegacyGenesisAgreement/wemix",
+      "TestNativeLegacyGenesisAgreement"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-vbfcvs8l",
+      "/private/tmp/cbui/txfail-vum79wu8",
+      "/private/tmp/cbui/txfail-x6ruvwkb"
+    ],
+    "elapsedSeconds": 169.8352489999961,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "presetFilesUnchanged": true
+  },
+  "independent": {
+    "acceptedScope": true,
+    "publicCases": 3,
+    "publicAssertions": 15,
+    "independentNodes": 12,
+    "observationNegativeControls": 24,
+    "retainedFiles": 563,
+    "remainingDatabases": 0,
+    "trieCacheBytesKept": 2356490,
+    "runtimes": [
+      {
+        "root": "/private/tmp/cbui/txfail-vbfcvs8l",
+        "chain": "stablenet",
+        "chainID": 8283,
+        "genesisHash": "0x7172f607a88537b47dc8a8775f89606bcd79ad4ea845fb93dc70c80545475113",
+        "publicCases": 1,
+        "publicAssertions": 5,
+        "independentNodes": 4,
+        "cache64Launches": 4,
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-vum79wu8",
+        "chain": "wemix",
+        "chainID": 8285,
+        "genesisHash": "0xac7e9ed45b566910810a40f28f4249075801a4965968fc3fd70c5ae83b731209",
+        "publicCases": 1,
+        "publicAssertions": 5,
+        "independentNodes": 4,
+        "cache64Launches": 4,
+        "remainingDatabases": 0,
+        "trieCacheBytes": 2356490
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-x6ruvwkb",
+        "chain": "wbft",
+        "chainID": 8284,
+        "genesisHash": "0x37f713def5891b5eb593c1ea502d00366503f5402aa412995f2dc21f2e997982",
+        "publicCases": 1,
+        "publicAssertions": 5,
+        "independentNodes": 4,
+        "cache64Launches": 4,
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      }
+    ],
+    "preservation": [
+      "Exact retained file set",
+      "SHA256 bytes",
+      "mode",
+      "uid",
+      "gid",
+      "nanosecond mtime",
+      "two fresh complete host process/FD inventories",
+      "45 preset key files unchanged"
+    ],
+    "firstAuditFailure": "Original audit assumed config.toml. Actual launch --config arguments identify config_node1..4.toml, with identical archived copies. Original helper and failed log preserved unchanged."
+  },
+  "evidence": [
+    {
+      "path": "/private/tmp/chainbench-genesis-20261016-start.json",
+      "sha256": "e754bdf3e498430b62dc4c7817db5e84c9ad910bb3793152bd58cf7dd0ec0aeb",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106442555359495
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-20261016-native.jsonl",
+      "sha256": "64aeadf0fd0b0e0ecf1af4d700a6ec4425fd3bafc6ac9c7a47c6aaa221255862",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106610066852986
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-20261016-summary.json",
+      "sha256": "36ca3b368af73a798be0d71890697f616a2bdff33785d42fae8ecfd8317f432e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106612519266315
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-20261016-independent.json",
+      "sha256": "0b5d2d2312365723d56773a4070b475f4f5b9fe6a9b74c0369e1fd806175c636",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106656254085393
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-red-20261016.log",
+      "sha256": "d07623fd05e075bc6d368a879148fba0afd30a4a2e875ace1bfe3d981ad84352",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106105157807210
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-green-20261016.log",
+      "sha256": "7441b90e480a51945d702a01af9da6fcac8bb0364b3499402a2251d24a338ead",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106148012521042
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-race-20261016.log",
+      "sha256": "636cdf9e5697a17802ebd007a99940c0e4731e05a1d61f8e42d9373fe80a8279",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106184170989596
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-check-20261016.log",
+      "sha256": "eb81a5e0e060ee3513356bbed2e17bab9e5fac8bfcebabaa65c5c8c762cd38f2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106292989041572
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-check-fixed-20261016.log",
+      "sha256": "2f64cfcc3db26444ceea614d502aa76cce344ab47c4ea357170e0a443acc9ac9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106420178287702
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-driver-20261016.log",
+      "sha256": "0cf423939974c50436afc05be91e56544ebbcc910df901097ff5c3c76538862a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106612519397232
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-independent-20261016.log",
+      "sha256": "95f6fcbcfd040c201697fd506a0bfa335e4371c78d07ebcc7dc098c9a3aac45a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106623343361900
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-independent2-20261016.log",
+      "sha256": "697ad4be5c8138b4080794690e048352aab8f629817fc601976d1f4f8e4ffebb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106656255655974
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-run-20261016.py",
+      "sha256": "b0c140af6e5d50550fbd7525aa0f4b74641b50b42d3d480611d05974e79ffed8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106187549933592
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-independent-20261016.py",
+      "sha256": "d5498709cdff267457fae67ef470563c88f0d099f74f073ec6fd6e6a4fde5c74",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106267726624257
+    },
+    {
+      "path": "/private/tmp/chainbench-genesis-independent2-20261016.py",
+      "sha256": "eb97bd67361a6c408d46c7b93f9e5d80a4508f233371d8a806257ee1a6537acf",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106647604986820
+    }
+  ],
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}
