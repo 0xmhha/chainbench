@@ -1,0 +1,226 @@
+{
+  "scope": "Original CT-NODE-002 startup topology on all three families: 7BP,7EN,1PN across 15 owned Linux virtual servers, cache64 override. Not full L1 or W3/W4 resolution.",
+  "sourceDigest": "9a6466a731d181f8ae807eea740b15ea467f78dbeafa1801af5af74df4624015",
+  "allThreeStartupCasesPassed": true,
+  "fullL1Accepted": false,
+  "externalIssuesResolved": false,
+  "runs": [
+    {
+      "family": "stablenet",
+      "elapsedSeconds": 111.36897091602441,
+      "proof": {
+        "path": "/private/tmp/cbui/ls-theqn4sk/reports/stablenet/proof.json",
+        "sha256": "2cfd5b02bc4a0a785457677607accea876e2843cf89803fcaa6b6590b9d6e6a7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792058795454315392
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/ls-theqn4sk/reports/20261015-100444-214/UTC-20261015-100444/tests/001_stablenet-chain-up-15/assert.json",
+        "sha256": "ea8e6ea7530083245fed116fa030a9182542103495e19842ec43d4ae23add48c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792058752720983937
+      },
+      "nodes": 15,
+      "validators": 7,
+      "chainId": "8283",
+      "minimumObservedBlock": 22,
+      "activeReferencesBeforeStop": 61,
+      "archives": 15,
+      "assertionRecordsPassed": 4,
+      "nodePeerObservations": 15
+    },
+    {
+      "family": "wbft",
+      "elapsedSeconds": 115.40055891603697,
+      "proof": {
+        "path": "/private/tmp/cbui/ls-theqn4sk/reports/wbft/proof.json",
+        "sha256": "f9066fb1345eba51508f026d722318d7619d4574bd1e52c1c904667c450a1076",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792059117922707456
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/ls-theqn4sk/reports/wbft/sessions/20261015-101002-9395/UTC-20261015-101002/tests/001_stablenet-chain-up-15/assert.json",
+        "sha256": "dbb94e75367e5780ba2df952196a485094333ace1ef2a3b52d93f571fb0ba8b9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792059076465377374
+      },
+      "nodes": 15,
+      "validators": 7,
+      "chainId": "8284",
+      "minimumObservedBlock": 27,
+      "activeReferencesBeforeStop": 61,
+      "archives": 15,
+      "assertionRecordsPassed": 4,
+      "nodePeerObservations": 15
+    },
+    {
+      "family": "wemix",
+      "elapsedSeconds": 278.4181256670272,
+      "proof": {
+        "path": "/private/tmp/cbui/ls-theqn4sk/reports/wemix/proof.json",
+        "sha256": "6bc66bb477cefaa28a6ee3cb1d3ca38d4bf1b4302983387b7dfda44931f9ff65",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792059526049091737
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/ls-theqn4sk/reports/wemix/sessions/20261015-101407-16484/UTC-20261015-101407/tests/001_stablenet-chain-up-15/assert.json",
+        "sha256": "bdf9836d1ecedf24aac513832ec77ea484b85bd1ceb901a52b3ec04b9d9e6ff1",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792059452240071788
+      },
+      "nodes": 15,
+      "validators": 7,
+      "chainId": "8285",
+      "minimumObservedBlock": 91,
+      "activeReferencesBeforeStop": 32,
+      "archives": 15,
+      "assertionRecordsPassed": 4,
+      "nodePeerObservations": 15
+    }
+  ],
+  "reclamation": {
+    "archives": 45,
+    "storedCompleteProcessInventories": 90,
+    "liveReclamationRefusedForEachFamily": true,
+    "freshIndependentContainerAudits": 15,
+    "remainingDisposableDatabasePaths": 0,
+    "metadataVerification": "Independent archive decoder rehashes regular bytes and compares mode, uid/gid, PAX mtime, type and links with recorded indices. This is archive/index agreement, not an independently captured pre-archive filesystem metadata baseline.",
+    "independentAudit": {
+      "path": "/private/tmp/cbui/ls-theqn4sk/reports/smoke-independent-audit.json",
+      "sha256": "48cd62d44bd9df4de1e55292a74d04c5444d28d94eff270a85152accedb4764e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059624619259105
+    },
+    "inventory": {
+      "path": "/private/tmp/cbui/ls-theqn4sk/reports/smoke-retention-inventory.json",
+      "sha256": "9c6b197b5a00b88dd784866492aaeda9421b6029b0b91a3db5a4b3ac0571c250",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059624740282778
+    },
+    "retainedFiles": 673
+  },
+  "existingContainersPreserved": [
+    {
+      "id": "4ac85d5a6a9bf051e548d2632d1e5eff7d94ee7e2ad69ad1ca793583f404985b",
+      "name": "/chainbench-mh-control",
+      "running": false,
+      "image": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35"
+    },
+    {
+      "id": "1a22279b358cdc311db4f0afcb2bb48e02bd77ee3e2f6cccbc3e727e0ee7b3a9",
+      "name": "/chainbench-mh-server2",
+      "running": false,
+      "image": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35"
+    },
+    {
+      "id": "73dc15628bbf81213311bb6dfb7349acf7fa46b47cb11cd64d448f8cef53bc4c",
+      "name": "/chainbench-server1",
+      "running": false,
+      "image": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35"
+    }
+  ],
+  "unitTests": {
+    "red": "argv-only model misses six unsafe process/open-file/inventory cases; existing argv case refuses",
+    "green": "positive fixture and seven negative subtests pass",
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-linux-proc-probe-unit-red.log",
+        "sha256": "25df547240f08ebca00ca361245c352533d51d28e113b83a3b533835ae9af744",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792058349209464214
+      },
+      {
+        "path": "/private/tmp/chainbench-linux-proc-probe-unit-green.log",
+        "sha256": "a6707d4eff38012da33ddc34bc6dc076a3b17151cfc9aef223c8790cbe64c3da",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792058349626972000
+      }
+    ]
+  },
+  "privateTools": [
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.sh",
+      "sha256": "3f5f8a801c95144c2afe6cbf4df70cc86eff5d4cb53acada4ece4e7490979e29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226765223461
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.py",
+      "sha256": "22690981c761e3d26e8c4423ea3861d96933fd6400d4140649188675ad704196",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226767850317
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe-test.py",
+      "sha256": "62f9454f20b37b6293ed2620c7b8e277267b5417c419a2a40e6892cd70cab8e7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058349073467762
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim.py",
+      "sha256": "df42710eb09c5e26d7b4243c06161989274e179265609b059ad8561c417a2f2a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058683337025254
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-smoke-run.py",
+      "sha256": "c0c46b9b69892e52f08f6ee7fcf886f1b1677092c738749c14886eafc4f6c867",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058683343788663
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-smoke-run2.py",
+      "sha256": "d06d48b705fcf50e36d04256973a9b5129e85b2fead9ab94bbbed6bba52de126",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058977403346440
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-smoke-evidence.py",
+      "sha256": "f9107e7ee73fc5970166453e5cdf52dc4be8a0e851fdbcf688254ca60a10bc5a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059617909732579
+    }
+  ],
+  "regression": {
+    "makeCheckPassed": true,
+    "log": {
+      "path": "/private/tmp/chainbench-linux-smoke-publication-check.log",
+      "sha256": "a061eaf088ca91ccda493288c410a12f77867b7da3f81c14ab7e7480f86aaa4c"
+    }
+  },
+  "decoderCorrection": "First independent decoder expected18 records; actual onEach result is a map of15 node values within one rpcCall record. Corrected strict verification requires4 records plus every node1..15 peer value >0. Native proofs were unchanged."
+}
