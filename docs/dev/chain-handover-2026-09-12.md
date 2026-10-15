@@ -656,3 +656,19 @@ DuplicateMetric 반환을 다시 확인했다. 이것은 충돌 원인의 진단
 실제 Linux4BP에서 정상 케이스 후 채굴을 중지한 동일 workspace가8초 deadline으로 종료2를 반환했고,
 그 뒤 모든 자료를 보존하고 DB를 회수했다. [시간 제한 증거](node-readiness-deadline-evidence.json).
 이 수정은 seal 거절을 고치지 않는다. 전체 L1과 S1은 계속 열린 상태다.
+
+
+### 7-1. S1 — 두 번째 고정 소스 배치의 추가 관찰 (2026-10-16)
+
+동일 StableNet 0937 Linux 바이너리에서 추가로 관찰했다. 원인과 해결은 여전히 미확정이다.
+소스 908의 CT-NODE-003은 부모 3에서 4 BP가 각각 seal·proposal 거절을 8회 기록했고 준비 5분 제한으로 BLOCKED다.
+전체 CLI 376초에는 준비가 포함되므로 관문만 정확히 300초였다고 측정한 것은 아니다.
+CT-NODE-005는 실제 거래 블록 21 뒤 목표 171 대기 600초가 FAIL이고, 4 BP의 거절 부모는 119다.
+reader 시작(index 13) 전에 실패했으며 마지막 조회의 context deadline을 상시 RPC 불통으로 확대하지 않는다.
+
+배치 전체는 32행 30 PASS·1 BLOCKED·1 FAIL이고 보존·DB 회수 후 케이스 경계에서 신호 없이 끝냈다.
+157개 압축·10,523엔트리·2,336개 파일과 15대의 새 프로세스·열린 파일·바이너리·DB 0개를 독립 확인했다.
+[원본 행·직렬 구간·독립 증거](linux-l1-second-cohort-evidence.json).
+공식 StableNet 4d17eea0의 별도 깨끗한 소스와 Mac·Linux 빌드 출처는 확인했지만,
+새 버전의 실제 S1 재검증이나 해결로 세지 않는다([입력](upstream-pinned-build-evidence.json)).
+외부 소스 수정이나 체인팀 메시지·리뷰 요청은 수행하지 않았다.

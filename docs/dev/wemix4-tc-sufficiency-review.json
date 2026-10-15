@@ -8697,7 +8697,11 @@
   ],
   "legacy": {
     "status": "not_verified",
-    "reason": "Both historical original script paths absent; no semantic-equivalence claim."
+    "reason": "Cached legacy Git source inputs recovered and independently checked:460 outer-shell files. Scenario equivalence and current consumer/runtime sufficiency remain unverified. No historical snapshot identity claim.",
+    "sourceAvailability": {
+      "path": "docs/dev/legacy-source-recovery-evidence.json",
+      "sha256": "9980c092815a2c79eae4ebefad5b9f1b4cefd599c2dc6110031651d063ba5195"
+    }
   },
   "externalDefects": {
     "W3": "unresolved; latest source reproduction does not prove resolution",
