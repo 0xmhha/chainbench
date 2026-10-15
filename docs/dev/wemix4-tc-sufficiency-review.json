@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 49,
-    "confirmed_scope": 36,
+    "partial": 48,
+    "confirmed_scope": 37,
     "conflict": 1,
     "merged": 1
   },
@@ -5193,104 +5193,191 @@
       "id": "RPC-002",
       "title": "eth\\_getBlockByNumber / eth\\_getBlockByHash",
       "criterionSha256": "85ca8c546c98beaf7e41175d9c9ad03da2394619897d726fb77fa75252f10112",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
-          "sha256": "09e5a03ee589e4ad4c97b2a6354afe3603ecd8d3b64f97bdb2886e6ec97d8544",
+          "sha256": "93ffc00d7ff4e7eff752993a1b47d301f0489e34f986e855e5837d465daf197f",
           "id": "block-by-hash-consistency"
         },
         {
           "path": "tests/tc/common/rpc/CT-RPC-002-block-transactions-field.json",
           "sha256": "e48b2e133aa5c512411ebef9acc93365099eda736e330c5cd7885fd682886a63",
           "id": "block-transactions-field"
+        },
+        {
+          "path": "internal/testhelper/block_lookup_semantics_test.go",
+          "sha256": "c5c0a3bd3a767cbd6e0e2febd095e062930a77d2ff6d8f5cf913ee42e5cb8f04",
+          "function": "TestPublicBlockLookupRejectsInconsistentFullBlocks"
+        },
+        {
+          "path": "internal/testengine/block_lookup_native_test.go",
+          "sha256": "702dbd2a804ca2391da08413641a84a7a6e4d1c82ba2cd95cfe39859f72e4455",
+          "function": "TestNativeFullBlockLookup"
         }
       ],
       "observations": [
         {
-          "analysis": "CT-RPC-003 byNumber에서읽은hash/number=byHashhash/number. CT-RPC-002 numberhex·hash64hex·transactions nonnil."
+          "analysis": "실제 거래의 번호를 고정해 true 전체 조회, hash/number/extraData/miner/transactions 일치 및 거래 객체 확인. 세 native 공개 케이스·독립 응답 대조 통과."
         },
         {
           "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
-          "pointer": "/steps/2",
+          "pointer": "/steps/7",
           "statement": {
             "expect": "rpcCall",
-            "is": "$hash",
-            "method": "eth_getBlockByHash",
+            "method": "eth_getBlockByNumber",
             "params": [
-              "$hash",
-              false
+              "$number",
+              true
             ],
-            "select": "hash"
+            "select": "hash",
+            "compare": "Regexp",
+            "is": "^0x[0-9a-fA-F]{64}$"
           }
         },
         {
           "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
-          "pointer": "/steps/3",
+          "pointer": "/steps/8",
           "statement": {
             "expect": "rpcCall",
-            "is": "$number",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "$number",
+              true
+            ],
+            "select": "extraData",
+            "compare": "Regexp",
+            "is": "^0x([0-9a-fA-F]{2})+$"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/9",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "$number",
+              true
+            ],
+            "select": "miner",
+            "compare": "Regexp",
+            "is": "^0x[0-9a-fA-F]{40}$"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/10",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "$number",
+              true
+            ],
+            "select": "transactions.0.hash",
+            "compare": "Regexp",
+            "is": "^0x[0-9a-fA-F]{64}$"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/11",
+          "statement": {
+            "expect": "rpcCall",
             "method": "eth_getBlockByHash",
             "params": [
               "$hash",
-              false
+              true
             ],
-            "select": "number"
+            "select": "hash",
+            "is": "$hash"
           }
         },
         {
-          "path": "tests/tc/common/rpc/CT-RPC-002-block-transactions-field.json",
-          "pointer": "/steps/0",
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/12",
           "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              true
+            ],
+            "select": "number",
+            "is": "$number"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/13",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              true
+            ],
+            "select": "extraData",
+            "is": "$extraData"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/14",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              true
+            ],
+            "select": "miner",
+            "is": "$miner"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/15",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              true
+            ],
+            "select": "transactions",
+            "is": "$transactions"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json",
+          "pointer": "/steps/16",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              true
+            ],
+            "select": "transactions.0.hash",
             "compare": "Regexp",
-            "expect": "rpcCall",
-            "is": "^0x[0-9a-fA-F]+$",
-            "method": "eth_getBlockByNumber",
-            "params": [
-              "latest",
-              false
-            ],
-            "select": "number"
-          }
-        },
-        {
-          "path": "tests/tc/common/rpc/CT-RPC-002-block-transactions-field.json",
-          "pointer": "/steps/1",
-          "statement": {
-            "compare": "Regexp",
-            "expect": "rpcCall",
-            "is": "^0x[0-9a-fA-F]{64}$",
-            "method": "eth_getBlockByNumber",
-            "params": [
-              "latest",
-              false
-            ],
-            "select": "hash"
-          }
-        },
-        {
-          "path": "tests/tc/common/rpc/CT-RPC-002-block-transactions-field.json",
-          "pointer": "/steps/2",
-          "statement": {
-            "compare": "NotNil",
-            "expect": "rpcCall",
-            "is": null,
-            "method": "eth_getBlockByNumber",
-            "params": [
-              "latest",
-              false
-            ],
-            "select": "transactions"
+            "is": "^0x[0-9a-fA-F]{64}$"
           }
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "extraData nonempty/equal와 miner equality 없음. fullTransactions true 대신false 입력. 기본hash/number/transactions 검증은 이미 존재."
+        "전체87·메인넷·Linux·legacy·최종 Web 인수는 별도이며 단계적 이관 구성의 fresh 실행은 이번 범위 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 거래의 채굴 번호를 고정한 전체 블록 조회 true. 세 체인의 공개 케이스와 독립 RPC 응답 대조, WBFT Croissant0 직접 구성.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/block-lookup-evidence.json",
+          "sha256": "b6ee13320dc69abb19f29098c5c674637c794bbe77c31a506553d8a91324ba30"
+        }
+      ]
     },
     {
       "id": "RPC-003",

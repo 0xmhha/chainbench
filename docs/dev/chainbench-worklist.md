@@ -182,6 +182,19 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-002 전체 블록 조회 보강:** 기존 latest 두 조회의 경합·false 입력과
+extraData/miner/거래 객체 누락을 공개 케이스에서 보강했다. 정상 입력의 protocol 및 잘못된
+응답7종을 기존 단언이 놓치는 RED를 확인했고, 정상1/음성9종 GREEN·관련 전체 race·전체
+검사를 통과했다. 실제 거래의 채굴 번호를 고정하고 두 조회 모두 true로 호출하며
+hash·number·extraData·miner·transactions와 전체 응답 일치를 독립 대조했다.
+
+세 체인 native race(154.715초, skip0), 공개 단언30개가 통과했다. 고정 소스
+`41a53f442dfad8b376a3737bca885a1a3b7fc4f1ccb56ddf412d836912de4bd4` 전후가 같다.
+[전체 블록 조회 증거](block-lookup-evidence.json)는501파일의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0이다. 주소 corpus 갱신은 기존 faucet/새 수신자2곳뿐이다.
+WBFT는 Croissant0 직접 구성이다. 단계적 이관·원문87개 전체·Linux·메인넷·legacy·최종 Web
+인수 완료로 확대하지 않는다.
+
 **2026-10-15 GOV-023 개별 credential 만료 보강:** 머신 시계 sleep·큰 잔액 증가로
 처리 항목을 추정하는 조건을 실제 체인 시각·슬롯 상태·포인터·정확한 이벤트/출금 ledger로
 바꿨다. 잘못된 시간/처리/포인터9조건과 threshold/이벤트/슬롯/입력/가스비6조건의 RED→GREEN을

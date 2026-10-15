@@ -1,0 +1,276 @@
+{
+  "scope": "RPC-002 pinned numeric block with a mined transaction, fullTransactions true, entire number/hash response equality, nonempty extraData and miner and exact transaction membership. Direct managed WBFT Croissant-at-genesis plus StableNet/WEMIX regression. Not staged migration/full87/mainnet/Linux/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Old latest/false protocol and seven malformed extra/miner/transaction controls failed the new oracle; old hash/number mismatches were already rejected.",
+  "unitGreen": "One positive and nine negative controls exercise the public DSL.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "41a53f442dfad8b376a3737bca885a1a3b7fc4f1ccb56ddf412d836912de4bd4",
+    "sourceAfter": "41a53f442dfad8b376a3737bca885a1a3b7fc4f1ccb56ddf412d836912de4bd4",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeFullBlockLookup/stablenet",
+      "TestNativeFullBlockLookup/wbft",
+      "TestNativeFullBlockLookup/wemix",
+      "TestNativeFullBlockLookup"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-_twtsxhm",
+      "/private/tmp/cbui/txfail-gp9agrst",
+      "/private/tmp/cbui/txfail-lu81gt3j"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-_twtsxhm/reports/block-lookup-proof.json",
+      "/private/tmp/cbui/txfail-gp9agrst/reports/block-lookup-proof.json",
+      "/private/tmp/cbui/txfail-lu81gt3j/reports/block-lookup-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-_twtsxhm": [],
+      "/private/tmp/cbui/txfail-gp9agrst": [],
+      "/private/tmp/cbui/txfail-lu81gt3j": []
+    },
+    "elapsedSeconds": 154.715,
+    "log": {
+      "path": "/private/tmp/chainbench-block-lookup-native-native.jsonl",
+      "sha256": "6bd96391a4d41e1ced5fa8fcdd71a173071ede69b36ae8001037939cdca32688",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022618255605089
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-block-lookup-native-summary.json",
+      "sha256": "42346801d41dcbabbcd5e8fa04ce294f1366f966114eff7d47f33dd4054b62a9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022618765819691
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-block-lookup-native-start.json",
+      "sha256": "2db8a783126a7c76fe867522fe8a5d3b31799e463962bdf99acb93887ea9263f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022461360915290
+    }
+  },
+  "families": [
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-_twtsxhm/reports/block-lookup-proof.json",
+        "sha256": "81427576e3a3f6d6e86abc8a33ea4dc1d98522b580e3fcdad0b5cd05de826261",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022524278600512
+      },
+      "blockNumber": "0x2b",
+      "blockHash": "0xd0ba6c79b6dc5b9438afaaf07e2d9a0c17bf9b3ada933cba1f8180d562502ad0",
+      "witnessHash": "0x56f3fa22f191720e15a3b88ba504e24ec0b803f6cc172c33fff6f8cbaffa6516",
+      "extraBytes": 510,
+      "miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "transactions": 1,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-_twtsxhm/reports/20261015-000103-58498/UTC-20261015-000119/tests/001_block-by-hash-consistency/assert.json",
+        "sha256": "a4ace05193352d147a9a92fab8375e6d1e21f604e08a895ea1d3dd822fe4b06c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022524269801391
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-_twtsxhm/reports/20261015-000103-58498/UTC-20261015-000119/tests/001_block-by-hash-consistency/steps.json",
+        "sha256": "df541244cf2c6e0e58ddf74e3392af302952cf60c548c917e2907a281022b082",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022524229583883
+      },
+      "assertionCount": 10,
+      "runtime": "/private/tmp/cbui/txfail-_twtsxhm",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-_twtsxhm/reports/block-lookup-inventory.json",
+        "sha256": "c0582ad8dd926415e2c6b88088eb0b2372fe8eab219ad0c1d1bbdf354fcbfc26",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022627757780892
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-gp9agrst/reports/block-lookup-proof.json",
+        "sha256": "92df8b2e301cd8efdf2afb303324253109c5c4fee6e29f6fa9e68aa3a6ed5767",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022600414931728
+      },
+      "blockNumber": "0x22",
+      "blockHash": "0x1effa7bc5592afdee9ca10f919f05f12fd00f7aad6e82a36ea86cdb6d0538ae7",
+      "witnessHash": "0x0ef567618e9305ece2d1f255b5f13c94ab6dcdbe3fbadaf53113a6bb395bfa1f",
+      "extraBytes": 31,
+      "miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "transactions": 1,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-gp9agrst/reports/20261015-000103-58498/UTC-20261015-000206/tests/001_block-by-hash-consistency/assert.json",
+        "sha256": "0ebf129ab832dec98af12b64aebaa277b3eb570a7516ad875ef40a4d0c944693",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022600406634490
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-gp9agrst/reports/20261015-000103-58498/UTC-20261015-000206/tests/001_block-by-hash-consistency/steps.json",
+        "sha256": "ad635c9e937146ae9384a440fff6f483aaf0dedf1230b7f10ff88f1f38d2f282",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022600366356855
+      },
+      "assertionCount": 10,
+      "runtime": "/private/tmp/cbui/txfail-gp9agrst",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-gp9agrst/reports/block-lookup-inventory.json",
+        "sha256": "06e2b76ce94d795ba8d9233fcac3dfe53f74aaf2beaf0e5b969c9bba516aea7e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022627784894555
+      }
+    },
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-lu81gt3j/reports/block-lookup-proof.json",
+        "sha256": "78d13505d7e045d17b5d59985742b8bac30821c2413b146fa0c4c2456a42d76f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022473189735740
+      },
+      "blockNumber": "0x7",
+      "blockHash": "0x5db2b50a2e89dde9c77a5c67555d1955f3e582f996a6132ee3e13f8c4204a38b",
+      "witnessHash": "0x23186641fcc320c270b5d73b651e8c53c384d2f4e310a8f2adf89b128ccf12c1",
+      "extraBytes": 517,
+      "miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "transactions": 1,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-lu81gt3j/reports/20261015-000103-58498/UTC-20261015-000103/tests/001_block-by-hash-consistency/assert.json",
+        "sha256": "df7093530d08a5c53061ab26e3297da6332a6dd7e19fe8be46ba1358f6c5cf6a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022473181378792
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-lu81gt3j/reports/20261015-000103-58498/UTC-20261015-000103/tests/001_block-by-hash-consistency/steps.json",
+        "sha256": "c6258ac47afd4f82a55dea853394299c5e61f4f9f63de7af2f1b5c4d86dc2a7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022473144070990
+      },
+      "assertionCount": 10,
+      "runtime": "/private/tmp/cbui/txfail-lu81gt3j",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-lu81gt3j/reports/block-lookup-inventory.json",
+        "sha256": "278e4a865cf860e3303d5e52984afcf83f3038e97312341ac8220d9034b92768",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792022627821676516
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-block-lookup-publication.json",
+    "sha256": "45d9a7cd368e483356e1a1c5323abe24e31b32b7dd2bf429f7bad98e3c905970",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792022326998347626
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-block-lookup-red.log",
+      "sha256": "d1d17a4febb6d4fda3630e82a9e74be26703277022d51b8f34aa01784daefc72",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022271585359687
+    },
+    {
+      "path": "/private/tmp/chainbench-block-lookup-green.log",
+      "sha256": "3486a1dc9960259182338314b64b53747d5f86d86af6c17968292b38d7b2d5ef",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022289406928328
+    },
+    {
+      "path": "/private/tmp/chainbench-block-lookup-related-race.log",
+      "sha256": "9fc8b5c690cede915a4ad69d37cd5b4ef58dee64ee2a994c134cc546f7efdf09",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022348071408186
+    },
+    {
+      "path": "/private/tmp/chainbench-block-lookup-related-race2.log",
+      "sha256": "80d0cbc4f3ebad62ce41180868bd01fde05f11b8d0894d37afe3157fdf12741e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022414539200616
+    },
+    {
+      "path": "/private/tmp/chainbench-block-lookup-check.log",
+      "sha256": "d5849ebacfca1199805a0fb5fcf41f075a01ee7e90562310736ef123d5f2fde6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022450082884622
+    },
+    {
+      "path": "/private/tmp/chainbench-block-lookup-corpus-update.log",
+      "sha256": "91702887a50d2bb446db4bc155afc2092f8ada61c853855ebe758688c920480e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022371241448500
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}
