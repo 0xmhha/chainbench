@@ -2,10 +2,11 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "govminter-v2-code",
-  "description": "TC-5-2-05: GovMinter v2 업그레이드는 코드만 교체하고 잔액은 건드리지 않는다. 하드포크 전후의 코드가 다르고 잔액이 같은지를 함께 본다.",
+  "description": "TC-5-2-05: Boho 10 직전 블록 9와 경계 블록 10의 GovMinter 코드가 원문 v1/v2 고정 Keccak 해시와 같고 잔액을 보존하는지 확인한다. 두 과거 블록을 고정해 latest 조회 경합을 피한다.",
   "requires": [
     "rpc",
-    "contract:govMinter"
+    "contract:govMinter",
+    "fork:boho"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4-boho-at-10",
@@ -15,11 +16,19 @@
   },
   "steps": [
     {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "11",
+      "pollInterval": "2s",
+      "source": "blockNumber",
+      "timeout": "120s"
+    },
+    {
       "do": "read",
       "method": "eth_getBalance",
       "params": [
         "0x0000000000000000000000000000000000001003",
-        "0x1"
+        "0x9"
       ],
       "save": "balPreBoho",
       "source": "rpcCall"
@@ -29,18 +38,10 @@
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
-        "0x1"
+        "0x9"
       ],
       "save": "codePreBoho",
       "source": "rpcCall"
-    },
-    {
-      "compare": "GreaterOrEqual",
-      "do": "waitFor",
-      "expected": "11",
-      "pollInterval": "2s",
-      "source": "blockNumber",
-      "timeout": "120s"
     },
     {
       "address": "govMinter",
@@ -55,7 +56,7 @@
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
-        "latest"
+        "0xa"
       ]
     },
     {
@@ -65,8 +66,36 @@
       "method": "eth_getBalance",
       "params": [
         "0x0000000000000000000000000000000000001003",
-        "latest"
+        "0xa"
       ]
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0xa"
+      ],
+      "save": "codePostBoho"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "web3_sha3",
+      "params": [
+        "$codePreBoho"
+      ],
+      "compare": "Equal",
+      "is": "0x3ea99dd77ff9bbc4a88b126e9aa06ddbf144f535a5b432040dbedadd66f3c759"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "web3_sha3",
+      "params": [
+        "$codePostBoho"
+      ],
+      "compare": "Equal",
+      "is": "0xf369fcc4edab330169f427fd2aedbe97432cf1cfa31200da06464034f3edaa05"
     }
   ]
 }

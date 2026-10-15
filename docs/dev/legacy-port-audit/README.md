@@ -13,6 +13,15 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 [복구 출처·파서 제한·잔여 조건](../legacy-source-recovery-evidence.json).
 현재 WEMIX 원문은 87개이며 아래 과거 84개와 구분한다. 정본 상태는 [워크리스트 §0a](../chainbench-worklist.md)다.
 
+### 02·10 코드 교체·스토리지 보존의 현행 보강
+
+과거 부분 포팅 표의 `02-test-v2-code-only-hash`와 `10-test-govminter-bytecode-hash-state-preserved`는
+14개 오류 입력의 거짓 통과를 RED로 확인한 뒤 공개 DSL을 보강했다. 원문 v1/v2 고정 해시와
+포크 경계 블록9/10, 스토리지 네 슬롯, v2 조회를 확인하며 기존 prealloc 검사도 유지한다.
+새 StableNet 4d17eea0의 실제 Mac BP4·Boho10에서 두 케이스·14단언과 독립 보존 대조가 통과했다.
+원문 기본 Boho100의 전체 환경, 다른 부분 포팅 행과254개 전체 동등성은 이번 범위가 아니다.
+[출처·보강·실제 증거와 한계](../legacy-code-state-evidence.json).
+
 ## 방법
 
 양쪽을 AST 로 파싱해 그래프로 만든 뒤 테스트 단위로 대조했다.
