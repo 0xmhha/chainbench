@@ -182,6 +182,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 NODE-006 실제 NCP 공백 파싱 보강:** 초기화 성공만 확인하는 판정이
+잘못된 활성화·블록 진행·조회 시점·수·membership·목록·입력의 12가지 오류를 허용하는
+RED→GREEN을 확인했다. 목록 순서에 의존하지 않는 집합 대조도 통과했다. 실제 이관은
+Croissant20·useNCP=true이며, 공백이 포함된 일곱 주소 CSV가 생성 genesis와 다섯 nodegenesis에
+그대로 보존됐다. 높이 25에서 ncpCount7, 정확한 ncpList 집합, 일곱 trim 주소의 isNCP word1과
+0 주소의 word0을 독립 대조했다. 실제 체인은 이후 높이 27까지 진행했다.
+
+Tagged CLI 전체 race·e2e vet·전체 검사와 실제 이관 검증(73.467초, skip 0)이 통과했다.
+고정 소스 `40556e48fd021f690ce311ecd2aa3cb295e13f166e9c6416a5bc5c8a0f0f518c`
+전후가 같다. [NCP 공백 실제 증거](ncp-whitespace-evidence.json)는 파일 228개의 내용·권한·
+소유자·mtime을 보존했고 활성 프로세스와 종료 DB는 0개다. 초기화만 확인한 과거 단계와
+이번 RPC·블록 진행 증명을 구분한다. 원문 87개 전체·Linux·메인넷 live·legacy·공개 DSL·
+최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 NODE-007 초기화 거절 원인 보강:** 기존의 어떤 실패든 통과시키는
 판정이 다른 genesis 오류, 빈 출력, 실행 실패, signal/timeout, 잘못된 인자, 불완전한 사유의
 6가지 오류를 허용하는 RED→GREEN을 확인했다. 정상 종료한 노드 프로세스의 비정상 코드와

@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 59,
-    "partial": 25,
+    "confirmed_scope": 60,
+    "partial": 24,
     "conflict": 2,
     "merged": 1
   },
@@ -405,13 +405,28 @@
       "id": "NODE-006",
       "title": "NCP 주소 공백 포함 파싱 검증",
       "criterionSha256": "61648c4ce2701a9f90bb877c69e9eac7e1c2c309915c667fc1bf6dc65dbd2cd7",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_genesis_test.go",
           "sha256": "81330c9e0974e7cac29c3d89bab5f49e60920eb519524267e8662ef7f45d8941",
           "function": "TestE2E_WbftGenesisNCPWhitespace"
+        },
+        {
+          "path": "cmd/chainbench/ncp_whitespace_e2e_test.go",
+          "sha256": "2fc3911f572557433212e22931edb97031d8e9828f9abc9478bbd7461df99006",
+          "function": "TestNCPWhitespaceRejectsInitOnlyAndPartialMembership"
+        },
+        {
+          "path": "cmd/chainbench/ncp_whitespace_e2e_test.go",
+          "sha256": "2fc3911f572557433212e22931edb97031d8e9828f9abc9478bbd7461df99006",
+          "function": "TestNCPWhitespaceMemberListOrderIsNotConstrained"
+        },
+        {
+          "path": "cmd/chainbench/ncp_whitespace_e2e_test.go",
+          "sha256": "2fc3911f572557433212e22931edb97031d8e9828f9abc9478bbd7461df99006",
+          "function": "TestWemixNCPWhitespaceE2E"
         }
       ],
       "observations": [
@@ -420,17 +435,24 @@
         },
         {
           "analysis": "현행검증바이너리로7개공백패턴주소 init0 다시확인하고 입력/명령/출력·종료자료 보존. 실제RPC·블록생산은아직별도미검증."
+        },
+        {
+          "analysis": "실제WEMIX→WBFT Croissant20·useNCP=true 이관.7개주소 공백CSV를생성genesis+다섯nodegenesis에그대로보존.25고정블록ncpCount7/ncpList정확집합/각trim주소isNCP word1/0주소word0과27까지진행을독립확인. rawABI구조·유일성·주소padding도대조,목록순서는제약안함."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
       "remainingConditions": [
-        "기동/RPC ncpCount>0, trim한 실제 주소 isNCP=true, blockNumber>0 없음"
+        "원문 공백 파싱·RPC·블록 진행 명제는 native범위 확인. 전체87·Linux·메인넷live·legacy·공개DSL·최종Web 전수인수는별도잔여."
       ],
-      "confirmedScope": null,
+      "confirmedScope": "useNCP=true·원문공백입력 의미를 실제이관에서검증.생성설정원문CSV보존·고정블록NCP정확수/목록/7주소membership·0주소대조·실제블록진행.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/ncp-init-evidence.json",
           "sha256": "83f49754dc8bbdb88133a15cef74390214d362ee0efd89a3c8f26d7949192cd1"
+        },
+        {
+          "path": "docs/dev/ncp-whitespace-evidence.json",
+          "sha256": "7d16528eb5b2e6db43c84f7039ccd354db7b74023bade2c34b7d437600e922fc"
         }
       ]
     },
