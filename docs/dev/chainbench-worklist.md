@@ -182,6 +182,26 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 NODE-005 재시작 주기·서명 재참여 보강:** 연속 링크만 확인하는
+판정이 평균 간격, 실제 신원, 조회 블록, commit quorum 등의 11가지 오류를 허용하는
+RED→GREEN을 확인했다. 기존 짧은 창·잘못된 링크 거절은 유지했고, 13개 음성 조건과
+기존 재시작 준비·view-change 판정 회귀를 통과했다.
+
+실제 WBFT Croissant0·BP4·BlockPeriod1에서 공개 CT-FAULT-001의 원문 동작을 그대로 실행했다.
+네 단언·여덟 동작이 정지 중 진행, catch-up, hash·stateRoot 정합성을 검증했다. 실제 node3은
+동일 바이너리·명령·데이터 경로에서 PID42830→42924와 revision 증가로 재시작됐고 원래 키
+주소가 같았다. 고정 높이의 resync hash/root가 일치했다. 이후 26~31번의 여섯 헤더에서
+다섯 timestamp 간격 모두 1초·Round0이며, 조회한 header와 정확히 묶인 commit quorum에 원래
+노드가 참여했다. 재시작 endpoint도 마지막 31번 hash를 확인했다. 후보는 모두 보존했고 첫
+여섯 후보가 회복 창을 충족했다. 즉시 항상 첫 창이 통과한다고 일반화하지 않는다.
+
+실행 엔진 전체 race·정적 검사·전체 검사와 실제 회귀(35.455초, skip 0)가 통과했다.
+고정 소스 `76ba5d35f1ef513eafbf5f6712a720359477b2ae0fcf6ee9806178502d631673`
+전후가 같다. [재시작 회복 증거](restart-participation-evidence.json)는 파일 199개의 내용·권한·
+소유자·mtime을 보존했고 활성 프로세스와 종료 DB는 0개다. 기본 세션의 단언 파일명은
+assert.json이며 별도 native fixture의 assertions.json과 구분했다. 단계적 이관·원문 87개 전체·
+Linux·메인넷 live·legacy·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 NODE-006 실제 NCP 공백 파싱 보강:** 초기화 성공만 확인하는 판정이
 잘못된 활성화·블록 진행·조회 시점·수·membership·목록·입력의 12가지 오류를 허용하는
 RED→GREEN을 확인했다. 목록 순서에 의존하지 않는 집합 대조도 통과했다. 실제 이관은

@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 60,
-    "partial": 24,
+    "confirmed_scope": 61,
+    "partial": 23,
     "conflict": 2,
     "merged": 1
   },
@@ -320,7 +320,7 @@
       "id": "NODE-005",
       "title": "노드 재기동 후 블록 생산 재개 및 체인 정합성",
       "criterionSha256": "1e6a9410d5456e479c5e14468172e26d3d4d5c2ba8ab5acd7f3d9a32df9a4056",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -337,6 +337,16 @@
           "path": "tests/e2e/wbft_fault_test.go",
           "sha256": "ea9ca175cad3b75679083aac063e7953bdd6812df9e6988de691416a7fd041f8",
           "function": "TestE2E_WbftFaultTolerance"
+        },
+        {
+          "path": "internal/testengine/restart_participation_test.go",
+          "sha256": "24a9701ce5283ca73762a8c72b4cb55b0cd8b1c6e423f3c1b3ea042ebd3a4dd2",
+          "function": "TestRestartWindowRejectsAverageAndIdentityOnlyProof"
+        },
+        {
+          "path": "internal/testengine/restart_participation_native_test.go",
+          "sha256": "c5c13e965590c6f5b89c0102defdd5252b393dcace90149b3181413bedf620d2",
+          "function": "TestNativeValidatorRestartParticipation"
         }
       ],
       "observations": [
@@ -392,14 +402,22 @@
             "expect": "sameBlockHash",
             "block": "latest"
           }
+        },
+        {
+          "analysis": "실제WBFT Croissant0 BP4/BlockPeriod1. 공개CT-FAULT-001 원문steps그대로4단언/8동작통과(정지중진행·catchup·hash/stateRoot). 실제node3이같은binary/command/datadir에서PID42830→42924/revision증가·원래key주소로재시작. 고정높이resync hash/root·미래26~31header5개별timestamp1/Round0·APIheaderorigin/quorum·원래노드committer포함·재시작endpoint31hash확인. 첫후보6개가충족,후보전체보존."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_predicates_in_native_restart",
       "remainingConditions": [
-        "재시작 후 연속5개의 timestamp 차이 모두1초·재시작한 coinbase의 commit signer 포함을 결합한 단언이 없음. hash/stateRoot 정합성은 CT-FAULT-001에 이미 있음."
+        "원문 재시작 회복 명제는 native범위 확인. 단계적이관·전체87·Linux·메인넷live·legacy·최종Web 전수인수는별도잔여."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제Croissant0 WBFT BP4의공개crash/restart동작·hash/stateRoot/catchup과같은노드PID교체/동일경로·원래키·다섯개별1초간격·실제commit참여결합검증.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/restart-participation-evidence.json",
+          "sha256": "adde35e401c32d9fd66a4ea467ebb36ad70628689c43d8cead0cbc6508c7c0d9"
+        }
+      ]
     },
     {
       "id": "NODE-006",
