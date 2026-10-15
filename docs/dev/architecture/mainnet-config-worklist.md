@@ -2077,6 +2077,13 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 
 ---
 
+**2026-10-16 StableNet Mac 시작 패닉 — 원인·해결은 미확정:**
+공식4d17eea0 BP4의 extra-state 첫 시도는 node4 ProcessExtraSeal nil 패닉으로 준비90초제한 BLOCKED다.
+본문과 후속구성은 실행되지 않았고 다른3노드는 같은77에 합의했다. 조회실패의0값을 실제 node4 높이로 보지 않는다.
+같은 소스e66의 새 시도는2케이스·36단언을 통과했지만, 최초 실패와 독립 보존 기록을 남겼고 결함을 닫지 않았다.
+Mac관찰이며 Linux/메인넷 영향은 미확인이다.
+[증거](../legacy-extra-state-evidence.json), [추가 인계](../chain-handover-2026-09-12.md#8-stablenet-processextraseal-nil-포인터-패닉-2026-10-16).
+
 **2026-10-16 새 두 입력의 실제 15노드 시작 — 전체 L1은 미완료:**
 StableNet 4d17eea0·WBFT d535dd3d를 소유 15대에 새 프로세스·열린 파일·기존 해시 확인 뒤 배치했다.
 원래 BP7·EN7·PN1 시작 케이스를 소스 de214에서 직렬 실행해 각각 pass1·다른 판정0이다.

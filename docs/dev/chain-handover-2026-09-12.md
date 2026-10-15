@@ -672,3 +672,25 @@ reader 시작(index 13) 전에 실패했으며 마지막 조회의 context deadl
 공식 StableNet 4d17eea0의 별도 깨끗한 소스와 Mac·Linux 빌드 출처는 확인했지만,
 새 버전의 실제 S1 재검증이나 해결로 세지 않는다([입력](upstream-pinned-build-evidence.json)).
 외부 소스 수정이나 체인팀 메시지·리뷰 요청은 수행하지 않았다.
+
+
+## 8. StableNet ProcessExtraSeal nil 포인터 패닉 (2026-10-16)
+
+**추가 관찰이며 미해결이다.** 외부 소스 수정이나 체인팀 메시지·리뷰 요청은 수행하지 않았다.
+공식4d17eea0의 깨끗한 소스로 빌드한 Mac ARM64 gstable
+(SHA256 `fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48`)의
+4BP 시작 과정에서 node4가 `ProcessExtraSeal`의 nil 포인터 역참조로 종료됐다.
+스택은 `consensus/wbft/core/extraseal.go:152`의 `valSet.GetByAddress(msg.Source())`를 가리키며,
+인자의 nil 인터페이스는 nil validator set과 일치한다. 그 값이 만들어진 원인·경합 조건·재현 빈도는 확정하지 않았다.
+`Backend.processExtraSeals`가 `currentBlock`, `PriorRound`, `PriorValidators`를 전달하는 경로를 확인했을 뿐이다.
+해당 extraseal.go는 이전 고정0937ac5c의 Git blob과 동일하므로 새 커밋이 도입한 회귀라고 판단하지 않는다.
+
+다른3노드는 같은 블록77에 합의했으며 node4의 RPC는 connection refused였다.
+health의 node4 chainId/blockNumber0은 실패한 조회의 기본값이며 실제 최종 상태 관측으로 세지 않는다.
+준비 제한1분30초로 공개 `stablenet-account-extra`는 본문 전 BLOCKED이고 후속 delayed 구성도 시작하지 않았다.
+종료DB0·새 프로세스/열린 파일 전수 조회·실패 파일의 내용과 속성 보존을 독립 확인했다.
+
+같은 고정소스e66에서 새 workspace로 두 구성을 재실행한 결과는2공개케이스·36단언 통과다.
+그 성공은 원문의 extra 상태 명제에 대한 확인이며 패닉 해결 증거가 아니다. 실패 시도와 성공 시도를 합쳐 전부 통과로 세지 않는다.
+Linux·메인넷 영향·장시간 안정성·원인 수정은 이번 범위가 아니다.
+[버전·원본 로그·BLOCKED·새 실행·독립 보존](legacy-extra-state-evidence.json).

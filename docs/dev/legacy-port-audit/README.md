@@ -22,6 +22,15 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 원문 기본 Boho100의 전체 환경, 다른 부분 포팅 행과254개 전체 동등성은 이번 범위가 아니다.
 [출처·보강·실제 증거와 한계](../legacy-code-state-evidence.json).
 
+### extra-state 양방향·지연 포크의 현행 보강
+
+원문 `02-test-extra-contract-to-alloc`의 설정→상태 방향을 기존 alloc→상태 검사에 추가했고,
+`07-test-extra-v1-to-v2-delayed`의 세 계정·여섯 상태를 공개07b의 정확한 블록5/6에서 검사한다.
+18개 거짓 통과 RED·22개 대조·관련 race·전체 검사와 새 StableNet의 두 실제 구성·36단언을 확인했다.
+첫 실제 시도는 외부 ProcessExtraSeal 패닉으로 본문 전 BLOCKED였고, 자료를 보존한 뒤 같은 소스의 새 시도를 확인했다.
+이것은 패닉 해결이나 과거 전체 환경·254개 전체 동등성이 아니다. 원문 높이100/역할 주소와 현재6/로컬EOA를 구분한다.
+[실패·성공·독립 증거와 한계](../legacy-extra-state-evidence.json).
+
 ## 방법
 
 양쪽을 AST 로 파싱해 그래프로 만든 뒤 테스트 단위로 대조했다.
