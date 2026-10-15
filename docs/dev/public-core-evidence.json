@@ -1,0 +1,812 @@
+{
+  "scope": "Fresh seven exact public case IDs per family on BP4 EN1, including actual block advance, nonce, exact balance/fee, suggested price and three contract/view/storage cases. Direct WBFT Croissant0 with fresh receipts and state42, not full87/mainnet/Linux/legacy/staged handoff/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Aggregate pass7 hid eight missing/duplicate/unrelated/wrong-preset/sequence/fail/skip controls.",
+  "unitGreen": "Exact case IDs, sequence, preset and status/counters, one positive and eight negative controls.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "7c227fe682284523844460f8b6af2bd0998bb237f6d4a89e0ff914492f0e6452",
+    "sourceAfter": "7c227fe682284523844460f8b6af2bd0998bb237f6d4a89e0ff914492f0e6452",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativePublicCoreCases/stablenet",
+      "TestNativePublicCoreCases/wbft",
+      "TestNativePublicCoreCases/wemix",
+      "TestNativePublicCoreCases"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-0uhzietp",
+      "/private/tmp/cbui/txfail-66q2bap2",
+      "/private/tmp/cbui/txfail-imcb22f9"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-0uhzietp/reports/public-core-proof.json",
+      "/private/tmp/cbui/txfail-66q2bap2/reports/public-core-proof.json",
+      "/private/tmp/cbui/txfail-imcb22f9/reports/public-core-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-0uhzietp": [],
+      "/private/tmp/cbui/txfail-66q2bap2": [],
+      "/private/tmp/cbui/txfail-imcb22f9": []
+    },
+    "elapsedSeconds": 216.117,
+    "log": {
+      "path": "/private/tmp/chainbench-public-core-native-native.jsonl",
+      "sha256": "871abac976a94ae5c4be56368287eb0489f2950396525a87ce17b91add1ea5a0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792028379607055087
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-public-core-native-summary.json",
+      "sha256": "795f7eb3a571476a2ead26c304241a30da89d63eda65ec48b94cae14ce4c869e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792028380072766387
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-public-core-native-start.json",
+      "sha256": "440741f106b2de63f03a8aba97e2e9d3054806e7796cd8cb84dc4bd341db6bac",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792028161244699778
+    }
+  },
+  "families": [
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-0uhzietp/reports/public-core-proof.json",
+        "sha256": "7169f288bddc79d163f75190b5804685584cc8a0ff92e496742481f6a034273f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792028248188156401
+      },
+      "head": "0x27",
+      "gasPrice": "0x1748ca814c",
+      "cases": [
+        {
+          "id": "basic-rpc-health",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/001_basic-rpc-health/spec.json",
+            "sha256": "5194b2a8e39a9899ca6972358968c01c668c1d308d9d996b7cfd7f47b7dc0984",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028224227800487
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/001_basic-rpc-health/assert.json",
+            "sha256": "938d3190bacc93849f4fce1d78c5b902d242d78de96496e23c9384dd2d1b5872",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028227299858760
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/001_basic-rpc-health/steps.json",
+            "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028226281093645
+          },
+          "actionCount": 1,
+          "assertionCount": 8,
+          "transactions": 0
+        },
+        {
+          "id": "transaction-count-increments",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/002_transaction-count-increments/spec.json",
+            "sha256": "5dd37142225283a3d7f5eabffbb08d7a88e634e8ff7dc62f436eab9d1f38236f",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028227304624638
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/002_transaction-count-increments/assert.json",
+            "sha256": "03eec371189b3e430541fd435a4c7ec1ed57f657c1d7e76ecc20d20b576eb8bf",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028231373670638
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/002_transaction-count-increments/steps.json",
+            "sha256": "40103a97c7d3a76f09295fe86615019c4c8233ea357425d6c19bd48de823ebf7",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028231372460137
+          },
+          "actionCount": 5,
+          "assertionCount": 2,
+          "transactions": 2
+        },
+        {
+          "id": "genesis-balance",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/003_genesis-balance/spec.json",
+            "sha256": "92b354996d731aa3afb3d0c1547308ce8a2780780f59c1cdc0dc01c5c1128ee5",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028231376663973
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/003_genesis-balance/assert.json",
+            "sha256": "33b8734502727ff69b48f69284bb753ae7f642edaaf977ae23f08c0811a9810c",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028235443197013
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/003_genesis-balance/steps.json",
+            "sha256": "f732eb16e1bdfc4d780efcdb2a6bd2b630ad7b37ed7c548b50d714c47783227e",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028235439571719
+          },
+          "actionCount": 9,
+          "assertionCount": 5,
+          "transactions": 2
+        },
+        {
+          "id": "gas-price-positive",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/004_gas-price-positive/spec.json",
+            "sha256": "dea0e38b544869f98ef0a593e6b72c0d80ad8cd604fe48351ed861322c674dd1",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028235444433056
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/004_gas-price-positive/assert.json",
+            "sha256": "ce89a236dcb83825cecdd4ea4bc5b3d0ca612333835c6f3fcd850b174d1a1551",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028237491653626
+          },
+          "steps": null,
+          "actionCount": 0,
+          "assertionCount": 2,
+          "transactions": 0
+        },
+        {
+          "id": "contract-roundtrip",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/005_contract-roundtrip/spec.json",
+            "sha256": "d5c899e8042e72ff70e97d9271c87bd7a6c09bc7723ac1c9a927728a9825dddf",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028237493037668
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/005_contract-roundtrip/assert.json",
+            "sha256": "052e5a89a0891e74956d677871c277814eec05f31d32c06bd338f79e497656b5",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028240066091953
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/005_contract-roundtrip/steps.json",
+            "sha256": "b67a6214c41854005ca0a524f3ce6503399a5557d095bb9cd9a5ec8e32b6216f",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028240039121561
+          },
+          "actionCount": 2,
+          "assertionCount": 2,
+          "transactions": 1
+        },
+        {
+          "id": "storage-write-and-read",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/006_storage-write-and-read/spec.json",
+            "sha256": "ad83ae1e0be14642123fd4b90b98bda24c4cd8d78a621990608c6400d52c6ae2",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028240072442291
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/006_storage-write-and-read/assert.json",
+            "sha256": "94b89e7e551684e4ce72afd57f1ea1619cdef305de1c8c6edd9e9d6ea36dd8e3",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028244117120441
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/006_storage-write-and-read/steps.json",
+            "sha256": "a6a83459e9fe2db8287e12cda2fe928edd26831db19ec40cd8c125b328c962df",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028244113961106
+          },
+          "actionCount": 4,
+          "assertionCount": 4,
+          "transactions": 2
+        },
+        {
+          "id": "view-call-leaves-state",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/007_view-call-leaves-state/spec.json",
+            "sha256": "a2c57a14f8598a0d717946c0598dad899669cec2541a4ddace4a592f31f4e1ec",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028244119404359
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/007_view-call-leaves-state/assert.json",
+            "sha256": "1dc4990cdb002aabb755c2575d9487a6b2ae5bf92a34884d0a4bed2189d511cb",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028248162961301
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-0uhzietp/reports/20261015-013603-4585/UTC-20261015-013647/tests/007_view-call-leaves-state/steps.json",
+            "sha256": "9c52f1f35fd0ec4cc47fc24ecb25e1587b4211a6080c0eda325e91bbb94f7d40",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028248155704713
+          },
+          "actionCount": 5,
+          "assertionCount": 8,
+          "transactions": 2
+        }
+      ],
+      "runtime": "/private/tmp/cbui/txfail-0uhzietp",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 292,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-0uhzietp/reports/public-core-inventory.json",
+        "sha256": "18117ffeee5d37c0c0fcd23a819c6e8f1bc4f2cbf0e2f622a1c81c50dc00c69f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792028397188233511
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-66q2bap2/reports/public-core-proof.json",
+        "sha256": "fb939bd3380f58be733881fcd6d70e972685989fda7d295d8feac8da3bf8ebb1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792028361996118227
+      },
+      "head": "0x50",
+      "gasPrice": "0x174876e801",
+      "cases": [
+        {
+          "id": "basic-rpc-health",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/001_basic-rpc-health/spec.json",
+            "sha256": "2863c68a0d84365d685085e18412418c58931c06cbebecb2c27296b6b6daf5b1",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028334425755027
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/001_basic-rpc-health/assert.json",
+            "sha256": "0b1990c33c3c279e834543f5a8fea24c5a6276b6784d2d3a5153a7211704b05b",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028336971362669
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/001_basic-rpc-health/steps.json",
+            "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028336448310248
+          },
+          "actionCount": 1,
+          "assertionCount": 8,
+          "transactions": 0
+        },
+        {
+          "id": "transaction-count-increments",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/002_transaction-count-increments/spec.json",
+            "sha256": "7d37267a8788f6fe7b316bd215ac7c83e954d79bde97586de89b42555f1334ac",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028336974879546
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/002_transaction-count-increments/assert.json",
+            "sha256": "5153e41244262a318bb63da8a08a782e22f1805fe97b21bda082bdf856317682",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028341573564512
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/002_transaction-count-increments/steps.json",
+            "sha256": "2105bcb3fde092471458869f741a18b6130a063c74bdaa9bf3dbeafe6e983983",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028341573018804
+          },
+          "actionCount": 5,
+          "assertionCount": 2,
+          "transactions": 2
+        },
+        {
+          "id": "genesis-balance",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/003_genesis-balance/spec.json",
+            "sha256": "5b3c1703192359266efa029fc6a149b1ac68a309328602cbebf7883c251bbe31",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028341576013597
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/003_genesis-balance/assert.json",
+            "sha256": "679adba1cf941254516068670f470814d578683aabaca3817bac48bc9ab34932",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028346668210840
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/003_genesis-balance/steps.json",
+            "sha256": "a21757ad97333bb62e198737aa3bb31b6137212dd1d0acd0de40da06204725b8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028346665880464
+          },
+          "actionCount": 9,
+          "assertionCount": 5,
+          "transactions": 2
+        },
+        {
+          "id": "gas-price-positive",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/004_gas-price-positive/spec.json",
+            "sha256": "8feebbd6c22bb31c3c0c575c948dee5066071cdbc000f2f0bb1008d5f916a662",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028346669202924
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/004_gas-price-positive/assert.json",
+            "sha256": "e389a762559349149c7c5831c2ce7daaa0f333c9e605844be907a3b0bee05bd6",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028348715576286
+          },
+          "steps": null,
+          "actionCount": 0,
+          "assertionCount": 2,
+          "transactions": 0
+        },
+        {
+          "id": "contract-roundtrip",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/005_contract-roundtrip/spec.json",
+            "sha256": "ae2dd716598a676e9513ae68d839abc17dcae49c4b3ae2488873bbfce52fabf8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028348718458038
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/005_contract-roundtrip/assert.json",
+            "sha256": "052e5a89a0891e74956d677871c277814eec05f31d32c06bd338f79e497656b5",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028351772193133
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/005_contract-roundtrip/steps.json",
+            "sha256": "018c438db828278651205475a4aa86b19b91989f48299e895b79f7e110386080",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028351769091839
+          },
+          "actionCount": 2,
+          "assertionCount": 2,
+          "transactions": 1
+        },
+        {
+          "id": "storage-write-and-read",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/006_storage-write-and-read/spec.json",
+            "sha256": "8cdd709f540f8f47a03fcfd7772a5237cce361bd39147c43e024abed40bb7a29",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028351775505551
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/006_storage-write-and-read/assert.json",
+            "sha256": "aeb43b8c20351034d5cc65b1d1b3d3983bce72dea231dd01966a6c9ea53e43b4",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028356873437298
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/006_storage-write-and-read/steps.json",
+            "sha256": "b77474f205b10560f6ca813688ef6c1e0b368984cad61448165640a7ca595cd5",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028356862290916
+          },
+          "actionCount": 4,
+          "assertionCount": 4,
+          "transactions": 2
+        },
+        {
+          "id": "view-call-leaves-state",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/007_view-call-leaves-state/spec.json",
+            "sha256": "6b9ac97405df7e268f33e37e7e332e60f44593e74879d58073453f9202f57427",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028356877366967
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/007_view-call-leaves-state/assert.json",
+            "sha256": "f43948be121e3c9b8eab1cab84083cd2ccbd0b2a55c22e91df25bfb26afe4b90",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028361961696414
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-66q2bap2/reports/20261015-013603-4585/UTC-20261015-013730/tests/007_view-call-leaves-state/steps.json",
+            "sha256": "1c0345d8c62c076be82ac0dee338881e3fc2decfb643e00f8b7a808bce0a937e",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028361948116988
+          },
+          "actionCount": 5,
+          "assertionCount": 8,
+          "transactions": 2
+        }
+      ],
+      "runtime": "/private/tmp/cbui/txfail-66q2bap2",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 183,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-66q2bap2/reports/public-core-inventory.json",
+        "sha256": "0052764dee9bd69bc77a95e5515be8ef5e68afb4e37d564cb1a913259decf11f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792028397224882868
+      }
+    },
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-imcb22f9/reports/public-core-proof.json",
+        "sha256": "5063faed2fb15648731cf4f8d2a36e76549c148b528ce1f6982a4e3d0233ecc1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792028205461389840
+      },
+      "head": "0x27",
+      "gasPrice": "0x2b4abd176000",
+      "cases": [
+        {
+          "id": "basic-rpc-health",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/001_basic-rpc-health/spec.json",
+            "sha256": "5289e04d4e4344524f8f2c577961cd7024ccbf0a80cfb8f166952226141915de",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028180977353214
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/001_basic-rpc-health/assert.json",
+            "sha256": "b62d62b313b771fe991948c8229e3cc57d6243cc00669363e8cec57de17e4af2",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028184543986140
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/001_basic-rpc-health/steps.json",
+            "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028183015062195
+          },
+          "actionCount": 1,
+          "assertionCount": 8,
+          "transactions": 0
+        },
+        {
+          "id": "transaction-count-increments",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/002_transaction-count-increments/spec.json",
+            "sha256": "c94ae8fb9c7bfd814f55b1adb8ec1bfeb479de210131a1732fda37c4ceabd38c",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028184548727643
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/002_transaction-count-increments/assert.json",
+            "sha256": "c6e2d4b735f1c0d95b460a7e5cf92a65e9544c56bfa67dd297d9a8fc41f24378",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028188104023394
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/002_transaction-count-increments/steps.json",
+            "sha256": "0e96f333b320cd4b9e60bfe589478926e79de072f2293083fd87b46b201e062a",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028188103218102
+          },
+          "actionCount": 5,
+          "assertionCount": 2,
+          "transactions": 2
+        },
+        {
+          "id": "genesis-balance",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/003_genesis-balance/spec.json",
+            "sha256": "e115f1f3e17af69ee20a52d68de5560f27ce1f52629709cc14ae6631805e4fe8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028188107254646
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/003_genesis-balance/assert.json",
+            "sha256": "b13704dc7700ffe4ad9911084cf1c3bf5a4a3a4fe64eb73949dae8828ca23235",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028192185835361
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/003_genesis-balance/steps.json",
+            "sha256": "f0afb747386e890bd43f618e998ddc57bf2971d0f27c8c22a6e19cce81334d19",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028192183507401
+          },
+          "actionCount": 9,
+          "assertionCount": 5,
+          "transactions": 2
+        },
+        {
+          "id": "gas-price-positive",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/004_gas-price-positive/spec.json",
+            "sha256": "1014d833f8bea966baf9ed1ef73f686b41d91abf7ae3523a99806a4538d7c043",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028192186728361
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/004_gas-price-positive/assert.json",
+            "sha256": "d50bc0b4c4fbf49ae0065e0bd15d63121742de6790e033fa45cf293a63729b56",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028194212645626
+          },
+          "steps": null,
+          "actionCount": 0,
+          "assertionCount": 2,
+          "transactions": 0
+        },
+        {
+          "id": "contract-roundtrip",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/005_contract-roundtrip/spec.json",
+            "sha256": "daa8a3f077584ec9ee9298f092438f8e4bd694eb1b59faeee2c864d1820df795",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028194213996502
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/005_contract-roundtrip/assert.json",
+            "sha256": "052e5a89a0891e74956d677871c277814eec05f31d32c06bd338f79e497656b5",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028197258307591
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/005_contract-roundtrip/steps.json",
+            "sha256": "490ce8b1e9fb7dd7394020bc243ffda84761d1553da5a3ab4d25f9906d7c3183",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028197253849380
+          },
+          "actionCount": 2,
+          "assertionCount": 2,
+          "transactions": 1
+        },
+        {
+          "id": "storage-write-and-read",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/006_storage-write-and-read/spec.json",
+            "sha256": "385391f402f2408fff6ee2b1ccda795a3ca92f90fc6cf3a1ae96b22b8ceafdc0",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028197262390135
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/006_storage-write-and-read/assert.json",
+            "sha256": "6c2eee0ae25331d322fc3939053c0184698ec3febe454a226db89f33712503c7",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028201339369348
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/006_storage-write-and-read/steps.json",
+            "sha256": "15263afe10c32cbc28830a762bd811a64d28ae9ee66bbc19ef3ddc13650f591c",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028201331767177
+          },
+          "actionCount": 4,
+          "assertionCount": 4,
+          "transactions": 2
+        },
+        {
+          "id": "view-call-leaves-state",
+          "spec": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/007_view-call-leaves-state/spec.json",
+            "sha256": "9914f52b63b353a6307d9b27855754f4af9d14c65ac4b8d49ac517e7a646b716",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028201345575686
+          },
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/007_view-call-leaves-state/assert.json",
+            "sha256": "5f350753d3c1dfe26aea3a91c26f35c866163489ce7cefec7a4ab13c322d90a4",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028205432088863
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-imcb22f9/reports/20261015-013603-4585/UTC-20261015-013603/tests/007_view-call-leaves-state/steps.json",
+            "sha256": "c42ea9cdcacbbc73b540e102f174ee08e53cba7e667a88c792bd38e05401cfc3",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792028205424623025
+          },
+          "actionCount": 5,
+          "assertionCount": 8,
+          "transactions": 2
+        }
+      ],
+      "runtime": "/private/tmp/cbui/txfail-imcb22f9",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 292,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-imcb22f9/reports/public-core-inventory.json",
+        "sha256": "d45cbe9e6007f94d3e85d1d208a8ea75bc91c4a056bed4b4a144e000fba773f4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792028397269704813
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-public-core-publication.json",
+    "sha256": "b66f7bc59c13b0fcbca4311cc169ef34f74692c35aa4258bf4824ff967c47a1a",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792027734748864798
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-public-core-red.log",
+      "sha256": "ef8f9da2b18f8857c39a706a8f2877a37a1de33e56d238cb5e89b5a05c4919db",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027899940169019
+    },
+    {
+      "path": "/private/tmp/chainbench-public-core-green.log",
+      "sha256": "22a4dd47ec0779f37e03750099b1b0cbaa5a2e2f5773e328c87ef4156c0f3392",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027918995689019
+    },
+    {
+      "path": "/private/tmp/chainbench-public-core-related-race.log",
+      "sha256": "c95fadbd3e58504e24fd884ff02a430e2a394fc2107f0b7145f90de188f8cf6f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792028010108056956
+    },
+    {
+      "path": "/private/tmp/chainbench-public-core-check.log",
+      "sha256": "d99f9bcbbfd520dcc3507aa3e7fcec18017966bc90bffdee794c99608e66d6f5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792028118542278900
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

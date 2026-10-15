@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 38,
-    "confirmed_scope": 47,
+    "partial": 33,
+    "confirmed_scope": 52,
     "conflict": 1,
     "merged": 1
   },
@@ -1262,7 +1262,7 @@
       "id": "TX-005",
       "title": "스마트 컨트랙트 배포 및 상태 변경/조회",
       "criterionSha256": "fa9de4eaf5228b0eaf814ced3776c80008a3b68a7b7da3cc7bf2eac7f48ea0f4",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -1284,6 +1284,16 @@
           "path": "tests/e2e/wbft_chain_test.go",
           "sha256": "9ec001dfe5a3c6b0f0ad18b9e3e77e8fc230d803eb95f2135510eb891b2da937",
           "function": "TestE2E_WbftChain"
+        },
+        {
+          "path": "internal/testengine/public_core_witness_test.go",
+          "sha256": "5e160e6280eca10c2488b96ff9de61a76c2cc54e70f53b1c6348b71f8f060188",
+          "function": "TestPublicCoreWitnessRejectsAggregateOnlyResults"
+        },
+        {
+          "path": "internal/testengine/public_core_native_test.go",
+          "sha256": "476571cd35f6826d0193b1d7e47b20af60cbe4ed0c7ce3f822300614e77fb2e7",
+          "function": "TestNativePublicCoreCases"
         }
       ],
       "observations": [
@@ -1474,14 +1484,23 @@
             "compare": "Equal",
             "is": "$n0"
           }
+        },
+        {
+          "analysis": "공개 contract-roundtrip/storage-write-and-read/view-call-leaves-state 세case 실제 배포·상태42·view비변경; 별도실제code/view/slot0 조회. London호환 손코드 fixture로 ABIselector원문차이는 유지. aggregate pass만으로닫지 않고 exact caseID/seq/preset/status·receipt·상태를대조했다."
         }
       ],
       "semanticAssessment": "deploy_real_storage_write_and_read_criterion_present; fixture_ABI_difference_and_evidence_scope_only",
       "remainingConditions": [
-        "명시 ABI set(uint256)/get() 대신 London호환 손코드 calldata 분기 fixture. 값42 저장·조회라는 핵심 의미는 이미 구현됐으며 이를 미구현으로 세면 안 됨. 본 probe는 이 세 case의 현재 native 실행 증명을 새로 실행하지 않았다."
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. WBFT Croissant0 직접 구성이며 staged handoff fixture는 이번 범위 아님.",
+        "현행 공통 fixture는 명시set(uint256)/get() ABIselector 대신 London호환 손코드 calldata분기이며 차이를 보존한다. 저장42·조회·view비변경은 실제 검증됐다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "세 현재 native 패밀리의 BP4 EN1 공개케이스 fresh21개 중 해당목적 실행. 공개 contract-roundtrip/storage-write-and-read/view-call-leaves-state 세case 실제 배포·상태42·view비변경; 별도실제code/view/slot0 조회. London호환 손코드 fixture로 ABIselector원문차이는 유지.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/public-core-evidence.json",
+          "sha256": "7fd312e35bccaa83432bde8c2ad92da72afa9316071ff55781bd8bf1484ea1cc"
+        }
+      ]
     },
     {
       "id": "TX-006",
@@ -5251,13 +5270,23 @@
       "id": "RPC-001",
       "title": "eth\\_blockNumber",
       "criterionSha256": "222743dc43cbea31deea08b9473d938801480f265c1fdd7cd795bdc9e49a681f",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/rpc/CT-RPC-001-block-number-advances.json",
           "sha256": "289b7aa8a27a1bd7b6bec0c0b0d1aee13af7b66212a197e65e2dda359189485a",
           "id": "basic-rpc-health"
+        },
+        {
+          "path": "internal/testengine/public_core_witness_test.go",
+          "sha256": "5e160e6280eca10c2488b96ff9de61a76c2cc54e70f53b1c6348b71f8f060188",
+          "function": "TestPublicCoreWitnessRejectsAggregateOnlyResults"
+        },
+        {
+          "path": "internal/testengine/public_core_native_test.go",
+          "sha256": "476571cd35f6826d0193b1d7e47b20af60cbe4ed0c7ce3f822300614e77fb2e7",
+          "function": "TestNativePublicCoreCases"
         }
       ],
       "observations": [
@@ -5342,14 +5371,22 @@
             "compare": "NotEqual",
             "is": ""
           }
+        },
+        {
+          "analysis": "BP4 EN1의 공개 basic-rpc-health 실제 실행: 각node 높이>=2·blockAdvance·clientVersion/peerCount, 별도실제hexhead조회. aggregate pass만으로닫지 않고 exact caseID/seq/preset/status·receipt·상태를대조했다."
         }
       ],
       "semanticAssessment": "core_original_assertions_present; current_actual_proof_not_executed_by_probe",
       "remainingConditions": [
-        "hex parsing은 reader에위임; currentpostfork실제case증명확인안함"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. WBFT Croissant0 직접 구성이며 staged handoff fixture는 이번 범위 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "세 현재 native 패밀리의 BP4 EN1 공개케이스 fresh21개 중 해당목적 실행. BP4 EN1의 공개 basic-rpc-health 실제 실행: 각node 높이>=2·blockAdvance·clientVersion/peerCount, 별도실제hexhead조회.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/public-core-evidence.json",
+          "sha256": "7fd312e35bccaa83432bde8c2ad92da72afa9316071ff55781bd8bf1484ea1cc"
+        }
+      ]
     },
     {
       "id": "RPC-002",
@@ -6415,7 +6452,7 @@
       "id": "RPC-012",
       "title": "eth\\_getBalance",
       "criterionSha256": "8caa50599c2ccbc1cab736618a74f92ebc56bb7f79fb825875982d4645c6726d",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -6432,6 +6469,16 @@
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
           "sha256": "41afb9543079352922dacd474076318c3ed18f1abd453438e839bcac023c435c",
           "id": "dynamic-fee-transfer"
+        },
+        {
+          "path": "internal/testengine/public_core_witness_test.go",
+          "sha256": "5e160e6280eca10c2488b96ff9de61a76c2cc54e70f53b1c6348b71f8f060188",
+          "function": "TestPublicCoreWitnessRejectsAggregateOnlyResults"
+        },
+        {
+          "path": "internal/testengine/public_core_native_test.go",
+          "sha256": "476571cd35f6826d0193b1d7e47b20af60cbe4ed0c7ce3f822300614e77fb2e7",
+          "function": "TestNativePublicCoreCases"
         }
       ],
       "observations": [
@@ -6678,14 +6725,22 @@
             "compare": "Equal",
             "is": "1000000000000000"
           }
+        },
+        {
+          "analysis": "공개 genesis-balance의 새 비검증자 payer/payee 실제 송금·정확 fee/잔액, 해당 거래/영수증의별도 native 조회. aggregate pass만으로닫지 않고 exact caseID/seq/preset/status·receipt·상태를대조했다."
         }
       ],
       "semanticAssessment": "Original balance assertions retained; dynamic price assertion now uses actual signed cap/tip and mined block baseFee with capped min formula. Fresh three-family native proof remains pending.",
       "remainingConditions": [
-        "localfreshfixture currentpostfork nativecase 재증명없음"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. WBFT Croissant0 직접 구성이며 staged handoff fixture는 이번 범위 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "세 현재 native 패밀리의 BP4 EN1 공개케이스 fresh21개 중 해당목적 실행. 공개 genesis-balance의 새 비검증자 payer/payee 실제 송금·정확 fee/잔액, 해당 거래/영수증의별도 native 조회.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/public-core-evidence.json",
+          "sha256": "7fd312e35bccaa83432bde8c2ad92da72afa9316071ff55781bd8bf1484ea1cc"
+        }
+      ]
     },
     {
       "id": "RPC-013",
@@ -6994,13 +7049,23 @@
       "id": "RPC-015",
       "title": "eth\\_getTransactionCount",
       "criterionSha256": "1c5d1c0251add958491c88003c487c622877912bc8149b4cc4d944da734e0e8a",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/rpc/CT-RPC-006-transaction-count-increments.json",
           "sha256": "c1538bf9ea4d6dbb77d162885c2a5c188f3bc88742df66e1ca7a5b219025b07b",
           "id": "transaction-count-increments"
+        },
+        {
+          "path": "internal/testengine/public_core_witness_test.go",
+          "sha256": "5e160e6280eca10c2488b96ff9de61a76c2cc54e70f53b1c6348b71f8f060188",
+          "function": "TestPublicCoreWitnessRejectsAggregateOnlyResults"
+        },
+        {
+          "path": "internal/testengine/public_core_native_test.go",
+          "sha256": "476571cd35f6826d0193b1d7e47b20af60cbe4ed0c7ce3f822300614e77fb2e7",
+          "function": "TestNativePublicCoreCases"
         }
       ],
       "observations": [
@@ -7055,26 +7120,44 @@
             "compare": "Equal",
             "is": "1"
           }
+        },
+        {
+          "analysis": "공개 transaction-count-increments 실제 실행 및 before/after의diff1을 resolved provenance로독립 계산, 실제 거래/영수증 대조. aggregate pass만으로닫지 않고 exact caseID/seq/preset/status·receipt·상태를대조했다."
         }
       ],
       "semanticAssessment": "core_original_assertions_present; current_actual_proof_not_executed_by_probe",
       "remainingConditions": [
-        "새계정 before/after transaction count delta1과 실제 minedstatus1이 존재하며 nonce증가 core는 구현됐다. 본 probe는 현재 native 실행 증명을 새로 실행하지 않았다."
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. WBFT Croissant0 직접 구성이며 staged handoff fixture는 이번 범위 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "세 현재 native 패밀리의 BP4 EN1 공개케이스 fresh21개 중 해당목적 실행. 공개 transaction-count-increments 실제 실행 및 before/after의diff1을 resolved provenance로독립 계산, 실제 거래/영수증 대조.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/public-core-evidence.json",
+          "sha256": "7fd312e35bccaa83432bde8c2ad92da72afa9316071ff55781bd8bf1484ea1cc"
+        }
+      ]
     },
     {
       "id": "RPC-016",
       "title": "eth\\_gasPrice",
       "criterionSha256": "a9cc715fdfb6e052f04fa6d0cba61536c413a7973e91bc650c1d9410b0095665",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json",
           "sha256": "91ec90e2d57f1fe1ab3752036984778f1599fc845d6dfb34d69366a83ae23c3c",
           "id": "gas-price-positive"
+        },
+        {
+          "path": "internal/testengine/public_core_witness_test.go",
+          "sha256": "5e160e6280eca10c2488b96ff9de61a76c2cc54e70f53b1c6348b71f8f060188",
+          "function": "TestPublicCoreWitnessRejectsAggregateOnlyResults"
+        },
+        {
+          "path": "internal/testengine/public_core_native_test.go",
+          "sha256": "476571cd35f6826d0193b1d7e47b20af60cbe4ed0c7ce3f822300614e77fb2e7",
+          "function": "TestNativePublicCoreCases"
         }
       ],
       "observations": [
@@ -7096,14 +7179,22 @@
           "statement": {
             "expect": "gasPriceIsBaseFeePlusTip"
           }
+        },
+        {
+          "analysis": "공개 gas-price-positive의 양수가격/base+tip 실제 단언과별도 eth_gasPrice 양수hex 조회. aggregate pass만으로닫지 않고 exact caseID/seq/preset/status·receipt·상태를대조했다."
         }
       ],
       "semanticAssessment": "core_original_assertions_present; current_actual_proof_not_executed_by_probe",
       "remainingConditions": [
-        "원문단언구조목적일치; currentpostfork native run확인아님"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. WBFT Croissant0 직접 구성이며 staged handoff fixture는 이번 범위 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "세 현재 native 패밀리의 BP4 EN1 공개케이스 fresh21개 중 해당목적 실행. 공개 gas-price-positive의 양수가격/base+tip 실제 단언과별도 eth_gasPrice 양수hex 조회.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/public-core-evidence.json",
+          "sha256": "7fd312e35bccaa83432bde8c2ad92da72afa9316071ff55781bd8bf1484ea1cc"
+        }
+      ]
     },
     {
       "id": "RPC-017",
