@@ -1,0 +1,190 @@
+{
+  "scope": "Historical Linux prerequisites for the original restart-at-Boho and version/signature-swap cases. Source/build/ELF execution only; no chain transition or fullL1 acceptance.",
+  "acceptedBuildScope": true,
+  "fullL1Accepted": false,
+  "chainTransitionsClaimed": false,
+  "sourceDigest": "bfe3545456a4857113d32f1f1a4f8273ffca9ff21fac3c770491c449851db2f0",
+  "runs": [
+    {
+      "label": "prefork",
+      "revision": "ad0122af042d49022052a9783b3086d40d308db8",
+      "selectedFiles": 2133,
+      "proof": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/prefork/proof.json",
+        "sha256": "71071b816eca8aa919e7cb429042c67beb71e7e014dc984302113a5dd20be8ca",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061497507061800
+      },
+      "sourceManifest": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/prefork-source.json",
+        "sha256": "166e5d8ef3ea4fdd23aab8dc67f976f3a94005ce756172fbe0a6637c5526f5cd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061228554428514
+      },
+      "inputArchive": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/inputs/prefork.tar.gz",
+        "sha256": "8dc0439bf5f0034b888a153856dc3efc58b4c4379da1f86ef4359f6c753aa3e7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061228366346262
+      },
+      "artifact": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/bin/gstable-prefork",
+        "sha256": "39cf9101357b1e6caa5626c5537a95524816975d635f5361be89700ac5f90856",
+        "mode": "0o700",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061493000000000
+      },
+      "version": "Gstable\nVersion: 1.0.1-stable\nGit Commit: ad0122af042d49022052a9783b3086d40d308db8\nGit Commit Date: 2026-03-05\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=/cache/gopath\nGOROOT=/usr/local/go\n",
+      "elapsedSeconds": 113.23201945796609,
+      "goAutomaticVCSClaimed": false,
+      "independentLinuxSourceHashesMatched": true,
+      "buildContainerID": "a7f9cfdfec71c79220a97f11b7bca6db30ed11fde8c0dca7a21be546aecd213d",
+      "sourceVolume": "chainbench-lb-gv2kmnbe-src-prefork"
+    },
+    {
+      "label": "boho-v101",
+      "revision": "bf17c9607a6b893ea85e6301e1cdb02d55b218de",
+      "selectedFiles": 2138,
+      "proof": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/boho-v101/proof.json",
+        "sha256": "a40cff33b773503fae0ecdb281d3465f96a2418e55df2c8fb6a249dfbdaab176",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061542260694576
+      },
+      "sourceManifest": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/boho-v101-source.json",
+        "sha256": "ebfa07d1b526618317362119a737c46e3897ce3235c732cb6664a05f23279e21",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061229735342621
+      },
+      "inputArchive": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/inputs/boho-v101.tar.gz",
+        "sha256": "aba13a54514fe586687239ca79b5880e0ca66350953e8a5e824b95098e1707c1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061229554954660
+      },
+      "artifact": {
+        "path": "/private/tmp/cbui/lb-gv2kmnbe/bin/gstable-boho-v101",
+        "sha256": "89e62a36028ef44302f119b44347f70b12fd074b162af9c89c7224052de7d83f",
+        "mode": "0o700",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792061539000000000
+      },
+      "version": "Gstable\nVersion: 1.0.1-stable\nGit Commit: bf17c9607a6b893ea85e6301e1cdb02d55b218de\nGit Commit Date: 2026-03-19\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=/cache/gopath\nGOROOT=/usr/local/go\n",
+      "elapsedSeconds": 22.80487237498164,
+      "goAutomaticVCSClaimed": false,
+      "independentLinuxSourceHashesMatched": true,
+      "buildContainerID": "56a33020fca4ecafa0ab118f00e53aadd74a17360d9967ee8bb32ebd632d9006",
+      "sourceVolume": "chainbench-lb-gv2kmnbe-src-boho-v101"
+    }
+  ],
+  "builder": {
+    "id": "sha256:4e2219ca515d99610115539a96f733fa567f62941e31ac5bfb87c7ade6143bcc",
+    "repoDigests": [
+      "golang@sha256:699337d620559a59b4a2bb298ad59611e535d2ee755a34cf2d2a98f37578dc80"
+    ]
+  },
+  "compiler": "go version go1.25.14 linux/arm64",
+  "originalExternalSource": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet",
+    "head": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+    "trackedUnchanged": true,
+    "untrackedUserFilesPreserved": true
+  },
+  "provenanceMethod": "Git archive file payloads checked against per-file Git object IDs; every selected SHA verified inside actual read-only Linux volume before/after build and again independently. Archive builds intentionally use -buildvcs=false and official internal/version linker metadata; automatic Go VCS is not claimed.",
+  "preparationFailure": {
+    "path": "/private/tmp/cbui/lb-dtd14wcb/reports/preparation-error.json",
+    "sha256": "7f0040cd2d7da648bedc47760d5254994e9be5997385706a571b425c7d0dd9d6",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792061741274411940
+  },
+  "firstIndependentDecoderError": {
+    "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/decoder-first-error.json",
+    "sha256": "7aec968af92d43a0421d6cc2c399b4545e22926562b14af8f2ccbfa30e567a19",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792061737624679022
+  },
+  "ownedBuildCopiesReclaimed": {
+    "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/build-copy-reclamation.json",
+    "sha256": "01b8d64d509ca5ead080292b73f9b5c94d88f0f4bd8b2f0f0fe9ef51b658d654",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792061741258367602
+  },
+  "cacheRetainedFor": "The imminent original version/fork compatibility cases and pending mixed-implementation input may require further builds. Only this owned cache/image is retained; remove when those prerequisites are settled.",
+  "retainedFiles": 21,
+  "inventory": {
+    "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/inventory.json",
+    "sha256": "7541c0f67a561419cb35e58365597332f9344904c573efd997b5f3d29ac3ba07",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792061741379299972
+  },
+  "unitRegression": {
+    "path": "/private/tmp/chainbench-linux-legacy-build-contract.log",
+    "sha256": "a13ddf43553a83383426868e6220c4de42edd864c3cc4e52aafd1e3b93f47fe7",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792061187064073459
+  },
+  "privateTools": [
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-prepare.py",
+      "sha256": "7fe15973c5fa26befb62f48a051253395526806c705ec3a12521b23fc490f37e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061226949132058
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-run.py",
+      "sha256": "158fa4ad44dfa81e53df85e269147b37498667f5e37305d879855b839c7aafce",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061383642026322
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-evidence.py",
+      "sha256": "5522d925c046a290e041591472e70c5fdae6d7edf037ea8851bd184ce9c4850c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061737624363685
+    }
+  ],
+  "builderPull": {
+    "path": "/private/tmp/chainbench-linux-legacy-builder-pull.log",
+    "sha256": "1dcdec3e296719643d5192694ee59c267c1a6d6dfe83136f102149ee45e13309",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792061272580253130
+  },
+  "publicationCheck": {
+    "passed": true,
+    "path": "/private/tmp/chainbench-linux-legacy-publication-check.log",
+    "sha256": "a92c8e1d5987a688e0bbbf1a931d48e719127cec04fc95c201e9f8f3348b8b07"
+  }
+}
