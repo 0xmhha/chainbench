@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 69,
-    "partial": 15,
+    "confirmed_scope": 70,
+    "partial": 14,
     "conflict": 2,
     "merged": 1
   },
@@ -516,7 +516,7 @@
       "id": "TX-001",
       "title": "일반 트랜잭션 생성 / 전파 / 포함 / 확정",
       "criterionSha256": "9f955a6ebf01ab703f8279c54c9ee83da7afdc82d9ef902f4fb52f3f62af88b5",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -538,6 +538,16 @@
           "path": "tests/tc/common/tx/CT-TX-018-txpool-propagation.json",
           "sha256": "d39472bc9358338be1bcc1ca197c78ec51dbf7b910173bdb92c3287b5e173181",
           "id": "basic-txpool-propagation"
+        },
+        {
+          "path": "cmd/chainbench/transaction_lifecycle_e2e_test.go",
+          "sha256": "26fdb33b22454645613758b30ef4b00e02f3d39d4b68e5a1f753071cf0d710b2",
+          "function": "TestTransactionLifecycleRejectsMinedOnlyEvidence"
+        },
+        {
+          "path": "cmd/chainbench/transaction_lifecycle_native_test.go",
+          "sha256": "a3f46da785c8b46f79e0c519e3076387350b7250fbe3f1e5cdc2a784c9a3f681",
+          "function": "TestWemixTransactionLifecycleE2E"
         }
       ],
       "observations": [
@@ -793,12 +803,17 @@
           }
         }
       ],
-      "semanticAssessment": "success_transfer_pool_and_propagation_observations_exist_in_related_common_cases",
+      "semanticAssessment": "confirmed_same_raw_transaction_pending_propagation_inclusion_and_confirmation",
       "remainingConditions": [
-        "생성/전파/포함의 관측은 공통세case에 있다. TX001 자체는 txpool pending 단계를 독립 검사하지 않으며 세 흐름은 서로 다른fixture다. 본 probe는 현재 native 실행을 수행하지 않았다."
+        "원문 생애주기는 새 로컬 이관 native 대응 테스트에서 하나의 거래로 확인했다. 생산 일시 중지라는 명시적 시험 제어를 사용했으며, 프록시 토폴로지의 기존 공개 JSON을 재실행하거나 변경한 것은 아니다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20 이후 같은 type0x02·1WMX·gas21000 raw 거래 하나를 네 후속 노드의 채굴 전 조회·실행 가능한 pending 풀에서 확인했다. 소유한 네 생산자의 miner API를 제어해 높이25를 유지한 뒤 생산을 재개했고 첫26번 블록에 포함됐다. 29번까지 진행한 뒤 네 노드의 canonical 블록/영수증 일치와 nonce0→1, 정확한 수신액·송금액+가스비 차감을 확인했다. raw RLP/Keccak과 baseFee+cappedTip을 독립 대조했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/transaction-lifecycle-evidence.json",
+          "sha256": "c0fc2accd6a5f098afc3ccf45f312ee676475a8a702ebb87be2c430c78227e32"
+        }
+      ]
     },
     {
       "id": "TX-002",
