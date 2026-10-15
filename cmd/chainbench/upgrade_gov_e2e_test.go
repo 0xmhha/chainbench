@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -63,6 +64,30 @@ func TestWemixGovernanceE2E(t *testing.T) {
 	}
 	logGovernanceProof(t, "GOV-001-002-original-fork", p)
 	if err := verifyGovernanceFork(p); err != nil {
+		t.Fatal(err)
+	}
+
+	// NODE-001: bind the original 99/100 transition to raw headers and the
+	// precise pre-fork API refusal, then compare the decoded API with raw RLP.
+	boundary := forkHeaderTransitionProof{EpochLength: 10}
+	if err := c.Call(ctx, "eth_getBlockByNumber", &boundary.Before, "0x63", false); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Call(ctx, "eth_getBlockByNumber", &boundary.At, "0x64", false); err != nil {
+		t.Fatal(err)
+	}
+	var beforeExtra map[string]any
+	err := c.Call(ctx, "istanbul_getWbftExtraInfo", &beforeExtra, "0x63")
+	var refusal *rpc.ServerError
+	if !errors.As(err, &refusal) {
+		t.Fatal("expected pre-fork node refusal, not transport failure", err)
+	}
+	boundary.BeforeErrorCode, boundary.BeforeErrorMethod, boundary.BeforeErrorMessage = refusal.Code, refusal.Method, refusal.Message
+	if err := c.Call(ctx, "istanbul_getWbftExtraInfo", &boundary.Extra, "0x64"); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "NODE-001-original-boundary", boundary)
+	if err := verifyForkHeaderTransition(boundary); err != nil {
 		t.Fatal(err)
 	}
 

@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 28,
-    "confirmed_scope": 56,
+    "confirmed_scope": 57,
+    "partial": 27,
     "conflict": 2,
     "merged": 1
   },
@@ -18,7 +18,7 @@
       "id": "NODE-001",
       "title": "하드포크 블록 전후 동작 비교",
       "criterionSha256": "978fbf6a764f5b7cfea18e53e56c573b9b69069c1bde1f78ebe403814d3a6399",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -30,6 +30,16 @@
           "path": "cmd/chainbench/wbft_header_integrity_e2e_test.go",
           "sha256": "20b33c16ae0870d77b211b09317044db5169a48cb3a0f3a600934d78f1dd0b87",
           "function": "TestWemixWbftHeaderIntegrityE2E"
+        },
+        {
+          "path": "cmd/chainbench/fork_header_transition_e2e_test.go",
+          "sha256": "2d82b4dd37ba72dcbd711e42db52fc9543f677eb11d3209ffdbcc04f56989662",
+          "function": "TestForkHeaderTransitionRejectsPresenceOnly"
+        },
+        {
+          "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
+          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
+          "function": "TestWemixGovernanceE2E"
         }
       ],
       "observations": [
@@ -77,14 +87,22 @@
             "compare": "Len",
             "is": 4
           }
+        },
+        {
+          "analysis": "원문Croissant100 실제 이관에서99 WPOA clientvanity31bytes·정확한 server error-32000 block is not a wbft block;100 raw622bytes/9필드RLP·API/wire Randao65/committed signature96·bitmap3명·epoch4validator주소/BLS48·staker/diligence/stabilizing/round/vanity 독립 일치. 실제parent linkage·정확99/100번호와GOV001/002배포/슬롯 회귀도 통과."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
       "remainingConditions": [
-        "99/100 정확 경계의 wpoa Extra→WBFTExtra 대조와 99 getWbftExtra 오류/형식의 직접 단언 없음"
+        "원문 헤더전환 명제는 native범위에서 확인. 전체87·Linux·메인넷live·legacy·공개DSL·최종Web 전수인수는 별도 잔여. 과거W3의의도적partialRegistry reader 결함 해결로 확대하지 않음."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "원문99/100 실제 WEMIX→WBFT 헤더 형식전환,99의정확한노드거절,100의9필드RLP/epoch/randao/committedseal/API/주소/BLS·parent linkage 독립검증.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/fork-header-evidence.json",
+          "sha256": "2e9ee037c2cae9f82dee87f31bbab956dbbcc24718f0900a0d92b7ba547aa02f"
+        }
+      ]
     },
     {
       "id": "NODE-002",
@@ -4253,7 +4271,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "15be593eb8eb001c07b624c35342e3fae9582c84737ea41e884768b1448f0e3a",
+          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
           "function": "TestWemixGovernanceE2E"
         },
         {
@@ -4356,6 +4374,9 @@
         },
         {
           "analysis": "원문Croissant100 실제 이관에서 높이99의 네 주소code0x→100의4코드 배포. GovConfig 슬롯0~3과 같은높이 getter가 min1e25/max1e26/staker604800/delegator604800과 정확 일치. 생성 genesis+다섯 nodegenesis 설정도 독립 대조. 기존fork20 auto출금 실제 회귀 통과. 7일출금 대기는 아님."
+        },
+        {
+          "analysis": "NODE001현재소스의원문100 실제증명에서도99/100배포와정확한슬롯/getter/생성설정 회귀를 다시확인."
         }
       ],
       "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
@@ -4367,6 +4388,10 @@
         {
           "path": "docs/dev/governance-fork-evidence.json",
           "sha256": "db07f4b0d960b811012f1b4790a5faf9179270040e594697a15cc0d8c82b2e79"
+        },
+        {
+          "path": "docs/dev/fork-header-evidence.json",
+          "sha256": "2e9ee037c2cae9f82dee87f31bbab956dbbcc24718f0900a0d92b7ba547aa02f"
         }
       ]
     },
@@ -4384,7 +4409,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "15be593eb8eb001c07b624c35342e3fae9582c84737ea41e884768b1448f0e3a",
+          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
           "function": "TestWemixGovernanceE2E"
         },
         {
@@ -4487,6 +4512,9 @@
         },
         {
           "analysis": "원문Croissant100 실제 이관에서 높이99의 네 주소code0x→100의4코드 배포. GovConfig 슬롯0~3과 같은높이 getter가 min1e25/max1e26/staker604800/delegator604800과 정확 일치. 생성 genesis+다섯 nodegenesis 설정도 독립 대조. 기존fork20 auto출금 실제 회귀 통과. 7일출금 대기는 아님."
+        },
+        {
+          "analysis": "NODE001현재소스의원문100 실제증명에서도99/100배포와정확한슬롯/getter/생성설정 회귀를 다시확인."
         }
       ],
       "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
@@ -4498,6 +4526,10 @@
         {
           "path": "docs/dev/governance-fork-evidence.json",
           "sha256": "db07f4b0d960b811012f1b4790a5faf9179270040e594697a15cc0d8c82b2e79"
+        },
+        {
+          "path": "docs/dev/fork-header-evidence.json",
+          "sha256": "2e9ee037c2cae9f82dee87f31bbab956dbbcc24718f0900a0d92b7ba547aa02f"
         }
       ]
     },
@@ -6349,7 +6381,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "15be593eb8eb001c07b624c35342e3fae9582c84737ea41e884768b1448f0e3a",
+          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
           "function": "TestWemixGovernanceE2E"
         }
       ],

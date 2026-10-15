@@ -182,6 +182,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 NODE-001 원문 헤더 경계 보강:** presence만 확인하는 판정이 잘못된
+높이/부모/Extra/포크전노드거절/epoch/API-to-wire12조건을 허용하는 RED→GREEN을 확인했다.
+실제 원문Croissant100 이관에서99의31bytes WPOA clientvanity와 정확한-32000/
+block is not a wbft block 거절을 확인했다. 100의622bytes Extra는Croissantv1의9필드RLP이며
+Randao65·committed signature96·bitmap3명·epoch4validator/BLS48·staker/diligence/stabilizing/
+round/vanity를 독립 RLP해석으로 API와 대조했다. 실제99hash→100parent linkage도 일치했다.
+
+Tagged CLI 전체 race·e2e vet·전체 검사와 실제 원문 경계/기존GOV001·002배포·슬롯 회귀
+(147.048초, skip0)가 통과했다. 고정 소스
+`ab44f6042b2750b6f665e364e5de21ed977eb59f94d3ad7dffc2ba4eb8c0ab7d` 전후가 같다.
+[헤더 경계 증거](fork-header-evidence.json)는228파일의내용·권한·소유자·mtime을 보존했고
+활성 프로세스·종료 DB는0이다. 원문87개 전체·Linux·메인넷live·legacy·공개DSL·최종Web는
+별도 잔여다. 이 정상 이관 성공을 과거W3 partialRegistry reader 결함의 해결로 확대하지 않는다.
+
 **2026-10-15 GOV-001·002 원문 배포 경계·설정 보강:** presence/positive만 확인하는
 판정이 잘못된 높이/배포전code/누락계약/코드/설정/슬롯/getter16조건을 허용하는 RED→GREEN과
 원문100대신축약20을 선언하던 입력 RED→GREEN을 확인했다. 실제 WEMIX→WBFT 이관은

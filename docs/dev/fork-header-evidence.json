@@ -1,0 +1,230 @@
+{
+  "scope": "NODE001 actual99 WPOA client vanity and exact non-WBFT refusal; actual100 nine-field RLP, API/wire randao/committed seal/epoch metadata and quorum addresses independently decoded. Related GOV001 original Croissant100: four exact system addresses code absent99 and present100 after actual WEMIX\u2192WBFT handoff. GOV002 exact slots0..3 and matching getters at100, generated genesis/node genesis configured minimum1e25 maximum1e26 staker604800 delegator604800. Reads mainnet-scale duration values without claiming seven-day withdrawal wait. Related default fork20 automatic withdrawal proves shared runner remains compatible. Not full87/Linux/live-mainnet/legacy/public DSL/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence-only model accepted twelve incorrect original boundary/linkage/extra/node-refusal/API-to-wire controls.",
+  "unitGreen": "One positive and twelve negatives plus existing epoch-shape/governance-fork regressions.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "ab44f6042b2750b6f665e364e5de21ed977eb59f94d3ad7dffc2ba4eb8c0ab7d",
+    "sourceAfter": "ab44f6042b2750b6f665e364e5de21ed977eb59f94d3ad7dffc2ba4eb8c0ab7d",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-unopvboj"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-unopvboj": []
+    },
+    "elapsedSeconds": 147.048,
+    "summary": {
+      "path": "/private/tmp/chainbench-fork-header-native-summary.json",
+      "sha256": "57e6b235633133f25542c80b9d14625bfafbcabf622d98d954a31e5adcb37a96",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032666877792334
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-fork-header-native-native.jsonl",
+      "sha256": "9f94059cff557a34e50df4d90924afb868d49e858eaba125b9bf38fe93e1a7e8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032666321096820
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-fork-header-native-start.json",
+      "sha256": "79274f23b26a4131860a5072738836065e664e983e4252a088861d7ac784fa0f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032516875598153
+    }
+  },
+  "boundary": {
+    "path": "/private/tmp/chainbench-fork-header-boundary.json",
+    "sha256": "f8bd772cf13b9496e467a88e369f066fa4bc1b0623b160578ba5e48eea1ca320",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792032674107879284
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-fork-header-evidence.py",
+    "sha256": "04db67bdb3825620fd2911f607e58320c17bf8e8b8a0d70c54eede05cc79b37c",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792032454777854694
+  },
+  "rawExtraBytes": {
+    "before": 31,
+    "at": 622
+  },
+  "committedBitmap": "11",
+  "committedSealers": [
+    "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+    "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+    "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+  ],
+  "proof": {
+    "path": "/private/tmp/chainbench-fork-header-observed.json",
+    "sha256": "58ad3223f1886151d4e46ec5c718f9092fc8178f924708c34473988217ba7064",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792032674108312375
+  },
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-unopvboj/w/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032519870691822
+    },
+    {
+      "path": "/private/tmp/cbui/hf-unopvboj/w/node1/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032519899671433
+    },
+    {
+      "path": "/private/tmp/cbui/hf-unopvboj/w/node2/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032520309794612
+    },
+    {
+      "path": "/private/tmp/cbui/hf-unopvboj/w/node3/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032520530395983
+    },
+    {
+      "path": "/private/tmp/cbui/hf-unopvboj/w/node4/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032520757322335
+    },
+    {
+      "path": "/private/tmp/cbui/hf-unopvboj/w/node5/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032521008600429
+    }
+  ],
+  "codeBytes": {
+    "0x0000000000000000000000000000000000001000": 282,
+    "0x0000000000000000000000000000000000001001": 20556,
+    "0x0000000000000000000000000000000000001002": 2261,
+    "0x0000000000000000000000000000000000001003": 5501
+  },
+  "slotValues": [
+    "10000000000000000000000000",
+    "100000000000000000000000000",
+    "604800",
+    "604800"
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-unopvboj",
+      "fork": 100,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-unopvboj/reports/fork-header-inventory.json",
+        "sha256": "ba26a833abc84a76842d790cca0e2b2d824acebdce80f8f11c8bad1455773862",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792032674166267931
+      }
+    }
+  ],
+  "retainedFiles": 228,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-fork-header-publication.json",
+    "sha256": "935139f1647c357e22b93d82695c6c3d0cd9b17ba8c1bd56188f3faf0e0dbecf",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792032389366190838
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-fork-header-red.log",
+      "sha256": "ed20b771e972d300e86d455a12875d8e13f09b9a0485e5e9fd68c959204ff8a6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032269757241023
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-header-green.log",
+      "sha256": "ec608565bb24b8033e66e38e26b2c796d721f36980ae9a774701744dfdcf9660",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032350499498061
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-header-related-race.log",
+      "sha256": "695c17cd79bbcc191c3c6158f9a021304cd0072e18af94ec875a630c60b11468",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032487438777431
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-header-check.log",
+      "sha256": "bcd14d094fb0f5a89dbee660571fa0aab9c4d37344cf68f0fb6003a02ba09b4c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032496411506977
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-header-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032413035181331
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}
