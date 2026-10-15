@@ -168,7 +168,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 
 | 순서 | 작업 | 완료 기준 | 상태 |
 |---|---|---|---|
-| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 기존 보존 계약·압축 검증 완료; 새 JSON/Markdown/인계 참조 보강·47계약·실제 보존/압축·호환 명령 dry run 완료. 과거 56 receipt는 28 일치·26 없음·2 다른 해시이므로 자료 전수 확인/후속 인수는 미완료. [새 증거](storage-document-evidence.json). 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
+| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 기존 보존 계약·압축 검증 완료; 새 JSON/Markdown/인계 참조 보강·47계약·실제 보존/압축·호환 명령 dry run 완료. 과거 56 receipt는 28 일치·26 없음·2 다른 해시이므로 자료 전수 확인/후속 인수는 미완료. 추가 복사본·Git·314압축 파일 검색에서29/56의 동일 bytes 위치를 확인했으나27개는 범위 내 미발견이며 원본을 덮어쓰지 않았다([복구 검색](historical-receipt-recovery-evidence.json)). [새 증거](storage-document-evidence.json). 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
 | 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건 |
 | 3 | suite 실패 테스트 3건 보강 | 존재하고 유효한 DSL·키 입력으로 실제 setup 실패까지 도달; JSON/비JSON 동일 code 2와 구체 원인 | 완료 — `setup_failure_test.go` 세 경로 RED→GREEN; suite 전체 race와 실제 CLI 단일·다중·비JSON 실행 모두 code 2·바이너리 셋업 원인 확인 |
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
@@ -182,6 +182,16 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-16 과거 receipt 복구 검색 — 전체 보존 복구는 미완료:**
+원래 경로의56개는 여전히28일치·26없음·2해시불일치다. 로컬 증거3영역의168후보 파일,
+314압축 파일 및WEB08의Git2ref를 읽기 전용으로 대조해29/56의 동일 bytes 위치를 찾았다.
+추가1개는WEB08 evidence이며3복사본과main662fff77의Git blob이 원래 기대SHA와 같다.
+나머지27개는 이 범위에서 찾지 못했고 다른 머신/백업의 전역 손실을 주장하지 않는다.
+압축 파일에는receipt가0개였고314개 전후SHA·mode·uid/gid·ns mtime·크기를 대조했다.
+독립 재해시와보존23테스트가 통과했다. 원본을 덮어쓰거나 복구한 파일은0개이며,
+복사본의 현재 속성을 원본 속성의 복구로 세지 않는다. 작업1과 새최종Web14는 계속 열림이다.
+[원본 경로 감사·동일 복사본·검색 한계](historical-receipt-recovery-evidence.json).
 
 **2026-10-16 현재37개 WEMIX 전체 회귀 — 수직 슬라이스 전체 완료는 아님:**
 컴파일한 `^TestWemix` 목록37개를 소스

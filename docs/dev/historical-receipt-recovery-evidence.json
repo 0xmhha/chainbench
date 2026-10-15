@@ -1,0 +1,134 @@
+{
+  "scope": "Read-only exact-byte recovery search in three named roots plus314 indexed archives and two Git refs for WEB08. No extraction, overwrite, restore, deletion or claim of global loss. Copied metadata is current copy metadata, not verified original metadata.",
+  "all56Recovered": false,
+  "task1Complete": false,
+  "originalPathAudit": {
+    "expected": 56,
+    "verified": 28,
+    "missing": [
+      "/private/tmp/cbui/recheck-fhblu965/source/chainbench-out/web-ui-acceptance/WEB-01/evidence.json",
+      "/private/tmp/cbui/recheck-fhblu965/source/chainbench-out/web-ui-acceptance/WEB-01/result.json",
+      "/private/tmp/cbui/recheck-2dv8spe_/source/chainbench-out/web-ui-acceptance/WEB-02/evidence.json",
+      "/private/tmp/cbui/recheck-2dv8spe_/source/chainbench-out/web-ui-acceptance/WEB-02/result.json",
+      "/private/tmp/cbui/recheck-pou24_s7/source/chainbench-out/web-ui-acceptance/WEB-03/evidence.json",
+      "/private/tmp/cbui/recheck-pou24_s7/source/chainbench-out/web-ui-acceptance/WEB-03/result.json",
+      "/private/tmp/cbui/recheck-n4i989ve/source/chainbench-out/web-ui-acceptance/WEB-04/evidence.json",
+      "/private/tmp/cbui/recheck-n4i989ve/source/chainbench-out/web-ui-acceptance/WEB-04/result.json",
+      "/private/tmp/cbui/recheck-2q712mg7/source/chainbench-out/web-ui-acceptance/WEB-06/evidence.json",
+      "/private/tmp/cbui/recheck-2q712mg7/source/chainbench-out/web-ui-acceptance/WEB-06/result.json",
+      "/private/tmp/cbui/recheck-wcqxhaed/source/chainbench-out/web-ui-acceptance/WEB-07/evidence.json",
+      "/private/tmp/cbui/recheck-wcqxhaed/source/chainbench-out/web-ui-acceptance/WEB-07/result.json",
+      "/private/tmp/cbui/recheck-x24v5npw/source/chainbench-out/web-ui-acceptance/WEB-08/evidence.json",
+      "/private/tmp/cbui/recheck-x24v5npw/source/chainbench-out/web-ui-acceptance/WEB-08/result.json",
+      "/private/tmp/cbui/recheck-_0rsuw90/source/chainbench-out/web-ui-acceptance/WEB-09/evidence.json",
+      "/private/tmp/cbui/recheck-_0rsuw90/source/chainbench-out/web-ui-acceptance/WEB-09/result.json",
+      "/private/tmp/cbui/recheck-5eyxts13/source/chainbench-out/web-ui-acceptance/WEB-10/evidence.json",
+      "/private/tmp/cbui/recheck-5eyxts13/source/chainbench-out/web-ui-acceptance/WEB-10/result.json",
+      "/private/tmp/cbui/recheck-5irt3m2t/source/chainbench-out/web-ui-acceptance/WEB-11/evidence.json",
+      "/private/tmp/cbui/recheck-5irt3m2t/source/chainbench-out/web-ui-acceptance/WEB-11/result.json",
+      "/private/tmp/cbui/recheck-8tvr7532/source/chainbench-out/web-ui-acceptance/WEB-12/evidence.json",
+      "/private/tmp/cbui/recheck-8tvr7532/source/chainbench-out/web-ui-acceptance/WEB-12/result.json",
+      "/private/tmp/cbui/recheck-oznb5gka/source/chainbench-out/web-ui-acceptance/WEB-13/evidence.json",
+      "/private/tmp/cbui/recheck-oznb5gka/source/chainbench-out/web-ui-acceptance/WEB-13/result.json",
+      "/private/tmp/cbui/recheck-h87uoyjd/source/chainbench-out/web-ui-acceptance/WEB-14/evidence.json",
+      "/private/tmp/cbui/recheck-h87uoyjd/source/chainbench-out/web-ui-acceptance/WEB-14/result.json"
+    ],
+    "changed": [
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-08/evidence.json",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-08/result.json"
+    ]
+  },
+  "receiptsWithIdenticalCopy": 29,
+  "unlocatedExpectedReceipts": 27,
+  "archiveCount": 314,
+  "archiveScanErrors": [],
+  "archiveReceiptMembersRead": 0,
+  "archivesUnchanged": true,
+  "filesRestored": 0,
+  "originalFilesOverwritten": 0,
+  "additionalIdenticalReceipt": {
+    "original": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-08/evidence.json",
+    "expectedSHA256": "7a45597b49b878af9028dfff0397b7b0eaa28f029a62959cfc659c87666d2067",
+    "existingFileCopies": [
+      {
+        "path": "/private/tmp/cbui/recheck-2adq4xuz/source/docs/dev/web-ui-evidence/WEB-08/evidence.json",
+        "sha256": "7a45597b49b878af9028dfff0397b7b0eaa28f029a62959cfc659c87666d2067",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791866483797257078,
+        "size": 27208
+      },
+      {
+        "path": "/private/tmp/cbui/recheck-6ro42476/source/docs/dev/web-ui-evidence/WEB-08/evidence.json",
+        "sha256": "7a45597b49b878af9028dfff0397b7b0eaa28f029a62959cfc659c87666d2067",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791867258787806593,
+        "size": 27208
+      },
+      {
+        "path": "/private/tmp/cbui/e38a19ec-e81b-4249-8940-c9655fdf8cee/source/docs/dev/web-ui-evidence/WEB-08/evidence.json",
+        "sha256": "7a45597b49b878af9028dfff0397b7b0eaa28f029a62959cfc659c87666d2067",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791866483797257078,
+        "size": 27208
+      }
+    ],
+    "archiveCopies": [],
+    "gitCopies": [
+      {
+        "ref": "main",
+        "commit": "662fff77382eb031df687d371a8bc8f63cad581f",
+        "path": "docs/dev/web-ui-evidence/WEB-08/evidence.json",
+        "sha256": "7a45597b49b878af9028dfff0397b7b0eaa28f029a62959cfc659c87666d2067"
+      }
+    ]
+  },
+  "independentVerification": {
+    "all56ExpectedIdentitiesMatchedManifest": true,
+    "29CopiesOrGitObjectsRehashed": true,
+    "314ArchivesRehashedAndMetadataMatched": true,
+    "originalCopyMetadataClaimed": false,
+    "storageTestsPassed": 23
+  },
+  "artifacts": {
+    "scan": {
+      "path": "/private/tmp/chainbench-receipt-recovery-20261016.json",
+      "sha256": "d76537a6e5b0a36a1182fdafa400bb6df00b9cb941bb4e501ec4722151f26abb"
+    },
+    "scanner": {
+      "path": "/private/tmp/chainbench-receipt-archive-scan-20261016.py",
+      "sha256": "fa1639e018fedae19c66a4a5aa980cad67532ff99a56c5164d4cf0263ce5a921"
+    },
+    "archiveIndex": {
+      "path": "/private/tmp/chainbench-receipt-archive-index-20261016.json",
+      "sha256": "7ab097ba57468a28e0227ef63693dce2cfa8c6e541f21b44dad9be77831deb20"
+    },
+    "scanLog": {
+      "path": "/private/tmp/chainbench-receipt-archive-scan-20261016.log",
+      "sha256": "208156b8705911aec5d6451b333c25027ae4031b509ef680d33f5603a560de70"
+    },
+    "storageRegression": {
+      "path": "/private/tmp/chainbench-receipt-recovery-storage-tests.log",
+      "sha256": "ddcc7e2fd95eefacf906ebd5795a4249d54bde4ed38a6da2267f614fbe4a0e68"
+    },
+    "previousFileSearch": {
+      "path": "/private/tmp/chainbench-receipt-recovery-scan-20261015.json",
+      "sha256": "6953fd7af9be0ea89a282d5bee62e2153524750ba88247f1dcb5a94243a51a5b"
+    },
+    "originalManifest": {
+      "path": "/private/tmp/chainbench-frozen-refactor-publication-audit.json",
+      "sha256": "f765d8bbf0c7d96d625d4deacb1aec7022bd2ea7a833f46e02153a4ebb271ce5"
+    }
+  },
+  "limitations": [
+    "Search limited to named local evidence roots,314 archives and WEB08 at two Git refs. Other machines or backups were not searched; missing here does not prove global loss.",
+    "Existing WEB08 evidence copy matches expected bytes. Its original metadata and missing result receipt were not recovered. Existing output files were not replaced.",
+    "Original-path28 matching/26 missing/2 changed stays distinct from29 receipts with any exact copy.",
+    "New final Web capture/recheck must not be presented as recovered historical receipts."
+  ]
+}
