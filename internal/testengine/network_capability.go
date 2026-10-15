@@ -21,6 +21,7 @@ import (
 )
 
 type networkNodeProbe struct {
+	Chain      string `json:"chain,omitempty"`
 	Node       int    `json:"node"`
 	Role       string `json:"role"`
 	Status     string `json:"status"`
@@ -42,7 +43,6 @@ type networkCapabilityProbe struct {
 // The RPC head, WS acknowledgement and deployed-code/builtin reads are bounded
 // and non-mutating. Unknown observations outrank known unsupported features.
 func networkCapabilityGate(chain string, dial func(string) *rpc.Client, headers func(string) http.Header) func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string) {
-	contracts := chainContracts(chain)
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, record session.TestRecord) (session.TestStatus, string) {
 		probes := []networkCapabilityProbe{}
 		status := session.TestStatus("")
@@ -55,9 +55,18 @@ func networkCapabilityGate(chain string, dial func(string) *rpc.Client, headers 
 				result.Status = "unknown"
 			}
 			for _, n := range env.Nodes() {
-				bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
-				probe := probeNetworkNode(bounded, capability, n, contracts, dial, headers)
-				cancel()
+				// A handoff can leave this run named after its predecessor. Only
+				// old records without a node chain inherit the run's dialect.
+				if n.Chain == "" {
+					n.Chain = chain
+				}
+				probe := networkNodeProbe{Chain: n.Chain, Node: n.Index, Role: string(n.Role), Status: "unknown", Reason: "recorded_chain_unavailable"}
+				_, chainErr := registry.Get(n.Chain)
+				if !strings.HasPrefix(capability, registry.CapContract) || chainErr == nil {
+					bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
+					probe = probeNetworkNode(bounded, capability, n, chainContracts(n.Chain), dial, headers)
+					cancel()
+				}
 				result.Nodes = append(result.Nodes, probe)
 				if probe.Status == "unknown" || probe.Status == "unsupported" && result.Status != "unknown" {
 					result.Status = probe.Status
@@ -106,7 +115,7 @@ func preferCapabilityVerdict(current, candidate session.TestStatus) session.Test
 }
 
 func probeNetworkNode(ctx context.Context, capability string, n node.Node, contracts map[string]string, dial func(string) *rpc.Client, headers func(string) http.Header) networkNodeProbe {
-	result := networkNodeProbe{Node: n.Index, Role: string(n.Role), Status: "unknown", Source: "eth_blockNumber", Reason: "rpc_probe_unavailable"}
+	result := networkNodeProbe{Chain: n.Chain, Node: n.Index, Role: string(n.Role), Status: "unknown", Source: "eth_blockNumber", Reason: "rpc_probe_unavailable"}
 	if strings.HasPrefix(capability, registry.CapContract) {
 		label := strings.TrimPrefix(capability, registry.CapContract)
 		result.Source, result.Address = "eth_getCode", contracts[label]

@@ -1,0 +1,465 @@
+{
+  "scope": "R3/P4 contract probe resolves the recorded chain of each node, preserving the old missing-chain fallback and rejecting unknown recorded chains without consulting another chain address map. Native four WBFT successors after WEMIX handoff; three attach profiles and exact deployed code hash/byte length. Not full R3/P4/contract ABI/version/permissions/mixed wbft-stablenet/Linux/L1/87/mainnet/legacy/final Web acceptance.",
+  "acceptedScope": true,
+  "fullR3Accepted": false,
+  "fullP4Accepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "externalSourceModified": false,
+  "red": "Original code blocks a known WBFT successor using the WEMIX run map, falsely accepts unknown recorded chain via StableNet map, and omits observed chain provenance. Three failing subtests; initial sandbox port denial is retained as environment failure, not product RED.",
+  "green": "All new and related network/consensus unit race, complete engine/setup/MCP race, make check and e2e vet passed.",
+  "native": {
+    "sourceBefore": "4f9e693adb2707b25c0040acb62d49ba506f74ba0b315e04c0df5575971bf5da",
+    "sourceAfter": "4f9e693adb2707b25c0040acb62d49ba506f74ba0b315e04c0df5575971bf5da",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-successor-contract-run.py": "4ce1a592a3d272eb64b2fc4503071df7ae490a9eda96b3675075e56c1eda5537",
+      "/private/tmp/chainbench-head-native/provenance.json": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "/private/tmp/chainbench-w3-head-native/provenance.json": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "/private/tmp/chainbench-w3-head-native/gwemix": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+      "/private/tmp/chainbench-head-native/gwbft": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-successor-contract-run.py": "4ce1a592a3d272eb64b2fc4503071df7ae490a9eda96b3675075e56c1eda5537",
+      "/private/tmp/chainbench-head-native/provenance.json": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "/private/tmp/chainbench-w3-head-native/provenance.json": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "/private/tmp/chainbench-w3-head-native/gwemix": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+      "/private/tmp/chainbench-head-native/gwbft": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79"
+    },
+    "helperInputsUnchanged": true,
+    "exitCode": 0,
+    "passed": [
+      "TestNativeSuccessorContractCapabilityE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-eytr0o70"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-eytr0o70": []
+    },
+    "elapsedSeconds": 47.33138254197547,
+    "fullR3Accepted": false,
+    "fullP4Accepted": false,
+    "all87Accepted": false,
+    "finalWebAccepted": false,
+    "acceptedScope": true
+  },
+  "independent": {
+    "proofs": [
+      {
+        "path": "/private/tmp/cbui/hf-eytr0o70/reports/successor-contract-proof.json",
+        "sha256": "6183f97f1f636d81072f6ee762d7bcbefe65d133c8783c1f873739e0e6493e64",
+        "profiles": [
+          {
+            "observation": {
+              "probes": [
+                {
+                  "capability": "contract:govStaking",
+                  "status": "supported",
+                  "nodes": [
+                    {
+                      "chain": "wbft",
+                      "node": 1,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 2,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 3,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 4,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    }
+                  ]
+                },
+                {
+                  "capability": "rpc",
+                  "status": "supported",
+                  "nodes": [
+                    {
+                      "chain": "wbft",
+                      "node": 1,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 2,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 3,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 4,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    }
+                  ]
+                }
+              ],
+              "source": "runtime_network_probes"
+            },
+            "outerChain": "wemix",
+            "profile": "recorded-successor",
+            "session": "/private/tmp/cbui/hf-eytr0o70/reports/recorded-successor/20261015-170125-58667/UTC-20261015-170201",
+            "summary": {
+              "tests": [
+                {
+                  "seq": 1,
+                  "id": "recorded-successor",
+                  "status": "pass"
+                }
+              ],
+              "summary": {
+                "pass": 1,
+                "fail": 0,
+                "blocked": 0,
+                "skip": 0
+              }
+            }
+          },
+          {
+            "observation": {
+              "probes": [
+                {
+                  "capability": "contract:govStaking",
+                  "status": "unknown",
+                  "nodes": [
+                    {
+                      "chain": "unknown-chain",
+                      "node": 1,
+                      "role": "bp",
+                      "status": "unknown",
+                      "source": "",
+                      "reason": "recorded_chain_unavailable"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 2,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 3,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 4,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    }
+                  ]
+                },
+                {
+                  "capability": "rpc",
+                  "status": "supported",
+                  "nodes": [
+                    {
+                      "chain": "unknown-chain",
+                      "node": 1,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 2,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 3,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 4,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    }
+                  ]
+                }
+              ],
+              "source": "runtime_network_probes"
+            },
+            "outerChain": "stablenet",
+            "profile": "unknown-recorded-chain",
+            "session": "/private/tmp/cbui/hf-eytr0o70/reports/unknown-recorded-chain/20261015-170125-58667/UTC-20261015-170201",
+            "summary": {
+              "tests": [
+                {
+                  "seq": 1,
+                  "id": "unknown-recorded-chain",
+                  "status": "blocked"
+                }
+              ],
+              "summary": {
+                "pass": 0,
+                "fail": 0,
+                "blocked": 1,
+                "skip": 0
+              }
+            }
+          },
+          {
+            "observation": {
+              "probes": [
+                {
+                  "capability": "contract:govStaking",
+                  "status": "supported",
+                  "nodes": [
+                    {
+                      "chain": "wbft",
+                      "node": 1,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 2,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 3,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 4,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_getCode",
+                      "address": "0x0000000000000000000000000000000000001001",
+                      "codeBytes": 20556,
+                      "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                    }
+                  ]
+                },
+                {
+                  "capability": "rpc",
+                  "status": "supported",
+                  "nodes": [
+                    {
+                      "chain": "wbft",
+                      "node": 1,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 2,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 3,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    },
+                    {
+                      "chain": "wbft",
+                      "node": 4,
+                      "role": "bp",
+                      "status": "supported",
+                      "source": "eth_blockNumber",
+                      "height": "24"
+                    }
+                  ]
+                }
+              ],
+              "source": "runtime_network_probes"
+            },
+            "outerChain": "wbft",
+            "profile": "legacy-fallback",
+            "session": "/private/tmp/cbui/hf-eytr0o70/reports/legacy-fallback/20261015-170125-58667/UTC-20261015-170201",
+            "summary": {
+              "tests": [
+                {
+                  "seq": 1,
+                  "id": "legacy-fallback",
+                  "status": "pass"
+                }
+              ],
+              "summary": {
+                "pass": 1,
+                "fail": 0,
+                "blocked": 0,
+                "skip": 0
+              }
+            }
+          }
+        ],
+        "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+      }
+    ],
+    "runtimes": 1,
+    "retainedFiles": 258,
+    "retainedTrieCacheBytes": 390776,
+    "remainingDatabasePaths": 0,
+    "fileAttributesChecked": [
+      "sha256",
+      "mode",
+      "uid",
+      "gid",
+      "mtimeNS",
+      "exact file set"
+    ],
+    "freshProcessAndOpenFileInventories": 2
+  },
+  "logs": {
+    "environmentFailure": {
+      "path": "/private/tmp/chainbench-contract-chain-red.log",
+      "sha256": "486f842f22a85a4730e4177757d050d2f4157bd618d9b57b9ffbeee58a1de32e"
+    },
+    "actualRed": {
+      "path": "/private/tmp/chainbench-contract-chain-actual-red.log",
+      "sha256": "b1d56f4bf00e99363b24fc8b5aea8f05ab41bd88a9b3bb95c6e0d2f5371df990"
+    },
+    "unitGreen": {
+      "path": "/private/tmp/chainbench-contract-chain-green.log",
+      "sha256": "9c4f8e06d50726f9a713cd46a7b2a7dc56721797db236471aec20a93c4762710"
+    },
+    "relatedRace": {
+      "path": "/private/tmp/chainbench-contract-chain-regression.log",
+      "sha256": "6c1d064e164f92d283de4c3e37654228ec11be26a0dadc124fd88e279e4ea21d"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-contract-chain-check.log",
+      "sha256": "c91f78b929135d5fc71bf70c30f7cfd5cdbd300699dc95d4ec865ff1f2a0e709"
+    },
+    "e2eVet": {
+      "path": "/private/tmp/chainbench-contract-chain-e2e-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "runner": {
+      "path": "/private/tmp/chainbench-successor-contract-run.py",
+      "sha256": "4ce1a592a3d272eb64b2fc4503071df7ae490a9eda96b3675075e56c1eda5537"
+    },
+    "nativeLog": {
+      "path": "/private/tmp/chainbench-successor-contract-native.jsonl",
+      "sha256": "8feb0cec6211a03d9f4992c3afd9dded7c115eb196da956db930fe2b5ff73323"
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-successor-contract-start.json",
+      "sha256": "7228291d0703a2f7daac964f4e5e705b9bd62b4aa3734850bd59251da8c3887e"
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-successor-contract-summary.json",
+      "sha256": "004cdaf9419dc16cbbf01513a04723434a0bd13a90a87086eb29e9749091c507"
+    },
+    "independentScript": {
+      "path": "/private/tmp/chainbench-successor-contract-independent.py",
+      "sha256": "6d97738c9c93cd0f9010e56e3eec4ae4fcf5c3915c50c171c47fa56146a49287"
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-successor-contract-independent.json",
+      "sha256": "87e7771898201e6e4b3b2570df0ce2dd8ad4abae735ce9444d768a87eaf9a3c1"
+    },
+    "independentLog": {
+      "path": "/private/tmp/chainbench-successor-contract-independent.log",
+      "sha256": "38b22a5d6068a053c64b75ab2396bda19e6fb7f2b467f01d4ecb29286cc575e5"
+    }
+  },
+  "sources": {
+    "internal/testengine/network_capability.go": "abf78d87e823cc2f9ab44d829972b732559b47dea8d2f227d3d2c6e5a95b524e",
+    "internal/testengine/network_capability_chain_test.go": "3a295cfcd0bac16a2f6f8664da89831865bca7d839a06aa802cbad95f5284560",
+    "cmd/chainbench/successor_contract_native_e2e_test.go": "466aa34064726bc73351202b77a94df95327f6154eeec990e99635e17ff63df7"
+  },
+  "limits": [
+    "Contract code presence/hash is not ABI/version/privilege verification.",
+    "Only the four recorded successors are attached; retired WEMIX producer is preserved in the original five-node record.",
+    "Unknown-chain BLOCKED is an expected negative control; it is not a failed Go test or a passed capability.",
+    "Attach profiles preserve actual recorded node PID/chain/endpoint identities; no external chain source modification.",
+    "The earlier37-case regression remains at its own frozen source; this later production change is verified by the targeted native proof and related regressions. Final full gates remain required."
+  ]
+}
