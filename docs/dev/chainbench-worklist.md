@@ -182,6 +182,21 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-013 승인 기준의 운영자 청구 보강:** 사용자는 원문 operator 프리뷰0과
+현행 v1의 스테이커 지분 프리뷰를 구분하는 기준을 승인했다. 원문 절차는 보존하고 해당 절에
+승인한 차이/대조 기준을 덧붙였다. 기존 잔액 증가 판정 모델이 잘못된 프리뷰·등록 mapping·
+위임 상태·이벤트·gas·출금·nonce·input14조건을 허용하는 RED를 확인하고 GREEN으로 보강했다.
+등록 운영자는 비검증자, 위임자는 없으며 실제 claim 부모 블록0x25에서 두 preview와
+등록 mapping·self/total stake를 조회했다. operator 보상0·스테이커 보상12e18, fee0이다.
+
+정확 Claimed/RewardPaid와 FeePaid 부재·Rewardee12e18 출금·운영자12e18−실제 가스비
+14402303986268594Wei 수령·nonce를 거래 단위 diff로 독립 대조했다. tagged CLI 전체 race·
+e2e vet·전체 검사·실제 WEMIX→WBFT 운영자/위임자 회귀(174.296초, skip0)가 통과했다.
+고정 소스 `b103570970f1a33cd0b5676100ab76c37641c3d7b6a4777446eb9f420d489a90`
+전후가 같고 [운영자 청구 증거](operator-claim-evidence.json)는456파일의 내용·권한·소유자·
+mtime을 보존했으며 활성 프로세스·종료 DB는0이다. 원문87개 전체·Linux·메인넷·legacy·
+공개 DSL·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 RPC-014 반환 로그 대조 보강:** 필터·개수·topic만 확인하던 공개 케이스가
 잘못된 주소/높이/블록 hash/거래 hash/removed/data6종을 허용하는 RED를 확인했다.
 영수증과 직접 대조하도록 보강한 정상1/음성6종 GREEN·관련 전체 race·전체 검사와

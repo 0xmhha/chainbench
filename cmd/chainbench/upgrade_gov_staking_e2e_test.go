@@ -1049,60 +1049,85 @@ func TestWemixGovernanceBlockRewardE2E(t *testing.T) {
 	}
 }
 
-// TestWemixGovernanceOperatorClaimE2E ports wemix4 GOV-013 (operator claim): the
-// operator claims the staker's accrued reward, which resets the pending amount
-// (claim sets pendingReward = 0 before transferring).
-//
-//	go test -tags e2e -run TestWemixGovernanceOperatorClaimE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceOperatorClaimE2E records the approved GOV-013 difference:
+// previewReward does not map the operator to the staker, while claim does.
+// The staker-share parent preview is bound to exact payout events and ledgers.
 func TestWemixGovernanceOperatorClaimE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual operator claim ledger")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	provider, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := mustHexBytes(t, scenarioOpKeys["op1"])
+	addr, err := provider.AddressForKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": map[string]any{addr: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}})
 	c := rpc.Dial(url)
-	ctx := context.Background()
-	ap, err := accounts.ForChain("wbft")
+	operator, err := provider.OpenWallet(t.Context(), key, url)
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	staker, operator := registerProducingStaker(t, c, ap, url)
-
-	// Wait until a sizeable reward has accrued (rewards grow ~1e18/block, so this
-	// clears the claim's gas cost and the read-timing noise).
-	const threshold = "5000000000000000000" // 5e18
-	want, _ := new(big.Int).SetString(threshold, 10)
-	deadline := time.Now().Add(120 * time.Second)
-	for stakingPreviewPending(t, c, staker, staker).Cmp(want) < 0 {
-		if time.Now().After(deadline) {
-			t.Fatal("reward did not accrue past the claim threshold")
+	assertGuardCallerOutsideValidators(t, c, operator.Address())
+	staker := presetNodeAddr(t, 2)
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	pk, sig := presetNodeBLS(t, 2)
+	stakingRegister(t, c, operator, staker, pk, sig, minimum)
+	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
+	start, err := c.BlockNumber(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitForHead(t, c, start+10, 90*time.Second)
+	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0})), nil)
+	p := operatorClaimProof{Claim: claimLedgerProof{Hash: hash, Caller: operator.Address(), Staker: staker, Rewardee: rewardee, FeePrecision: govConfigUint(t, c, "feePrecision()").String()}}
+	if err = c.Call(t.Context(), "eth_getTransactionByHash", &p.Claim.Transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(t.Context(), "eth_getTransactionReceipt", &p.Claim.Receipt, hash); err != nil {
+		t.Fatal(err)
+	}
+	number, err := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(p.Claim.Receipt["blockNumber"]), "0x"), 16, 64)
+	if err != nil || number == 0 {
+		t.Fatal("missing mined block", err)
+	}
+	p.Claim.PreviewBlock = fmt.Sprintf("0x%x", number-1)
+	query := func(input string) string {
+		var out string
+		if err := c.Call(t.Context(), "eth_call", &out, map[string]string{"from": p.Claim.Caller, "to": e2eGovStaking, "data": input}, p.Claim.PreviewBlock); err != nil {
+			t.Fatal(err)
 		}
-		time.Sleep(3 * time.Second)
+		return out
 	}
-
-	// The operator (msg.sender) receives the reward on a no-restake claim, so its
-	// balance rises by ~the reward minus gas — a clear net increase.
-	opAddr := operator.Address()
-	balBefore, err := c.BalanceAt(ctx, opAddr)
-	if err != nil {
-		t.Fatalf("operator balance: %v", err)
+	p.Claim.Preview = query(accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(staker)))
+	p.OperatorPreview = query(accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(p.Claim.Caller)))
+	word := func(raw string, index int) *big.Int {
+		if !strings.HasPrefix(raw, "0x") || len(raw) < 2+(index+1)*64 {
+			t.Fatal("missing ABI word", index)
+		}
+		n, ok := new(big.Int).SetString(raw[2+index*64:2+(index+1)*64], 16)
+		if !ok {
+			t.Fatal("invalid ABI word", index)
+		}
+		return n
 	}
-	data := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
-	raw, _ := hex.DecodeString(strings.TrimPrefix(data, "0x"))
-	hash, err := operator.Execute(ctx, e2eGovStaking, raw, nil)
-	if err != nil {
-		t.Fatalf("claim execute: %v", err)
+	p.MappedStaker = wordToAddr(word(query(accounts.EncodeCallArgs("stakerByOperator(address)", accounts.Address(p.Claim.Caller))), 0))
+	info := query(accounts.EncodeCallArgs("stakerInfo(address)", accounts.Address(staker)))
+	p.Claim.FeeRecipient = wordToAddr(word(info, 2))
+	p.Claim.FeeRate = word(info, 3).String()
+	p.TotalStaked = word(info, 5).String()
+	p.Staked = word(query(accounts.EncodeCallArgs("userRewardInfo(address,address)", accounts.Address(staker), accounts.Address(staker))), 0).String()
+	p.Claim.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(t.Context(), "debug_traceTransaction", &p.Claim.Diff, hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+		t.Fatal(err)
 	}
-	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
-		t.Fatalf("claim reverted (status %s)", st)
-	}
-	balAfter, err := c.BalanceAt(ctx, opAddr)
-	if err != nil {
-		t.Fatalf("operator balance after: %v", err)
-	}
-	if balAfter.Cmp(balBefore) <= 0 {
-		t.Fatalf("operator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
+	logGovernanceProof(t, "GOV-013-operator-ledger", p)
+	if err := verifyOperatorClaimProof(p); err != nil {
+		t.Fatal(err)
 	}
 }
 

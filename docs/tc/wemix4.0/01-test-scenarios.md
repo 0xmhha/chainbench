@@ -1429,6 +1429,13 @@
 - OP\_A 잔액 증가 (보상 수령)
 - `previewReward` 예상값과 실제 amount 일치
 
+> **승인된 현행 v1 기준 (2026-10-15):** 원문의 `previewReward(staker, operator)`는
+> 운영자를 스테이커로 변환하지 않아 보상0을 반환한다. 이 원문 입력과 차이를 기록하고,
+> 동일한 claim 실행 직전 블록에서 `previewReward(staker, staker)`의 실제 지분 보상을
+> 조회해 청구 금액과 대조한다. 위임자가 없는 상태에서 정확한 `Claimed`·`RewardPaid`
+> 이벤트, GovRewardee 출금, 운영자 수령액에서 실제 영수증 가스비를 뺀 변화와 nonce를
+> 거래 단위로 검증한다. 블록 확정 보상과 청구 출금을 섞지 않는다.
+
 ---
 
 ### GOV-014 — 위임자 보상 수령 (Delegator Claim)
