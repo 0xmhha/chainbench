@@ -19,8 +19,17 @@ set -uo pipefail
 OUT="${1:?usage: tcsweep.sh <out.log> [pattern]}"
 PATTERN="${2:-}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BIN="$ROOT/bin/chainbench"
+BIN="${TCSWEEP_BIN:-$ROOT/bin/chainbench}"
 WS_BASE="${TCSWEEP_WS:-$HOME/cbw/sweep}"
+# An executable path, not a shell expression. The hook receives the stopped
+# workspace and the case's pass flag (1 or 0). It must preserve evidence and
+# reclaim only verified inactive disposable data, returning non-zero on doubt.
+# With this hook the sweep never calls chain rm or deletes the workspace.
+RETAIN_HOOK="${TCSWEEP_RETAIN_HOOK:-}"
+if [ -n "$RETAIN_HOOK" ] && [ ! -x "$RETAIN_HOOK" ]; then
+  echo "retention hook is not executable: $RETAIN_HOOK" >&2
+  exit 2
+fi
 # Extra flags for every `chainbench run`. A sweep against the docker fleet needs
 # five of them and they belong to the environment, not to this script:
 #   TCSWEEP_FLAGS="--server-set env/docker/build/server-set.yaml \
@@ -215,7 +224,17 @@ PLAN
 endWorkspace() {
   local ws=$1 passed=$2
   [ -d "$ws" ] || return 0
-  "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+  if ! "$BIN" chain stop --workspace-dir "$ws" >>"$OUT" 2>&1; then
+    printf '          chain stop failed; kept workspace and halted sweep: %s\n' "$ws" | tee -a "$OUT"
+    return 1
+  fi
+  if [ -n "$RETAIN_HOOK" ]; then
+    if ! "$RETAIN_HOOK" "$ws" "$passed" >>"$OUT" 2>&1; then
+      printf '          retention failed; kept workspace and halted sweep: %s\n' "$ws" | tee -a "$OUT"
+      return 1
+    fi
+    return 0
+  fi
   if [ "$passed" = 1 ]; then
     if "$BIN" chain rm --workspace-dir "$ws" >/dev/null 2>&1; then
       rm -rf "$ws"
@@ -481,7 +500,12 @@ for plan_line in "${PLAN[@]}"; do
   printf '          %s: %d case(s)%s\n' "$glabel" "${#SPECS[@]}" \
     "$([ "$override" != "-" ] && echo " on $override")" | tee -a "$OUT"
   for spec in "${SPECS[@]}"; do
-    c=$((c + 1)); ws="$WS_BASE/c$c"; rm -rf "$ws"
+    c=$((c + 1)); ws="$WS_BASE/c$c"
+    if [ -n "$RETAIN_HOOK" ] && { [ -e "$ws" ] || [ -L "$ws" ]; }; then
+      printf 'workspace already exists; refusing to overwrite evidence: %s\n' "$ws" | tee -a "$OUT" >&2
+      exit 2
+    fi
+    rm -rf "$ws"
     start=$SECONDS
     # Per case as well, and for a harder reason than the endpoint. A common
     # round overrides the chain-preset, so there the round IS the chain; a
@@ -511,10 +535,10 @@ for plan_line in "${PLAN[@]}"; do
     fi
     code=$?
     if record "$spec" "$out" $((SECONDS - start)) "$label" "$code"; then
-      endWorkspace "$ws" 1
+      endWorkspace "$ws" 1 || exit 2
     else
       tail -3 <<<"$out" | sed 's/^/          /' | tee -a "$OUT"
-      endWorkspace "$ws" 0
+      endWorkspace "$ws" 0 || exit 2
     fi
   done
 

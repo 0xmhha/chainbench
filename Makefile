@@ -16,7 +16,7 @@ GOLANGCI ?= $(BIN_DIR)/golangci-lint
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build $(CMDS) test test-race test-e2e tc-review cover lint lint-tool fmt fmt-check vet tidy secrets check clean
+.PHONY: help build $(CMDS) test test-race test-e2e tc-review sweep-test cover lint lint-tool fmt fmt-check vet tidy secrets check clean
 
 help: ## list the targets
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -41,6 +41,9 @@ test-e2e: ## e2e tests (they skip themselves without chain binaries)
 tc-review: ## validate original criterion coverage, source anchors and open conditions
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/inventory/test_tc_sufficiency.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/inventory/tc_sufficiency.py
+
+sweep-test: ## verify sweep retention and failure lifecycle contracts
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_tcsweep_retention.py
 
 cover: ## coverage into coverage.html
 	$(GO) test -coverprofile=coverage.out $(PKGS)
@@ -105,7 +108,7 @@ tidy: ## go mod tidy
 secrets: ## scan the tree for secrets (pre-commit gate)
 	bash scripts/check-secrets.sh --all
 
-check: fmt-check vet lint test tc-review ## everything a commit should pass
+check: fmt-check vet lint test tc-review sweep-test ## everything a commit should pass
 
 clean: ## remove build output
 	rm -rf $(BIN_DIR) coverage.out coverage.html
