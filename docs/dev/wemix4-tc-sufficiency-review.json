@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 61,
-    "partial": 23,
+    "confirmed_scope": 66,
+    "partial": 18,
     "conflict": 2,
     "merged": 1
   },
@@ -1237,13 +1237,28 @@
       "id": "TX-004",
       "title": "수수료 위임 (Fee Delegation) 트랜잭션",
       "criterionSha256": "4e0cde24e169362dc04829a4a5232328297a3c83a804d20fb6a32590a3944652",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-005-fee-delegated-transfer.json",
           "sha256": "ab8f7cfe03f1f94b37dc927dbfd5cf3386fe369ac31b864459e749e8ba5f9a9c",
           "id": "fee-delegated-transfer"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_native_test.go",
+          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "function": "TestWemixPostforkPublicCasesE2E"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
       "observations": [
@@ -1330,12 +1345,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
       "remainingConditions": [
-        "원문 post-handoff fixture로 현재 fresh 기준 재실행 확인 없음"
+        "원문 명제를 실제 로컬 이관 범위에서 확인했다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다. 제출 거절 원문 응답을 별도 파일로 보존했다고 주장하지 않으며, 성공한 원문 동작이 필수 사유를 강제한다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20 이관 뒤 공개 DSL 그대로 실행. 서로 다른 sender/payer의 실제 type0x16 거래·status1 영수증과 1ETH 송금, sender의 value만 차감, payer의 gasUsed×effectiveGasPrice 정확한 차감을 독립 대조했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/postfork-public-evidence.json",
+          "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        }
+      ]
     },
     {
       "id": "TX-005",
@@ -2102,13 +2122,28 @@
       "id": "TX-009",
       "title": "secp256r1 프리컴파일 유효 서명 검증",
       "criterionSha256": "ff326d99516b25ae48ca39908bdce9861c338c72027e4616fe783202e5d70523",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-wbft/accounts/01-secp256r1-precompile-valid.json",
           "sha256": "eac2c8b83a73c9535079e988e513887e041a1daecc3105b9bda9939601f90520",
           "id": "secp256r1-precompile-valid"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_native_test.go",
+          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "function": "TestWemixPostforkPublicCasesE2E"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
       "observations": [
@@ -2127,12 +2162,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
       "remainingConditions": [
-        "native capability P256 behavior 증거가 있으나 이 JSON case를 post-handoff WBFT에서 실행한 current receipt는 별도로 검증하지 않음"
+        "원문 명제를 실제 로컬 이관 범위에서 확인했다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다. 제출 거절 원문 응답을 별도 파일로 보존했다고 주장하지 않으며, 성공한 원문 동작이 필수 사유를 강제한다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 이관 후 WBFT 후속 노드 네 개에서 유효/무효 P256 런타임 관문을 통과하고, 공개 케이스의 160byte 유효 입력이 정확한 word1을 반환했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/postfork-public-evidence.json",
+          "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        }
+      ]
     },
     {
       "id": "TX-010",
@@ -2380,13 +2420,28 @@
       "id": "TX-011",
       "title": "잔액 부족 tx 거부",
       "criterionSha256": "b45629795398bd905677cd0e0cb120349953285f2ecc519ba82c96d8abe5ed36",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json",
           "sha256": "733e60844cb8643e40f7bbca5ec537d6b0791b1c112bbe7e4986f4a2a8fcac53",
           "id": "insufficient-funds-rejected"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_native_test.go",
+          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "function": "TestWemixPostforkPublicCasesE2E"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
       "observations": [
@@ -2448,12 +2503,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
       "remainingConditions": [
-        "postfork fixture의 실제 실행 재검증 없음; 단언 구조는 목적과 일치"
+        "원문 명제를 실제 로컬 이관 범위에서 확인했다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다. 제출 거절 원문 응답을 별도 파일로 보존했다고 주장하지 않으며, 성공한 원문 동작이 필수 사유를 강제한다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 이관 후 공개 케이스 그대로 실행. 새 계정에 1ETH를 넣고 balance+1의 raw 제출을 거절했으며, 필수 insufficient funds 사유·nonce와 잔액 불변·블록 진행을 검증했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/postfork-public-evidence.json",
+          "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        }
+      ]
     },
     {
       "id": "TX-012",
@@ -2770,13 +2830,28 @@
       "id": "TX-015",
       "title": "Fee Delegation FeePayer 서명 실패 시 거부",
       "criterionSha256": "5e14442953570efa5ec80346a385b05137957fc7c25f030fce5e4c09087ac0e5",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json",
           "sha256": "0b74463248d1180361326f01052c7b9aa79ed96018912a83101dac4bb75231e6",
           "id": "fd-feepayer-sig-invalid-rejected"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_native_test.go",
+          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "function": "TestWemixPostforkPublicCasesE2E"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
       "observations": [
@@ -2793,12 +2868,17 @@
           }
         }
       ],
-      "semanticAssessment": "payer_tamper_submission_rejection_criterion_present; current_proof_not_run",
+      "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
       "remainingConditions": [
-        "본 probe에서 해당 case의 현재 native 실행을 새로 수행하지 않았다. 원문 필수인 제출 오류는 코드에서 강제하며 임의 RPC오류 대용으로 완화한 것은 아님."
+        "원문 명제를 실제 로컬 이관 범위에서 확인했다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다. 제출 거절 원문 응답을 별도 파일로 보존했다고 주장하지 않으며, 성공한 원문 동작이 필수 사유를 강제한다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 이관 후 서로 다른 sender/payer를 사용하는 공개 케이스가 FeePayer 서명만 변조한 raw 제출의 거절과 필수 invalid feePayer 사유·후속 블록 진행을 검증했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/postfork-public-evidence.json",
+          "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        }
+      ]
     },
     {
       "id": "TX-016",
@@ -3416,13 +3496,28 @@
       "id": "TX-020",
       "title": "secp256r1 프리컴파일 잘못된 입력 길이",
       "criterionSha256": "88e1b2cda8081af77ccae60af9c5831d6ffb19b1fe1e85d84d5aa678a840d455",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-wbft/accounts/03-secp256r1-precompile-short-input.json",
           "sha256": "673b325009b9ed1af2510914bc5235bac7cea463e1a0a96f16bfce6fe07d4cf7",
           "id": "secp256r1-precompile-short-input"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_native_test.go",
+          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "function": "TestWemixPostforkPublicCasesE2E"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_e2e_test.go",
+          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
       "observations": [
@@ -3452,12 +3547,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
       "remainingConditions": [
-        "post-handoff actual short-input case의 최신 실행 증거는 본 probe에서 확인하지 않음"
+        "원문 명제를 실제 로컬 이관 범위에서 확인했다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다. 제출 거절 원문 응답을 별도 파일로 보존했다고 주장하지 않으며, 성공한 원문 동작이 필수 사유를 강제한다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 이관 후 공개 케이스의 159byte 입력과 빈 입력이 각각 정확한 0x를 반환했다. 네 후속 노드의 유효/무효 P256 런타임 지원 관문도 통과했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/postfork-public-evidence.json",
+          "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        }
+      ]
     },
     {
       "id": "WBFT-001",
@@ -4760,7 +4860,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "07d5e88d2449a8ef824fbb7b672bc6acac39b71ec0ad627a459f1e69d1544cfd",
+          "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         }
       ],
@@ -4785,7 +4885,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "07d5e88d2449a8ef824fbb7b672bc6acac39b71ec0ad627a459f1e69d1544cfd",
+          "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         }
       ],
@@ -4810,7 +4910,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "07d5e88d2449a8ef824fbb7b672bc6acac39b71ec0ad627a459f1e69d1544cfd",
+          "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         }
       ],

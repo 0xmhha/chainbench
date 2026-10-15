@@ -395,6 +395,14 @@ func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[strin
 // runtime, retries and teardown as the default governance fixture.
 func runGovHandoffSpec(t *testing.T, fromBin, toBin, spec string) string {
 	t.Helper()
+	_, url := runGovHandoffWorkspace(t, fromBin, toBin, spec)
+	return url
+}
+
+// runGovHandoffWorkspace also returns the successful owned workspace so a
+// follow-up case attaches to recorded successors without guessing a runtime.
+func runGovHandoffWorkspace(t *testing.T, fromBin, toBin, spec string) (string, string) {
+	t.Helper()
 	t.Setenv("GWEMIX_BIN", fromBin)
 	t.Setenv("GWBFT_BIN", toBin)
 
@@ -424,7 +432,7 @@ func runGovHandoffSpec(t *testing.T, fromBin, toBin, spec string) string {
 			if attempt > 1 {
 				t.Logf("handoff composed on attempt %d/%d", attempt, govHandoffAttempts)
 			}
-			return url
+			return dataDir, url
 		}
 
 		// The error Execute returns is the only account of a refusal cobra
@@ -440,7 +448,7 @@ func runGovHandoffSpec(t *testing.T, fromBin, toBin, spec string) string {
 		t.Logf("handoff attempt %d/%d did not compose; retrying", attempt, govHandoffAttempts)
 	}
 	t.Fatalf("handoff not composed after %d attempts:\n%s", govHandoffAttempts, lastOut)
-	return ""
+	return "", ""
 }
 
 // presetNodeKey loads node idx's raw private key from presets/keys/metadata.json.
