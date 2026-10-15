@@ -1,0 +1,377 @@
+{
+  "scope": "WBFT009 direct current native WBFT Croissant0 profiles5/7, three parent13..15/child14..16 pairs each. Actual generated BLS/live identities match exact parent-height validator query. Both previous prepared/committed unique signer subsets reach actual quorum4/5. Independent RLP child bitmap/signature-to-API validation and parent current-seal bitmap inclusion/round retention; late-seal merge need not produce equal aggregate bytes. Static stabilized seed membership, no changing-set transition claimed. Not staged migration/public JSON re-execution/mainnet/Linux/all87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Count>=3 model accepted fourteen wrong parent/query/quorum/membership/duplicate/aggregate controls.",
+  "unitGreen": "Positive and fourteen negatives plus existing quorum fault-boundary regressions.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "e118fbd6b5a18eaefb02b6bb754f0695b42ce09a44127ddae3fa98da26b1ebe4",
+    "sourceAfter": "e118fbd6b5a18eaefb02b6bb754f0695b42ce09a44127ddae3fa98da26b1ebe4",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativePreviousSealerMembership/bp5",
+      "TestNativePreviousSealerMembership/bp7",
+      "TestNativePreviousSealerMembership"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-afcvpril",
+      "/private/tmp/cbui/txfail-t81lxrtv"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-afcvpril": [],
+      "/private/tmp/cbui/txfail-t81lxrtv": []
+    },
+    "elapsedSeconds": 75.043,
+    "log": {
+      "path": "/private/tmp/chainbench-previous-sealers-native-native.jsonl",
+      "sha256": "eceab07a75b9ce0c3d20f761987336c3c7062cd5f56343dd18027eef01110778",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042383634528786
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-previous-sealers-native-summary.json",
+      "sha256": "f81973b5323c30527283d69dcd51352d3bac411507064b5736c9d3661d8ef436",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042384043434888
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-previous-sealers-native-start.json",
+      "sha256": "5840e76dd6438d70ade441e302f0243e2cd9424c7ff84f226f380312e7bda040",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042305959761066
+    }
+  },
+  "profiles": [
+    {
+      "n": 7,
+      "quorum": 5,
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-afcvpril/reports/previous-sealers-proof.json",
+        "sha256": "c6d1d5fed0e490be4cebd1c17d2f5be1dcfacc8b7de26cc3b5517c111dba9e77",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792042380320849422
+      },
+      "genesis": {
+        "path": "/private/tmp/cbui/txfail-afcvpril/w/genesis.json",
+        "sha256": "ea8894fbb071669e90a5d28f89b60e92d38287f21ef9e508c1aa890a83fe2adf",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792042359455255809
+      },
+      "pairs": [
+        {
+          "parent": 13,
+          "child": 14,
+          "counts": {
+            "Prepared": {
+              "signers": 7,
+              "bitmap": "127",
+              "parentBitmap": "93",
+              "parentSignersRetained": true
+            },
+            "Committed": {
+              "signers": 7,
+              "bitmap": "127",
+              "parentBitmap": "61",
+              "parentSignersRetained": true
+            }
+          }
+        },
+        {
+          "parent": 14,
+          "child": 15,
+          "counts": {
+            "Prepared": {
+              "signers": 7,
+              "bitmap": "127",
+              "parentBitmap": "91",
+              "parentSignersRetained": true
+            },
+            "Committed": {
+              "signers": 7,
+              "bitmap": "127",
+              "parentBitmap": "79",
+              "parentSignersRetained": true
+            }
+          }
+        },
+        {
+          "parent": 15,
+          "child": 16,
+          "counts": {
+            "Prepared": {
+              "signers": 7,
+              "bitmap": "127",
+              "parentBitmap": "79",
+              "parentSignersRetained": true
+            },
+            "Committed": {
+              "signers": 7,
+              "bitmap": "127",
+              "parentBitmap": "93",
+              "parentSignersRetained": true
+            }
+          }
+        }
+      ],
+      "publicAddresses": [
+        "0x0368f615f93015fa8f4c9ced62ba711c7a0b7589",
+        "0x24ce098fc33d1976046aaa0006b9e74c870d78ba",
+        "0x7845a2240a41ccffd0dbe23d6d0cca32b9a6b553",
+        "0x887f09fe110baafcc8563b3ffe063e9f758fc6e9",
+        "0x920c93035e2bf343af01fb9af366f78f7c1fe705",
+        "0xa020a5e6e1188ece580c875725edd3ea01ae3e67",
+        "0xc141dff39203774907144d8d9609e9ade0326ff2"
+      ],
+      "summary": {
+        "tests": [
+          {
+            "presetId": "previous-sealers-bp7",
+            "seq": 1,
+            "id": "previous-sealers-ready",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 1,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        }
+      }
+    },
+    {
+      "n": 5,
+      "quorum": 4,
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-t81lxrtv/reports/previous-sealers-proof.json",
+        "sha256": "d698e69249705acbe80cbb9725cb7ebd296aa032129ed0dab2f52713b4bd2b0e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792042355229360842
+      },
+      "genesis": {
+        "path": "/private/tmp/cbui/txfail-t81lxrtv/w/genesis.json",
+        "sha256": "85b112e0662bcb0d9c21194763f40de5de2782735dd46e3fa66c6adcf4dd09ba",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792042311411451637
+      },
+      "pairs": [
+        {
+          "parent": 13,
+          "child": 14,
+          "counts": {
+            "Prepared": {
+              "signers": 4,
+              "bitmap": "30",
+              "parentBitmap": "30",
+              "parentSignersRetained": true
+            },
+            "Committed": {
+              "signers": 4,
+              "bitmap": "30",
+              "parentBitmap": "30",
+              "parentSignersRetained": true
+            }
+          }
+        },
+        {
+          "parent": 14,
+          "child": 15,
+          "counts": {
+            "Prepared": {
+              "signers": 4,
+              "bitmap": "30",
+              "parentBitmap": "30",
+              "parentSignersRetained": true
+            },
+            "Committed": {
+              "signers": 4,
+              "bitmap": "30",
+              "parentBitmap": "30",
+              "parentSignersRetained": true
+            }
+          }
+        },
+        {
+          "parent": 15,
+          "child": 16,
+          "counts": {
+            "Prepared": {
+              "signers": 4,
+              "bitmap": "30",
+              "parentBitmap": "30",
+              "parentSignersRetained": true
+            },
+            "Committed": {
+              "signers": 4,
+              "bitmap": "30",
+              "parentBitmap": "30",
+              "parentSignersRetained": true
+            }
+          }
+        }
+      ],
+      "publicAddresses": [
+        "0x46e712ba2f52be50dfeeccd032ef153f1868cca0",
+        "0x5c5f008fabb21298119e2af6753683eef4b1bbd4",
+        "0x70719c6a0a1dd8e07a23f712f4e350df903e898d",
+        "0xb312265a0d990f3da0158fed52c1ee7e2218679d",
+        "0xfc2433ae674414054ff89e4e22ef3eac562e175b"
+      ],
+      "summary": {
+        "tests": [
+          {
+            "presetId": "previous-sealers-bp5",
+            "seq": 1,
+            "id": "previous-sealers-ready",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 1,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        }
+      }
+    }
+  ],
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-previous-sealers-evidence.py",
+    "sha256": "59395997c5d141581e94c0307854b8224444ca554c118b991297b3dfc2e93427",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792042395419303102
+  },
+  "chainContract": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/consensus/wbft/engine/engine.go",
+      "sha256": "928fd05ac51aa2e9aa6ec6d50fff550195e758915e94acd282d1053c8eb36762",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397339219078
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/consensus/wbft/backend/api.go",
+      "sha256": "b48322dee32bc49bf28732442439ebcdd09c315468f5b0c047d150f02ee87062",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397335448997
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/txfail-afcvpril",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 365,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-afcvpril/reports/previous-sealers-inventory.json",
+        "sha256": "a9092d63525bdccecda48b3b7fbb237ddd80875db33f9ab5dca9edde41b850f0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792042433365663592
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/txfail-t81lxrtv",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 269,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-t81lxrtv/reports/previous-sealers-inventory.json",
+        "sha256": "83008bef7160a52b9dbddb1a97417364fc881583ea289268cd0ab330776ae440",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792042433402470559
+      }
+    }
+  ],
+  "retainedFiles": 634,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-previous-sealers-publication.json",
+    "sha256": "e728eb272452576d4a985b34cd3400f5b9d8731a4e53efda3d8c5f6e5a6dfb6f",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792041694355579279
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-previous-sealers-red.log",
+      "sha256": "fe472921a55ce6c366bfdbc16530c2d980ce7392b5d3d8516f3bda3bfa695d66",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041952636426374
+    },
+    {
+      "path": "/private/tmp/chainbench-previous-sealers-green.log",
+      "sha256": "a7181bbcf448bf540fdc6c64918cd0c98456aba4a610ef2b7e4ba4ca66d496b2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041979210182877
+    },
+    {
+      "path": "/private/tmp/chainbench-previous-sealers-green2.log",
+      "sha256": "aedf6907d82569450e622468c86e91f5db3c52e8dbf127c7aa977c290de94988",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042061498946159
+    },
+    {
+      "path": "/private/tmp/chainbench-previous-sealers-related-race.log",
+      "sha256": "ad4e6d2a6a2d0e42d8e577c6f06f46a4ec3793e82fcbedc97464fa84d51a817f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042201209594998
+    },
+    {
+      "path": "/private/tmp/chainbench-previous-sealers-check.log",
+      "sha256": "3024dffb1537aa536a98e4dd954cb180956d6d85c8f1967e0effcaca6e790bee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042251927929244
+    },
+    {
+      "path": "/private/tmp/chainbench-previous-sealers-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792042150157834566
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  }
+}
