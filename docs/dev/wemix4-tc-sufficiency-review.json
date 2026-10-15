@@ -8,9 +8,9 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 31,
+    "partial": 30,
     "confirmed_scope": 54,
-    "conflict": 1,
+    "conflict": 2,
     "merged": 1
   },
   "records": [
@@ -4509,7 +4509,7 @@
       "id": "GOV-004",
       "title": "GovStaking 언스테이킹 및 출금",
       "criterionSha256": "3790c5441a28db96a34fe8277f8a8bdb142395d3d10c7cc4f9eaddb70336dcd8",
-      "status": "partial",
+      "status": "conflict",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -4531,6 +4531,16 @@
           "path": "cmd/chainbench/unstake_withdrawal_e2e_test.go",
           "sha256": "356961a365fe29e8a37c66d073bc4c28b6713408f963aab9be722df9ceab98b2",
           "function": "TestUnstakeWithdrawalRejectsClockAndPartialProof"
+        },
+        {
+          "path": "cmd/chainbench/auto_withdrawal_e2e_test.go",
+          "sha256": "f29d93cb153b093fff1015c43c0758f573e8e75e9cf5104d4c9fce8f6b663530",
+          "function": "TestAutoWithdrawalRejectsEarlyPayoutAndWrongInput"
+        },
+        {
+          "path": "cmd/chainbench/auto_withdrawal_e2e_test.go",
+          "sha256": "f29d93cb153b093fff1015c43c0758f573e8e75e9cf5104d4c9fce8f6b663530",
+          "function": "TestWemixGovernanceAutoWithdrawalE2E"
         }
       ],
       "observations": [
@@ -4545,13 +4555,16 @@
         },
         {
           "analysis": "동일 fullunstake credential·15초 chain-time 지연에서 withdraw(1) 조기 채굴 status0/정확한 insufficient withdrawable credentials·slot/pointers 불변, 만기후 exact Withdrawn/원금−gas/contract debit/slot drain 독립 대조. 실제 기존 expiry 회귀 통과. 원문 withdraw(0)은 별도 auto mode이므로 동일 실패로 간주하지 않음."
+        },
+        {
+          "analysis": "원문 withdraw(0) 입력은 실제 만기13초 전 status1/no events/no payout·contract2e25 그대로/caller exactgas fee, 만기1초 후 동일index exact Withdrawn/principal−gas/contract debit/slot/pointers drain. diffMode는 변동없는 계약을 생략하므로 실제 parent/mined eth_getBalance를 직접 대조. 기존 명시 출금/expiry 실제 회귀 통과. 원문 조기 withdrawal time not reached revert 기대와 충돌; 사용자 결정 대기."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "criterion_conflicts_with_current_contract",
       "remainingConditions": [
-        "원문 withdraw(0) 자동 처리 모드의 만기 전 결과·상태·수수료와 만기후 정확한 출금을 실제 확인하고 원문의 withdrawal time not reached 기대와 차이를 기록해야 함. 현행 withdraw(1) 명시 count 검증은 원문 입력 대체가 아님. 메인넷7일/현행15초 fixture 범위도 구분."
+        "원문 withdraw(0)의 조기 revert 기대와 실제 auto mode 성공/no payout의 차이에 대한 사용자 기준 결정 대기. 현행 만기 전 무출금·slot/pointers 보존·정확gas 및 만기후 exact출금은 검증됐다. 메인넷7일/현행15초 fixture 범위 구분."
       ],
-      "confirmedScope": "실제 WEMIX→WBFT 이관 뒤 비검증자 operator 전액2minimum unstake→동일 credential의 withdraw(1) 조기 정확한 채굴 거절/상태불변→15초 만기후 동일index 원금·gas·Withdrawn·잔액/포인터 검증. 원문 withdraw(0) 미검증.",
+      "confirmedScope": "실제 WEMIX→WBFT 이관 뒤 비검증자 operator 전액2minimum unstake·exact Unstaked/StakerRemoved·activefalse. 동일 credential의 withdraw(1) 조기 정확한 채굴 거절/상태불변 및15초 만기후 exact출금. 원문 withdraw(0)은 실제 조기 status1/no payout·이벤트0/slot/pointers 불변/정확gas·부모/채굴블록 contract잔액2e25, 만기후 동일slot·원금−gas·Withdrawn·contract debit·slot/pointer drain 검증. 원문의 조기revert 기대는 미충족·기준 결정 대기.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/full-unstake-evidence.json",
@@ -4560,6 +4573,10 @@
         {
           "path": "docs/dev/unstake-withdrawal-evidence.json",
           "sha256": "076cd5acf95dc93aaf57b1837b63f13715d69dadb0fe642bc7f222d960b60204"
+        },
+        {
+          "path": "docs/dev/auto-withdrawal-evidence.json",
+          "sha256": "9a9c338e057d1f2d6b660a9d261496f91d0c9f846937f27d50d6e4eceb7a53f4"
         }
       ]
     },
@@ -5199,22 +5216,22 @@
         {
           "path": "cmd/chainbench/credential_expiry_e2e_test.go",
           "function": "verifyCredentialExpiry",
-          "sha256": "5b82500e73e75ad6929fda9b53b2faa7113acd156929710062b4ad1d57c89a9e"
+          "sha256": "652e4f2c93392d17029905fbda9d8c6cc07a82b6d36be8548181bf65d923d212"
         },
         {
           "path": "cmd/chainbench/credential_expiry_e2e_test.go",
           "function": "verifyWithdrawalLedger",
-          "sha256": "5b82500e73e75ad6929fda9b53b2faa7113acd156929710062b4ad1d57c89a9e"
+          "sha256": "652e4f2c93392d17029905fbda9d8c6cc07a82b6d36be8548181bf65d923d212"
         },
         {
           "path": "cmd/chainbench/credential_expiry_e2e_test.go",
           "function": "TestCredentialExpiryRejectsClockAndDrainAmbiguity",
-          "sha256": "5b82500e73e75ad6929fda9b53b2faa7113acd156929710062b4ad1d57c89a9e"
+          "sha256": "652e4f2c93392d17029905fbda9d8c6cc07a82b6d36be8548181bf65d923d212"
         },
         {
           "path": "cmd/chainbench/credential_expiry_e2e_test.go",
           "function": "TestWithdrawalLedgerRejectsThresholdAndWrongSlot",
-          "sha256": "5b82500e73e75ad6929fda9b53b2faa7113acd156929710062b4ad1d57c89a9e"
+          "sha256": "652e4f2c93392d17029905fbda9d8c6cc07a82b6d36be8548181bf65d923d212"
         }
       ],
       "observations": [
@@ -8152,7 +8169,8 @@
     "W4": "unresolved; original metric requirement retained"
   },
   "pendingDecisions": [
-    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output."
+    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output.",
+    "GOV-004 original withdraw(0) early revert expectation vs actual current v1 status1/no payout: user decision pending; do not mark original early-revert accepted."
   ],
   "limitations": [
     "Relevant sources were read, not all 87 freshly executed. Partial records intentionally remain open.",

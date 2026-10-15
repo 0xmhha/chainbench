@@ -182,6 +182,22 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-004 원문 auto mode 출금 대조:** 원문 withdraw(0)을 실제 전송해
+만기13초 전 status1/no events/no payout·slot/pointers 불변과 정확gas를 확인했다.
+실제 부모/채굴 블록의 계약잔액은 모두 원금2e25와 같다. 만기1초 후 같은 입력은 동일slot의
+Withdrawn index0/amount2e25·원금−gas·contract debit·slot0/pointers1로 출금됐다.
+원문의 조기 withdrawal time not reached revert 기대는 실제 현행v1 auto mode와 충돌하므로
+GOV-004는 conflict·기준 결정 대기로 남긴다. 현행관찰 통과를 원문 요구 완료로 세지 않는다.
+
+Success만 확인하는 판정의15조건과 블록별 잔액 누락/차이2조건 RED→GREEN을 확인했다.
+Tagged CLI 전체 race·e2e vet·전체 검사와 실제 auto/explicit/expiry3개 회귀(279.707초, skip0)가
+통과했다. 최초실행은 diffMode가 변동없는 계약을 생략한 것을 판정이 잘못 가정해 실패했고
+로그/고정 소스/종료자료를 그대로 보존했다. 부모/채굴 잔액 직접 조회로 보강한 뒤 재검증했다.
+고정 소스 `c5fc3a6881fd886f3366350ce96639000249b209fa696b016d8400fd7fd4ac48`
+전후가 같다. [자동 출금 증거](auto-withdrawal-evidence.json)는 실패 포함6실행/1368파일의
+내용·권한·소유자·mtime을 보존했고 활성 프로세스·종료 DB는0이다. 메인넷7일·원문87개 전체·
+Linux·legacy·공개 DSL·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 GOV-004 명시 count 출금 보강:** success만 확인하는 판정이
 잘못된 시각/설정/금액/slot/pointers/조기 거절/출금13조건을 허용하는 RED→GREEN을 확인했다.
 비검증자 operator의 전액2minimum 해제 뒤 동일 credential을 15초 chain-time fixture로 검증했다.

@@ -113,8 +113,12 @@ func TestCredentialExpiryRejectsClockAndDrainAmbiguity(t *testing.T) {
 }
 
 func verifyWithdrawalLedger(p credentialExpiryProof, w credentialWithdrawal) error {
+	return verifyWithdrawalLedgerCount(p, w, 1)
+}
+
+func verifyWithdrawalLedgerCount(p credentialExpiryProof, w credentialWithdrawal, withdrawalCount uint64) error {
 	tx, r := w.Transaction, w.Receipt
-	input := accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1)))
+	input := accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(new(big.Int).SetUint64(withdrawalCount)))
 	if w.Hash == "" || tx["hash"] != w.Hash || r["transactionHash"] != w.Hash || tx["blockHash"] == nil || tx["blockHash"] != r["blockHash"] || tx["blockNumber"] != r["blockNumber"] || r["status"] != "0x1" || tx["from"] != p.Caller || tx["to"] != p.Contract || tx["input"] != input || tx["value"] != "0x0" {
 		return fmt.Errorf("wrong actual withdrawal input/receipt")
 	}

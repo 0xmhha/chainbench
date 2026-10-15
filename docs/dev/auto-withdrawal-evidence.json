@@ -1,0 +1,303 @@
+{
+  "scope": "GOV004 original withdraw(0) input observed after WEMIX\u2192WBFT handoff. Non-validator caller; current v1 automatic scan skips locked slot with status1/no event/no principal payout, same slot/pointers and exact gas charge. After configured fixture maturity same input drains exact slot, event, principal/gas/contract ledger. Original early-revert expectation differs and remains undecided. Not mainnet7days/full87/Linux/legacy/public DSL/final Web.",
+  "originalAll87Complete": false,
+  "originalEarlyRevertAccepted": false,
+  "unitRed": "Receipt-success model accepted fifteen wrong input/time/state/payout/event controls.",
+  "unitGreen": "One positive and seventeen negative controls, including two pinned-balance RED controls.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "c5fc3a6881fd886f3366350ce96639000249b209fa696b016d8400fd7fd4ac48",
+    "sourceAfter": "c5fc3a6881fd886f3366350ce96639000249b209fa696b016d8400fd7fd4ac48",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceAutoWithdrawalE2E",
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceCredentialExpiryE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-1d0td095",
+      "/private/tmp/cbui/hf-qxdmpxza",
+      "/private/tmp/cbui/hf-s0wvtz0o"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-1d0td095": [],
+      "/private/tmp/cbui/hf-qxdmpxza": [],
+      "/private/tmp/cbui/hf-s0wvtz0o": []
+    },
+    "elapsedSeconds": 279.707,
+    "summary": {
+      "path": "/private/tmp/chainbench-auto-withdrawal-pinned-summary.json",
+      "sha256": "ba9f82a4cc5b5db2ad4b70bf1563b47a5c9f40ef1f18112adb8ede4ede21fafc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031412940601973
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-auto-withdrawal-pinned-native.jsonl",
+      "sha256": "556d5a3d7c96043694b96eea95cdd4e4801b0947e1758c2583bcb570dd27db10",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031412464590652
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-auto-withdrawal-pinned-start.json",
+      "sha256": "a2c2c7b0931076faae4686d2f31b64f363a3e26ffa7b80a3b1f27938d39f7fe9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031130301527438
+    }
+  },
+  "failedAttempt": {
+    "summary": {
+      "path": "/private/tmp/chainbench-auto-withdrawal-native-summary.json",
+      "sha256": "eecdb4056fee88c05da9b0a62ef268bb9d40754bdb9d1734605f7e78096ea386",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030952885234244
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-auto-withdrawal-native-native.jsonl",
+      "sha256": "c319be581f9b643b6a875689263f2a850c823ca759761ff15f39f4db8a4d3daa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030952370449378
+    },
+    "source": "ad0731c60a72e168cdb97765edd927ba1e1525f4baac99877c701ecccb5901cb",
+    "reason": "Unchanged contract omitted by prestateTracer diffMode; replaced assumed trace balance with exact parent/mined eth_getBalance queries."
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-auto-withdrawal-observed.json",
+    "sha256": "10f19e06174b3983bf0c5305e5465bcddc50468b193ea61a020e02374e7e09d2",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792031422000291530
+  },
+  "amount": "20000000000000000000000000",
+  "fixtureDelaySeconds": 15,
+  "earlyTimestamp": 1792031207,
+  "maturityTimestamp": 1792031220,
+  "paidTimestamp": 1792031221,
+  "gasFees": [
+    "4290706724513761",
+    "7034401700495856"
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-0wq_5qqa",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-0wq_5qqa/reports/auto-withdrawal-inventory.json",
+        "sha256": "be737c4d27d0eac925bfd6b864441434be9afc68ca23f260d5996cd2c6abb237",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792031422064304378
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-1d0td095",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-1d0td095/reports/auto-withdrawal-inventory.json",
+        "sha256": "88f9a913edf98652a7826a80203c7d51ca3e29ecbd0a3529aba19124a5f91189",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792031422099879265
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-441iileg",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-441iileg/reports/auto-withdrawal-inventory.json",
+        "sha256": "d26c3677f779e200ebb57958bd2973fc6869a3eece413fbe70ec57a03572b128",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792031422158888610
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-65p9pely",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-65p9pely/reports/auto-withdrawal-inventory.json",
+        "sha256": "98022be65d0f602fd35665a3557065fa40b3f3c8201eb311ff872ff0009ae6e7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792031422226329487
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-qxdmpxza",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-qxdmpxza/reports/auto-withdrawal-inventory.json",
+        "sha256": "37a3de145ce56edf7a1e6331017c7c367c25b115747c6a772d524f5e2013e5ec",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792031422266984751
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-s0wvtz0o",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-s0wvtz0o/reports/auto-withdrawal-inventory.json",
+        "sha256": "95f49d023b72863cec8ade61baa94a104ba4c64668169ae9c8462a0d40e0816f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792031422305972209
+      }
+    }
+  ],
+  "retainedFiles": 1368,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-auto-withdrawal-publication.json",
+    "sha256": "45784512b824b0b4bcc2dc3291d6dc7e91909260c43f39f82957aeb8abba8043",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792030560373489960
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-red.log",
+      "sha256": "525a9235b85bceef0cd65c4fc4aae58e24bcd647f8eb6ebcd588b2cd57f2ef2d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030471741640071
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-green.log",
+      "sha256": "d122c994dbfe378ae1a732ab80cffd9c50d548f3271edfdb82e498bd1636f280",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030524839816919
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-green2.log",
+      "sha256": "16b62ed8b7ed47da6d88b3a0f2081ceb534418c46a97be1b0c88538423666389",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030553449575802
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-pinned-red.log",
+      "sha256": "58a93792fa98c8d1fe40eb242c23ecd6b338cfcbb9e49d266cb291abefedb78b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030973711143825
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-pinned-green.log",
+      "sha256": "f1861fd51934f14c0df6305ad6489097b7699b4b0edc23a1ca4cb8f482ed36e4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031002222615373
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-related-race.log",
+      "sha256": "407b69ea4578fafc3d2bfcc72a411733a92bd3ef3d481e690fc31ed99a8d7423",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030658494009690
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-check.log",
+      "sha256": "0c3f987335871b7cd3258fb54aebd030e2d45305f3fb0a19d0d9d297d2cac18a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030659735689351
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030576518121841
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-related-race2.log",
+      "sha256": "a19a6d6a85a2bb95d5f1f80953757bda72d6f2d55bc60908b798f8f8484e2982",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031118934025242
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-check2.log",
+      "sha256": "9fdc5ab2f8b5a8255e13eae7af0da985739d4bd840577df565bfcce7093fca94",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031114144333675
+    },
+    {
+      "path": "/private/tmp/chainbench-auto-withdrawal-vet2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031026290656628
+    }
+  ],
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}
