@@ -100,4 +100,7 @@ func TestWemixGovernanceE2E(t *testing.T) {
 	if _, ok := new(big.Int).SetString(strings.TrimPrefix(strings.TrimSpace(out), "0x"), 16); !ok {
 		t.Fatalf("RPC-009: GovStaking.totalStaking() not a uint (got %q)", out)
 	}
+
+	// RPC-022 uses the original block110 with explicit ordinary-block controls.
+	captureOriginalEpochBoundary(t, c)
 }

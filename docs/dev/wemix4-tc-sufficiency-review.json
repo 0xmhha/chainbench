@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 66,
-    "partial": 18,
+    "confirmed_scope": 67,
+    "partial": 17,
     "conflict": 2,
     "merged": 1
   },
@@ -38,7 +38,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
+          "sha256": "74b3b8a00e36b919456360df746e14d68b8fc42146ceb6b7ac2f439e7bc3b492",
           "function": "TestWemixGovernanceE2E"
         }
       ],
@@ -4432,7 +4432,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
+          "sha256": "74b3b8a00e36b919456360df746e14d68b8fc42146ceb6b7ac2f439e7bc3b492",
           "function": "TestWemixGovernanceE2E"
         },
         {
@@ -4570,7 +4570,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
+          "sha256": "74b3b8a00e36b919456360df746e14d68b8fc42146ceb6b7ac2f439e7bc3b492",
           "function": "TestWemixGovernanceE2E"
         },
         {
@@ -6549,7 +6549,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "75ccc391b9e2bfb1da32f7215643f2111ff531b2f8a3adb1a80250ad02ec87aa",
+          "sha256": "74b3b8a00e36b919456360df746e14d68b8fc42146ceb6b7ac2f439e7bc3b492",
           "function": "TestWemixGovernanceE2E"
         },
         {
@@ -8344,7 +8344,7 @@
       "id": "RPC-022",
       "title": "istanbul\\_getWbftExtraInfo — 에폭 마지막 블록 (EpochInfo 존재)",
       "criterionSha256": "f6e1b18359f9698a834d1576501f003d6dafbe5d8862627f5e787771d91718a2",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -8356,6 +8356,21 @@
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
           "sha256": "2e4491b0b67ba6309261872365aaf4d77d234a9a699aed5bd125abdbce4bad79",
           "function": "TestWemixGovernanceStabilizingE2E"
+        },
+        {
+          "path": "cmd/chainbench/original_epoch_boundary_e2e_test.go",
+          "sha256": "22c583e2ed270d4564a08876512190b227b2b1b29b702bea616bceb51f14d810",
+          "function": "TestOriginalEpochBoundaryRejectsPresenceOnly"
+        },
+        {
+          "path": "cmd/chainbench/original_epoch_boundary_e2e_test.go",
+          "sha256": "22c583e2ed270d4564a08876512190b227b2b1b29b702bea616bceb51f14d810",
+          "function": "captureOriginalEpochBoundary"
+        },
+        {
+          "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
+          "sha256": "74b3b8a00e36b919456360df746e14d68b8fc42146ceb6b7ac2f439e7bc3b492",
+          "function": "TestWemixGovernanceE2E"
         }
       ],
       "observations": [
@@ -8363,12 +8378,17 @@
           "analysis": "epochboundary pointer nonnil,nonempty stakers/validators"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_block110_epoch_metadata_after_native_handoff",
       "remainingConditions": [
-        "축약fork20/epoch10; currentnativeproofhand-offhistory재인수본probe수행안함"
+        "원문110 명제는 실제 로컬 이관 범위에서 확인했다. 신규 스테이킹과 변경된 집합 선정은 이번 실행의 범위가 아니며 WBFT-005·GOV-005에 별도로 남는다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT 포크100·에폭10의 원문110에서 네 스테이커·밸리데이터·인덱스와 프리셋의 정확한48byte BLS 키를 확인했다. 109·110·111 헤더의 연결과 일반 블록의 명시적 null, 원시 RLP의 epoch payload 및 API 응답을 독립 대조했다. threshold5 미만 네 seed 멤버의 안정화 유지 범위다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/original-epoch-evidence.json",
+          "sha256": "870e1c5a530c51a34563f528e177973627c0b2be0094484020aa6271289db681"
+        }
+      ]
     },
     {
       "id": "RPC-023",
