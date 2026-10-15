@@ -182,6 +182,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 NODE-003/004 원문 cold full·snap 포크 replay 보강:** 높이/hash만 확인하는
+모델이 놓친 거래 종류·raw/inclusion·cold 시작·진행·pivot·정확한 상태/영수증 32개 음성 대조를
+RED로 확인하고 양성+32개를 GREEN으로 보강했다. 관련 CLI 전체 e2e race(100.762초), tagged vet,
+전체 make check를 통과한 고정 소스 `0eb6dae8ea0f77f1fb0be6f21432e6c4c926141395949602d7716406db36a4b8`에서
+실제 native race가 281.425초/skip0으로 통과했다. WEMIX WPOA→WBFT Croissant100 전후에
+Legacy·Dynamic·FeeDelegation 전송·Dynamic 배포·쓰기 각각5종(총10건)을 채굴했다.
+소스210에서 cold full을 시작해223까지, full 종료 뒤 소스224에서 cold snap을 시작해237까지 동기화했다.
+비교 높이222/236의 hash/stateRoot, fork100 hash, 실제 snap pivot169, 같은 높이의10거래/영수증과
+정확한 sender/payer 수수료·수취21ETH·nonce10/0·코드·저장값42/84를 독립 RLP/Keccak으로 재대조했다.
+종료 후 새 프로세스 전수 조회로 미사용을 확인하고 DB0·309파일의 내용/권한/소유자/mtime를 보존했다.
+[증거](crossfork-sync-evidence.json). 검토 상태는 confirmed_scope81→83·partial3→1이며,
+GOV-011·원문 충돌·legacy·Linux·메인넷·latest 코드 원인·W3/W4·최종 Web14는 아직 잔여다.
+이번 결과를 전체87 완료나 외부 결함 해결로 표시하지 않는다.
+
 **2026-10-15 RPC-008 정확한 첫 반감·실제 proposer 원장 보강:** 양수/감소만 확인하는
 판정이 설정·반감 비율·태그/채굴 높이·부모·proposer·실제 잔액·수수료/분배 격리의23개
 오류를 허용하는 RED와 이를 거절하는 GREEN을 확인했다. 정적 검사가 지적한 조건식도

@@ -8,9 +8,9 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 81,
-    "partial": 3,
+    "confirmed_scope": 83,
     "conflict": 2,
+    "partial": 1,
     "merged": 1
   },
   "records": [
@@ -138,13 +138,23 @@
       "id": "NODE-003",
       "title": "Full Sync 동기화",
       "criterionSha256": "5d5239726c58cc5c4bcf85f7692c3dfa6419823234827aead1b301c3b817b578",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/node/CT-NODE-004-full-sync.json",
           "sha256": "567d1ad3354f934ffa574d4fddc7026e367cfae0ceb8088dffaed52fcc0790e3",
           "id": "full-sync"
+        },
+        {
+          "path": "cmd/chainbench/crossfork_sync_e2e_test.go",
+          "sha256": "2cee13da09438fb5b71c200b411af6025bdf491aae9aa5badbd945e8685f7d29",
+          "function": "TestCrossForkSyncRejectsHeadAndHashOnly"
+        },
+        {
+          "path": "cmd/chainbench/crossfork_sync_native_test.go",
+          "sha256": "5036ccdddd449cb520bccc2f0900c75542fcb4c9137f3109628b6ed7184a3cd6",
+          "function": "TestWemixCrossForkColdSyncE2E"
         }
       ],
       "observations": [
@@ -195,18 +205,23 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_crossfork_ten_transaction_cold_full_and_snap_replay",
       "remainingConditions": [
-        "원문 pre/postfork 각각 Legacy/Dynamic/FeeDelegation/deploy/write 10거래와 200+ 높이/fork경계 replay 없음"
+        "이번 native 원문 구성의 확인 범위다. 기존 공개 JSON의 새 전체 실행, 전체87·legacy·Linux·메인넷 live·W3/W4 해결·최종 Web14 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX WPOA→WBFT Croissant100에서 전후 각각 Legacy·Dynamic·FeeDelegation 전송·Dynamic 배포·쓰기 5종을 채굴했다. 소스210/224에서 cold full/snap을 직렬 시작했고 full223·snap237까지 완료했다. 비교 높이222/236의 hash/stateRoot와 fork100 hash, 각10거래/영수증, 정확한 대납 수수료·잔액·nonce·코드·저장값을 대조했다. snap 실제 pivot169와 이후 상태 조회를 로그·독립 RLP 해석으로 확인했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/crossfork-sync-evidence.json",
+          "sha256": "e725043175a8d3108fec172ebefc4fcae11298688d6ebf0ec2ef9ea091262d1e"
+        }
+      ]
     },
     {
       "id": "NODE-004",
       "title": "Snap Sync 동기화",
       "criterionSha256": "5d9e59b6502ae4d9c6e0d414453763455737b7eb44446de61e46e2131f3554a5",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -218,6 +233,16 @@
           "path": "tests/e2e/wbft_sync_test.go",
           "sha256": "735ef3df9c0cc120210ee4cfeb5069d3a816ffb2491d74b40b4e5a2f0d98043f",
           "function": "TestE2E_WbftSnapSync"
+        },
+        {
+          "path": "cmd/chainbench/crossfork_sync_e2e_test.go",
+          "sha256": "2cee13da09438fb5b71c200b411af6025bdf491aae9aa5badbd945e8685f7d29",
+          "function": "TestCrossForkSyncRejectsHeadAndHashOnly"
+        },
+        {
+          "path": "cmd/chainbench/crossfork_sync_native_test.go",
+          "sha256": "5036ccdddd449cb520bccc2f0900c75542fcb4c9137f3109628b6ed7184a3cd6",
+          "function": "TestWemixCrossForkColdSyncE2E"
         }
       ],
       "observations": [
@@ -309,12 +334,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_crossfork_ten_transaction_cold_full_and_snap_replay",
       "remainingConditions": [
-        "fresh WBFT genesis 축약; 200+높이/fork 경계와 pre/postfork 10타입거래/pivot 위상 직접 검증 없음"
+        "이번 native 원문 구성의 확인 범위다. 기존 공개 JSON의 새 전체 실행, 전체87·legacy·Linux·메인넷 live·W3/W4 해결·최종 Web14 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX WPOA→WBFT Croissant100에서 전후 각각 Legacy·Dynamic·FeeDelegation 전송·Dynamic 배포·쓰기 5종을 채굴했다. 소스210/224에서 cold full/snap을 직렬 시작했고 full223·snap237까지 완료했다. 비교 높이222/236의 hash/stateRoot와 fork100 hash, 각10거래/영수증, 정확한 대납 수수료·잔액·nonce·코드·저장값을 대조했다. snap 실제 pivot169와 이후 상태 조회를 로그·독립 RLP 해석으로 확인했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/crossfork-sync-evidence.json",
+          "sha256": "e725043175a8d3108fec172ebefc4fcae11298688d6ebf0ec2ef9ea091262d1e"
+        }
+      ]
     },
     {
       "id": "NODE-005",

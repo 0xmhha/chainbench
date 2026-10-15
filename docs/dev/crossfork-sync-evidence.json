@@ -1,0 +1,282 @@
+{
+  "scope": "NODE003/004 original Croissant100, source>=200, cold full then cold snap with actual pivot>100; each phase has Legacy/Dynamic/FD transfers plus dynamic deploy/storage write. Exact source/reader headers/roots and pinned fees/balances/nonces/code/storage plus all ten transactions/receipts. Not Linux/mainnet/full87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Head/hash-only model accepted32 missing phase/type/raw/inclusion/cold/progress/pivot/replay/state controls.",
+  "unitGreen": "Positive and32 negative controls, complete CLI e2e race, tagged vet, make check.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "0eb6dae8ea0f77f1fb0be6f21432e6c4c926141395949602d7716406db36a4b8",
+    "sourceAfter": "0eb6dae8ea0f77f1fb0be6f21432e6c4c926141395949602d7716406db36a4b8",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixCrossForkColdSyncE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-rcjdf_r1"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-rcjdf_r1": []
+    },
+    "elapsedSeconds": 281.425,
+    "log": {
+      "path": "/private/tmp/chainbench-crossfork-sync-native-native.jsonl",
+      "sha256": "a0ad9b5dd765eca5bae25d29d5f2b09b6fabc62c683481bbb3fc1f1704a778b8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792051468635432440
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-crossfork-sync-native-summary.json",
+      "sha256": "4b7ac670b28d77e304b310ba2af278ab8cd8c728247a6512351061d767d3143e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792051469134581537
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-crossfork-sync-native-start.json",
+      "sha256": "df690f0762ea0def1cced3ce98a6ad9bdf61ffcc1396edfafe3ebf306e7d2ed4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792051184889222268
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-rcjdf_r1/reports/crossfork-sync-proof.json",
+    "sha256": "d091b333c99a208716af0e2b1ef65f58641a9168b59f463a054c9d6ebc80c2f4",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792051464103870301
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-crossfork-sync-evidence.py",
+    "sha256": "15e814d2123f2bc6142e89cea1c05c43d0f0b0a8a2ebe46176f3dfa75a09e9f1",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792051306779528857
+  },
+  "reusedDecoderSource": {
+    "path": "/private/tmp/chainbench-original-epoch-evidence.py",
+    "sha256": "87794f7ac8055e5d727b63b3bdcb47896f6b4e4bb8fafca488e3a8ba202c7987",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792038415534476826
+  },
+  "transactions": [
+    {
+      "phase": "pre",
+      "kind": "legacy",
+      "height": 20,
+      "hash": "0xa97f829c8db4ae02acaabcded9fbf5f1c95703d787d50094aa066bdad954b50c",
+      "gasUsed": 21000,
+      "fee": "2100007336476000"
+    },
+    {
+      "phase": "pre",
+      "kind": "dynamic",
+      "height": 21,
+      "hash": "0x64c6ccd291047bbffae0bd434bfb0b1defab05d615d42b91106b67a5e6238b6c",
+      "gasUsed": 21000,
+      "fee": "2100000669102000"
+    },
+    {
+      "phase": "pre",
+      "kind": "feeDelegation",
+      "height": 23,
+      "hash": "0x5c32f7dc70e2c3c4277fea38f40b72340ea47ce8443a931be33c41488e4cd890",
+      "gasUsed": 21000,
+      "fee": "2100000135618000"
+    },
+    {
+      "phase": "pre",
+      "kind": "deploy",
+      "height": 24,
+      "hash": "0xa185c908f45d9b422767ea795b1c835ee72d49a3c7c2112cfcc5b3cc709e4a92",
+      "gasUsed": 54668,
+      "fee": "5466800159029212"
+    },
+    {
+      "phase": "pre",
+      "kind": "write",
+      "height": 27,
+      "hash": "0x9013fa3c7be7f9dbcc4b741a0a7616a676318591cb5087f31a979701bdcdbdf2",
+      "gasUsed": 43249,
+      "fee": "4324900011504234"
+    },
+    {
+      "phase": "post",
+      "kind": "legacy",
+      "height": 106,
+      "hash": "0x69ee5d706307a1dc489a9f192a1ed73faa70613deaf98a10a6c0638d3f514573",
+      "gasUsed": 21000,
+      "fee": "2100000000021000"
+    },
+    {
+      "phase": "post",
+      "kind": "dynamic",
+      "height": 107,
+      "hash": "0x99b5b6fcc076e19b386b37277c40fdcc72a282df3114a2888252c177c738428f",
+      "gasUsed": 21000,
+      "fee": "2100000000021000"
+    },
+    {
+      "phase": "post",
+      "kind": "feeDelegation",
+      "height": 108,
+      "hash": "0x13e1b3cfcc510e0bd5f43533a5cfb8b602806529958cdcace49ba50761c84c14",
+      "gasUsed": 21000,
+      "fee": "2100000000021000"
+    },
+    {
+      "phase": "post",
+      "kind": "deploy",
+      "height": 109,
+      "hash": "0xe9a1ce477c971608c88482f55256e568addb342cd7c18278e48c9989138583ec",
+      "gasUsed": 54668,
+      "fee": "5466800000054668"
+    },
+    {
+      "phase": "post",
+      "kind": "write",
+      "height": 112,
+      "hash": "0xec936b6dd97f42f33bd5ca26d73b225b2601d6e71565b1cd5cd71ccd4206ff5f",
+      "gasUsed": 43249,
+      "fee": "4324900000043249"
+    }
+  ],
+  "readers": [
+    {
+      "mode": "full",
+      "start": 0,
+      "sourceStart": 210,
+      "reference": 222,
+      "head": 223,
+      "sourceHead": 224,
+      "pivot": 0,
+      "peers": 1,
+      "hash": "0x94b522925d3528578ee4a10aaf36a09936524dbefce9c8b746e8bc4cf6545a19",
+      "stateRoot": "0xc5f2f37b69beb8b911f189ab4a7ae080eb1690ef2f794e0bb72dd59bad691633",
+      "log": {
+        "path": "/private/tmp/cbui/hf-rcjdf_r1/reports/cold-full.log",
+        "sha256": "1812b9e4d244fbf9522669f06e794200a3a41f38c15af08b405cac8fe3a9089e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792051450310284189
+      }
+    },
+    {
+      "mode": "snap",
+      "start": 0,
+      "sourceStart": 224,
+      "reference": 236,
+      "head": 237,
+      "sourceHead": 237,
+      "pivot": 169,
+      "peers": 1,
+      "hash": "0xac6ef64ea981eee8c8dd11913aae6151c5f72f41766610b377264c3ee0184294",
+      "stateRoot": "0x3633273f703c66783af3334686359f7a963beda8be07cebbaf4830e3ff9bb6e4",
+      "log": {
+        "path": "/private/tmp/cbui/hf-rcjdf_r1/reports/cold-snap.log",
+        "sha256": "7044539ae53fac163d0ef04ed08a681f8a2e1121ba37acc85ad3860f7b0dd916",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792051464083306347
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-rcjdf_r1",
+      "attemptExitCode": 0,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 309,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-rcjdf_r1/reports/crossfork-sync-inventory.json",
+        "sha256": "55c5ef2119b1708c32726c8e5ef12dd3bfe99e075ba59d4c59c02a5b3c72f9a5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792051486530679087
+      }
+    }
+  ],
+  "retainedFiles": 309,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-crossfork-sync-publication.json",
+    "sha256": "192dbead51f3c54f5ee0a4efddde41ff0ef914766366704a7f854f23465eb021",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792048946828569728
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-crossfork-sync-red.log",
+      "sha256": "702371c8d9d10fa12323680ec7dac34f01849396825dccb3cee16cda35849c4b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792050144239762526
+    },
+    {
+      "path": "/private/tmp/chainbench-crossfork-sync-green-final.log",
+      "sha256": "6e0d3ec326cbb443a89c9cdd7515d2089d8c2000bcf25eed021225abf9d36aef",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792051047168001028
+    },
+    {
+      "path": "/private/tmp/chainbench-crossfork-cli-race.log",
+      "sha256": "cae16d6504cda5f9092dd3da8ef5bc95f98abde36df81944c3d2fe5a70445fa9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792051049848164652
+    },
+    {
+      "path": "/private/tmp/chainbench-crossfork-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792050963302325375
+    },
+    {
+      "path": "/private/tmp/chainbench-crossfork-check.log",
+      "sha256": "12279aa9ccc6cdaff454bb636c82837214d43736c5a995c1d29bbc9f53225674",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792051168486124974
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}
