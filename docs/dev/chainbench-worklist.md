@@ -182,6 +182,25 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-006 7명 NCP 과반수 투표 보강:** 최종 멤버 수·후보 포함만 보는
+판정의 RED를 확인했다. 기존 실패 영수증 거절도 포함한 모델로 다시 대조한 결과 추가
+누락은23가지이고, 기존 실패 status 거절1가지는 새 누락으로 세지 않았다. 양성·총24개
+음성 조건, CLI 전체 race·정적 검사·전체 검사가 통과했다.
+
+실제 WEMIX→WBFT Croissant20 이후 서로 다른 NCP 운영자7명에서 제안26번·투표27~30번을
+확인했다. 정확한 type1/NewProposal·Vote와 원문 입력을 대조했고, 3표까지 Voting/accepts3·
+목록7·후보false를 유지했다. 4표째의 같은 성공 거래에 Vote/NCPAdded/ProposalFinalized(true)가
+정확히 있으며 Accepted/accepts4·목록8·후보true·제안ID 증가가 즉시 반영됐다. 각 거래의
+영수증 높이 고정 상태, raw Keccak·nonce·calldata·canonical 포함·이벤트 ABI의 독립 대조도
+통과했다. 합의 노드는4개이고 NCP7 운영자는 별도 계정이다. 7노드 합의·staker 등록·제거·
+자기 탈퇴·순위·안정화와 기존 공개 JSON 전체 재실행은 이 증명의 범위가 아니다.
+
+실제 검증(78.341초, skip0)의 고정 소스
+`1f8b424c3157726b27c2a491b6daa46bcccbd4e1374d7cb03435418922793d5e` 전후가 같다.
+[7명 과반수 증거](ncp-majority-evidence.json)는 파일229개의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0개다. 원문87개는 확인 범위76·부분8·충돌2·병합1이다.
+전체87·Linux·메인넷 live·legacy·latest 코드 관측 원인 조사·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 WBFT-005·GOV-005 원문 등록/에폭 변경 보강:** epoch 존재만 확인하는
 판정이 잘못된 높이·등록·실제 stake·집합·BLS/index 등의21가지 오류를 통과시키는 RED와,
 이를 거절하는 GREEN을 확인했다. 컴파일만 실패한 overlay는 의미 있는 RED로 세지 않았다.

@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 75,
-    "partial": 9,
+    "confirmed_scope": 76,
+    "partial": 8,
     "conflict": 2,
     "merged": 1
   },
@@ -4940,7 +4940,7 @@
       "id": "GOV-006",
       "title": "GovNCP NCP 추가 제안 및 투표",
       "criterionSha256": "ce4e6baa247dc1b443dd881a289108a3db4c926ac9b05853126a68545434bfe2",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -4952,6 +4952,16 @@
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
           "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
+        },
+        {
+          "path": "cmd/chainbench/ncp_majority_e2e_test.go",
+          "sha256": "46406288fccd9213cfb6d2a6fb9f2631f47362d85fa91ea1c87379ab014d5457",
+          "function": "TestNCPMajorityRejectsMembershipOnly"
+        },
+        {
+          "path": "cmd/chainbench/ncp_majority_native_test.go",
+          "sha256": "66e5e53376d396a029890909b5a3068465b9db2416fd0eb16375cc39b458294a",
+          "function": "TestWemixNCPSevenMemberMajorityE2E"
         }
       ],
       "observations": [
@@ -4959,12 +4969,17 @@
           "analysis": "proposal 첫topic1 ballotID,vote status1,isNCPtrue,count+1"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_seven_operator_strict_majority_and_exact_receipt_events",
       "remainingConditions": [
-        "정확 NewProposal type1/emitter,args·Vote·Finalized·NCPAdded 없음; 7NCP majority경계 아닌1~3NCP"
+        "실제 합의 노드는 WBFT4이며 NCP7 운영자 집합은 별도의 자금 공급 계정이다. 7노드 합의·staker 등록·제거/자기 탈퇴·랭킹·안정화 검증은 이번 범위가 아니다. 기존 공개 JSON 전체 재실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인 조사·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20 이후 7개 독립 NCP 운영자 계정에서 26번 제안(type1), 27~30번의 네 찬성표를 검증했다. 제안과 1~3표는 정확한 NewProposal/Vote와 Voting/accepts0~3, 목록7·후보false를 유지했다. 4표째 같은 성공 거래에서 Vote/NCPAdded/ProposalFinalized(true), Accepted/accepts4와 목록8·후보true·ID 증가가 정확했다. 영수증 높이 고정 상태·서명 원문·정확한 거래 입력·canonical 블록 포함·ABI·이벤트를 독립 대조했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-majority-evidence.json",
+          "sha256": "6fcc235b643d0ca82f91e8ac37f6b44163a20505c75f92e93341762455a764da"
+        }
+      ]
     },
     {
       "id": "GOV-007",
