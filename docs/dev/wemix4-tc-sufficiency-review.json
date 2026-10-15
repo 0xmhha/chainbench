@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "scope": "Original 87 criterion sufficiency review and explicit remaining conditions. confirmed_scope records only stated local proofs, never full original/mainnet/final-Web acceptance. Code presence, historical proofs, pending conflicting criteria and external defects remain distinct.",
-  "reviewedHead": "58145d8a16dbe785738d006f1830f4f1cd0502a8",
+  "reviewedHead": "73aad2e74c57efadb612e9bdfe331d03597a3534",
   "criterionSource": {
     "path": "docs/tc/wemix4.0/01-test-scenarios.md",
     "sha256": "dc4c06f50f3182eb8b0a0ce66221fe90e04e55d1a2addb0600dd415a2e51ea1e"
@@ -8708,9 +8708,13 @@
   ],
   "limitations": [
     "Relevant sources were read, not all 87 freshly executed. Partial records intentionally remain open.",
-    "Fresh -tags e2e -list measurement found37 compiled TestWemix functions. This phase executed6 actual native cases, not all37 and not historical20/22/23.",
+    "All37 freshly compiled TestWemix functions passed serial native race on source d716e13b8061ef0d19a0f1a78a1ec6b61ed2a95ab26348da656236d8efff2122. Independent outcome identities, GOV004/011 ledgers,37 inactive runtimes and8937 retained files checked. This is not all87/public DSL/Linux/mainnet/legacy/final Web acceptance; W3 remains unresolved.",
     "Old Web receipt verification fails; final fresh WEB-01 through WEB-14 capture and independent replay remain.",
     "External Ouroboros QA transmission rejected by automatic approval review; optional approval pending. Local artifact and process review completed."
   ],
-  "latestNativeSourceDigest": "ecb87e6302b83a0a36e714318b0864a74232f14821345695d4ec637b48be5da7"
+  "latestNativeSourceDigest": "d716e13b8061ef0d19a0f1a78a1ec6b61ed2a95ab26348da656236d8efff2122",
+  "latestNativeRegressionEvidence": {
+    "path": "docs/dev/wemix37-regression-evidence.json",
+    "sha256": "ca7aa3a3311e3fca9f92721abe72ccb20dd1317c286d3756b78d8ca2d4c484b3"
+  }
 }
