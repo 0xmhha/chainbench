@@ -153,15 +153,11 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 	if sendErr == nil {
 		return fmt.Errorf("dsl: sendRawTampered: node accepted a tx with a corrupt %s signature (hash %s)", which, h)
 	}
-	ac.Value = sendErr.Error()
-	// Any refusal used to pass. A tampered signature recovers to some other
-	// address, so the node could refuse for that address's empty balance and
-	// the case would pass without the signature check ever being the reason.
-	// "reason" names what the refusal has to say.
-	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
-		if !strings.Contains(strings.ToLower(sendErr.Error()), strings.ToLower(reason)) {
-			return fmt.Errorf("dsl: sendRawTampered: the %s-tampered tx was refused, but not for %q: %v", which, reason, sendErr)
-		}
+	// A failed HTTP request or RPC protocol error says nothing about the
+	// signature. Use the same typed submission check as sendTx, including its
+	// reason match against the node message rather than the method name.
+	if err := checkSubmitRejected(h, sendErr, ac); err != nil {
+		return fmt.Errorf("dsl: sendRawTampered (%s): %w", which, err)
 	}
 	return nil
 }
