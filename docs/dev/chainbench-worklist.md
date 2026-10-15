@@ -182,6 +182,29 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 WBFT-005·GOV-005 원문 등록/에폭 변경 보강:** epoch 존재만 확인하는
+판정이 잘못된 높이·등록·실제 stake·집합·BLS/index 등의21가지 오류를 통과시키는 RED와,
+이를 거절하는 GREEN을 확인했다. 컴파일만 실패한 overlay는 의미 있는 RED로 세지 않았다.
+관련 CLI 전체 race·정적 검사·전체 검사가 통과했다. 첫 실제 시도는 빈 키링 암호 때문에
+WEMIX 배포가 입력을 요구해 준비 단계에서 실패했고, 다음 시도는 고정 tip1wei 거래의
+전 노드 pending 관측에 실패했다. 두 실패 자료를 보존했고 명시 암호·노드 제안 수수료로
+fixture를 고친 뒤 관련 회귀·정적 검사와 실제 race를 다시 통과했다.
+
+생성 키의 WEMIX1+WBFT5노드, Croissant100/epoch10에서102 높이를 멈춰 첫 신규 GovStaking
+등록을 정확히103에 채굴했다. 나머지는104·105·106에 등록됐고 네 거래의 원문 minimum1e25,
+등록 전102의0·등록 후 영수증 높이의 totalStaked1e25, input/receipt/event/BLS/PoP/proxy가
+정확했다. 109의 초기 seed5 집합이110에서 등록된 네 staker/validator/BLS로 갱신되고
+stabilizing=false이며,111 RPC가 그 집합을 사용했다. 일반109/111의 epochInfo는 명시 null이다.
+독립 RLP의9필드·epoch 내용·raw Keccak·이벤트 ABI·이전5/다음4의 쿼럼까지 일치했다.
+등록 대상은 초기 seed였으므로 seed 외부 노드 편입으로 확대하지 않는다. target4/threshold4/
+useNCPfalse와2초 주기를 명시한 로컬 fixture이며 기존 공개 JSON 전체 재실행은 아니다.
+
+실제 검증(139.086초, skip0)의 고정 소스
+`e37a6c3fae80bf3b7eb7d984b766bd2dc4fd79f604b6e373063ea6d43df06a98` 전후가 같다.
+[등록·에폭 증거](registered-epoch-evidence.json)는 세 시도 파일704개의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0개다. 원문87개는 확인 범위75·부분9·충돌2·병합1이다.
+전체87·Linux·메인넷 live·legacy·latest 코드 관측 원인 조사·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 WBFT-009 이전 블록 서명자 집합 보강:** count>=3만 확인하는 판정이
 잘못된 부모 조회·블록 연결·밸리데이터 수·쿼럼·중복/외부 주소·집계서명 형식의14가지 오류를
 허용하는 RED→GREEN을 확인했다. 기존 쿼럼 장애 경계와 관련 실행 엔진·노드 관측·체인 구성
