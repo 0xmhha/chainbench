@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 70,
-    "partial": 14,
+    "confirmed_scope": 72,
+    "partial": 12,
     "conflict": 2,
     "merged": 1
   },
@@ -8290,7 +8290,7 @@
       "id": "RPC-020",
       "title": "eth\\_subscribe (newHeads)",
       "criterionSha256": "65286175b792297b0338a4e0c5dfea25cc40f4256e6df664a56dceb39334e7f3",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -8302,6 +8302,21 @@
           "path": "internal/testhelper/websocket.go",
           "sha256": "0be2ee7b6d7a144980d83e954f6b21c62080ff61251dd2e39f7adec2e7db724e",
           "function": "wsSubscribeAssertion.Check"
+        },
+        {
+          "path": "cmd/chainbench/websocket_witness_e2e_test.go",
+          "sha256": "5d4c54552b1b186025aeca77fd23dfdfc309056378c840a8fc7d0cb3b098023b",
+          "function": "TestWebsocketWitnessRejectsCountsWithoutPayloadOrigin"
+        },
+        {
+          "path": "cmd/chainbench/websocket_witness_e2e_test.go",
+          "sha256": "5d4c54552b1b186025aeca77fd23dfdfc309056378c840a8fc7d0cb3b098023b",
+          "function": "TestWSDeploymentRequiresReceiptPinnedCode"
+        },
+        {
+          "path": "cmd/chainbench/websocket_witness_native_test.go",
+          "sha256": "f57330fc102ecebea09f7b2d98178e59d4a8f2433f86832ca41f0a483bb68f0f",
+          "function": "TestWemixWebsocketWitnessE2E"
         }
       ],
       "observations": [
@@ -8320,18 +8335,23 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_native_websocket_payload_origin_and_bounded_delivery",
       "remainingConditions": [
-        "관측기간 실제 생성 block 개수와 수신 개수의 정확한 일치, 각 payload hash/parentHash 존재 및 체인연결은 미검증. block number와 엄격증가 단언은 이미 helper에 있음."
+        "기존 공개 JSON 전체를 재실행한 것은 아니며 공개 runtime만 재사용한 새 로컬 native 대응 테스트다. 서명·큐 대기·합의까지 포함한 제출→수신 상한을 관측했으며 모든 환경의 SLA로 일반화하지 않는다. 첫 latest 배포 코드 조회0x의 정확한 원인은 미확정이며, 영수증 고정 관측 보강을 생산 결함 해결로 표시하지 않는다. 전체87·Linux·메인넷 live·legacy·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20 이후 소유한 네 생산자의 일시 중지로 관측 경계를 고정했다. WS node2의 acknowledgement 뒤44→49 사이 생성된45~49 다섯 블록과 수신한 다섯 newHeads가 정확히 같았다. number/hash/parentHash 및 연속 연결과 고정 HTTP canonical 블록을 독립 대조했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/websocket-witness-evidence.json",
+          "sha256": "8d7ca9bfab2c699ab26dc415f975ee0e72bd0dfdaa8b65d3dc6d30a6719799e3"
+        }
+      ]
     },
     {
       "id": "RPC-021",
       "title": "eth\\_subscribe (logs)",
       "criterionSha256": "438f2acb25623d54270657bad8fd698de4f14251d10a844ba2781f6fa3c303bb",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -8343,6 +8363,21 @@
           "path": "internal/testhelper/websocket.go",
           "sha256": "0be2ee7b6d7a144980d83e954f6b21c62080ff61251dd2e39f7adec2e7db724e",
           "function": "wsCollectedAssertion.Check"
+        },
+        {
+          "path": "cmd/chainbench/websocket_witness_e2e_test.go",
+          "sha256": "5d4c54552b1b186025aeca77fd23dfdfc309056378c840a8fc7d0cb3b098023b",
+          "function": "TestWebsocketWitnessRejectsCountsWithoutPayloadOrigin"
+        },
+        {
+          "path": "cmd/chainbench/websocket_witness_e2e_test.go",
+          "sha256": "5d4c54552b1b186025aeca77fd23dfdfc309056378c840a8fc7d0cb3b098023b",
+          "function": "TestWSDeploymentRequiresReceiptPinnedCode"
+        },
+        {
+          "path": "cmd/chainbench/websocket_witness_native_test.go",
+          "sha256": "f57330fc102ecebea09f7b2d98178e59d4a8f2433f86832ca41f0a483bb68f0f",
+          "function": "TestWemixWebsocketWitnessE2E"
         }
       ],
       "observations": [
@@ -8378,12 +8413,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_native_websocket_payload_origin_and_bounded_delivery",
       "remainingConditions": [
-        "<1block latency, returned address/topic0 직접 검증 없음. 필터를 실제 전송하는 것과 응답 payload 정확성을 확인하는 것을 구분한다."
+        "기존 공개 JSON 전체를 재실행한 것은 아니며 공개 runtime만 재사용한 새 로컬 native 대응 테스트다. 서명·큐 대기·합의까지 포함한 제출→수신 상한을 관측했으며 모든 환경의 SLA로 일반화하지 않는다. 첫 latest 배포 코드 조회0x의 정확한 원인은 미확정이며, 영수증 고정 관측 보강을 생산 결함 해결로 표시하지 않는다. 전체87·Linux·메인넷 live·legacy·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 이관 후 공개 LOG1 런타임을 두 주소에 배포하고 WS node2에서 address+topic 필터를 구독했다. 같은topic의 다른주소 성공 로그는 제외됐고 대상의 정확한 address/topic/tx/hash/index/data/removed와 영수증이 일치했다. SDK 호출 전부터 수신까지의 보수적인 지연 상한291.625ms가 실제 블록 주기1초 미만이었다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/websocket-witness-evidence.json",
+          "sha256": "8d7ca9bfab2c699ab26dc415f975ee0e72bd0dfdaa8b65d3dc6d30a6719799e3"
+        }
+      ]
     },
     {
       "id": "RPC-022",
