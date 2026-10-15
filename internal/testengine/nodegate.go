@@ -223,21 +223,30 @@ func factsFromReport(rep health.Report, ns node.NodeSet, fork forkGate) []nodemo
 	advancing := rep.Producing || fork.parked(rep)
 	facts := make([]nodemonitor.Facts, 0, len(rep.Nodes))
 	for _, ni := range rep.Nodes {
+		var minimumHeight uint64
+		// A post-handover successor must have executed the activation block.
+		// Ordinary two-block sampling skew cannot excuse a node still on the
+		// pre-fork engine. Restart-style upgrades happen before activation and
+		// pre-fork producers remain retired, so neither receives this floor.
+		if fork.handedOver && !fork.restart && fork.at > 0 && !fork.preFork[ni.Index] {
+			minimumHeight = uint64(fork.at) //nolint:gosec // positive declared height
+		}
 		facts = append(facts, nodemonitor.Facts{
-			Node:       ni.Index,
-			Label:      "node" + strconv.Itoa(ni.Index),
-			Wanted:     true,
-			Retired:    fork.retired(ni.Index, head),
-			PIDAlive:   pid[ni.Index] > 0,
-			RPCUp:      ni.OK,
-			ChainID:    ni.ChainID,
-			Height:     ni.BlockNumber,
-			Advancing:  advancing,
-			WantHeight: head,
-			WantPeers:  wantPeers,
-			Forked:     forked,
-			Syncing:    ni.Syncing,
-			Peers:      clampCount(ni.PeerCount),
+			Node:          ni.Index,
+			Label:         "node" + strconv.Itoa(ni.Index),
+			Wanted:        true,
+			Retired:       fork.retired(ni.Index, head),
+			PIDAlive:      pid[ni.Index] > 0,
+			RPCUp:         ni.OK,
+			ChainID:       ni.ChainID,
+			Height:        ni.BlockNumber,
+			Advancing:     advancing,
+			WantHeight:    head,
+			WantMinHeight: minimumHeight,
+			WantPeers:     wantPeers,
+			Forked:        forked,
+			Syncing:       ni.Syncing,
+			Peers:         clampCount(ni.PeerCount),
 		})
 	}
 	return facts

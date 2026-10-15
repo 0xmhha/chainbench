@@ -1,0 +1,273 @@
+{
+  "scope": "Fix deterministic READY misclassification when network21/successor19 straddles activation20 within generic two-block lag tolerance. Derive absolute minimum from declared non-restart handed-over fork for successor nodes. Preserve pre-fork parking, restart before activation, retired producers, ordinary post-fork sampling lag, fatal precedence and wait budget. Native normal handoffs20/100 require all four successor capability probes supported and sampled heights>=activation without retries. Native artificial node lag was not injected; unit gate proves exact mixed-height wait and timeout. Not all transient RPC issues/W3/W4/full87/Linux/mainnet/final Web.",
+  "allBacklogComplete": false,
+  "unitRed": "Actual prior native evidence network21/node4at19 READY followed by unknown consensus and blocked case. Deterministic mapping/gate tests reproduced READY and immediate OK even when successor never activated.",
+  "unitGreen": "Mapped activation floor causes WAITABLE\u2192READY at20, deadline preserved; parking/restart/no-fork/tolerance/fatal controls.",
+  "previousNativeFailure": {
+    "evidence": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/staking-read-evidence.json",
+      "sha256": "547878a38f06405a61caa778369e8639c2640e873c1167259ba5cbafcf9357f4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792033494876060145
+    },
+    "root": "/private/tmp/cbui/hf-vp3eg5q1",
+    "consensus": {
+      "path": "/private/tmp/cbui/hf-vp3eg5q1/reports/20261015-030105-44473/UTC-20261015-030106/tests/001_gov-handoff/observations/capability-probes.json",
+      "sha256": "0cd4d038d44d4a889e687d7e7b8ffd49ffec3ecdc9d62784f4d9c82cd245f021",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033299938099398
+    },
+    "networkRPC": {
+      "path": "/private/tmp/cbui/hf-vp3eg5q1/reports/20261015-030105-44473/UTC-20261015-030106/tests/001_gov-handoff/observations/network-capability-probes.json",
+      "sha256": "5e28700cf08da49ae0be6f3e17fe190f80673888df707a0ef9b12571f512a1ce",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033299941190658
+    },
+    "caseStatus": {
+      "path": "/private/tmp/cbui/hf-vp3eg5q1/reports/20261015-030105-44473/UTC-20261015-030106/tests/001_gov-handoff/status.json",
+      "sha256": "bbd18ddff459df107d049f061eabb22e1ff2b6fb4c8854d327c4274057374513",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033299941738668
+    },
+    "runLog": {
+      "path": "/private/tmp/cbui/hf-vp3eg5q1/run.log",
+      "sha256": "cfd8436b520be1f7e607a3b8920bb79bd374196907a7d6035c02e878dd318700",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033299945381937
+    }
+  },
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "9feb35e4777ca9137eb1c06010b86689e5f127174d0d140a0ee8c1486db61a7a",
+    "sourceAfter": "9feb35e4777ca9137eb1c06010b86689e5f127174d0d140a0ee8c1486db61a7a",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceE2E",
+      "TestWemixGovernanceRegisterStakerE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-kjiklvjl",
+      "/private/tmp/cbui/hf-tdh5pr_c"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-kjiklvjl": [],
+      "/private/tmp/cbui/hf-tdh5pr_c": []
+    },
+    "elapsedSeconds": 225.259,
+    "log": {
+      "path": "/private/tmp/chainbench-fork-readiness-native-native.jsonl",
+      "sha256": "ce251233047f4f65b3bbbf8a184911f359e180f30294631ada0d69e89fcc9957",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034443015755522
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-fork-readiness-native-summary.json",
+      "sha256": "a0d38555bf7d75e7cb85fab3ed23d1103021818bdcff3557c5db91f84bb6a090",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034443526282425
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-fork-readiness-native-start.json",
+      "sha256": "440e2de35d779fdc0d135636044b328ed1d56f01d56b432d6cc1a36bb2001d21",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034213680682783
+    }
+  },
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-kjiklvjl",
+      "fork": 20,
+      "successorProbeHeights": {
+        "1": 23,
+        "2": 23,
+        "3": 23,
+        "4": 23
+      },
+      "consensus": {
+        "path": "/private/tmp/cbui/hf-kjiklvjl/reports/20261015-031658-80150/UTC-20261015-031927/tests/001_gov-handoff/observations/capability-probes.json",
+        "sha256": "89c5587f8847867ea06ef571c9c2eb3fb9065edd3873f8e68e49f8e38b820da4",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034434112897446
+      },
+      "networkRPC": {
+        "path": "/private/tmp/cbui/hf-kjiklvjl/reports/20261015-031658-80150/UTC-20261015-031927/tests/001_gov-handoff/observations/network-capability-probes.json",
+        "sha256": "32c26141de9820965cab155b42414da610d84b816dd1a4e6800a8ccfd86542e0",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034434115182393
+      },
+      "session": {
+        "path": "/private/tmp/cbui/hf-kjiklvjl/reports/20261015-031658-80150/UTC-20261015-031927/session.json",
+        "sha256": "b649b4fc46887e026a9cbc8e62675db51f70ac3e96254e7bf1b3bcc89e941a69",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034436145299883
+      },
+      "activationWaitObservedInNativeLog": true,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-kjiklvjl/reports/fork-readiness-inventory.json",
+        "sha256": "6e3e8e5bfe4f6846ea9987ef9530264c3dd51db3d818ed5af63dbddf7b2e65b7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034451179525191
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-tdh5pr_c",
+      "fork": 100,
+      "successorProbeHeights": {
+        "1": 103,
+        "2": 103,
+        "3": 103,
+        "4": 103
+      },
+      "consensus": {
+        "path": "/private/tmp/cbui/hf-tdh5pr_c/reports/20261015-031658-80150/UTC-20261015-031658/tests/001_gov-handoff/observations/capability-probes.json",
+        "sha256": "89c5587f8847867ea06ef571c9c2eb3fb9065edd3873f8e68e49f8e38b820da4",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034359208997353
+      },
+      "networkRPC": {
+        "path": "/private/tmp/cbui/hf-tdh5pr_c/reports/20261015-031658-80150/UTC-20261015-031658/tests/001_gov-handoff/observations/network-capability-probes.json",
+        "sha256": "267f032cb177682e085c1eda06521d6ecff58fe1a7cbd1b3b6d3fd5999ae8842",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034359212657361
+      },
+      "session": {
+        "path": "/private/tmp/cbui/hf-tdh5pr_c/reports/20261015-031658-80150/UTC-20261015-031658/session.json",
+        "sha256": "d10f09fc287277ea322d5cf519360f83a148762b5097b15b8dcb982c699fa4d2",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034361241245205
+      },
+      "activationWaitObservedInNativeLog": true,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-tdh5pr_c/reports/fork-readiness-inventory.json",
+        "sha256": "6cbe8cdbba95b313a937e02ccab61212a1863dccfbf02cf9d45ebe596f623b01",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792034451211421414
+      }
+    }
+  ],
+  "retainedFiles": 456,
+  "frozenWorklist": {
+    "path": "/private/tmp/chainbench-worklist-before-fork-readiness-publication.md",
+    "sha256": "555c854cf07f157521e9f2860cf32fb11e9a5a5494f6583cafd8a7adf23e86b3",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792033595085473411
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-red.log",
+      "sha256": "b6f3cf950330d373187e384db39ed3038196e155731a607473bd81e987daa3d0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033768535677291
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-green.log",
+      "sha256": "dbc5942c2470f6ddfd451ced9c3886da3c987deb381ef5d94fbd7609e5eecef6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033815988653042
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-green2.log",
+      "sha256": "89c8d88cd339db0a5ad2eb043036daead77a23c99cde2a2f3762e607274be63f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033844166125367
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-related-race.log",
+      "sha256": "0f5a68cef0d36f2880bc6ed94698eb8c049629e503ce941e9ff07baffd0f83b4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033987873288842
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-check.log",
+      "sha256": "1653c1f20c273a3fd8eb71c778ee404a750dafbb9bdd79eeae4cbb036de2101f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034058001839321
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-check2.log",
+      "sha256": "861d866009ff95cfffd5a5e50f7f00dcdd7d9209d7174dabfb82b13561a03368",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034195396203349
+    },
+    {
+      "path": "/private/tmp/chainbench-fork-readiness-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792033931447949968
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

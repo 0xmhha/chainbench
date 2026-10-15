@@ -6408,17 +6408,24 @@
         },
         {
           "analysis": "실제WEMIX→WBFT Croissant20 이후 min1e25 getter·등록input/value·설정정확값 일치. 영수증parent/mined 고정 totalStaking0→1e25 증가와 등록이벤트/Rewardee배포 회귀 독립대조. 최초준비시도는node4height19/consensus unknown으로blocked였고same-source재시도후성공;자료보존·간헐문제해결로 표시안함."
+        },
+        {
+          "analysis": "준비상태 후속 보강: 선언된 활성화 최소높이를 후속노드에 연결. 실제20/100 이관 모두 최소높이 미달로 대기후 네후속노드23/103·consensus supported. 이전21/19READY 재현과 대기/시간제한·기존준비계약 회귀 통과. 모든일시RPC오류해결은아님."
         }
       ],
       "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
       "remainingConditions": [
-        "원문읽기·스테이킹후증가 명제는native범위확인. 첫 준비시도의fork전node4height19/consensus unknown 관찰은별도준비상태후속검토이며해결아님. 전체87·Linux·메인넷live·legacy·공개DSL·최종Web는별도잔여."
+        "원문읽기·스테이킹후증가 명제는 native범위확인. 별도 준비 판정 보강으로 이관 뒤 후속 노드의 포크 전 높이 READY를 거절하고 활성화까지 기다린다. 모든 RPC 지연의 해결로 확대하지 않음. 전체87·Linux·메인넷live·legacy·공개DSL·최종Web는별도잔여."
       ],
       "confirmedScope": "실제Croissant20 이관후 등록영수증parent/mined 고정 GovConfig.minimumStaking·생성설정1e25 일치, GovStaking.totalStaking0→1e25 정확증가·해당등록input/value/receipt/event/deployment 연결.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/staking-read-evidence.json",
           "sha256": "547878a38f06405a61caa778369e8639c2640e873c1167259ba5cbafcf9357f4"
+        },
+        {
+          "path": "docs/dev/fork-readiness-evidence.json",
+          "sha256": "037090a30bdb6d19846e10433f54f10bf9283bb8f02687ff7d063efc5e6b6ca7"
         }
       ]
     },
