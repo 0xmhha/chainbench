@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 45,
-    "confirmed_scope": 40,
+    "partial": 40,
+    "confirmed_scope": 45,
     "conflict": 1,
     "merged": 1
   },
@@ -5392,7 +5392,7 @@
       "id": "RPC-003",
       "title": "istanbul\\_getValidators",
       "criterionSha256": "d067fa83f590074114e8e6e0f69bf4d0405e39ae8eda20a9d32bd5cfea895f8b",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -5414,6 +5414,16 @@
           "path": "tests/tc/common/node/CT-NODE-002-startup-15-nodes.json",
           "sha256": "b91adaf36a6e98456269d9c208807d2ccb22827809652be77b73befbbcd2709f",
           "id": "stablenet-chain-up-15"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_test.go",
+          "sha256": "66be5d462083514b2618ce57f3a92ad93764fa73d4dff0c81eee3e4c6dd0ec6d",
+          "function": "TestIdentityEpochRejectsPresenceOnlyQueries"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_native_test.go",
+          "sha256": "cc6176881aae1b0803e9de6e2075fac77109071869e84ff38039c9e16c72c451",
+          "function": "TestNativeIdentityEpochGenesisQueries"
         }
       ],
       "observations": [
@@ -5598,26 +5608,44 @@
               "all"
             ]
           }
+        },
+        {
+          "analysis": "epoch10의9/10/11·19/20/21 tagged 검증자 배열이 설정target4·실제BP4와 exact 일치. 첫 actual 시도는 객체 대신 배열decode를 가정해 실패했으며 별도 accepted=false로 보존. 수정 후 실제/독립 대조 통과."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "두 epoch 전후에 tagged istanbul_getValidators로 조회한 주소배열/각TargetValidators 일치가 미검증. startup validator count검사는 이미 존재."
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. epoch10/target4 직접 구성이며 메인넷 epoch/target 수치의 증명은 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "현재 WBFT Croissant0 BP4 EN1 실제 증명. epoch10의9/10/11·19/20/21 tagged 검증자 배열이 설정target4·실제BP4와 exact 일치.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/identity-epoch-evidence.json",
+          "sha256": "5afb91674f74b45b956ea44e87e872b53a0cc1954587d4b49793a2263e5f2ada"
+        }
+      ]
     },
     {
       "id": "RPC-004",
       "title": "istanbul\\_getCommitSignersFromBlock",
       "criterionSha256": "3949507d17f498883a11f177c68547ca998c935db006171ecd8b16d838ed2bf0",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-stablenet/regression/api/13-commit-signers-quorum.json",
           "sha256": "b8e70e8a211d78b5e6be276ba19ac4a3a0db4d4476d0822e4b9cf9a22f88252c",
           "id": "commit-signers-quorum"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_test.go",
+          "sha256": "66be5d462083514b2618ce57f3a92ad93764fa73d4dff0c81eee3e4c6dd0ec6d",
+          "function": "TestIdentityEpochRejectsPresenceOnlyQueries"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_native_test.go",
+          "sha256": "cc6176881aae1b0803e9de6e2075fac77109071869e84ff38039c9e16c72c451",
+          "function": "TestNativeIdentityEpochGenesisQueries"
         }
       ],
       "observations": [
@@ -5649,14 +5677,22 @@
               "latest"
             ]
           }
+        },
+        {
+          "analysis": "같은 지정6블록의 BlockSigners Number/Hash/Author=실제헤더; Committers>=3·중복 없음·해당 검증자 부분집합. 첫 actual 시도는 객체 대신 배열decode를 가정해 실패했으며 별도 accepted=false로 보존. 수정 후 실제/독립 대조 통과."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "quorum수/부분집합 직접없음; StableNet전용preset에고정"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. epoch10/target4 직접 구성이며 메인넷 epoch/target 수치의 증명은 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "현재 WBFT Croissant0 BP4 EN1 실제 증명. 같은 지정6블록의 BlockSigners Number/Hash/Author=실제헤더; Committers>=3·중복 없음·해당 검증자 부분집합.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/identity-epoch-evidence.json",
+          "sha256": "5afb91674f74b45b956ea44e87e872b53a0cc1954587d4b49793a2263e5f2ada"
+        }
+      ]
     },
     {
       "id": "RPC-005",
@@ -6169,7 +6205,7 @@
       "id": "RPC-010",
       "title": "istanbul\\_nodeAddress",
       "criterionSha256": "1ba705b5559de9a3827de0aa0820a23d3ba4f6dd42265d9e1a913ae235e46134",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -6181,6 +6217,16 @@
           "path": "tests/e2e/wbft_rpc_test.go",
           "sha256": "f24fe146e6498a6a5de9430a6e88b8dab5270c41f05ca3d9a3e4661be25d94d2",
           "function": "TestE2E_WbftIsValidator"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_test.go",
+          "sha256": "66be5d462083514b2618ce57f3a92ad93764fa73d4dff0c81eee3e4c6dd0ec6d",
+          "function": "TestIdentityEpochRejectsPresenceOnlyQueries"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_native_test.go",
+          "sha256": "cc6176881aae1b0803e9de6e2075fac77109071869e84ff38039c9e16c72c451",
+          "function": "TestNativeIdentityEpochGenesisQueries"
         }
       ],
       "observations": [
@@ -6202,20 +6248,28 @@
               "bp4"
             ]
           }
+        },
+        {
+          "analysis": "BP4/EN1 각각 nodeAddress=공개키 Keccak 주소=metadata; admin enode 공개키/ID 연결과 BP포함·EN제외. 첫 actual 시도는 객체 대신 배열decode를 가정해 실패했으며 별도 accepted=false로 보존. 수정 후 실제/독립 대조 통과."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "BP address validator집합포함/EN address 반환과집합미포함의identity직접단언없음"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. epoch10/target4 직접 구성이며 메인넷 epoch/target 수치의 증명은 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "현재 WBFT Croissant0 BP4 EN1 실제 증명. BP4/EN1 각각 nodeAddress=공개키 Keccak 주소=metadata; admin enode 공개키/ID 연결과 BP포함·EN제외.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/identity-epoch-evidence.json",
+          "sha256": "5afb91674f74b45b956ea44e87e872b53a0cc1954587d4b49793a2263e5f2ada"
+        }
+      ]
     },
     {
       "id": "RPC-011",
       "title": "istanbul\\_isValidator — 밸리데이터/비밸리데이터 노드",
       "criterionSha256": "a4449e94cbd4543d76d41ffeac9191ed39f75965b6515e04eafebec2b135aeca",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -6227,6 +6281,16 @@
           "path": "tests/e2e/wbft_rpc_test.go",
           "sha256": "f24fe146e6498a6a5de9430a6e88b8dab5270c41f05ca3d9a3e4661be25d94d2",
           "function": "TestE2E_WbftIsValidator"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_test.go",
+          "sha256": "66be5d462083514b2618ce57f3a92ad93764fa73d4dff0c81eee3e4c6dd0ec6d",
+          "function": "TestIdentityEpochRejectsPresenceOnlyQueries"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_native_test.go",
+          "sha256": "cc6176881aae1b0803e9de6e2075fac77109071869e84ff38039c9e16c72c451",
+          "function": "TestNativeIdentityEpochGenesisQueries"
         }
       ],
       "observations": [
@@ -6250,14 +6314,22 @@
               "latest"
             ]
           }
+        },
+        {
+          "analysis": "5개 실제 endpoint의 높이21 isValidator BP=true·EN=false, 기존 공개BP true 케이스실행. 과거 소유자 상태전이증거와 별도 fresh 조회. 첫 actual 시도는 객체 대신 배열decode를 가정해 실패했으며 별도 accepted=false로 보존. 수정 후 실제/독립 대조 통과."
         }
       ],
       "semanticAssessment": "core_original_assertions_present; current_actual_proof_not_executed_by_probe",
       "remainingConditions": [
-        "원문목적scope단언은있으나currentnative실행수집본probe안함"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. epoch10/target4 직접 구성이며 메인넷 epoch/target 수치의 증명은 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "현재 WBFT Croissant0 BP4 EN1 실제 증명. 5개 실제 endpoint의 높이21 isValidator BP=true·EN=false, 기존 공개BP true 케이스실행. 과거 소유자 상태전이증거와 별도 fresh 조회.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/identity-epoch-evidence.json",
+          "sha256": "5afb91674f74b45b956ea44e87e872b53a0cc1954587d4b49793a2263e5f2ada"
+        }
+      ]
     },
     {
       "id": "RPC-012",
@@ -6539,13 +6611,23 @@
       "id": "RPC-013",
       "title": "eth\\_chainId",
       "criterionSha256": "e4e2bdea95acbd1aa797fe4b6da7c9d64a9bb6bd18bfc1a23a43377a42bb6b8a",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/node/CT-NODE-003-genesis-init.json",
           "sha256": "0694307526564737b5d97f958fcd753383689cc44810f32e0f4d12b02246250f",
           "id": "genesis-block-hash-consistent"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_test.go",
+          "sha256": "66be5d462083514b2618ce57f3a92ad93764fa73d4dff0c81eee3e4c6dd0ec6d",
+          "function": "TestIdentityEpochRejectsPresenceOnlyQueries"
+        },
+        {
+          "path": "internal/testengine/identity_epoch_native_test.go",
+          "sha256": "cc6176881aae1b0803e9de6e2075fac77109071869e84ff38039c9e16c72c451",
+          "function": "TestNativeIdentityEpochGenesisQueries"
         }
       ],
       "observations": [
@@ -6615,14 +6697,22 @@
               "all"
             ]
           }
+        },
+        {
+          "analysis": "생성된 실제 genesis config.chainId8284와5개 endpoint의 eth_chainId 일치·공개genesis case실행. 첫 actual 시도는 객체 대신 배열decode를 가정해 실패했으며 별도 accepted=false로 보존. 수정 후 실제/독립 대조 통과."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "common genesis-init은 체인별 preset 예상chainID와 모든노드반환값·genesis parent/hash정합성을 확인한다. generated genesis config.chainId 파일을 직접 읽어RPC와 비교하는 독립 단언은 없음. 하드코딩된 preset expected값 자체를 누락으로 세지 않는다."
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. epoch10/target4 직접 구성이며 메인넷 epoch/target 수치의 증명은 아님."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "현재 WBFT Croissant0 BP4 EN1 실제 증명. 생성된 실제 genesis config.chainId8284와5개 endpoint의 eth_chainId 일치·공개genesis case실행.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/identity-epoch-evidence.json",
+          "sha256": "5afb91674f74b45b956ea44e87e872b53a0cc1954587d4b49793a2263e5f2ada"
+        }
+      ]
     },
     {
       "id": "RPC-014",

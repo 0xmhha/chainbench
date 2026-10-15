@@ -182,6 +182,25 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-003/004/010/011/013 합의 조회 연결 보강:** presence 판정 모델이 잘못된
+노드/역할·신원·제네시스ID·에폭·쿼럼·연결19조건을 허용하는 RED→GREEN을 확인했다.
+초기 import 준비 오류는 별도 보존하고 제품 RED로 세지 않았다. 최초 실제 실행은 공개4케이스가
+통과했으나 서명자 API를 배열로 decode한다고 잘못 가정해 전체 증명에 실패했다. 실제 객체의
+Number/Hash/Author까지 헤더에 연결하는 추가4조건 RED→GREEN을 확인했고, 준비 중 구조체
+필드 누락 오류도 별도 보존했다. 관련 실행 엔진 전체 race·최종 전체 검사가 통과했다.
+
+수정된 actual native race(34.255초, skip0)에서 공개4케이스·단언9개와 BP4/EN1의
+공개키→Keccak 노드ID/주소·metadata·관리API 신원 연결을 독립 대조했다. 높이21 BP4=true,
+EN=false이며 실제 생성 genesis.chainId8284와 모든5노드 RPC가 같다. epoch10의9/10/11·
+19/20/21에서 tagged validators=target4의 BP주소집합, BlockSigners 객체=실제헤더,
+Committers>=3·중복 없음·검증자 부분집합을 확인했다.
+
+고정 소스 `b602471a8445dec67ab5d13ec24549b44ca1ceaadcc31c89dfe2c5ad6609eb05`
+전후가 같다. [신원·에폭 조회 증거](identity-epoch-evidence.json)는 최초 실패도 accepted=false로
+남기고540파일 내용·권한·소유자·mtime을 보존했으며 두 실행의 활성 프로세스·종료 DB는0이다.
+단언만 있는 is-validator case는 동작0개라 steps.json을 만들지 않는 실제 기록 계약을 확인했다.
+원문87개 전체·Linux·메인넷·legacy·단계적 이관·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 GOV-013 승인 기준의 운영자 청구 보강:** 사용자는 원문 operator 프리뷰0과
 현행 v1의 스테이커 지분 프리뷰를 구분하는 기준을 승인했다. 원문 절차는 보존하고 해당 절에
 승인한 차이/대조 기준을 덧붙였다. 기존 잔액 증가 판정 모델이 잘못된 프리뷰·등록 mapping·

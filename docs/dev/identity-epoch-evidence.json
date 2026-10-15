@@ -1,0 +1,578 @@
+{
+  "scope": "RPC003/004/010/011/013 current WBFT Croissant0 BP4 EN1 epoch10. Public four cases plus two tagged boundaries, each commit signer quorum/subset, BP/EN derived identity and validator flags, generated genesis/RPC chain ID exact on five nodes. Not full87/mainnet/Linux/legacy/staged migration/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence model accepted nineteen malformed identity/topology/epoch/quorum/genesis controls; initial unused-import compile failure retained separately and not counted as product RED.",
+  "unitGreen": "One positive, nineteen initial and four response-object negative controls, cryptographic public-key identity derivation and exact tagged boundary membership.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "b602471a8445dec67ab5d13ec24549b44ca1ceaadcc31c89dfe2c5ad6609eb05",
+    "sourceAfter": "b602471a8445dec67ab5d13ec24549b44ca1ceaadcc31c89dfe2c5ad6609eb05",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeIdentityEpochGenesisQueries"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-g9rudr4v"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-g9rudr4v/reports/identity-epoch-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-g9rudr4v": []
+    },
+    "elapsedSeconds": 34.255,
+    "log": {
+      "path": "/private/tmp/chainbench-identity-epoch-object-native.jsonl",
+      "sha256": "1be7cfc95d72a0ecab2074bb6f7a88a660c99df6ef4d100a8934146ab105588a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025020369171055
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-identity-epoch-object-summary.json",
+      "sha256": "1685354bec1d64eed5b301a75f6eccf048d71269bd42f5e512b8037e58ea5cdb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025020814455515
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-identity-epoch-object-start.json",
+      "sha256": "3b76666444dfb8e3d0006621bbf198ee2d8559b2cd96f788984c89104856abc3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024983837327482
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/identity-epoch-proof.json",
+    "sha256": "b8cfecffd78cd95794ca36f111880caf12ca7bfba10450be140bb904d5942457",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792025017186343731
+  },
+  "genesis": {
+    "path": "/private/tmp/cbui/txfail-g9rudr4v/w/runs/20261015-004308/genesis.json",
+    "sha256": "c0833febba15ce355f646e6bf52687aa57030634003773aecf642df24aca7775",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792024988133342075
+  },
+  "keyMetadata": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/metadata.json",
+    "sha256": "62dba855824591a1ed6e9e9cf57d625d58ff5326c0c4a7466586ada8919148d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1791380070113019854
+  },
+  "nodes": [
+    {
+      "Index": 1,
+      "Role": "bp",
+      "ExpectedAddress": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "PublicKey": "8d2153cc491bdb0c1d5533c445fec3641ccbc5177ae45ce8029e8a8e33252ccbed4d08d26b6cf25ba5af75f6305615517eb53b41dc6cbd87ecf6da3191ebd16a",
+      "AdminPublicKey": "8d2153cc491bdb0c1d5533c445fec3641ccbc5177ae45ce8029e8a8e33252ccbed4d08d26b6cf25ba5af75f6305615517eb53b41dc6cbd87ecf6da3191ebd16a",
+      "AdminID": "878a7f9e07a5261d4150b18dc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "ChainID": "0x205c",
+      "Validator": true
+    },
+    {
+      "Index": 2,
+      "Role": "bp",
+      "ExpectedAddress": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Address": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "PublicKey": "3e9a15eb1488c5620ede1babc0ff277c5bbf3556f23d64e6e182c946e8cba213b00a1d24f40ff2c5b9fc533600efd5df636948010d5305c607869ec1f3e07e4c",
+      "AdminPublicKey": "3e9a15eb1488c5620ede1babc0ff277c5bbf3556f23d64e6e182c946e8cba213b00a1d24f40ff2c5b9fc533600efd5df636948010d5305c607869ec1f3e07e4c",
+      "AdminID": "e7666e00b36d8772900465852493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "ChainID": "0x205c",
+      "Validator": true
+    },
+    {
+      "Index": 3,
+      "Role": "bp",
+      "ExpectedAddress": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Address": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "PublicKey": "401168b1b868e5d0ba70cc1de873b5c5634b68f56e5ca0d19538a6bd2f191f572daa9a3a15adc38f060ce6fa81ee958409fcdba3951c8121b23c646d020f4906",
+      "AdminPublicKey": "401168b1b868e5d0ba70cc1de873b5c5634b68f56e5ca0d19538a6bd2f191f572daa9a3a15adc38f060ce6fa81ee958409fcdba3951c8121b23c646d020f4906",
+      "AdminID": "c6a139ea14f61b0850fc68308c4a10b9108d49b9d23f764464090831d9c17764",
+      "ChainID": "0x205c",
+      "Validator": true
+    },
+    {
+      "Index": 4,
+      "Role": "bp",
+      "ExpectedAddress": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Address": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "PublicKey": "124c20ddda04e5de3fb3606b12861d1b695eef3032346dbfc9f35cb84e28634da485d9a9f05b93f22543b55521e7a57a35a3aef0e92df6d11d06c44b984231d5",
+      "AdminPublicKey": "124c20ddda04e5de3fb3606b12861d1b695eef3032346dbfc9f35cb84e28634da485d9a9f05b93f22543b55521e7a57a35a3aef0e92df6d11d06c44b984231d5",
+      "AdminID": "f998ebb636941e331e2cc2c18eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "ChainID": "0x205c",
+      "Validator": true
+    },
+    {
+      "Index": 5,
+      "Role": "en",
+      "ExpectedAddress": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Address": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "PublicKey": "a172e91aed88e8f7bca1d2dc2ec139a7c7446ba4a854d1ee032c06a230e0390ecd3e2b018ce5f3fae817286dba68131f582634bada5e4127ecfb91b86742a162",
+      "AdminPublicKey": "a172e91aed88e8f7bca1d2dc2ec139a7c7446ba4a854d1ee032c06a230e0390ecd3e2b018ce5f3fae817286dba68131f582634bada5e4127ecfb91b86742a162",
+      "AdminID": "16b5662ebef5f62fcdd172e55400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "ChainID": "0x205c",
+      "Validator": false
+    }
+  ],
+  "epochs": [
+    {
+      "SignerNumber": 9,
+      "SignerHash": "0xa6aadf14b9a73fa09be0a5553869b125e2a25139e1e69cb913e0bf4ccde2b8e2",
+      "Author": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "HeaderAuthor": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "At": 9,
+      "Hash": "0xa6aadf14b9a73fa09be0a5553869b125e2a25139e1e69cb913e0bf4ccde2b8e2",
+      "ParentHash": "0x8c109fee99b8062bb6a0d7b2a5caa5029750c28506bd9b7c5cf10b557a2e2a05",
+      "Validators": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "Signers": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
+    },
+    {
+      "SignerNumber": 10,
+      "SignerHash": "0x54ba0fb6a44941fee413cf8810bc666ccc183d862ca7629f4a813536bfbcf0e3",
+      "Author": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "HeaderAuthor": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "At": 10,
+      "Hash": "0x54ba0fb6a44941fee413cf8810bc666ccc183d862ca7629f4a813536bfbcf0e3",
+      "ParentHash": "0xa6aadf14b9a73fa09be0a5553869b125e2a25139e1e69cb913e0bf4ccde2b8e2",
+      "Validators": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "Signers": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
+    },
+    {
+      "SignerNumber": 11,
+      "SignerHash": "0x2f3ee1a383ee505c28d126d035dc8cb881346f131b530d58d517147b021ddde3",
+      "Author": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "HeaderAuthor": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "At": 11,
+      "Hash": "0x2f3ee1a383ee505c28d126d035dc8cb881346f131b530d58d517147b021ddde3",
+      "ParentHash": "0x54ba0fb6a44941fee413cf8810bc666ccc183d862ca7629f4a813536bfbcf0e3",
+      "Validators": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "Signers": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
+    },
+    {
+      "SignerNumber": 19,
+      "SignerHash": "0xe52860231e2fe32a8e2cea788d49b13aba13d7c9c4b5eb576b2ea262ca6333c2",
+      "Author": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "HeaderAuthor": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "At": 19,
+      "Hash": "0xe52860231e2fe32a8e2cea788d49b13aba13d7c9c4b5eb576b2ea262ca6333c2",
+      "ParentHash": "0xe3971ca2cc0a3333097982205f0ccadc7c5177ace900422bc63e6a5d07cefafc",
+      "Validators": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "Signers": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
+    },
+    {
+      "SignerNumber": 20,
+      "SignerHash": "0x0771ebe133c78eebf9264eb7a0aa4738c30219638fe7e27412f173b4357ec429",
+      "Author": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "HeaderAuthor": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "At": 20,
+      "Hash": "0x0771ebe133c78eebf9264eb7a0aa4738c30219638fe7e27412f173b4357ec429",
+      "ParentHash": "0xe52860231e2fe32a8e2cea788d49b13aba13d7c9c4b5eb576b2ea262ca6333c2",
+      "Validators": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "Signers": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
+    },
+    {
+      "SignerNumber": 21,
+      "SignerHash": "0xe922b1fb6b14382bed806e819fcad75662d9f9553812e0c01376e27bc3a43730",
+      "Author": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "HeaderAuthor": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "At": 21,
+      "Hash": "0xe922b1fb6b14382bed806e819fcad75662d9f9553812e0c01376e27bc3a43730",
+      "ParentHash": "0x0771ebe133c78eebf9264eb7a0aa4738c30219638fe7e27412f173b4357ec429",
+      "Validators": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "Signers": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
+    }
+  ],
+  "publicAssertions": [
+    {
+      "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/001_node-address-returned",
+      "spec": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/001_node-address-returned/spec.json",
+        "sha256": "77e885d5b4dd23b1cf01c8adf4a83f17c3945e4e2b18d521572b303479f7fc97",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025003485033000
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/001_node-address-returned/assert.json",
+        "sha256": "901f6a00c195ca3b4f9261a1ae1b44b049912db2760a7f4cc42f4943a86b23d0",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025011023378567
+      },
+      "actionCount": 1,
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/001_node-address-returned/steps.json",
+        "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025011017141962
+      },
+      "count": 1
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/002_commit-signers-quorum",
+      "spec": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/002_commit-signers-quorum/spec.json",
+        "sha256": "3c32c59be799e1ed12c9b40530e8be761df0c83bd81841ddaebf8d28b1875d7e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025011025454393
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/002_commit-signers-quorum/assert.json",
+        "sha256": "c9ab1c06d4c59c30d4e5141894c3d739b16b9d2bc147da6d6698a596b87e95a3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025013068019276
+      },
+      "actionCount": 1,
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/002_commit-signers-quorum/steps.json",
+        "sha256": "9007380789f7e9438d19d81d2fbd66200948b5dba534160f8d0f4c294ff011dc",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025013061217339
+      },
+      "count": 2
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/003_is-validator-flags",
+      "spec": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/003_is-validator-flags/spec.json",
+        "sha256": "05a2df8cf8e4483ec2bf69ceab10a700c059a573a649bc1de64c6f493292a86e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025013069502605
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/003_is-validator-flags/assert.json",
+        "sha256": "de92f723e1e696efb5ce807ebecac747f92a044e5e58f98be6dc740b61c3afec",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025015099883684
+      },
+      "actionCount": 0,
+      "steps": null,
+      "count": 1
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/004_genesis-block-hash-consistent",
+      "spec": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/004_genesis-block-hash-consistent/spec.json",
+        "sha256": "a01cf948d280dd8ae3dcfabbfc6ba778222d794098fcacfcfc6c926ee5bb9c52",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025015101998595
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/004_genesis-block-hash-consistent/assert.json",
+        "sha256": "2043550ae08ea58cfbd51adb100c5ad9f990b70d7475ea70a4a1cecebc896f63",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025017146477968
+      },
+      "actionCount": 1,
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/20261015-004306-45348/UTC-20261015-004306/tests/004_genesis-block-hash-consistent/steps.json",
+        "sha256": "9007380789f7e9438d19d81d2fbd66200948b5dba534160f8d0f4c294ff011dc",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025017132072509
+      },
+      "count": 5
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/txfail-xvld1ghe",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 270,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-xvld1ghe/reports/identity-epoch-inventory.json",
+        "sha256": "a8e98a4fc51c8aeec3606e24d69dbfb490c1c468902876f803d68e51ceab9e64",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025077513216156
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/txfail-g9rudr4v",
+      "accepted": true,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 270,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-g9rudr4v/reports/identity-epoch-inventory.json",
+        "sha256": "3c528b6458dcd859bce579b2399dadc0b8befe369f9dc241af7c825b117255f0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792025077557966601
+      }
+    }
+  ],
+  "active": false,
+  "remainingDatabases": 0,
+  "retainedFiles": 540,
+  "priorFailedAttempt": {
+    "accepted": false,
+    "exitCode": 1,
+    "sourceBefore": "5dfe006c6d39d85203a9147e33b824d86b15325560a61434e38697f047f87517",
+    "sourceAfter": "5dfe006c6d39d85203a9147e33b824d86b15325560a61434e38697f047f87517",
+    "sourceUnchanged": true,
+    "passed": [],
+    "failed": [
+      "TestNativeIdentityEpochGenesisQueries",
+      null
+    ],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-xvld1ghe"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-xvld1ghe/reports/identity-epoch-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-xvld1ghe": []
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-identity-epoch-native-summary.json",
+      "sha256": "71553552652d89651c5e0f2d397d9306e389693c6890c38f4f0e68d4a68a0a7b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024733964201380
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-identity-epoch-native-start.json",
+      "sha256": "4a161a91770f8af33e4a460baff8fc2f656b5be2cb2d66735fef08e9f2aded7e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024665245416976
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-identity-epoch-native-native.jsonl",
+      "sha256": "269abe747acd32838785ed31be28274fcf129bd0df4ed3fd7a113386c0320c74",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024733527673528
+    }
+  },
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-identity-epoch-publication.json",
+    "sha256": "8c3739ba8d78539a3f0425b30aca41f5ec1b03ff7f5ef3bb4502919892b39df5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792024061312374818
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-compile-red.log",
+      "sha256": "27bdd2467160268ef2e2fb25784f8c64d01c27ed28e9a7bb794a7690bfadf677",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024224784191394
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-red.log",
+      "sha256": "f0ffea08c9719706f98742183e711ad25ba2b331a87ba87eb41a9008adbb8922",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024227898363099
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-green.log",
+      "sha256": "76328ecca8edf2ff291c41ccdaf1f354c7614bd965fce938a299ebfcf2686760",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024310247161881
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-object-red.log",
+      "sha256": "599a44147a0c4af06f56adafe8f8184369165916be28a65fc854c7c037830fbb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024779574006501
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-object-compile.log",
+      "sha256": "24b24f802c97d671c98e4e7e83f353c3de2c8d379fb4cb27b5780801282643bd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024828412672741
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-object-red2.log",
+      "sha256": "7a08a0652465ea124076fd72b5e11f0f6ed2d7f92a62474345ecbf79e3cb7507",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024831711124414
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-object-green.log",
+      "sha256": "e7bc720bfadafaeff1a05705258fccd7d0292630f2d845edfce4fcf3e3dfbc96",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024853194861596
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-related-race.log",
+      "sha256": "3651305624d8534a2f64f6450d7494f55d4f077e86d30677b34e952313d1df73",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024404825384509
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-related-race2.log",
+      "sha256": "81671ed217ae1b921ef606d6e9734f8732b56f31296242d7b1bb157390ade7c8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024473276386588
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-related-race3.log",
+      "sha256": "259882575bcad2ef38503e47ae9e77c2b76e215ea108f53a9de0cf83a9e00b49",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024860732587768
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-check.log",
+      "sha256": "cfd4e7dfad5a7be8bddbf1e5b33ecfb896642891a382faa9fe0e6058febbe8a4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024526308935215
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-check2.log",
+      "sha256": "9e8d646ba883e3cc5274a5351896f469aa9e9cac8324a1482c5f92af68f8d9e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024641983857616
+    },
+    {
+      "path": "/private/tmp/chainbench-identity-epoch-check3.log",
+      "sha256": "634a4921fcb76c266ee63acc4e750cfdc40a452116ee910c8710bea70adbff78",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024973569780695
+    }
+  ],
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    }
+  ]
+}
