@@ -50,6 +50,15 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 원문 private1010/testnet8283 환경과 현행8283/8284/8285의 generated BP4를 구분하며 전체254개를 닫지 않는다.
 [원문·보강·실제·독립 증거와 한계](../legacy-genesis-evidence.json).
 
+### 원문18의 코드 없는 수신자·1wei 가스 기준선 보강
+
+과거 부분 포팅 표는18번 원문이 authorizationList와 비교한다고 적었으나, 복구 원문18은 별도의 기준선 검사다.
+공개17에 서로 다른 수신자·value0x1·eth_getCode0x를 추가하고 기존9개 authorization 비용 검사는 유지했다.
+11개 단위 대조와 기록기gzip RED→GREEN·관련 race·전체 검사·StableNet/WBFT 실제2케이스/20단언·독립 대조가 통과했다.
+원문EN 주소 대신BP coinbase/새EOA를 사용하며, 원문17의배포된Simple7702Delegate는 아직 구현/검증하지 않았다.
+첫 중계기록0개 실패의215파일과 성공430파일도 별도 보존했다. 이것은254개 전체 동등성 인수가 아니다.
+[원문·범위 차이·실패/성공·독립 증거](../legacy-authorization-estimate-evidence.json).
+
 ## 방법
 
 양쪽을 AST 로 파싱해 그래프로 만든 뒤 테스트 단위로 대조했다.
