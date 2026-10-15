@@ -174,8 +174,8 @@ func TestWemixGovernanceDelegateE2E(t *testing.T) {
 // registered staker: the operator unstakes its full stake, which drops the
 // staker's amount to zero and deactivates it (a partial unstake below
 // minimumStaking is rejected, so a full unstake is the deactivation path). The
-// withdrawal credential then matures over the unbonding period, which this test
-// does not wait out.
+// withdrawal credential is followed through a mined early refusal and exact
+// maturity, event, slot, pointer and withdrawal ledger checks.
 //
 //	go test -tags e2e -run TestWemixGovernanceUnstakeE2E -timeout 8m ./cmd/chainbench
 func TestWemixGovernanceUnstakeE2E(t *testing.T) {
@@ -184,18 +184,23 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
 	ctx := context.Background()
-
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	key := mustHexBytes(t, scenarioOpKeys["op1"])
+	address, err := ap.AddressForKey(key)
 	if err != nil {
-		t.Fatalf("open operator wallet: %v", err)
+		t.Fatal(err)
 	}
+	url := runGovHandoffOverlay(t, fromBin, toBin, map[string]any{"alloc": map[string]any{address: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}})
+	c := rpc.Dial(url)
+	operator, err := ap.OpenWallet(ctx, key, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertGuardCallerOutsideValidators(t, c, operator.Address())
 	staker := presetNodeAddr(t, 1)
 	blsPK, blsSig := presetNodeBLS(t, 1)
 	minimum := govConfigUint(t, c, "minimumStaking()")
@@ -239,6 +244,64 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	}
 	logGovernanceProof(t, "GOV-016-full-unstake-witness", p)
 	if e := verifyFullUnstakeWitness(p); e != nil {
+		t.Fatal(e)
+	}
+
+	createdIndex, oldest := credentialPointers(t, c, operator.Address())
+	n, err := strconv.ParseUint(oldest, 10, 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	created := credentialAt(t, c, operator.Address(), n)
+	delay := govConfigUint(t, c, "unbondingPeriodStaker()")
+	if !delay.IsUint64() {
+		t.Fatal("unbonding delay invalid")
+	}
+	workflow := unstakeWithdrawalWitness{Ledger: credentialExpiryProof{Caller: operator.Address(), Contract: e2eGovStaking, Amount: amount.String(), N: n}, Delay: delay.Uint64(), Created: created, BeforeCredentialIndex: createdIndex, BeforeWithdrawalIndex: oldest}
+	creationBlock, err := c.BlockByNumber(ctx, fmt.Sprint(p.Receipt["blockNumber"]))
+	if err != nil || created.RequestTime != fmt.Sprint(creationBlock.Timestamp) {
+		t.Fatal("credential creation timestamp differs", err)
+	}
+	input := accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1)))
+	workflow.Early = stakingRejectedTx(t, c, operator, input, new(big.Int), "insufficient withdrawable credentials")
+	earlyBlock, err := c.BlockByNumber(ctx, fmt.Sprint(workflow.Early.Receipt["blockNumber"]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow.EarlyTimestamp = earlyBlock.Timestamp
+	workflow.AfterEarly = credentialAt(t, c, operator.Address(), n)
+	workflow.EarlyCredentialIndex, workflow.EarlyWithdrawalIndex = credentialPointers(t, c, operator.Address())
+	mature, err := strconv.ParseUint(created.WithdrawableTime, 10, 64)
+	if err != nil || earlyBlock.Timestamp >= mature {
+		t.Fatal("early refusal not before credential maturity", err)
+	}
+	waitCredentialTime(t, c, mature)
+	paidHash := stakingSendOK(t, c, operator, input, nil)
+	paid := credentialWithdrawal{Hash: paidHash, Index: n}
+	if err = c.Call(ctx, "eth_getTransactionByHash", &paid.Transaction, paidHash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getTransactionReceipt", &paid.Receipt, paidHash); err != nil {
+		t.Fatal(err)
+	}
+	paidBlock, err := c.BlockByNumber(ctx, fmt.Sprint(paid.Receipt["blockNumber"]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	paid.Timestamp = paidBlock.Timestamp
+	paid.Credentials = []withdrawalCredential{credentialAt(t, c, operator.Address(), n)}
+	paid.CredentialIndex, paid.WithdrawalIndex = credentialPointers(t, c, operator.Address())
+	logs, err := json.Marshal(feeReceipt(t, c, paidHash))
+	if err != nil {
+		t.Fatal(err)
+	}
+	paid.LogsJSON = string(logs)
+	if err = c.Call(ctx, "debug_traceTransaction", &paid.Diff, paidHash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+		t.Fatal(err)
+	}
+	workflow.Success = paid
+	logGovernanceProof(t, "GOV-004-unstake-withdrawal", workflow)
+	if e := verifyUnstakeWithdrawal(workflow); e != nil {
 		t.Fatal(e)
 	}
 
