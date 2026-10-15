@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 76,
-    "partial": 8,
+    "confirmed_scope": 78,
+    "partial": 6,
     "conflict": 2,
     "merged": 1
   },
@@ -4950,7 +4950,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
+          "sha256": "d4ea5df1bfca1495a9cc46ce743261799d7dd9a71f33e7a32f11d1e10642c2a3",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         },
         {
@@ -4985,13 +4985,23 @@
       "id": "GOV-007",
       "title": "GovNCP NCP 제거 (타인 제안, 투표)",
       "criterionSha256": "12a9375c903194c81c32278222b71dcf0d0d189f707d6b48c3231c731478095b",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
+          "sha256": "d4ea5df1bfca1495a9cc46ce743261799d7dd9a71f33e7a32f11d1e10642c2a3",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
+        },
+        {
+          "path": "cmd/chainbench/ncp_removal_e2e_test.go",
+          "function": "TestNCPRemovalRejectsCountAndMembershipOnly",
+          "sha256": "b352c0ff62e008cfb588c479698d3921c0933007e1133e41b19acf8558b76adc"
+        },
+        {
+          "path": "cmd/chainbench/ncp_removal_native_test.go",
+          "function": "TestWemixNCPRemovalAndSelfExitE2E",
+          "sha256": "d4f0eee3731390f231325d8aa6fb37aea0ec87abb5d1bb81864168a29623e71c"
         }
       ],
       "observations": [
@@ -4999,24 +5009,39 @@
           "analysis": "n3 target remove-by-vote,isNCPfalse,count−1"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_exact_council_removal_stake_preservation_and_first_epoch_exclusion",
       "remainingConditions": [
-        "Finalized accepted/NCPRemoved exactevent 및 이후candidate exclusion 없음"
+        "NCP 운영자는 독립 계정이고 실제 합의 노드는4개이다. target4/threshold4의 로컬 fixture이며 기본 threshold5 안정화 과정·7노드 합의·스테이킹 순위는 별도다. 기존 공개 JSON 전체 재실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인 조사·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20/UseNCPtrue, NCP7명과 등록 스테이커4명에서 검증했다. 타인 제거는 제안43·찬성44~47에서 엄격 과반수4표로 정확한 type2/NewProposal/Vote/NCPRemoved/Finalized(true), council7→6이 반영됐다. 6명 상태의 자기 탈퇴는54번 한 거래에서 투표 없이 정확한 세 이벤트·council6→5를 확인했다. 두 대상의 원문 최소1e25와 전체 stakerInfo/BLS·isStaker·운영자 매핑이 전후 pinned 상태에서 동일했고, 각각 첫 다음 epoch50/60에서 정확한3/2 staker·BLS와 API51/61·실제 헤더/쿼럼으로 4→3→2 밸리데이터 제외·계속 생산을 확인했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-removal-evidence.json",
+          "sha256": "8f07f8a81eba7f3fb88beac45ffc70f4962210745aaa5b5163742ae77f1a792e"
+        }
+      ]
     },
     {
       "id": "GOV-008",
       "title": "GovNCP NCP 자기 탈퇴 (즉시 실행)",
       "criterionSha256": "0633faea290ae5102c1fec70a61fd644ab1a6cac3fad08f1e58e9072e54622b8",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "5984472c1b68f85c3dd5a4ea3477750c6d954cc694d55fa4954103551e690742",
+          "sha256": "d4ea5df1bfca1495a9cc46ce743261799d7dd9a71f33e7a32f11d1e10642c2a3",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
+        },
+        {
+          "path": "cmd/chainbench/ncp_removal_e2e_test.go",
+          "function": "TestNCPRemovalRejectsCountAndMembershipOnly",
+          "sha256": "b352c0ff62e008cfb588c479698d3921c0933007e1133e41b19acf8558b76adc"
+        },
+        {
+          "path": "cmd/chainbench/ncp_removal_native_test.go",
+          "function": "TestWemixNCPRemovalAndSelfExitE2E",
+          "sha256": "d4f0eee3731390f231325d8aa6fb37aea0ec87abb5d1bb81864168a29623e71c"
         }
       ],
       "observations": [
@@ -5024,12 +5049,17 @@
           "analysis": "n2 selfexit singletransaction status1,isNCPfalse,count−1"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_exact_council_removal_stake_preservation_and_first_epoch_exclusion",
       "remainingConditions": [
-        "원문>=3입력, staking유지/nextEpochcandidate 제외/단일tx 정확NCPRemoved event 없음"
+        "NCP 운영자는 독립 계정이고 실제 합의 노드는4개이다. target4/threshold4의 로컬 fixture이며 기본 threshold5 안정화 과정·7노드 합의·스테이킹 순위는 별도다. 기존 공개 JSON 전체 재실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인 조사·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20/UseNCPtrue, NCP7명과 등록 스테이커4명에서 검증했다. 타인 제거는 제안43·찬성44~47에서 엄격 과반수4표로 정확한 type2/NewProposal/Vote/NCPRemoved/Finalized(true), council7→6이 반영됐다. 6명 상태의 자기 탈퇴는54번 한 거래에서 투표 없이 정확한 세 이벤트·council6→5를 확인했다. 두 대상의 원문 최소1e25와 전체 stakerInfo/BLS·isStaker·운영자 매핑이 전후 pinned 상태에서 동일했고, 각각 첫 다음 epoch50/60에서 정확한3/2 staker·BLS와 API51/61·실제 헤더/쿼럼으로 4→3→2 밸리데이터 제외·계속 생산을 확인했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-removal-evidence.json",
+          "sha256": "8f07f8a81eba7f3fb88beac45ffc70f4962210745aaa5b5163742ae77f1a792e"
+        }
+      ]
     },
     {
       "id": "GOV-009",

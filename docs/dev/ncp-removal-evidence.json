@@ -1,0 +1,429 @@
+{
+  "scope": "GOV007/008 local WEMIX-to-WBFT Croissant20, UseNCPtrue, NCP7 independent operators and four managed initial seed stakers registered at original minimum1e25. Target4/threshold4 exits stabilization before council changes. Other-member removal needs four distinct votes of seven; self-exit begins with six members>=3 and is one no-vote transaction. Exact proposal/removal/finalized events, pinned full staking info/activity/operator mapping preserved, then first following epoch excludes only removed operator staker and live validators progress4->3->2. Not seven-node consensus, public JSON whole execution/ranking/default-threshold5/Linux/mainnet/full87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Count/membership-only model preserving existing failed-receipt guard accepted26 additional negative controls per path. Later a stronger oracle accepted two later-epoch substitutes; RED4 specifically reproduced both before requiring the first following epoch. Initial syntax failure not semantic RED.",
+  "unitGreen": "Both positives and54 negatives; CLI full race, e2e vet and full make check passed.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "5c83e59a2962a09119a2778d16cbdae35dbf0c1f7601a63b95e884b644b0bf89",
+    "sourceAfter": "5c83e59a2962a09119a2778d16cbdae35dbf0c1f7601a63b95e884b644b0bf89",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixNCPRemovalAndSelfExitE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-n2kx34lv"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-n2kx34lv": []
+    },
+    "elapsedSeconds": 108.132,
+    "log": {
+      "path": "/private/tmp/chainbench-ncp-removal-first-native.jsonl",
+      "sha256": "542aee15b2d12dd43b5131dc90bac5f2f3a34def8d9c5973d2e190a886152ee3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792046099759499316
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-ncp-removal-first-summary.json",
+      "sha256": "77b67b0f0e927f61b49dc33faf2fe073b698c35fd26223d5382e86d0b5997577",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792046100355169630
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-ncp-removal-first-start.json",
+      "sha256": "cf1bb05aa53d6c787e957bb2752d468bc34f021e5f3ee3f3c83aaa27420aff0a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045987070622478
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-n2kx34lv/reports/ncp-removal-proof.json",
+    "sha256": "246fdab9be9a058aa0e04dee89d0201df395bdcc877e8e69d6cf42c4fe671c29",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792046096230902520
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-ncp-removal-evidence.py",
+    "sha256": "320d611abd75701b1ef3347510bf4334041e6032b3f12613a22ed73a12c400c7",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792045922050067374
+  },
+  "reusedDecoderSource": {
+    "path": "/private/tmp/chainbench-original-epoch-evidence.py",
+    "sha256": "87794f7ac8055e5d727b63b3bdcb47896f6b4e4bb8fafca488e3a8ba202c7987",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792038415534476826
+  },
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "changes": [
+    {
+      "self": false,
+      "initialCouncil": 7,
+      "finalCouncil": 6,
+      "targetOperator": "0xf2fce00f68a026187da49393a2533f4a8ae9b4ee",
+      "targetStaker": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "stakePreserved": "10000000000000000000000000",
+      "stages": [
+        {
+          "stage": 0,
+          "height": 43,
+          "hash": "0x91c6f7f93ce4250962de2e0351d49e7c1fb1732c565227fef4c22c5e8d9d2131",
+          "final": false,
+          "logs": 1
+        },
+        {
+          "stage": 1,
+          "height": 44,
+          "hash": "0x847f6f0092a9624cc066239be4af99b64258603332b02d5b51726831c9513842",
+          "final": false,
+          "logs": 1
+        },
+        {
+          "stage": 2,
+          "height": 45,
+          "hash": "0x8143aa70337f4a2c740f5d1075122b3f8428003308a058472c59da8f47a67ba6",
+          "final": false,
+          "logs": 1
+        },
+        {
+          "stage": 3,
+          "height": 46,
+          "hash": "0x19bb7481f6af2153d29856384b145666568ab07293c38e79f30ad91e820a49ca",
+          "final": false,
+          "logs": 1
+        },
+        {
+          "stage": 4,
+          "height": 47,
+          "hash": "0xb93bfbb0170532745efca1e539f873bf64c4dbb20d95b1cfb261370730d29135",
+          "final": true,
+          "logs": 3
+        }
+      ],
+      "firstFollowingEpoch": 50,
+      "before": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ],
+      "after": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+      ],
+      "headers": [
+        {
+          "height": 49,
+          "validators": 4,
+          "quorum": 3,
+          "commits": 3
+        },
+        {
+          "height": 50,
+          "validators": 4,
+          "quorum": 3,
+          "commits": 3
+        },
+        {
+          "height": 51,
+          "validators": 3,
+          "quorum": 3,
+          "commits": 3
+        }
+      ]
+    },
+    {
+      "self": true,
+      "initialCouncil": 6,
+      "finalCouncil": 5,
+      "targetOperator": "0x069da82868fdec05524e85271db98d8d1d071794",
+      "targetStaker": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "stakePreserved": "10000000000000000000000000",
+      "stages": [
+        {
+          "stage": 0,
+          "height": 54,
+          "hash": "0xb829184a6a39d2ed52b6f2e0069d7a86b17b4cf7002c1525dde9b42473c04ce2",
+          "final": true,
+          "logs": 3
+        }
+      ],
+      "firstFollowingEpoch": 60,
+      "before": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+      ],
+      "after": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      ],
+      "headers": [
+        {
+          "height": 59,
+          "validators": 3,
+          "quorum": 3,
+          "commits": 3
+        },
+        {
+          "height": 60,
+          "validators": 3,
+          "quorum": 3,
+          "commits": 3
+        },
+        {
+          "height": 61,
+          "validators": 2,
+          "quorum": 2,
+          "commits": 2
+        }
+      ]
+    }
+  ],
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-n2kx34lv/w/genesis.json",
+      "sha256": "c944f97f6ca2e4f525244efdddbe1316c26419e0ff5dbb2333d8ab8a8744646e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045992770706878
+    },
+    {
+      "path": "/private/tmp/cbui/hf-n2kx34lv/w/node1/genesis.json",
+      "sha256": "c944f97f6ca2e4f525244efdddbe1316c26419e0ff5dbb2333d8ab8a8744646e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045992797492648
+    },
+    {
+      "path": "/private/tmp/cbui/hf-n2kx34lv/w/node2/genesis.json",
+      "sha256": "c944f97f6ca2e4f525244efdddbe1316c26419e0ff5dbb2333d8ab8a8744646e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045993278516524
+    },
+    {
+      "path": "/private/tmp/cbui/hf-n2kx34lv/w/node3/genesis.json",
+      "sha256": "c944f97f6ca2e4f525244efdddbe1316c26419e0ff5dbb2333d8ab8a8744646e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045993605496213
+    },
+    {
+      "path": "/private/tmp/cbui/hf-n2kx34lv/w/node4/genesis.json",
+      "sha256": "c944f97f6ca2e4f525244efdddbe1316c26419e0ff5dbb2333d8ab8a8744646e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045993936639715
+    },
+    {
+      "path": "/private/tmp/cbui/hf-n2kx34lv/w/node5/genesis.json",
+      "sha256": "c944f97f6ca2e4f525244efdddbe1316c26419e0ff5dbb2333d8ab8a8744646e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045994248282388
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-n2kx34lv",
+      "attemptExitCode": 0,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 229,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-n2kx34lv/reports/ncp-removal-inventory.json",
+        "sha256": "a1feb8faf8eff822701336521b57876385dc1d380d2a46528212d20d78de797a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792046128613068518
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-ydmzoqq_",
+      "attemptExitCode": 0,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 229,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-ydmzoqq_/reports/ncp-removal-inventory.json",
+        "sha256": "27191635a0f19c742f2a20a8c8cb265585b7bbe18fc317fd01fdd45c565f67e5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792046128656373281
+      }
+    }
+  ],
+  "retainedFiles": 458,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-ncp-removal-publication.json",
+    "sha256": "7c23b8efa14a1ac62e620a0d7048038ff1af1c9a058857c7ad9d6e0ba79f0f31",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792045858078195214
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-red.log",
+      "sha256": "a28459ce26de66e2db7823497d1ed6dfe2acc86bb91902cb319ef600d9d5203b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045218667821663
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-red2.log",
+      "sha256": "c68a6829050152ba18064c0ad12db783c8e386624a4f9ad6da0c4f7dae935738",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045250368378378
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-red3.log",
+      "sha256": "b3fddc29480e04092d4dd196327a5902f006e1e93de793cb7bfaf589eb0fbfa7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045480969594158
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-red4.log",
+      "sha256": "19ca87625497406cfa5497b57629318d2294c416578a27985305bf901d837861",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045824823362405
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-green.log",
+      "sha256": "3baa80841cd15fa21053fc0cb8504fe537a4abadaa87a99ae39020178813fec4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045317619122977
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-green2.log",
+      "sha256": "ee1d35c84e1e48c258a188895fe46ca931b805915bb219d636704a600756d143",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045513269223123
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-green3.log",
+      "sha256": "2beb01a321696e8d5e78fcc991f64cea1c2a8ade208a1174d04013e152941a3d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045841945545929
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-compile.log",
+      "sha256": "44882b720e2c03e75870a5297ce2a1a597072f160777ae7ed51a8e95a3768441",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045435830422231
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-related-race.log",
+      "sha256": "a71e6955bb88326fc387cb425cf7e17eb6cd8a673984751b8199448931043171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045599274711585
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-related-race2.log",
+      "sha256": "c68fff19f031acfeafbb1248403ab2a0a07180e0add3eb359bc7e463cb622b11",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045957310837723
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045516688625771
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-vet2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045858084550516
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-check.log",
+      "sha256": "8748788238639f9f46e9b3d4d14bd682b2dc826b59090ac6628e5b7b3ce5546c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045608940951645
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-removal-check2.log",
+      "sha256": "0b50f767f19eda20a132ea0f9e6cb01125a054211b3cc906b0016fe004973cdf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792045958754375356
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 // GOV-007 (remove an NCP by vote of the others) and GOV-008 (immediate self-exit)
 // — as one coherent NCP lifecycle on the go-wbft handoff successor. It builds on
 // the GOV-006 add flow: the preset validator accounts (raw keys in presets/keys)
-// are the NCP electorate, and quorum is ceil(2*ncpCount/3).
+// are the NCP electorate, and acceptance requires floor(ncpCount/2)+1 votes.
 //
 //	add node2 (quorum 1)  -> ncpCount 1->2
 //	add node3 (quorum 2)  -> ncpCount 2->3

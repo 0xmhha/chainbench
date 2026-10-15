@@ -182,6 +182,31 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-007·008 NCP 제거/자기 탈퇴와 첫 다음 에폭 제외 보강:** 멤버 수·
+제외 여부만 보고 기존 실패 영수증 거절을 유지하는 모델이 경로별26개 오류를 통과시키는
+RED를 확인했다. 이후 더 강한 판정도 늦은 에폭을 허용하는 두 RED를 추가로 확인했고,
+첫 다음 에폭만 허용해 양성2개·음성54개를 GREEN으로 만들었다. 초기 문법 실패는 의미 있는
+RED로 세지 않았다. CLI 전체 race·정적 검사·전체 검사를 재통과했다. 잘못된 기존 NCP
+가결 설명도 실제 계약의 floor(n/2)+1로 고쳤으며 동작 코드는 바꾸지 않았다.
+
+실제 WEMIX→WBFT Croissant20/UseNCPtrue에서 NCP7명과 등록된 네 스테이커로 검증했다.
+43번 제안과44~47번 찬성표에서 3표까지 미가결, 4표째 정확한 type2/NewProposal/Vote/
+NCPRemoved/Finalized(true)와 council7→6을 확인했다. 6명 상태의 자기 탈퇴54번은 한 거래에
+NewProposal/NCPRemoved/Finalized만 있고 투표가 없으며 council6→5가 됐다. 각각 최종 거래
+직전/영수증 높이의 전체 stakerInfo·BLS·minimum1e25·활성·운영자 매핑이 정확히 유지됐다.
+첫 다음 epoch50/60의 후보·BLS에서 대상 스테이커만 제외됐고, API51/61와 실제 헤더는
+밸리데이터4→3→2·쿼럼3/3/2로 계속 생산했다. 독립 raw Keccak/nonce/calldata·영수증/
+canonical 포함·이벤트 ABI·RLP/index/BLS/bitmap·첫 에폭 공식 대조도 통과했다.
+
+첫 실제 관측도 통과했지만 첫 에폭 판정을 보강한 뒤 최종 소스로 다시 실행했다.
+최종 검증(108.132초, skip0)의 소스
+`5c83e59a2962a09119a2778d16cbdae35dbf0c1f7601a63b95e884b644b0bf89` 전후가 같다.
+[제거·탈퇴 증거](ncp-removal-evidence.json)는 두 실행 파일458개의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0개다. 합의4노드·독립 NCP 운영자·target4/threshold4의
+로컬 fixture이며 7노드 합의·원문 threshold5 안정화·순위·공개 JSON 전체 실행은 별도다.
+원문87개는 확인 범위78·부분6·충돌2·병합1이며, 전체87·Linux·메인넷 live·legacy·latest
+코드 관측 원인 조사·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 GOV-006 7명 NCP 과반수 투표 보강:** 최종 멤버 수·후보 포함만 보는
 판정의 RED를 확인했다. 기존 실패 영수증 거절도 포함한 모델로 다시 대조한 결과 추가
 누락은23가지이고, 기존 실패 status 거절1가지는 새 누락으로 세지 않았다. 양성·총24개
