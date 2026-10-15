@@ -1,0 +1,309 @@
+{
+  "scope": "RPC-007 signed transfer receipt status1, positive gas bounded by actual transaction limit, pinned block number/hash membership, and direct generated activation field. WBFT Croissant0, StableNet/WEMIX London0 regression. Not staged migration/full87/mainnet/Linux/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Existing status/price/logs predicates accepted seven malformed receipt/transaction origins and gas controls.",
+  "unitGreen": "One positive and seven negative controls exercise the public DSL.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "94ecae8d478547ff897e61caa78d1b99913726e6a524a33b62b45d6e523c2daf",
+    "sourceAfter": "94ecae8d478547ff897e61caa78d1b99913726e6a524a33b62b45d6e523c2daf",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeReceiptBlockOrigin/stablenet",
+      "TestNativeReceiptBlockOrigin/wbft",
+      "TestNativeReceiptBlockOrigin/wemix",
+      "TestNativeReceiptBlockOrigin"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-1llob2tq",
+      "/private/tmp/cbui/txfail-gyhgyt3y",
+      "/private/tmp/cbui/txfail-w2llc7y1"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-1llob2tq/reports/receipt-origin-proof.json",
+      "/private/tmp/cbui/txfail-gyhgyt3y/reports/receipt-origin-proof.json",
+      "/private/tmp/cbui/txfail-w2llc7y1/reports/receipt-origin-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-1llob2tq": [],
+      "/private/tmp/cbui/txfail-gyhgyt3y": [],
+      "/private/tmp/cbui/txfail-w2llc7y1": []
+    },
+    "elapsedSeconds": 192.844,
+    "log": {
+      "path": "/private/tmp/chainbench-receipt-origin-native-native.jsonl",
+      "sha256": "e8b1e6b70f519bf897ec00f7979a469a8912887c3fa6d7f1e292c0829d6b50be",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027688222370412
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-receipt-origin-native-summary.json",
+      "sha256": "528c90f7b9a3628a6eca1afdf25235d311bad7f26ddc492a7393d156fc81b54c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027688702164430
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-receipt-origin-native-start.json",
+      "sha256": "1b7729231a1275803b738268938de4bcae3fb956f166b595220e5e1a5ebff749",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027492862075439
+    }
+  },
+  "families": [
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-1llob2tq/reports/receipt-origin-proof.json",
+        "sha256": "433407b6bedafddc26eb6af5ecf4725a3c5aebb1091b719721a60fbd6bac7d4f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027541270232081
+      },
+      "blockNumber": "0x9",
+      "blockHash": "0x6511a0fc6bc72453d486b8e9b37f4b792d58f3ce64c9c243c0735ccfc54683af",
+      "witnessHash": "0x92e5f5f10745a2c3ea3efa3fb01d313bba3539f399896d5d9b353c29044f9384",
+      "extraBytes": 517,
+      "miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "transactions": 1,
+      "gasUsed": 21000,
+      "activationField": "londonBlock",
+      "activation": 0,
+      "genesis": {
+        "path": "/private/tmp/cbui/txfail-1llob2tq/w/genesis.json",
+        "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027495794436664
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-1llob2tq/reports/20261015-012455-70562/UTC-20261015-012455/tests/001_transaction-receipt-fields/assert.json",
+        "sha256": "ec358199869bb56068f8fe3ce1fbde6279c6d5804270c592b5d5f87ea750db5f",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027541259148115
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-1llob2tq/reports/20261015-012455-70562/UTC-20261015-012455/tests/001_transaction-receipt-fields/steps.json",
+        "sha256": "0636c8cc9de22b875b80f2e878d7c84a044631a4b8beb471d410f9bc4ee1aa34",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027541247142941
+      },
+      "assertionCount": 8,
+      "runtime": "/private/tmp/cbui/txfail-1llob2tq",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-1llob2tq/reports/receipt-origin-inventory.json",
+        "sha256": "8abb4b776967b990901bcef6f3fa4f12a20b06d54e92e5ace62be8b96937254c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027711293828085
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-gyhgyt3y/reports/receipt-origin-proof.json",
+        "sha256": "a5d8a7776f3bb211d6c38221c9f695bd07d651981098e27807fdc9da8da4b8ec",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027670548002094
+      },
+      "blockNumber": "0x27",
+      "blockHash": "0xcc1978886926399b52740bdbea64f838ca977f22e1b28d9cf33546472bdc4f62",
+      "witnessHash": "0xf3fb903adad5f15950d58ee6e28faa00ee0aaad2b55ec87c494b201b921ecaf4",
+      "extraBytes": 31,
+      "miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "transactions": 1,
+      "gasUsed": 21000,
+      "activationField": "londonBlock",
+      "activation": 0,
+      "genesis": {
+        "path": "/private/tmp/cbui/txfail-gyhgyt3y/w/genesis.json",
+        "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027593914876039
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-gyhgyt3y/reports/20261015-012455-70562/UTC-20261015-012633/tests/001_transaction-receipt-fields/assert.json",
+        "sha256": "397620ebc7626382e96d1f8b7b4862d7dc39bfb4f9e8814fc446baa037264aae",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027670509844028
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-gyhgyt3y/reports/20261015-012455-70562/UTC-20261015-012633/tests/001_transaction-receipt-fields/steps.json",
+        "sha256": "a5abb05d02ba977b267adf0316f789f5bd123bd2da954ac2d59c1e9faf023862",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027670497582145
+      },
+      "assertionCount": 8,
+      "runtime": "/private/tmp/cbui/txfail-gyhgyt3y",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-gyhgyt3y/reports/receipt-origin-inventory.json",
+        "sha256": "b3dadc3fc506c53aeda2176605d5383c009f9e0709bb0365a9d105b6d622a7e3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027711322895146
+      }
+    },
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-w2llc7y1/reports/receipt-origin-proof.json",
+        "sha256": "2dddab5e7169c0b49b3c691512792a066b3244f21fdf73f7e810617b451616e8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027588201430853
+      },
+      "blockNumber": "0x2c",
+      "blockHash": "0x92ae493d9d5cbc7959b33a673e7d56507a74f852e1e487cd00725ff408ae8f5b",
+      "witnessHash": "0x6017ad72e32a4b2be316e90c49e5c12a00fe62ca37c0ef3bd82b70c5eda7ba94",
+      "extraBytes": 510,
+      "miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "transactions": 1,
+      "gasUsed": 21000,
+      "activationField": "croissantBlock",
+      "activation": 0,
+      "genesis": {
+        "path": "/private/tmp/cbui/txfail-w2llc7y1/w/genesis.json",
+        "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027543043201308
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-w2llc7y1/reports/20261015-012455-70562/UTC-20261015-012543/tests/001_transaction-receipt-fields/assert.json",
+        "sha256": "b7bca0eb720df1a861d34c7e49ab4d2dcc4f117dd48d1a343a2c557470edda4c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027588184664467
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-w2llc7y1/reports/20261015-012455-70562/UTC-20261015-012543/tests/001_transaction-receipt-fields/steps.json",
+        "sha256": "9369acb7d009bae37027b5efa339413724ec299f0a3855b2cd7469a4c4233e7e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027588173638002
+      },
+      "assertionCount": 8,
+      "runtime": "/private/tmp/cbui/txfail-w2llc7y1",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-w2llc7y1/reports/receipt-origin-inventory.json",
+        "sha256": "484fae01dde86b694a76cfc3bb688dca0ee32d2077b6c9aed8d42c6eb7404e4a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792027711354147708
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-receipt-origin-publication.json",
+    "sha256": "10317f0d6af4266ee8ed085e2fdf127c9b84fa96f3da93b16713b58f6f9da750",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792027105143125431
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-receipt-origin-red.log",
+      "sha256": "fcd02b4a1c9f80c802d0d373c28e2319f449c9752bd8c45172df057bbc7113a7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027068943766039
+    },
+    {
+      "path": "/private/tmp/chainbench-receipt-origin-green.log",
+      "sha256": "745021f821d57e3da6c517a2896390bfbd4585e4c45c5943311c087eff1a9c7d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027107715263006
+    },
+    {
+      "path": "/private/tmp/chainbench-receipt-origin-related-race.log",
+      "sha256": "751340be49a1de4ecc01b95ac45de31471571657ebf3652d51071488772fe95b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027174210817857
+    },
+    {
+      "path": "/private/tmp/chainbench-receipt-origin-related-race2.log",
+      "sha256": "355df6afb07e66903dcf9ee03541b23397ef5e380dbb9f71f89c30c72357fe6c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027279061904239
+    },
+    {
+      "path": "/private/tmp/chainbench-receipt-origin-check.log",
+      "sha256": "db710334b1fde4b3eb6be135537d24ed5b53c6a5e14ff8ad235cd0eeba576d9d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027336492519659
+    },
+    {
+      "path": "/private/tmp/chainbench-receipt-origin-check2.log",
+      "sha256": "1f47a2ec92d077c91fc791077dc93b150cb8f41ecaca9e3272714a94eb3280ed",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792027478372232885
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

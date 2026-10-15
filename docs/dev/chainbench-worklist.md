@@ -182,6 +182,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-007 영수증 출처 보강:** 기존 status/price/logs 판정이 잘못된
+receipt/transaction block hash·번호·missing hash·0/invalid gas7조건을 허용하는 RED→GREEN을
+확인했다. 공개 케이스는 양수 gas와 고정한 번호의 실제 블록/거래 hash·번호 대조를 추가했다.
+관련 전체 race·최종 전체 검사와 세 native race(192.844초, skip0)·공개 단언24개가 통과했다.
+실제 거래·영수증·두 방식의 전체 블록 조회·포함 거래가 일치하고 gasUsed는 양수/실제 한도
+이내이다. 생성된WBFT croissantBlock0 이후 높이를 직접 읽어 대조했고 두 회귀 패밀리는
+실제 londonBlock0 설정을 대조했다. 존재하지 않는 StableNet anzeonBlock을 가정하지 않는다.
+
+고정 소스 `94ecae8d478547ff897e61caa78d1b99913726e6a524a33b62b45d6e523c2daf`
+전후가 같다. [영수증 출처 증거](receipt-origin-evidence.json)는501파일 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0이다. 기존 주소 corpus bytes는 바뀌지 않았다. WBFT는
+Croissant0 직접 구성이며 단계적 이관·원문87개 전체·Linux·메인넷·legacy·최종 Web 인수는
+별도 잔여다.
+
 **2026-10-15 TX-007 배포된 slot0 접근 목록 보강:** 기존 BALANCE/eth_createAccessList
 회귀를 유지하면서 원문의 contractAddr/slot0 입력을 추가했다. 잘못된 주소·슬롯·배열·거래/영수증
 타입·저장값7조건 RED→GREEN을 확인했다. 최초 actual은 로컬 sendTx 생성의 수신자 제한으로

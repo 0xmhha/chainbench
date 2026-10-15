@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 39,
-    "confirmed_scope": 46,
+    "partial": 38,
+    "confirmed_scope": 47,
     "conflict": 1,
     "merged": 1
   },
@@ -6051,12 +6051,12 @@
       "id": "RPC-007",
       "title": "eth\\_getTransactionReceipt (WBFT 블록)",
       "criterionSha256": "9ee1784644c886d14bdde8b0974834be828ed30dffcd5353de4f94b2d5edd517",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
-          "sha256": "7c18b9dea2bfa21ddd27cc3784d737fc9f0583a96ee89dce4b170549cb4419cb",
+          "sha256": "d3d2f5b82c6319db3d35e3a25037ea1ebd7343e3e74a5144fab17177ddd51c29",
           "id": "transaction-receipt-fields"
         },
         {
@@ -6068,24 +6068,21 @@
           "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
           "sha256": "38cd750280cca815b47aed62bddc331f8dd730b5358eac3f1ff98c1f5cd02cd5",
           "id": "basic-tx-send"
+        },
+        {
+          "path": "internal/testhelper/receipt_origin_semantics_test.go",
+          "sha256": "adb36d5c9c93bf5f6a8796c1fa92861037e17812d52ecca3d31fa5e24e3bb721",
+          "function": "TestPublicReceiptBindsActualBlockAndPositiveGas"
+        },
+        {
+          "path": "internal/testengine/receipt_origin_native_test.go",
+          "sha256": "90394c0ef9d846e1f4ca33fb1212525bc499c9ea20bccdc624d6f65af222d01b",
+          "function": "TestNativeReceiptBlockOrigin"
         }
       ],
       "observations": [
         {
-          "analysis": "CT-RPC-005 status1·logs/effectiveGasPrice nonnil; CT-FEE-007 gasUsed>=21000; CT-TX-001 actual receipt blockNumber>0."
-        },
-        {
-          "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
-          "pointer": "/steps/1",
-          "statement": {
-            "do": "sendTx",
-            "from": "faucet",
-            "to": "$sender",
-            "value": "3000000000000000000",
-            "gas": "21000",
-            "expect": "receipt",
-            "timeout": "120s"
-          }
+          "analysis": "기존 status/price/logs를 유지하고 pinned block/transaction과receipt hash/number·gas>=1 추가. 세 native 공개단언24와 실제genesis activation·gaslimit·포함거래/블록을 독립 대조."
         },
         {
           "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
@@ -6128,155 +6125,85 @@
           }
         },
         {
-          "path": "tests/tc/common/fee/CT-FEE-007-effective-gas-price.json",
-          "pointer": "/steps/1",
-          "statement": {
-            "do": "sendTx",
-            "from": "faucet",
-            "to": "$sender",
-            "value": "3000000000000000000",
-            "gas": "21000",
-            "expect": "receipt",
-            "timeout": "120s"
-          }
-        },
-        {
-          "path": "tests/tc/common/fee/CT-FEE-007-effective-gas-price.json",
-          "pointer": "/steps/3",
-          "statement": {
-            "expect": "txStatus",
-            "hash": "$hash",
-            "is": "0x1"
-          }
-        },
-        {
-          "path": "tests/tc/common/fee/CT-FEE-007-effective-gas-price.json",
-          "pointer": "/steps/4",
-          "statement": {
-            "compare": "Greater",
-            "expect": "rpcCall",
-            "is": "0",
-            "method": "eth_getTransactionReceipt",
-            "params": [
-              "$hash"
-            ],
-            "select": "effectiveGasPrice"
-          }
-        },
-        {
-          "path": "tests/tc/common/fee/CT-FEE-007-effective-gas-price.json",
-          "pointer": "/steps/5",
-          "statement": {
-            "compare": "GreaterOrEqual",
-            "expect": "rpcCall",
-            "is": "21000",
-            "method": "eth_getTransactionReceipt",
-            "params": [
-              "$hash"
-            ],
-            "select": "gasUsed"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
-          "pointer": "/steps/1",
-          "statement": {
-            "do": "sendTx",
-            "on": "node1",
-            "from": "node1",
-            "to": "$nodePayee",
-            "value": "1000000000000000000",
-            "expect": "receipt",
-            "save": "nodeHash",
-            "timeout": "120s"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
-          "pointer": "/steps/2",
-          "statement": {
-            "expect": "txStatus",
-            "hash": "$nodeHash",
-            "is": "0x1"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
-          "pointer": "/steps/3",
-          "statement": {
-            "expect": "balanceAt",
-            "address": "$nodePayee",
-            "compare": "Equal",
-            "is": "1000000000000000000"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
-          "pointer": "/steps/6",
-          "statement": {
-            "do": "sendTx",
-            "from": "faucet",
-            "to": "$sender",
-            "value": "3000000000000000000",
-            "gas": "21000",
-            "expect": "receipt",
-            "timeout": "120s"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
-          "pointer": "/steps/7",
-          "statement": {
-            "do": "sendTx",
-            "on": "node1",
-            "key": "$senderKey",
-            "to": "$recipient",
-            "value": "1000000000000000000",
-            "expect": "receipt",
-            "save": "rawHash",
-            "timeout": "120s"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
+          "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
           "pointer": "/steps/8",
           "statement": {
-            "expect": "txStatus",
-            "hash": "$rawHash",
-            "is": "0x1"
+            "expect": "rpcCall",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "gasUsed",
+            "compare": "GreaterOrEqual",
+            "is": "1"
           }
         },
         {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
+          "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
+          "pointer": "/steps/9",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "$minedNumber",
+              false
+            ],
+            "select": "hash",
+            "is": "$minedHash"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
           "pointer": "/steps/10",
           "statement": {
-            "expect": "derive",
-            "op": "diff",
-            "of": [
-              "$rawBlock",
-              "0"
+            "expect": "rpcCall",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "$minedNumber",
+              false
             ],
-            "compare": "Greater",
-            "is": "0"
+            "select": "number",
+            "is": "$minedNumber"
           }
         },
         {
-          "path": "tests/tc/common/tx/CT-TX-001-value-transfer.json",
+          "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
           "pointer": "/steps/11",
           "statement": {
-            "expect": "balanceAt",
-            "address": "$recipient",
-            "compare": "Equal",
-            "is": "1000000000000000000"
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "blockHash",
+            "is": "$minedHash"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json",
+          "pointer": "/steps/12",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "blockNumber",
+            "is": "$minedNumber"
           }
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "blockNumber가 configured Croissant 이후인지와 receipt.blockHash가 실제 포함 block hash와 맞는지의 직접 대조 없음. gasUsed/status 및 실제 minedblocknumber 관측은 존재."
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "공개 signed transfer의 실제 영수증 status1·positive gas/limit·거래/전체블록의 hash와번호 exact. 생성된WBFT croissantBlock0 이후, StableNet/WEMIX londonBlock0 대응 회귀.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/receipt-origin-evidence.json",
+          "sha256": "f3735ffae06b49aea3fb0437cb05939184d8dd7b9669307b87cd1094ec56c6d0"
+        }
+      ]
     },
     {
       "id": "RPC-008",
