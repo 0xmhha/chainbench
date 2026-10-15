@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 48,
-    "confirmed_scope": 37,
+    "partial": 47,
+    "confirmed_scope": 38,
     "conflict": 1,
     "merged": 1
   },
@@ -5750,13 +5750,23 @@
       "id": "RPC-006",
       "title": "istanbul\\_status",
       "criterionSha256": "b1133c2a85e9680a00e3127c28dc6e75cfd9b2b81dd354b3f24ecd5d230424bd",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-stablenet/regression/api/15-istanbul-status-fields.json",
           "sha256": "f100605ef1afe472f84b39f853ddf13b40f8593374e40d2ce8ffe6b1ac6f09d7",
           "id": "istanbul-status-fields"
+        },
+        {
+          "path": "internal/testengine/consensus_statistics_test.go",
+          "sha256": "994afc7339db94190989df85107562e2d15f056faabda3f9493b874fe93a8e66",
+          "function": "TestStatistics50RejectsPresenceOnlyCounts"
+        },
+        {
+          "path": "internal/testengine/consensus_statistics_native_test.go",
+          "sha256": "2afa0c0542811ded08d05cb4170b532f50b2a8345a851f1d92069199b6e9f1b9",
+          "function": "TestNativeConsensusStatisticsFifty"
         }
       ],
       "observations": [
@@ -5822,14 +5832,22 @@
             ],
             "select": "roundStats"
           }
+        },
+        {
+          "analysis": "기존 공개 presence 단언4개를 실제 실행했다. 별도의 native1..50 통계는 제안50/라운드50/총서명622/currentCommitted150(각3이상)·네 서명 종류의 실제 목록과 exact를 대조했다."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "50block 통계합 exact/sealer>=blocks*quorum/authorcounts합/roundstats합 없음"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도. 공개 DSL presence 단언은 유지하며 정확한 합계는 native oracle에서 보강했다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "현재 WBFT Croissant0 직접 구성의 정확1..50 native 통계. 제안자/라운드 합계50, 네 서명 종류의 실제 Extra 서명자 목록 재합산, 블록별 committed 쿼럼과 통계 exact.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/consensus-statistics-evidence.json",
+          "sha256": "49082fb6d232c47ab0318c22bca560d055320e216f47f3ec76a34ee9de07b5f9"
+        }
+      ]
     },
     {
       "id": "RPC-007",

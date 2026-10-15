@@ -1,0 +1,160 @@
+{
+  "scope": "RPC-006 exact1..50 current WBFT Croissant0 managed BP4. Public presence assertions retained; native oracle reconstructs authors/rounds/all four seal classes from fifty block/extra responses, validates each committed quorum and exact status counters. Not full87/mainnet/Linux/legacy/staged migration/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Four-field presence model accepted sixteen malformed count/range/quorum/header controls.",
+  "unitGreen": "One positive and sixteen negative controls check full counter semantics.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "a3596a2c83640f1b87b90d6eb1f33bc1633c1e1c585713359c12fb9afaae1c31",
+    "sourceAfter": "a3596a2c83640f1b87b90d6eb1f33bc1633c1e1c585713359c12fb9afaae1c31",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeConsensusStatisticsFifty"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-ej_u29nb"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-ej_u29nb/reports/consensus-statistics-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-ej_u29nb": []
+    },
+    "elapsedSeconds": 55.044,
+    "log": {
+      "path": "/private/tmp/chainbench-consensus-statistics-native-native.jsonl",
+      "sha256": "6ee32dd59f33eebd4e98a1884bfe0d696c6d48b990c5e95eac3dde8b44ce6a01",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022945476348716
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-consensus-statistics-native-summary.json",
+      "sha256": "d6d6b2aee511667bee198f3756e4a22348893a5c008cc18dfb1ff1b7bb64773d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022946102927117
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-consensus-statistics-native-start.json",
+      "sha256": "fa432077d22d65e8ef2aea573a5ada2d2ad4144f2ebdb397dfc629a5b8537598",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022888230362504
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-ej_u29nb/reports/consensus-statistics-proof.json",
+    "sha256": "d19cc3ac8e76267702fff46cd77607f5e820a3df60812213cd7fe23418b8e79e",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792022942617350331
+  },
+  "validators": [
+    "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+    "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+    "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+    "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+  ],
+  "quorum": 3,
+  "range": {
+    "StartBlock": 1,
+    "EndBlock": 50,
+    "TotalBlocks": 50
+  },
+  "authorTotal": 50,
+  "roundTotal": 50,
+  "sealTotals": {
+    "total": 622,
+    "prepared": 150,
+    "committed": 150,
+    "prevPrepared": 161,
+    "prevCommitted": 161
+  },
+  "assertions": {
+    "path": "/private/tmp/cbui/txfail-ej_u29nb/reports/20261015-000810-75524/UTC-20261015-000810/tests/001_istanbul-status-fields/assert.json",
+    "sha256": "6b8f3974d295718318baf3edf2ab7afeb2801a75bba96d11129fa0e05a78ca23",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792022942498971171
+  },
+  "steps": {
+    "path": "/private/tmp/cbui/txfail-ej_u29nb/reports/20261015-000810-75524/UTC-20261015-000810/tests/001_istanbul-status-fields/steps.json",
+    "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792022942490902061
+  },
+  "runtime": "/private/tmp/cbui/txfail-ej_u29nb",
+  "active": false,
+  "remainingDatabases": 0,
+  "retainedFiles": 196,
+  "inventory": {
+    "path": "/private/tmp/cbui/txfail-ej_u29nb/reports/consensus-statistics-inventory.json",
+    "sha256": "25d110493d58db360f7a7bb4956ce64db1b134e6d0c74435b4459e4da4df2724",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792022952497665680
+  },
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-consensus-statistics-publication.json",
+    "sha256": "f23d97afea7c7d6e08aa36d767d33d9f6f47924fb3fb4060c69c4c889434ec19",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792022647297837364
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-consensus-statistics-red.log",
+      "sha256": "6495fe0257f280c289eb13c933a7ada978c109ca901109cff42d9c630649b28c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022723979151575
+    },
+    {
+      "path": "/private/tmp/chainbench-consensus-statistics-green.log",
+      "sha256": "bd85d21dc338f6eee5c439dfbe06c0a4b19db13c0cfe4ba923bfd860f5d4ae86",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022749272544173
+    },
+    {
+      "path": "/private/tmp/chainbench-consensus-statistics-related-race.log",
+      "sha256": "2582e6ca0d8bc8756ab1be9bf007343cde61016a4ce0e3ecb67cc816eb4f0b92",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022790831132592
+    },
+    {
+      "path": "/private/tmp/chainbench-consensus-statistics-check.log",
+      "sha256": "4b6123c2eb99fa799ae4805ab51a5074ef899bdb4df36cc40f3969dd33515b9d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792022878378658631
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    }
+  ]
+}
