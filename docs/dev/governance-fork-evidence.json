@@ -1,0 +1,222 @@
+{
+  "scope": "GOV001 original Croissant100: four exact system addresses code absent99 and present100 after actual WEMIX\u2192WBFT handoff. GOV002 exact slots0..3 and matching getters at100, generated genesis/node genesis configured minimum1e25 maximum1e26 staker604800 delegator604800. Reads mainnet-scale duration values without claiming seven-day withdrawal wait. Related default fork20 automatic withdrawal proves shared runner remains compatible. Not full87/Linux/live-mainnet/legacy/public DSL/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence/positive-only model accepted sixteen wrong coordinates/code/config/slot/getter controls; original input generation still used fork20.",
+  "unitGreen": "One positive, sixteen negatives, original case pins upgrade/genesis100 and wait102/assertGreater100 with all four configured values.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "2ed58bd224b15d2aae7f79f16e9aa0b8e98bcf92ea9d9a276c0e8723c0cacba1",
+    "sourceAfter": "2ed58bd224b15d2aae7f79f16e9aa0b8e98bcf92ea9d9a276c0e8723c0cacba1",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceAutoWithdrawalE2E",
+      "TestWemixGovernanceE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-apc_uoeq",
+      "/private/tmp/cbui/hf-yw2eaa71"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-apc_uoeq": [],
+      "/private/tmp/cbui/hf-yw2eaa71": []
+    },
+    "elapsedSeconds": 217.536,
+    "summary": {
+      "path": "/private/tmp/chainbench-governance-fork-native-summary.json",
+      "sha256": "bcb582106285cb267dc2b7fb4af6b9a73200459c1ddb060ae94da355f3baabe6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032017731605427
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-governance-fork-native-native.jsonl",
+      "sha256": "99c282fd90145f2ba8f2f7612bf142dd6656e6b18af23af974ba87e418fa41f8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792032017231825702
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-governance-fork-native-start.json",
+      "sha256": "cb0abbde08a07849d39ad6592f902f962932781a7e87bc6e8bd73e3a8f02bfef",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031797274967224
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-governance-fork-observed.json",
+    "sha256": "58ad3223f1886151d4e46ec5c718f9092fc8178f924708c34473988217ba7064",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792032046416240807
+  },
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-apc_uoeq/w/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031889618751853
+    },
+    {
+      "path": "/private/tmp/cbui/hf-apc_uoeq/w/node1/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031889652920052
+    },
+    {
+      "path": "/private/tmp/cbui/hf-apc_uoeq/w/node2/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031889974383867
+    },
+    {
+      "path": "/private/tmp/cbui/hf-apc_uoeq/w/node3/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031890255386586
+    },
+    {
+      "path": "/private/tmp/cbui/hf-apc_uoeq/w/node4/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031890515342660
+    },
+    {
+      "path": "/private/tmp/cbui/hf-apc_uoeq/w/node5/genesis.json",
+      "sha256": "126a8ae38d38f72e21f94d3e67060b3139bd1330584bacd9391ca17d4e412171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031890748299739
+    }
+  ],
+  "codeBytes": {
+    "0x0000000000000000000000000000000000001000": 282,
+    "0x0000000000000000000000000000000000001001": 20556,
+    "0x0000000000000000000000000000000000001002": 2261,
+    "0x0000000000000000000000000000000000001003": 5501
+  },
+  "slotValues": [
+    "10000000000000000000000000",
+    "100000000000000000000000000",
+    "604800",
+    "604800"
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-apc_uoeq",
+      "fork": 100,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-apc_uoeq/reports/governance-fork-inventory.json",
+        "sha256": "f17b8a2307dc3426c30499dec58e184866db720bdd62e5c25a2f45842fe248a5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792032046471873450
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-yw2eaa71",
+      "fork": 20,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-yw2eaa71/reports/governance-fork-inventory.json",
+        "sha256": "9334c1c429bbe8938ae004da861f578564f3883123482aac98480becc5b03042",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792032046512554508
+      }
+    }
+  ],
+  "retainedFiles": 456,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-governance-fork-publication.json",
+    "sha256": "29b6b40f9bc880449917294b05174891c9944975fedb32a75002dc79612b84ed",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792031657284538971
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-governance-fork-red.log",
+      "sha256": "b8d900d545c7a2d0b4940be60baa2d4777ce75c83975508e36f893c8fc694d41",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031584815861957
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-fork-green.log",
+      "sha256": "82fe13debf8cf5042a02e2feb6525969d25d47220dbe8903f1d885921322e958",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031640402180634
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-fork-related-race.log",
+      "sha256": "d00020fc52790c71520c71c8ea7623d4cb7dccf1fbbf3bddebf2d65b91026d77",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031765167049697
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-fork-check.log",
+      "sha256": "297a2b6676c13dde326c10ec3775fc886db1c61e4eba9424a07dd6c2af495581",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031763886419578
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-fork-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792031679698989296
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

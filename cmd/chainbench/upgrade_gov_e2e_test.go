@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"os"
 	"strings"
@@ -37,36 +38,32 @@ func TestWemixGovernanceE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	// Governance lives on the go-wbft successor (deployed at the fork block).
-	c := rpc.Dial(runGovHandoff(t, fromBin, toBin))
+	// Original GOV-001 uses the actual 99/100 boundary. GOV-002 reads the
+	// configured mainnet-scale values at that exact deployment block, not latest.
+	c := rpc.Dial(runGovHandoffSpec(t, fromBin, toBin, writeGovernanceOriginalForkCase(t)))
 	ctx := context.Background()
-
-	// GOV-001: all four governance system contracts carry code.
+	p := governanceForkProof{Fork: 100, BeforeHeight: 99, AtHeight: 100, CodeBefore: map[string]string{}, CodeAt: map[string]string{}, Configured: governanceForkFixture().Configured}
 	for _, addr := range []string{e2eGovConfig, e2eGovStaking, e2eGovRewardee, e2eGovNCP} {
-		code, err := c.CodeAt(ctx, addr)
-		if err != nil {
-			t.Fatalf("eth_getCode %s: %v", addr, err)
+		var before, at string
+		if err := c.Call(ctx, "eth_getCode", &before, addr, "0x63"); err != nil {
+			t.Fatal(err)
 		}
-		if code == "" || code == "0x" {
-			t.Fatalf("GOV-001: no governance contract deployed at %s", addr)
+		if err := c.Call(ctx, "eth_getCode", &at, addr, "0x64"); err != nil {
+			t.Fatal(err)
+		}
+		p.CodeBefore[addr], p.CodeAt[addr] = before, at
+	}
+	for i, sig := range []string{"minimumStaking()", "maximumStaking()", "unbondingPeriodStaker()", "unbondingPeriodDelegator()"} {
+		if err := c.Call(ctx, "eth_getStorageAt", &p.Storage[i], e2eGovConfig, fmt.Sprintf("0x%x", i), "0x64"); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.Call(ctx, "eth_call", &p.Getters[i], map[string]string{"to": e2eGovConfig, "data": accounts.Selector(sig)}, "0x64"); err != nil {
+			t.Fatal(err)
 		}
 	}
-
-	// GOV-002: GovConfig returns positive values for its core parameters.
-	for _, sig := range []string{
-		"minimumStaking()",
-		"unbondingPeriodStaker()",
-		"unbondingPeriodDelegator()",
-		"changeFeeDelay()",
-	} {
-		out, err := c.EthCall(ctx, e2eGovConfig, accounts.Selector(sig))
-		if err != nil {
-			t.Fatalf("eth_call GovConfig %s: %v", sig, err)
-		}
-		v, ok := new(big.Int).SetString(strings.TrimPrefix(strings.TrimSpace(out), "0x"), 16)
-		if !ok || v.Sign() <= 0 {
-			t.Fatalf("GOV-002: GovConfig.%s must be > 0 (got %q)", sig, out)
-		}
+	logGovernanceProof(t, "GOV-001-002-original-fork", p)
+	if err := verifyGovernanceFork(p); err != nil {
+		t.Fatal(err)
 	}
 
 	// RPC-009: eth_call reaches a second governance contract — GovStaking's

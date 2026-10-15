@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 30,
-    "confirmed_scope": 54,
+    "partial": 28,
+    "confirmed_scope": 56,
     "conflict": 2,
     "merged": 1
   },
@@ -4243,7 +4243,7 @@
       "id": "GOV-001",
       "title": "Croissant 블록에서 거버넌스 컨트랙트 배포 확인",
       "criterionSha256": "abb17020caf63b10c9a09dd2b1727782c3dc7ca71fd65de875a8a4578a8d95dd",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -4253,8 +4253,18 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "339dbadc8ad117fc6be4c10fc0a8d03cccb4a31dcf064a0929f9de36d6b695a2",
+          "sha256": "15be593eb8eb001c07b624c35342e3fae9582c84737ea41e884768b1448f0e3a",
           "function": "TestWemixGovernanceE2E"
+        },
+        {
+          "path": "cmd/chainbench/governance_fork_e2e_test.go",
+          "sha256": "23a656ea64edeb3a62967b1372a7de4b7922dd81e4aff59fad9143921f409347",
+          "function": "TestGovernanceForkRejectsPresenceAndPositiveOnly"
+        },
+        {
+          "path": "cmd/chainbench/governance_fork_e2e_test.go",
+          "sha256": "23a656ea64edeb3a62967b1372a7de4b7922dd81e4aff59fad9143921f409347",
+          "function": "TestGovernanceOriginalForkCaseCoordinates"
         }
       ],
       "observations": [
@@ -4343,20 +4353,28 @@
             "compare": "Len",
             "is": 4
           }
+        },
+        {
+          "analysis": "원문Croissant100 실제 이관에서 높이99의 네 주소code0x→100의4코드 배포. GovConfig 슬롯0~3과 같은높이 getter가 min1e25/max1e26/staker604800/delegator604800과 정확 일치. 생성 genesis+다섯 nodegenesis 설정도 독립 대조. 기존fork20 auto출금 실제 회귀 통과. 7일출금 대기는 아님."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
       "remainingConditions": [
-        "fork−1 absent/fork present exactblock 지정비교 없음"
+        "원문의 배포 경계·설정 슬롯 명제는 native 범위에서 확인. 전체87·Linux·메인넷live·legacy·공개DSL·최종Web 전수 인수는 별도 잔여. 604800초는 실제 설정조회이며7일출금 대기는 미검증."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant100 이관: 높이99 미배포/100 네 계약 배포 및100의GovConfig 슬롯0~3·getter·생성설정 정확값 대조.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/governance-fork-evidence.json",
+          "sha256": "db07f4b0d960b811012f1b4790a5faf9179270040e594697a15cc0d8c82b2e79"
+        }
+      ]
     },
     {
       "id": "GOV-002",
       "title": "GovConfig 파라미터 초기값 검증",
       "criterionSha256": "202d107243c3b0c5c126bb09dd0f8828a8b2a28758bc7084c5b0caf618ba3a87",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -4366,8 +4384,18 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "339dbadc8ad117fc6be4c10fc0a8d03cccb4a31dcf064a0929f9de36d6b695a2",
+          "sha256": "15be593eb8eb001c07b624c35342e3fae9582c84737ea41e884768b1448f0e3a",
           "function": "TestWemixGovernanceE2E"
+        },
+        {
+          "path": "cmd/chainbench/governance_fork_e2e_test.go",
+          "sha256": "23a656ea64edeb3a62967b1372a7de4b7922dd81e4aff59fad9143921f409347",
+          "function": "TestGovernanceForkRejectsPresenceAndPositiveOnly"
+        },
+        {
+          "path": "cmd/chainbench/governance_fork_e2e_test.go",
+          "sha256": "23a656ea64edeb3a62967b1372a7de4b7922dd81e4aff59fad9143921f409347",
+          "function": "TestGovernanceOriginalForkCaseCoordinates"
         }
       ],
       "observations": [
@@ -4456,14 +4484,22 @@
             "compare": "Len",
             "is": 4
           }
+        },
+        {
+          "analysis": "원문Croissant100 실제 이관에서 높이99의 네 주소code0x→100의4코드 배포. GovConfig 슬롯0~3과 같은높이 getter가 min1e25/max1e26/staker604800/delegator604800과 정확 일치. 생성 genesis+다섯 nodegenesis 설정도 독립 대조. 기존fork20 auto출금 실제 회귀 통과. 7일출금 대기는 아님."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_predicates_in_native_handoff",
       "remainingConditions": [
-        "원문 slots0..3 forkblock exact설정대조 및 maximumStaking/unbonding exact값 미충족"
+        "원문의 배포 경계·설정 슬롯 명제는 native 범위에서 확인. 전체87·Linux·메인넷live·legacy·공개DSL·최종Web 전수 인수는 별도 잔여. 604800초는 실제 설정조회이며7일출금 대기는 미검증."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant100 이관: 높이99 미배포/100 네 계약 배포 및100의GovConfig 슬롯0~3·getter·생성설정 정확값 대조.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/governance-fork-evidence.json",
+          "sha256": "db07f4b0d960b811012f1b4790a5faf9179270040e594697a15cc0d8c82b2e79"
+        }
+      ]
     },
     {
       "id": "GOV-003",
@@ -4624,7 +4660,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "ac0b87c54e737daffc1644a07c8cd1f79ebb183bd3fb762f0df9140718cb996d",
+          "sha256": "07d5e88d2449a8ef824fbb7b672bc6acac39b71ec0ad627a459f1e69d1544cfd",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         }
       ],
@@ -4649,7 +4685,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "ac0b87c54e737daffc1644a07c8cd1f79ebb183bd3fb762f0df9140718cb996d",
+          "sha256": "07d5e88d2449a8ef824fbb7b672bc6acac39b71ec0ad627a459f1e69d1544cfd",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         }
       ],
@@ -4674,7 +4710,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
-          "sha256": "ac0b87c54e737daffc1644a07c8cd1f79ebb183bd3fb762f0df9140718cb996d",
+          "sha256": "07d5e88d2449a8ef824fbb7b672bc6acac39b71ec0ad627a459f1e69d1544cfd",
           "function": "TestWemixGovernanceNCPLifecycleE2E"
         }
       ],
@@ -6313,7 +6349,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_e2e_test.go",
-          "sha256": "339dbadc8ad117fc6be4c10fc0a8d03cccb4a31dcf064a0929f9de36d6b695a2",
+          "sha256": "15be593eb8eb001c07b624c35342e3fae9582c84737ea41e884768b1448f0e3a",
           "function": "TestWemixGovernanceE2E"
         }
       ],

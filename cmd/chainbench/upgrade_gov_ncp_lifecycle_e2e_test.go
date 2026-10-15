@@ -388,11 +388,15 @@ func runGovHandoff(t *testing.T, fromBin, toBin string) string {
 // on the chain-preset instead of passed as a flag.
 func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[string]any, launch ...map[string]map[string]any) string {
 	t.Helper()
-	// The preset names its binaries through these, so a test points them at the
-	// builds it was given rather than at whatever is on PATH.
+	return runGovHandoffSpec(t, fromBin, toBin, writeHandoffCase(t, overlay, launch...))
+}
+
+// runGovHandoffSpec runs a fully declared case, preserving the same owned
+// runtime, retries and teardown as the default governance fixture.
+func runGovHandoffSpec(t *testing.T, fromBin, toBin, spec string) string {
+	t.Helper()
 	t.Setenv("GWEMIX_BIN", fromBin)
 	t.Setenv("GWBFT_BIN", toBin)
-	spec := writeHandoffCase(t, overlay, launch...)
 
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {

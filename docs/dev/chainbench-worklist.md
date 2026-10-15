@@ -182,6 +182,21 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-001·002 원문 배포 경계·설정 보강:** presence/positive만 확인하는
+판정이 잘못된 높이/배포전code/누락계약/코드/설정/슬롯/getter16조건을 허용하는 RED→GREEN과
+원문100대신축약20을 선언하던 입력 RED→GREEN을 확인했다. 실제 WEMIX→WBFT 이관은
+원문Croissant100이며 높이99에서 네 주소code0x, 높이100에서 GovConfig282/GovStaking20556/
+GovRewardeeImp2261/GovNCP5501bytes를 확인했다. 100의슬롯0~3·getter는 min1e25/max1e26/
+staker604800/delegator604800과 정확히 같고 생성genesis와다섯 nodegenesis도 독립 대조했다.
+
+Tagged CLI 전체 race·e2e vet·전체 검사와 실제 원문 배포/기존fork20 auto출금 회귀
+(217.536초, skip0)가 통과했다. 경계에서 후속 노드의99수신 지연이 관찰됐으나 같은 시도에서
+99수신→100합의→102이상 진행했다. 로그는 보존하며 이 성공을 과거W3결함 해결로 확대하지 않는다.
+고정 소스 `2ed58bd224b15d2aae7f79f16e9aa0b8e98bcf92ea9d9a276c0e8723c0cacba1`
+전후가 같다. [원문 배포·설정 증거](governance-fork-evidence.json)는2실행/456파일 내용·권한·
+소유자·mtime을 보존했고 활성 프로세스·종료 DB는0이다. 604800초는 실제 설정값 조회이며
+7일출금 대기는 아님. 원문87개 전체·Linux·메인넷live·legacy·공개DSL·최종Web는 별도 잔여다.
+
 **2026-10-15 GOV-004 원문 auto mode 출금 대조:** 원문 withdraw(0)을 실제 전송해
 만기13초 전 status1/no events/no payout·slot/pointers 불변과 정확gas를 확인했다.
 실제 부모/채굴 블록의 계약잔액은 모두 원금2e25와 같다. 만기1초 후 같은 입력은 동일slot의
