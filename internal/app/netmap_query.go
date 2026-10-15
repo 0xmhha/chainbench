@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -32,6 +34,9 @@ type NetworkMapIn struct {
 	// Addr is the same question in the form a log line actually prints it,
 	// "host:port", so it can be pasted rather than split by hand.
 	Addr string
+	// DialRPC adds the caller's HTTP dial URL, resolving the
+	// recorded Docker localmap without changing the placement addresses.
+	DialRPC bool `json:"dialRPC,omitempty"`
 }
 
 // MapEntry is one node's placement as an operator reads it. Both names are
@@ -49,6 +54,7 @@ type MapEntry struct {
 	// that a hand-written copy of a port set lost a member of it.
 	node.Endpoints
 	DataDir string `json:"dataDir,omitempty"`
+	RPCURL  string `json:"rpcURL,omitempty"`
 }
 
 // NetworkMapOut is the answer, plus the counts an operator scanning a network wants
@@ -86,20 +92,52 @@ func NetworkMap(_ context.Context, d Deps, in NetworkMapIn) (NetworkMapOut, erro
 	if err != nil {
 		return NetworkMapOut{}, err
 	}
+	var mapAddress func(string, int) (string, int)
+	if in.DialRPC && ws.State().Docker {
+		local, err := resource.LoadLocalMap(resource.LocalMapNear(ws.State().ServerSet))
+		if err != nil {
+			return NetworkMapOut{}, fmt.Errorf("app: netmap RPC address: %w", err)
+		}
+		mapAddress = local.AddrMap(nil)
+	}
 	for _, p := range all {
 		if !match(p) {
 			continue
 		}
-		out.Entries = append(out.Entries, MapEntry{
+		entry := MapEntry{
 			Node: p.Index, Label: string(p.Label), Alias: string(p.RoleLabel()),
 			Role: string(p.Role), Host: p.Host,
 			Endpoints: p.Ports, DataDir: p.DataDir,
-		})
+		}
+		if in.DialRPC {
+			host, port := p.Host, p.Ports.HTTP
+			if host == "" {
+				host = "127.0.0.1"
+			}
+			if mapAddress != nil {
+				host, port = mapAddress(host, port)
+			}
+			entry.RPCURL, err = mapRPCURL(host, port)
+			if err != nil {
+				return NetworkMapOut{}, err
+			}
+		}
+		out.Entries = append(out.Entries, entry)
 	}
 	if len(out.Entries) == 0 {
 		return NetworkMapOut{}, fmt.Errorf("app: netmap show: nothing matches (the network has %d node(s))", len(all))
 	}
 	return out, nil
+}
+
+func mapRPCURL(host string, port int) (string, error) {
+	if host == "" || strings.ContainsAny(host, "/@?#\r\n\t ") || port < 1 || port > 65535 {
+		return "", fmt.Errorf("app: netmap RPC address has an invalid host or port")
+	}
+	if strings.Contains(host, ":") && net.ParseIP(strings.SplitN(host, "%", 2)[0]) == nil {
+		return "", fmt.Errorf("app: netmap RPC address has an invalid host")
+	}
+	return (&url.URL{Scheme: "http", Host: net.JoinHostPort(host, strconv.Itoa(port))}).String(), nil
 }
 
 // mapFilter turns the selectors into one predicate, rejecting a combination

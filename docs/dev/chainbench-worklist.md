@@ -182,6 +182,26 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 L1에서 발견한 attach 주소 변환 수정:**211파일·353회 계획의 첫 배치는
+4행(3pass/1blocked) 뒤 중단했다. 원래 basic08의 host 체인은 정상 구동됐지만 스위프의 localmap
+정규식이 블록형 YAML을 읽지 못해172.31.42.11:8601로 직접 접속했고, 실제 관측은
+rpc_probe_unavailable이었다. 신선한 PID/부모/명령을 확인한 소유 스케줄러만 중단했다.
+마지막 통과 케이스는 노드 종료 뒤 회수 훅이 완료되지 않아 멱등 종료·별도 신선한 보존/회수를
+수행했고, 소스 수정 전15서버의 활성 참조/DB0을 확인했다.349행은 실행하지 않았고 전체L1은 미완료다.
+
+기존 Go localmap 계약을 쓰는 선택적 `chain show --dial-rpc`/MCP `dialRPC` 조회를 추가했다.
+원래 배치 Host/HTTP는 보존하고 rpcURL을 추가하며, 일반 배치 조회는 localmap에 의존하지 않는다.
+스위프는 이 결과를 소비하고 YAML 정규식 해석을 제거했다. CLI/MCP의 부재·잘못된 bool과 실제
+블록 YAML 스위프 실패를 RED로 재현했고, 흐름/블록·IPv6·invalid map·opt-in·읽기 계약 및
+기존 회귀를 GREEN으로 보강했다. App/CLI/MCP/feature 전체 race와 전체 검사가 통과했다.
+줄 수 문서의 실제 변화를 측정 도구로 반영했다. 고정 소스
+`19274685939e5750cf6ad825877946f9c4760650811134331cc70e634a388c34`와 보조 입력 지문이
+전후 같은 실제 basic08 재실행에서 CLI/stdio MCP가 같은127.0.0.1:46001 주소를 반환했다.
+MCP 기본 조회·잘못된 bool 거절 및3개 제어 파일 무변경도 확인했다. 실제 attach2단언과
+host setup3단언을 통과했고 pass1/fail0/blocked0/skip0, 종료·DB 회수까지80.053초다.
+독립 원본·아카이브·5서버 조회에서 DB0,92파일을 보존했다. [실제 수정·대조·중단 기록](dial-address-query-evidence.json).
+전체353회는 수정된 소스에서 다시 실행해야 하며 R3/P4/R4/R5·legacy·W3/W4·최종 Web14는 잔여다.
+
 **2026-10-15 원래 Linux 포크·서명 교체2건 실제 통과:** 고정 소스
 `f812907e751ac9f46497f3b1d14c4bf31accff7e2ae6b0107343c775421a260e`에서
 원래 케이스를 수정하지 않고 직렬 실행했다. Boho 이전ad0122af0으로4BP를 시작하고 높이27에

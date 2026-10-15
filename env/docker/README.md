@@ -187,6 +187,12 @@ bp 수(7)만 validator 로 선언한다.
 
 ### 전량 스위프를 이 15대에서
 
+attach 케이스의 접속 주소는 `chainbench chain show --dial-rpc --json`의 `rpcURL`을
+사용한다. 기록된 Docker 모드와 server-set 옆 localmap을 Go 엔진이 해석하므로 YAML의
+블록형·흐름형 표현과 IPv6를 같은 계약으로 처리한다. 일반 `chain show`의 배치 주소는 그대로이며
+`--dial-rpc`를 주면 호출자용 URL도 표시한다. MCP `chainbench_chain_show`의 `dialRPC: true`도
+같은 결과를 반환한다. 스위프와 같은 체크아웃에서 빌드한 CLI를 사용해야 한다.
+
 저장 공간과 증거 보존이 필요한 스위프는 `TCSWEEP_RETAIN_HOOK`에 검증된 실행 파일의
 경로를 지정한다. 셸 식이나 인자 문자열이 아니라 실행 파일 하나이며, 종료된 workspace 경로와
 통과 여부(`1`/`0`)를 인자로 받는다. 성공·실패 케이스 모두 호출하며 이 모드에서는

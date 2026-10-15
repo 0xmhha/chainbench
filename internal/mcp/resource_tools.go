@@ -19,13 +19,21 @@ func chainShowTool() Tool {
 			"with one, that question answered — including the reverse ones (which node owns a port, " +
 			"what runs on an address). Each node has an identity (node7) and a role alias (en2).",
 		InputSchema: workspaceDirSchema(map[string]any{
-			"node":  map[string]any{"type": "number", "description": "select by identity (1-based node number)"},
-			"label": map[string]any{"type": "string", "description": "select by identity (node7) or role alias (en2)"},
-			"host":  map[string]any{"type": "string", "description": "select every node on an address"},
-			"port":  map[string]any{"type": "number", "description": "select whichever node listens on a port (p2p, etcd, http, ws, auth, metrics)"},
-			"addr":  map[string]any{"type": "string", "description": "select by an address as a log line prints it (host:port)"},
+			"node":    map[string]any{"type": "number", "description": "select by identity (1-based node number)"},
+			"label":   map[string]any{"type": "string", "description": "select by identity (node7) or role alias (en2)"},
+			"host":    map[string]any{"type": "string", "description": "select every node on an address"},
+			"port":    map[string]any{"type": "number", "description": "select whichever node listens on a port (p2p, etcd, http, ws, auth, metrics)"},
+			"addr":    map[string]any{"type": "string", "description": "select by an address as a log line prints it (host:port)"},
+			"dialRPC": map[string]any{"type": "boolean", "description": "include HTTP RPC dial URLs using the recorded Docker mapping"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			dialRPC := false
+			if value, present := args["dialRPC"]; present {
+				var ok bool
+				if dialRPC, ok = value.(bool); !ok {
+					return "", fmt.Errorf("mcp: chain show: dialRPC must be a boolean")
+				}
+			}
 			res, err := invokeFeature[app.NetworkMapIn, app.NetworkMapOut](ctx, app.Deps{}, "network.map", app.NetworkMapIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				Node:    argInt(args, "node", 0),
@@ -33,6 +41,7 @@ func chainShowTool() Tool {
 				Host:    argString(args, "host", ""),
 				Port:    argInt(args, "port", 0),
 				Addr:    argString(args, "addr", ""),
+				DialRPC: dialRPC,
 			})
 			if err != nil {
 				return "", err

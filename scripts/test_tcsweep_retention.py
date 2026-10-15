@@ -25,12 +25,20 @@ import json, os, pathlib, sys
 args=sys.argv[1:]
 with open(os.environ['CALLS'], 'a') as out: out.write(json.dumps(args)+'\\n')
 if args[0]=='run':
- ws=pathlib.Path(args[args.index('--workspace-dir')+1]);ws.mkdir(parents=True,exist_ok=True)
- (ws/'evidence.log').write_text('original evidence')
+ if '--workspace-dir' in args:
+  ws=pathlib.Path(args[args.index('--workspace-dir')+1]);ws.mkdir(parents=True,exist_ok=True)
+  (ws/'evidence.log').write_text('original evidence')
+  (ws/'chain-record.json').write_text(json.dumps({'keysDir':'presets/keys'}))
+ elif os.environ.get('GSTABLE_RPC')!='http://127.0.0.1:46001':
+  print('attach endpoint is not reachable from caller');sys.exit(2)
  print('pass=0 fail=1 blocked=0 skip=0' if os.environ.get('CASE_FAIL') else 'pass=1 fail=0 blocked=0 skip=0')
  sys.exit(1 if os.environ.get('CASE_FAIL') else 0)
 if args[:2]==['chain','stop']:sys.exit(int(os.environ.get('STOP_EXIT','0')))
 if args[:2]==['chain','rm']:sys.exit(0)
+if args[:2]==['chain','show']:
+ entry={'host':'172.31.42.11','http':8601}
+ if '--dial-rpc' in args and not os.environ.get('SHOW_NO_RPC'):entry['rpcURL']='http://127.0.0.1:46001'
+ print(json.dumps({'entries':[entry]}));sys.exit(0)
 raise SystemExit(3)
 ''')
         cli.chmod(0o700)
@@ -54,6 +62,7 @@ raise SystemExit(int(os.environ.get('HOOK_EXIT','0')))
             "CASE_FAIL": "",
             "STOP_EXIT": "0",
             "HOOK_EXIT": "0",
+            "SHOW_NO_RPC": "",
             "PYTHONDONTWRITEBYTECODE": "1",
         }
 
@@ -124,6 +133,33 @@ raise SystemExit(int(os.environ.get('HOOK_EXIT','0')))
         self.assertEqual(result.returncode, 1)
         self.assertFalse(any(args[:2] == ["chain", "rm"] for args in self.calls()))
         self.assertTrue((self.root / "work/c1/evidence.log").exists())
+
+    def test_attach_uses_cli_dial_address_with_block_yaml(self):
+        flags = self.attach_fixture()
+        result = self.invoke(TCSWEEP_FLAGS=flags)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        shows = [args for args in self.calls() if args[:2] == ["chain", "show"]]
+        self.assertEqual(len(shows), 1)
+        self.assertIn("--dial-rpc", shows[0])
+        self.assertEqual(self.calls("hooks"), [[str(self.root / "work/c1"), "1"]])
+
+    def test_attach_refuses_missing_dial_address_and_finalizes_host(self):
+        result = self.invoke(TCSWEEP_FLAGS=self.attach_fixture(), SHOW_NO_RPC="1")
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(self.calls("hooks"), [[str(self.root / "work/c1"), "0"]])
+        self.assertIn("returned no reachable RPC URL", (self.root / "out.log").read_text())
+
+    def attach_fixture(self):
+        for number in (1, 2):
+            (self.root / f"tests/tc/fixture/{number}.json").unlink()
+        basic = self.root / "tests/tc/basic"
+        basic.mkdir()
+        (basic / "08-attached-chain-produces.json").write_text('{"chainPreset":"stablenet-attached"}')
+        (self.root / "presets/chain/stablenet-attached.json").write_text(json.dumps({
+            "chain": "stablenet", "attach": {"rpc": ["${GSTABLE_RPC}"]}}))
+        (self.root / "localmap.yaml").write_text(
+            "hosts:\n  172.31.42.11:\n    host: 127.0.0.1\n    ports:\n      8601: 46001\n")
+        return f"--docker --server-set {self.root}/server-set.yaml"
 
 
 if __name__ == "__main__":

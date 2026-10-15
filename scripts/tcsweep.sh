@@ -299,26 +299,22 @@ attachTarget() {
   # empty result then fell through to the preset's default endpoint, so an
   # attach case failed against 127.0.0.1:8600 with nothing saying why.
   local show
-  show=$("$BIN" chain show --workspace-dir "$1" --node 1 --json 2>&1) || {
+  show=$("$BIN" chain show --workspace-dir "$1" --node 1 --dial-rpc --json 2>&1) || {
     printf 'attachTarget: chain show failed for %s: %s\n' "$1" "$show" >&2
     return 1
   }
   [ -n "$show" ] || { printf 'attachTarget: chain show said nothing for %s\n' "$1" >&2; return 1; }
-  python3 - "$1" "$ROOT" "$show" ${EXTRA[@]+"${EXTRA[@]}"} <<'PY'
-import json, pathlib, re, sys
-ws, root, extra = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[4:]
+  python3 - "$1" "$ROOT" "$show" <<'PY'
+import json, pathlib, sys
+ws, root = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 e = json.loads(sys.argv[3])["entries"][0]
-host, port = e["host"], e["http"]
-if "--docker" in extra and "--server-set" in extra:
-    lm = pathlib.Path(extra[extra.index("--server-set") + 1]).parent / "localmap.yaml"
-    m = re.search(re.escape(host) + r":\s*\n\s*host:\s*(\S+)\s*\n\s*ports:\s*\{([^}]*)\}", lm.read_text())
-    if m:
-        ports = dict(p.split(":") for p in m.group(2).replace(" ", "").split(","))
-        host, port = m.group(1), ports.get(str(port), port)
+rpc = e.get("rpcURL")
+if not isinstance(rpc, str) or not rpc:
+    raise SystemExit("attachTarget: chain show returned no reachable RPC URL")
 keys = json.loads((ws / "chain-record.json").read_text()).get("keysDir", "")
 if keys and not pathlib.Path(keys).is_absolute():
     keys = str(root / keys)
-print(f"http://{host}:{port} {keys}")
+print(f"{rpc} {keys}")
 PY
 }
 

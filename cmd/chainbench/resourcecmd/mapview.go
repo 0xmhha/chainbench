@@ -19,7 +19,15 @@ import (
 // drift apart in shape.
 func PrintMap(out io.Writer, m app.NetworkMapOut) {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "NODE\tROLE\tLABEL\tHOST\tP2P\tETCD\tHTTP\tDATADIR")
+	showRPC := false
+	for _, entry := range m.Entries {
+		showRPC = showRPC || entry.RPCURL != ""
+	}
+	header := "NODE\tROLE\tLABEL\tHOST\tP2P\tETCD\tHTTP\tDATADIR"
+	if showRPC {
+		header += "\tRPC"
+	}
+	fmt.Fprintln(w, header)
 	for _, e := range m.Entries {
 		etcd := "-"
 		if e.Etcd != 0 {
@@ -34,8 +42,12 @@ func PrintMap(out io.Writer, m app.NetworkMapOut) {
 		if dataDir == "" {
 			dataDir = "-"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\t%d\t%s\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\t%d\t%s",
 			e.Label, e.Role, e.Alias, e.Host, e.P2P, etcd, e.HTTP, dataDir)
+		if showRPC {
+			fmt.Fprintf(w, "\t%s", e.RPCURL)
+		}
+		fmt.Fprintln(w)
 	}
 	_ = w.Flush()
 
