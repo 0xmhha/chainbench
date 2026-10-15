@@ -182,6 +182,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-003 등록 자동배포 보강:** active만 확인하는 판정이 잘못된
+거래/금액/이벤트/BLS/코드/구현/mapping14조건을 허용하는 RED→GREEN과 기존 배포 주소를
+새 배포로 오인하는1조건 RED→GREEN을 확인했다. 기존 최소금액 등록 흐름에 정확한 거래
+input/value/receipt·StakerRegistered ABI·BLS48/PoP96·active/operator mapping을 연결하고
+등록 부모블록code0x/등록블록code155bytes·implementation slot0x1002/구현코드를 직접 대조했다.
+
+Tagged CLI 전체 race·e2e vet·전체 검사와 실제 이관 등록/기존 보상 ledger 회귀
+(136.171초, skip0)가 통과했다. 실제 최소1e25 입력·이벤트의 emitter/subject/operator/rewardee/
+feeRecipient/feeRate0/amount/dynamic BLS offset/padding을 독립 계산했다. 고정 소스
+`bb0b8b0846e4162ec45eb86a5e0395a83f12a59d9ba5fe32b0937d6b9dc4bb2d` 전후가 같다.
+[등록 배포 증거](staker-registration-evidence.json)는456파일 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0이다. 원문87개 전체·Linux·메인넷·legacy·공개 DSL·
+최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 공개 core 케이스 최신 실증:** 목적에 맞는 기존 단언을 미구현으로 세지
 않고 실제 publiccase를 fresh 실행했다. aggregate pass7만 확인하는 판정이 누락/중복/다른ID/
 seq/preset/skip/fail8조건을 허용하는 RED→GREEN을 확인했다. 관련 실행 엔진 전체 race·전체

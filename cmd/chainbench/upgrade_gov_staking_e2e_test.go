@@ -69,7 +69,7 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 		t.Fatalf("minimumStaking() = %s, want > 0", amount)
 	}
 
-	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+	hash := stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
 
 	// Post-state: the staker is registered and mapped from its operator.
 	if !stakingIsStaker(t, c, staker) {
@@ -78,6 +78,39 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 	if got := stakingStakerByOperator(t, c, operator.Address()); !strings.EqualFold(got, staker) {
 		t.Fatalf("stakerByOperator(%s) = %s, want %s", operator.Address(), got, staker)
 	}
+	w := registrationWitness{Reward: rewardLedgerProof{Staker: staker, Operator: operator.Address(), Minimum: amount.String(), BLSKey: "0x" + hex.EncodeToString(blsPK)}, Hash: hash, PoP: "0x" + hex.EncodeToString(blsSig), Active: stakingIsStaker(t, c, staker), Mapped: stakingStakerByOperator(t, c, operator.Address())}
+	w.Reward.Rewardee = wordToAddr(stakingInfoWord(t, c, staker, 1))
+	w.Reward.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(ctx, "eth_getTransactionByHash", &w.Transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getTransactionReceipt", &w.Receipt, hash); err != nil {
+		t.Fatal(err)
+	}
+	number, e := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(w.Receipt["blockNumber"]), "0x"), 16, 64)
+	if e != nil || number == 0 {
+		t.Fatal("registration block missing", e)
+	}
+	tag := fmt.Sprintf("0x%x", number)
+	parent := fmt.Sprintf("0x%x", number-1)
+	if err = c.Call(ctx, "eth_getCode", &w.BeforeCode, w.Reward.Rewardee, parent); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getCode", &w.Code, w.Reward.Rewardee, tag); err != nil {
+		t.Fatal(err)
+	}
+	slot := "0x4ef8d65ed4f969898f05d331f7b880c9611386779b412e35e117f26e0983c85d"
+	if err = c.Call(ctx, "eth_getStorageAt", &w.Implementation, w.Reward.Rewardee, slot, tag); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getCode", &w.ImplementationCode, "0x0000000000000000000000000000000000001002", tag); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-003-registration-witness", w)
+	if e := verifyRegistrationWitness(w); e != nil {
+		t.Fatal(e)
+	}
+
 }
 
 // TestWemixGovernanceDelegateE2E ports wemix4 GOV-011 (delegation) on top of the
