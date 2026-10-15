@@ -395,6 +395,8 @@ func (callErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 // never got an answer is returned as an error: it says nothing about what the
 // node would have refused. reason is required because "any error passes" is
 // how callError once counted a refused connection as a revert.
+// Transaction submission methods additionally require a transaction refusal;
+// RPC protocol failures are not a verdict about the submitted transaction.
 type rpcErrorAssertion struct{}
 
 func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
@@ -440,12 +442,21 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 		return res, fmt.Errorf("dsl: %s: %w", assertRPCError, callErr)
 	}
 	res.Actual = se.Message
-	switch {
-	case isMethodNotFound(se):
+	if isMethodNotFound(se) {
 		res.Source = method + " is not a registered method"
-	case !strings.Contains(strings.ToLower(se.Message), strings.ToLower(reason)):
+		return res, nil
+	}
+	if method == "eth_sendTransaction" || method == "eth_sendRawTransaction" {
+		if err := checkSubmitRejected("", callErr, &interp.ActionCtx{Args: map[string]any{"reason": reason}}); err != nil {
+			res.Source = err.Error()
+		} else {
+			res.Pass = true
+		}
+		return res, nil
+	}
+	if !strings.Contains(strings.ToLower(se.Message), strings.ToLower(reason)) {
 		res.Source = method + " failed, but not for " + strconvQuote(reason)
-	default:
+	} else {
 		res.Pass = true
 	}
 	return res, nil
