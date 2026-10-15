@@ -1,16 +1,15 @@
 {
   "schemaVersion": 1,
   "scope": "Original 87 criterion sufficiency review and explicit remaining conditions. confirmed_scope records only stated local proofs, never full original/mainnet/final-Web acceptance. Code presence, historical proofs, pending conflicting criteria and external defects remain distinct.",
-  "reviewedHead": "0cf2b9ccd14b3e3a25bc9d01dd78ccec03ade229",
+  "reviewedHead": "58145d8a16dbe785738d006f1830f4f1cd0502a8",
   "criterionSource": {
     "path": "docs/tc/wemix4.0/01-test-scenarios.md",
-    "sha256": "fd17c167278b766efcf0136e103903cb56c4f92453de1bf6aabc6ead4052e4c6"
+    "sha256": "dc4c06f50f3182eb8b0a0ce66221fe90e04e55d1a2addb0600dd415a2e51ea1e"
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 83,
-    "conflict": 2,
-    "partial": 1,
+    "confirmed_scope": 85,
+    "conflict": 1,
     "merged": 1
   },
   "records": [
@@ -4849,8 +4848,8 @@
     {
       "id": "GOV-004",
       "title": "GovStaking 언스테이킹 및 출금",
-      "criterionSha256": "3790c5441a28db96a34fe8277f8a8bdb142395d3d10c7cc4f9eaddb70336dcd8",
-      "status": "conflict",
+      "criterionSha256": "1c54bde8e4de9b8e2f199fc14b69e049967443ad4759ae99b70717acd6ad3000",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -4875,49 +4874,29 @@
         },
         {
           "path": "cmd/chainbench/auto_withdrawal_e2e_test.go",
-          "sha256": "f29d93cb153b093fff1015c43c0758f573e8e75e9cf5104d4c9fce8f6b663530",
+          "sha256": "b1e900aeea62711ae36e2392c1d12f94bfb95bd87848505fc6246c3cbc150c07",
           "function": "TestAutoWithdrawalRejectsEarlyPayoutAndWrongInput"
         },
         {
           "path": "cmd/chainbench/auto_withdrawal_e2e_test.go",
-          "sha256": "f29d93cb153b093fff1015c43c0758f573e8e75e9cf5104d4c9fce8f6b663530",
+          "sha256": "b1e900aeea62711ae36e2392c1d12f94bfb95bd87848505fc6246c3cbc150c07",
           "function": "TestWemixGovernanceAutoWithdrawalE2E"
         }
       ],
       "observations": [
         {
-          "analysis": "full unstake status1 amount0; 다른credentialfixture 두 maturity withdrawal"
-        },
-        {
-          "analysis": "원문2minimum fullunstake input·receipt·exact Unstaked/StakerRemoved·active true→false·stake2min→0 보강. native 독립 대조 대기. 만료 출금은 별도 잔여."
-        },
-        {
-          "analysis": "실제2minimum input/value0/status1·Unstaked amount2min/StakerRemoved exact(emitter/subject/unique/data)·active true→false·stake2min→0 독립 대조, 미달 거절 실제 회귀 통과."
-        },
-        {
-          "analysis": "동일 fullunstake credential·15초 chain-time 지연에서 withdraw(1) 조기 채굴 status0/정확한 insufficient withdrawable credentials·slot/pointers 불변, 만기후 exact Withdrawn/원금−gas/contract debit/slot drain 독립 대조. 실제 기존 expiry 회귀 통과. 원문 withdraw(0)은 별도 auto mode이므로 동일 실패로 간주하지 않음."
-        },
-        {
-          "analysis": "원문 withdraw(0) 입력은 실제 만기13초 전 status1/no events/no payout·contract2e25 그대로/caller exactgas fee, 만기1초 후 동일index exact Withdrawn/principal−gas/contract debit/slot/pointers drain. diffMode는 변동없는 계약을 생략하므로 실제 parent/mined eth_getBalance를 직접 대조. 기존 명시 출금/expiry 실제 회귀 통과. 원문 조기 withdrawal time not reached revert 기대와 충돌; 사용자 결정 대기."
+          "analysis": "조기 요청1792078229 < 만기1792078297, 출금1792078298. 원금20000000000000000000000000Wei, 조기 가스4290737950597895Wei, 만기 가스7034400006471648Wei. 원문의 조기 revert와 실제 현행 동작의 차이는 사용자 승인으로 명시했다."
         }
       ],
-      "semanticAssessment": "criterion_conflicts_with_current_contract",
+      "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "원문 withdraw(0)의 조기 revert 기대와 실제 auto mode 성공/no payout의 차이에 대한 사용자 기준 결정 대기. 현행 만기 전 무출금·slot/pointers 보존·정확gas 및 만기후 exact출금은 검증됐다. 메인넷7일/현행15초 fixture 범위 구분."
+        "승인한 현행v1/축약 fixture의 실제 검증 범위다. 전체87개·37개 WEMIX 전체 회귀·메인넷/Linux·legacy·공개DSL·최종Web 인수는 별도이며 전체 완료로 확대하지 않는다."
       ],
-      "confirmedScope": "실제 WEMIX→WBFT 이관 뒤 비검증자 operator 전액2minimum unstake·exact Unstaked/StakerRemoved·activefalse. 동일 credential의 withdraw(1) 조기 정확한 채굴 거절/상태불변 및15초 만기후 exact출금. 원문 withdraw(0)은 실제 조기 status1/no payout·이벤트0/slot/pointers 불변/정확gas·부모/채굴블록 contract잔액2e25, 만기후 동일slot·원금−gas·Withdrawn·contract debit·slot/pointer drain 검증. 원문의 조기revert 기대는 미충족·기준 결정 대기.",
+      "confirmedScope": "사용자 승인 현행v1 기준. 동일 실제 흐름에서2minimum 전액 unstake·정확한 Unstaked/StakerRemoved·INACTIVE 전환,70초 credential의 조기 withdraw(0) status1/무이벤트/무원금·포인터 보존·정확한 가스비, 만기 후 원금/Withdrawn/슬롯/포인터/nonce 장부를 검증했다.",
       "verifiedEvidence": [
         {
-          "path": "docs/dev/full-unstake-evidence.json",
-          "sha256": "185d2ad4addbbd70e4c9855d3678dad7686b8fe8a85d9294e41d7c6d8049f3a1"
-        },
-        {
-          "path": "docs/dev/unstake-withdrawal-evidence.json",
-          "sha256": "076cd5acf95dc93aaf57b1837b63f13715d69dadb0fe642bc7f222d960b60204"
-        },
-        {
-          "path": "docs/dev/auto-withdrawal-evidence.json",
-          "sha256": "9a9c338e057d1f2d6b660a9d261496f91d0c9f846937f27d50d6e4eceb7a53f4"
+          "path": "docs/dev/approved-unbonding-evidence.json",
+          "sha256": "551eff8f6ca27ea3144fdd5b0aac49c0e9f0602121585b469587770dadd11691"
         }
       ]
     },
@@ -5184,8 +5163,8 @@
     {
       "id": "GOV-011",
       "title": "Delegation 동작 검증",
-      "criterionSha256": "29c15a932dc7d908fcc231d8526b32111a244fe569f0ecd4a9e69a3be7df10dd",
-      "status": "partial",
+      "criterionSha256": "6ff7ac6f3ca2e3a8930b091641945853aca9896b38c9415e1de56da9fb80e9bc",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -5197,19 +5176,44 @@
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
           "sha256": "2e4491b0b67ba6309261872365aaf4d77d234a9a699aed5bd125abdbce4bad79",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
+        },
+        {
+          "path": "cmd/chainbench/delegation_withdrawal_native_e2e_test.go",
+          "sha256": "02336a603f2d4c519058aa226b3e24472ff677666bb75157b94abca96dd3b98d",
+          "function": "TestWemixGovernanceDelegationWithdrawalE2E"
+        },
+        {
+          "path": "cmd/chainbench/delegation_withdrawal_native_e2e_test.go",
+          "sha256": "02336a603f2d4c519058aa226b3e24472ff677666bb75157b94abca96dd3b98d",
+          "function": "TestWemixGovernanceOriginalUnbondingConfigurationE2E"
+        },
+        {
+          "path": "cmd/chainbench/delegation_withdrawal_e2e_test.go",
+          "sha256": "6ac290cee77e02fb5a80482530292730835b0f7098bb4dbf5337772facc93d76",
+          "function": "TestDelegationWithdrawalRejectsIncompleteLifecycle"
+        },
+        {
+          "path": "cmd/chainbench/delegation_withdrawal_e2e_test.go",
+          "sha256": "6ac290cee77e02fb5a80482530292730835b0f7098bb4dbf5337772facc93d76",
+          "function": "TestDelegationWithdrawalSparseBalanceDiff"
         }
       ],
       "observations": [
         {
-          "analysis": "delegate1e24 status1 delegatedamount exactdelta, 별도 credential partialundelegate withdrawal"
+          "analysis": "언위임 요청1792078385, 조기1792078387 < 만기1792078415, 출금1792078416. 원금10000000000000000000000000Wei. 수정 전 검증기는 diff-mode의 생략된 계약 사후잔액을 거절해 실제5pass/1fail; 원본을 보존하고 생략 의미를 보강한 새 소스6개를 다시 실행해 전부 통과했다."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "Delegated/Undelegated exactevents,totalStaked변화,72h<7d명시확인,Withdrawn exactevent 없음"
+        "승인한 현행v1/축약 fixture의 실제 검증 범위다. 전체87개·37개 WEMIX 전체 회귀·메인넷/Linux·legacy·공개DSL·최종Web 인수는 별도이며 전체 완료로 확대하지 않는다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "WEMIX→WBFT 실제 이관 후 비검증자 운영자와 별도 위임자.30초/70초 실제 파라미터,정확한 delegate/undelegate 입력·양측 이벤트·금액·staking power·원금/가스,조기 withdraw(0) 무원금/자격·포인터 보존,만기 환급·Withdrawn·가스·슬롯 소거. 원문259200/604800은 별도 배포 fixture의 getter/저장값 대조이며 장시간 대기·메인넷 관측은 아니다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/approved-unbonding-evidence.json",
+          "sha256": "551eff8f6ca27ea3144fdd5b0aac49c0e9f0602121585b469587770dadd11691"
+        }
+      ]
     },
     {
       "id": "GOV-012",
@@ -8700,13 +8704,13 @@
     "W4": "unresolved; original metric requirement retained"
   },
   "pendingDecisions": [
-    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output.",
-    "GOV-004 original withdraw(0) early revert expectation vs actual current v1 status1/no payout: user decision pending; do not mark original early-revert accepted."
+    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output."
   ],
   "limitations": [
     "Relevant sources were read, not all 87 freshly executed. Partial records intentionally remain open.",
-    "Native compiled denominator was 22 TestWemix functions at reviewedHead; new policy diagnostic makes 23 compiled functions, not historical 20.",
+    "Fresh -tags e2e -list measurement found37 compiled TestWemix functions. This phase executed6 actual native cases, not all37 and not historical20/22/23.",
     "Old Web receipt verification fails; final fresh WEB-01 through WEB-14 capture and independent replay remain.",
     "External Ouroboros QA transmission rejected by automatic approval review; optional approval pending. Local artifact and process review completed."
-  ]
+  ],
+  "latestNativeSourceDigest": "ecb87e6302b83a0a36e714318b0864a74232f14821345695d4ec637b48be5da7"
 }

@@ -25,6 +25,11 @@ type autoWithdrawalProof struct {
 }
 
 func verifyAutoWithdrawal(p autoWithdrawalProof) error {
+	return verifyAutoWithdrawalBalance(p, p.Ledger.Amount)
+}
+
+// expectedBalance includes active stakes as well as the locked credential.
+func verifyAutoWithdrawalBalance(p autoWithdrawalProof, expectedBalance string) error {
 	requested, e1 := strconv.ParseUint(p.Created.RequestTime, 10, 64)
 	mature, e2 := strconv.ParseUint(p.Created.WithdrawableTime, 10, 64)
 	if e1 != nil || e2 != nil || p.Delay == 0 || mature != requested+p.Delay || p.Created.Amount != p.Ledger.Amount || p.AfterEarly != p.Created || p.Early.Timestamp < requested || p.Early.Timestamp >= mature || len(p.Early.Credentials) != 1 || p.Early.Credentials[0] != p.Created || p.Early.CredentialIndex != fmt.Sprint(p.Ledger.N+1) || p.Early.WithdrawalIndex != fmt.Sprint(p.Ledger.N) {
@@ -48,7 +53,8 @@ func verifyAutoWithdrawal(p autoWithdrawalProof) error {
 	principal, valid := new(big.Int).SetString(p.Ledger.Amount, 10)
 	beforeContract, bok := parse(p.EarlyContractBefore)
 	afterContract, aok := parse(p.EarlyContractAfter)
-	if !valid || principal.Sign() <= 0 || !bok || !aok || beforeContract.Cmp(principal) != 0 || afterContract.Cmp(principal) != 0 {
+	expected, expectedOK := new(big.Int).SetString(expectedBalance, 10)
+	if !valid || principal.Sign() <= 0 || !expectedOK || expected.Cmp(principal) < 0 || !bok || !aok || beforeContract.Cmp(expected) != 0 || afterContract.Cmp(expected) != 0 {
 		return fmt.Errorf("pinned early contract balance differs")
 	}
 	used, ok := parse(fmt.Sprint(r["gasUsed"]))
@@ -156,7 +162,8 @@ func TestAutoWithdrawalRejectsEarlyPayoutAndWrongInput(t *testing.T) {
 
 // The original withdraw(0) input uses automatic scanning. This records the
 // current contract outcome, including a successful no-payout early transaction;
-// it does not redefine the original early-revert requirement.
+// the user approved this current-v1 criterion; the original early-revert
+// expectation is retained as a documented difference.
 func TestWemixGovernanceAutoWithdrawalE2E(t *testing.T) {
 	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
 	if from == "" || to == "" {
@@ -172,7 +179,7 @@ func TestWemixGovernanceAutoWithdrawalE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": map[string]any{address: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}})
+	url := runGovHandoffOverlay(t, from, to, unbondingPeriodOverlay(map[string]any{address: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}, 30, 70))
 	c := rpc.Dial(url)
 	op, err := ap.OpenWallet(ctx, key, url)
 	if err != nil {
@@ -184,7 +191,21 @@ func TestWemixGovernanceAutoWithdrawalE2E(t *testing.T) {
 	staker := presetNodeAddr(t, 1)
 	pk, sig := presetNodeBLS(t, 1)
 	stakingRegister(t, c, op, staker, pk, sig, amount)
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount)), nil)
+	removal := fullUnstakeWitness{Operator: address, Staker: staker, Minimum: minimum.String(), Amount: amount.String(), Before: stakingUint(t, c, "getStakerAmount(address)", staker).String(), ActiveBefore: stakingIsStaker(t, c, staker)}
+	removal.Hash = stakingSendOK(t, c, op, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount)), nil)
+	removal.After = stakingUint(t, c, "getStakerAmount(address)", staker).String()
+	removal.ActiveAfter = stakingIsStaker(t, c, staker)
+	removal.Logs = feeReceipt(t, c, removal.Hash)
+	if err := c.Call(ctx, "eth_getTransactionByHash", &removal.Transaction, removal.Hash); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Call(ctx, "eth_getTransactionReceipt", &removal.Receipt, removal.Hash); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-004-auto-full-unstake", removal)
+	if err := verifyFullUnstakeWitness(removal); err != nil {
+		t.Fatal(err)
+	}
 	ci, wi := credentialPointers(t, c, address)
 	n, err := strconv.ParseUint(wi, 10, 64)
 	if err != nil {
@@ -192,8 +213,8 @@ func TestWemixGovernanceAutoWithdrawalE2E(t *testing.T) {
 	}
 	p := autoWithdrawalProof{Ledger: credentialExpiryProof{Caller: address, Contract: e2eGovStaking, Amount: amount.String(), N: n}, Created: credentialAt(t, c, address, n)}
 	delay := govConfigUint(t, c, "unbondingPeriodStaker()")
-	if !delay.IsUint64() {
-		t.Fatal("invalid configured delay")
+	if !delay.IsUint64() || delay.Uint64() != 70 {
+		t.Fatal("approved staker fixture delay differs")
 	}
 	p.Delay = delay.Uint64()
 	if ci != fmt.Sprint(n+1) {

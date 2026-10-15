@@ -1186,6 +1186,12 @@
 - 기간 내 `withdraw(0)` 실패 (`"withdrawal time not reached"` revert)
 - 기간 후 `withdraw(0)` 성공, `Withdrawn(requester, withdrawalIndex, amount)` 이벤트
 
+> **승인된 현행 계약 기준 (2026-10-16 실행 검증):** 원문의 조기 revert 기대는 위에 보존한다.
+> 사용자는 현행 v1의 조기 `withdraw(0)` 성공·무출금·이벤트 없음·자격/포인터 보존·정확한 가스비와
+> 만기 후 같은 입력의 원금·이벤트·출금 검증을 승인했다. 실제 70초 fixture와 원문 7일 설정의 별도 조회를
+> 검증했으며, 7일을 실제 대기하거나 메인넷 설정을 조회했다고 주장하지 않는다.
+> [승인 범위의 실제 거래·독립 대조](../../dev/approved-unbonding-evidence.json).
+
 ---
 
 ### GOV-005 — 스테이킹 후 Validator 반영
@@ -1377,6 +1383,13 @@
 - `Undelegated(delegator, staker, recipient, amount)` 이벤트
 - `unbondingPeriodDelegator`(72시간) \< `unbondingPeriodStaker`(7일) 임을 확인
 - `withdraw(0)` 성공 후 `Withdrawn` 이벤트
+
+> **승인된 축약 시간 검증 (2026-10-16):** 사용자는 실제 30초·70초 fixture에서 조기 원금 미출금과
+> 만기 환급·정확한 이벤트/수수료를 검증하고 원문 72시간·7일 설정을 별도로 대조하도록 승인했다.
+> 위임자와 운영자를 분리해 위임/언위임 입력·이벤트·staking power, 조기/만기 `withdraw(0)`을 실제 검증했다.
+> 원문 값 259,200초·604,800초를 명시한 별도 fixture의 getter와 저장 슬롯도 읽었다.
+> 이 별도 설정 조회는 실제 메인넷 파라미터 조회나 72시간·7일 대기 증명이 아니다.
+> [거래·시간·원금·가스 장부](../../dev/approved-unbonding-evidence.json).
 
 ---
 
