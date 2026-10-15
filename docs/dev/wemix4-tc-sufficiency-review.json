@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 47,
-    "confirmed_scope": 38,
+    "partial": 46,
+    "confirmed_scope": 39,
     "conflict": 1,
     "merged": 1
   },
@@ -6619,18 +6619,28 @@
       "id": "RPC-014",
       "title": "eth\\_getLogs",
       "criterionSha256": "218e451da17e4176ac26758f78c8f758da99707a9b6beb1113a70df43e77993b",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
-          "sha256": "66d03de520f60b519c20a0e08e43588e2aa36595ba283ce7846d299617d174be",
+          "sha256": "0893fd63ec51b7e65e8baae44e232a8fa981ffbc548f221b632b76ddb0fea8c9",
           "id": "contract-event-emitted"
+        },
+        {
+          "path": "internal/testhelper/event_log_semantics_test.go",
+          "sha256": "e4406d621d1eafae25e88495add2ff5da6739f9abc50695afa8f24f385081fa4",
+          "function": "TestPublicEventLogsBindReturnedFieldsToReceipt"
+        },
+        {
+          "path": "internal/testengine/event_log_native_test.go",
+          "sha256": "29207b08b31b03ea261f4f4b67525a1377004d7811f75f43094ba5841a0713d8",
+          "function": "TestNativeReceiptBoundEventLogs"
         }
       ],
       "observations": [
         {
-          "analysis": "exactblock address+topic count1,topic exact,wrongtopiccount0"
+          "analysis": "기존 topic/count 양성·음성 필터를 유지하고 반환 address/blockNumber/blockHash/transactionHash/removed/data를 영수증과 대조. 세 native 공개 단언30과 독립 실제 로그 대조 통과."
         },
         {
           "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
@@ -6685,14 +6695,121 @@
             "compare": "Equal",
             "is": "0"
           }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
+          "pointer": "/steps/9",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getLogs",
+            "params": [
+              {
+                "address": "$addr",
+                "fromBlock": "$blk",
+                "toBlock": "$blk"
+              }
+            ],
+            "select": "0.address",
+            "is": "$addr"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
+          "pointer": "/steps/10",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getLogs",
+            "params": [
+              {
+                "address": "$addr",
+                "fromBlock": "$blk",
+                "toBlock": "$blk"
+              }
+            ],
+            "select": "0.blockNumber",
+            "is": "$blk"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
+          "pointer": "/steps/11",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getLogs",
+            "params": [
+              {
+                "address": "$addr",
+                "fromBlock": "$blk",
+                "toBlock": "$blk"
+              }
+            ],
+            "select": "0.blockHash",
+            "is": "$eventBlockHash"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
+          "pointer": "/steps/12",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getLogs",
+            "params": [
+              {
+                "address": "$addr",
+                "fromBlock": "$blk",
+                "toBlock": "$blk"
+              }
+            ],
+            "select": "0.transactionHash",
+            "is": "$ehash"
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
+          "pointer": "/steps/13",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getLogs",
+            "params": [
+              {
+                "address": "$addr",
+                "fromBlock": "$blk",
+                "toBlock": "$blk"
+              }
+            ],
+            "select": "0.removed",
+            "is": false
+          }
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-009-event-logs-query.json",
+          "pointer": "/steps/14",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getLogs",
+            "params": [
+              {
+                "address": "$addr",
+                "fromBlock": "$blk",
+                "toBlock": "$blk"
+              }
+            ],
+            "select": "0.data",
+            "is": "0x"
+          }
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "returnedaddress와blockNumber 실제값을 직접select비교안함(필터조건만)"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "세 native 체인의 실제 LOG1 배포/실행. 주소·번호·블록/거래 hash·topic/data/removed와 receipt 일치, 다른 topic 필터0. WBFT Croissant0 직접 구성.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/event-log-evidence.json",
+          "sha256": "24a29efca6fef4d0c61cfdac3e07c6607cd9089fbf285779d7b223e796ede560"
+        }
+      ]
     },
     {
       "id": "RPC-015",

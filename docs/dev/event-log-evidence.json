@@ -1,0 +1,296 @@
+{
+  "scope": "RPC-014 real LOG1 deployment and mined call on three managed native families. Original positive/negative topic filters retained; unfiltered returned payload bound to deploy/event receipts, exact address/blockNumber/blockHash/transactionHash/data/removed/topic and event index identity. Not staged migration/full87/mainnet/Linux/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Original count/topic predicates accepted six malformed returned payloads.",
+  "unitGreen": "One positive and six negative controls execute public DSL.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "7ee7a7f780ebc1497169e5626ababe372f4cd81e164afd714edb5df941863954",
+    "sourceAfter": "7ee7a7f780ebc1497169e5626ababe372f4cd81e164afd714edb5df941863954",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeReceiptBoundEventLogs/stablenet",
+      "TestNativeReceiptBoundEventLogs/wbft",
+      "TestNativeReceiptBoundEventLogs/wemix",
+      "TestNativeReceiptBoundEventLogs"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-bcoxt7kx",
+      "/private/tmp/cbui/txfail-kepwhb05",
+      "/private/tmp/cbui/txfail-msu7s5aw"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-bcoxt7kx/reports/event-log-proof.json",
+      "/private/tmp/cbui/txfail-kepwhb05/reports/event-log-proof.json",
+      "/private/tmp/cbui/txfail-msu7s5aw/reports/event-log-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-bcoxt7kx": [],
+      "/private/tmp/cbui/txfail-kepwhb05": [],
+      "/private/tmp/cbui/txfail-msu7s5aw": []
+    },
+    "elapsedSeconds": 157.925,
+    "log": {
+      "path": "/private/tmp/chainbench-event-log-native-native.jsonl",
+      "sha256": "d3a109db78a8810062677da3bc64e9e6a5dbe2f8bf1dfbd7608c37bef0d2c191",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023408268492165
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-event-log-native-summary.json",
+      "sha256": "4812266f002d38a6d0440cdfecaf3fdf3c6ad554fa980500e41c1c8bc3d068db",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023408638354281
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-event-log-native-start.json",
+      "sha256": "4ec87e9fe4753d96f3d6375586dd8b2392a7dfcfd63e859265a1aec6ca4c2073",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023248110963145
+    }
+  },
+  "families": [
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-bcoxt7kx/reports/event-log-proof.json",
+        "sha256": "9fccf37348dbc117a7a9e920fce912f4727cc4d424d0f856ca4d386225f78ccd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023296438149313
+      },
+      "blockNumber": "0x25",
+      "blockHash": "0x5405d93a5bf3298bfd5c1e620350224d35bf314c2ad5221a1a633431e5a04cca",
+      "eventHash": "0x79baa7704e51ad2425e0f64b65608f39d35175d83530fefe4ed16ef27e35a8f7",
+      "address": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+      "log": {
+        "address": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+        "blockHash": "0x5405d93a5bf3298bfd5c1e620350224d35bf314c2ad5221a1a633431e5a04cca",
+        "blockNumber": "0x25",
+        "data": "0x",
+        "logIndex": "0x0",
+        "removed": false,
+        "topics": [
+          "0x1111111111111111111111111111111111111111111111111111111111111111"
+        ],
+        "transactionHash": "0x79baa7704e51ad2425e0f64b65608f39d35175d83530fefe4ed16ef27e35a8f7",
+        "transactionIndex": "0x0"
+      },
+      "negativeCount": 0,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-bcoxt7kx/reports/20261015-001410-86402/UTC-20261015-001410/tests/001_contract-event-emitted/assert.json",
+        "sha256": "ae62f86a4178438b2fae8a7ad685f2084a34a74bf5c28cecdebc598f680b2de4",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023296423422490
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-bcoxt7kx/reports/20261015-001410-86402/UTC-20261015-001410/tests/001_contract-event-emitted/steps.json",
+        "sha256": "369a4b2ec4526ce4336f9d2740aa5878ada0689859bc484366d23a7432ede9c9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023296405564641
+      },
+      "assertionCount": 10,
+      "runtime": "/private/tmp/cbui/txfail-bcoxt7kx",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-bcoxt7kx/reports/event-log-inventory.json",
+        "sha256": "3b624d1e2e96d2eddcd0ee6a6f802b8aaf2a1d5e1d44e758a0a719531dd3acf5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023425267551901
+      }
+    },
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-kepwhb05/reports/event-log-proof.json",
+        "sha256": "593cc38c0b8030bae6dab0480c500e93b8f873ed9b11efe97ecac04fe921ceba",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023310211914407
+      },
+      "blockNumber": "0x8",
+      "blockHash": "0xd855935ada52185fcd0b586f8cb25a0890afa2744aafe0a312ef46d3eb955862",
+      "eventHash": "0xea4ece73a074f9c31606435fd138f32fe3aed4f7a70d37482d7e7891b3f18c6f",
+      "address": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+      "log": {
+        "address": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+        "blockHash": "0xd855935ada52185fcd0b586f8cb25a0890afa2744aafe0a312ef46d3eb955862",
+        "blockNumber": "0x8",
+        "data": "0x",
+        "logIndex": "0x0",
+        "removed": false,
+        "topics": [
+          "0x1111111111111111111111111111111111111111111111111111111111111111"
+        ],
+        "transactionHash": "0xea4ece73a074f9c31606435fd138f32fe3aed4f7a70d37482d7e7891b3f18c6f",
+        "transactionIndex": "0x0"
+      },
+      "negativeCount": 0,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-kepwhb05/reports/20261015-001410-86402/UTC-20261015-001500/tests/001_contract-event-emitted/assert.json",
+        "sha256": "af88d7e4362c9a224e1e2f555fc482ed5665ee3de19c3276a19b35484bdb1a70",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023310205441474
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-kepwhb05/reports/20261015-001410-86402/UTC-20261015-001500/tests/001_contract-event-emitted/steps.json",
+        "sha256": "37c1b7cce885ce7cd59188a4f6965d18b7ba7aaf08ef252226c5508f0229582a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023310189456372
+      },
+      "assertionCount": 10,
+      "runtime": "/private/tmp/cbui/txfail-kepwhb05",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-kepwhb05/reports/event-log-inventory.json",
+        "sha256": "c6f0eb4a871dbd684bcf100b51ba5f1862d28a2bdc49495d17c5970cb3617b5f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023425315581412
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-msu7s5aw/reports/event-log-proof.json",
+        "sha256": "5390eebfaf9f2b49df5ace38d932b1270ddb140bef7a544e5e6d1306f8ba0231",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023390673778381
+      },
+      "blockNumber": "0x25",
+      "blockHash": "0x1f2dc901c5c40eb814d02312a73407cf0be3a19d61460a0b56c32be00495f47b",
+      "eventHash": "0xf17a7dd5dd2f6be981e45183c83674f084e3fc964bd8e603811d5f09bab04239",
+      "address": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+      "log": {
+        "address": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+        "blockHash": "0x1f2dc901c5c40eb814d02312a73407cf0be3a19d61460a0b56c32be00495f47b",
+        "blockNumber": "0x25",
+        "data": "0x",
+        "logIndex": "0x0",
+        "removed": false,
+        "topics": [
+          "0x1111111111111111111111111111111111111111111111111111111111111111"
+        ],
+        "transactionHash": "0xf17a7dd5dd2f6be981e45183c83674f084e3fc964bd8e603811d5f09bab04239",
+        "transactionIndex": "0x0"
+      },
+      "negativeCount": 0,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-msu7s5aw/reports/20261015-001410-86402/UTC-20261015-001516/tests/001_contract-event-emitted/assert.json",
+        "sha256": "2b2d3847d945ee7adcb8290c6e00abc042f67363926ecc67de4682ca367d8a88",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023390666033430
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-msu7s5aw/reports/20261015-001410-86402/UTC-20261015-001516/tests/001_contract-event-emitted/steps.json",
+        "sha256": "a2285566f9bb0e58e0fe7a3db95e207419a8c7a78f615abfb875f7ce90dc5c4d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023390642804411
+      },
+      "assertionCount": 10,
+      "runtime": "/private/tmp/cbui/txfail-msu7s5aw",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-msu7s5aw/reports/event-log-inventory.json",
+        "sha256": "aa8e3adf211bf9ca4f1161c0c710d91aa3dad1b7986fab4c3e1794b8ff23f06d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792023425350025541
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-event-log-publication.json",
+    "sha256": "5e5873e4c23527fd1b76eb7ab442d1ea0486e084ac1ab7de85ca7b5558ea25df",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792023060982812718
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-event-log-red.log",
+      "sha256": "6527dee8062b9bbafcb59120d7d03746801589326a9417114a467f4697b90112",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023038486795743
+    },
+    {
+      "path": "/private/tmp/chainbench-event-log-green.log",
+      "sha256": "42bdff5a56ba8c0e2e1107681ffa97888885ad9f647d8c4c208e46016eedd372",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023063156744359
+    },
+    {
+      "path": "/private/tmp/chainbench-event-log-related-race.log",
+      "sha256": "2816307c1785674ec3e0c4e97ecda9d7681ba61a17bb071b112d55c8a1aae8ad",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023115487663698
+    },
+    {
+      "path": "/private/tmp/chainbench-event-log-check.log",
+      "sha256": "d54f3059d86c99c54e71129f0a9cfac5b0f7edec54578d882e29362b5f96079f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023238450703333
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}
