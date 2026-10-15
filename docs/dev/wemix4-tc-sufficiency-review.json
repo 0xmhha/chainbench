@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 78,
-    "partial": 6,
+    "confirmed_scope": 80,
+    "partial": 4,
     "conflict": 2,
     "merged": 1
   },
@@ -5065,13 +5065,23 @@
       "id": "GOV-009",
       "title": "Validator 변경 프로세스 및 NCP 조건 검증 (GOV-024 통합)",
       "criterionSha256": "fc4735f124b226905122e79100c1345378868f711e46490a8d17da86f83d9907",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_scenario_e2e_test.go",
           "sha256": "f7825423a65b84ea3ea0a0f04352ef7883501065d7b423996d603746b8bdb665",
           "function": "TestWemixGovValidatorSelectionScenarioE2E"
+        },
+        {
+          "path": "cmd/chainbench/ncp_selection_e2e_test.go",
+          "function": "TestNCPSelectionRejectsFlagsWithoutEligibility",
+          "sha256": "02637d523ceef9fe062cf4a295dd4a8ff0b4f65845561867cd60082245fc4150"
+        },
+        {
+          "path": "cmd/chainbench/ncp_selection_native_test.go",
+          "function": "TestWemixNCPStabilizationAndRankingE2E",
+          "sha256": "929b23d21d4a388656ab6eca15e51ccb3af035c36de64c84b03efef856bc0f0e"
         }
       ],
       "observations": [
@@ -5079,18 +5089,23 @@
           "analysis": "nonNCP highstake5*min isnotcandidate, permissioned3sets 유지"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_NCP_threshold5_and_target7_rank_permission_transition",
       "remainingConditions": [
-        "NCP추가투표 후 nextEpoch highstakevalidator 포함·최하위탈락 후반 전혀없음. target4에 후보3이라 topNrank경쟁도 없음"
+        "안정화 중 seed8과 해제 후 target7을 구분한 로컬 실제9노드 fixture이다. threshold5 도달을1/4/4/7의 원문 순서로 검증했으며 정확히5명인 별도 중간 에폭이나 임의 churn 전수는 주장하지 않는다. 기존 공개 JSON 전체 재실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인 조사·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 생성 BLS의 WEMIX1+WBFT8/Croissant20/epoch10/UseNCPtrue/target7/threshold5에서 확인했다. NCP staker1/4/4(nonNCP H 포함 총등록5)인 epoch30/40/50은 stabilizingtrue·seed8, NCP staker7인60은 false·target7이었다. A40M~G10M, H10M→45M의 실제 입력과 pinned stake/NCP/staker 전체 목록을 대조했다. 최고액 nonNCP H는70에도 제외됐으며, 4표 과반수 NCP 추가78 직후 첫80에서 H 포함·최하위 G 제외·정확히7명으로 바뀌었다. 독립 raw14건·이벤트·에폭 RLP·BLS/index·새 집합의 다음 헤더 쿼럼도 일치했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-selection-evidence.json",
+          "sha256": "bfeff78c27470b16464eb7ca4c8d504698b40a8d51d8535e95a1c57bf9f580de"
+        }
+      ]
     },
     {
       "id": "GOV-010",
       "title": "Stabilization Stage 검증 (staker 등록 → 해제까지)",
       "criterionSha256": "64ff8ced9221d7d46b934f383f7cc18770256a1497850e0dbc528ac5fe99c34b",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -5107,6 +5122,16 @@
           "path": "cmd/chainbench/upgrade_gov_epoch_e2e_test.go",
           "sha256": "af710b7ed38462c080bc595767ce6d00ad5521f977c19f86bd54e71a13b03fc8",
           "function": "TestWemixGovernanceEpochDecidesTheValidatorSetE2E"
+        },
+        {
+          "path": "cmd/chainbench/ncp_selection_e2e_test.go",
+          "function": "TestNCPSelectionRejectsFlagsWithoutEligibility",
+          "sha256": "02637d523ceef9fe062cf4a295dd4a8ff0b4f65845561867cd60082245fc4150"
+        },
+        {
+          "path": "cmd/chainbench/ncp_selection_native_test.go",
+          "function": "TestWemixNCPStabilizationAndRankingE2E",
+          "sha256": "929b23d21d4a388656ab6eca15e51ccb3af035c36de64c84b03efef856bc0f0e"
         }
       ],
       "observations": [
@@ -5114,12 +5139,17 @@
           "analysis": "threshold2/4 축약 true→false 및 기본4<5 true"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_NCP_threshold5_and_target7_rank_permission_transition",
       "remainingConditions": [
-        "1/4NCP threshold5, nonNCP등록해도 true유지 후7NCP false라는 순서 없음; nonNCP등록은이미false후"
+        "안정화 중 seed8과 해제 후 target7을 구분한 로컬 실제9노드 fixture이다. threshold5 도달을1/4/4/7의 원문 순서로 검증했으며 정확히5명인 별도 중간 에폭이나 임의 churn 전수는 주장하지 않는다. 기존 공개 JSON 전체 재실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인 조사·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 생성 BLS의 WEMIX1+WBFT8/Croissant20/epoch10/UseNCPtrue/target7/threshold5에서 확인했다. NCP staker1/4/4(nonNCP H 포함 총등록5)인 epoch30/40/50은 stabilizingtrue·seed8, NCP staker7인60은 false·target7이었다. A40M~G10M, H10M→45M의 실제 입력과 pinned stake/NCP/staker 전체 목록을 대조했다. 최고액 nonNCP H는70에도 제외됐으며, 4표 과반수 NCP 추가78 직후 첫80에서 H 포함·최하위 G 제외·정확히7명으로 바뀌었다. 독립 raw14건·이벤트·에폭 RLP·BLS/index·새 집합의 다음 헤더 쿼럼도 일치했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-selection-evidence.json",
+          "sha256": "bfeff78c27470b16464eb7ca4c8d504698b40a8d51d8535e95a1c57bf9f580de"
+        }
+      ]
     },
     {
       "id": "GOV-011",

@@ -182,6 +182,30 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-009·010 원문 threshold5·target7·NCP 순위 전환 보강:** 기존 플래그
+거절을 유지한 판정이 profile·신원·등록/NCP 수·고정 높이·금액·선정 집합/BLS·권한 투표의
+31가지 오류를 허용하는 RED와 이를 거절하는 GREEN을 확인했다. CLI 전체 race·정적 검사·
+전체 검사도 통과했다.
+
+생성 BLS 키의 실제 WEMIX1+WBFT8, Croissant20/epoch10/UseNCPtrue/target7/threshold5에서
+원문 순서대로 검증했다. NCP staker1/4명과 nonNCP H 등록 후4명(총등록5)의 epoch30/40/50은
+stabilizingtrue·seed8을 유지했고, E/F/G까지 등록한 NCP staker7명의60은 false·target7이었다.
+초기 NCP council은 계속7명이며 이 수와 활성 NCP staker 수를 혼동하지 않았다. 원문은
+1/4/4/7 순서이므로 정확히5명인 별도 중간 에폭을 검증했다고 하지 않는다.
+
+A40M·B35M·C30M·D25M·E20M·F15M·G10M·H10M WMX를 실제 등록하고 H를35M 더해45M로
+만들었다. 최고액 H는 nonNCP인70에도 제외돼 A~G7명이 유지됐다. 정확한 과반수 NCP 추가
+투표의 마지막78번 직후 첫80번 에폭에서는 H가 포함되고 최하위 G가 제외돼7명이 됐다.
+여섯 상태의 등록·NCP·정확한 금액·계약 목록, raw14건의 hash/nonce/calldata·등록/증액/투표
+이벤트, RLP·BLS/index·새 집합의 다음 블록 쿼럼6/5와 실제 노드 신원을 독립 대조했다.
+
+실제 검증(93.226초, skip0)의 고정 소스
+`a5b9a9e40cbf913b7030484274c4d53f4b4044aecb9871e3b246e2734fcca8fb` 전후가 같다.
+[선정·안정화 증거](ncp-selection-evidence.json)는 파일457개의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0개다. 원문87개는 확인 범위80·부분4·충돌2·병합1이다.
+기존 공개 JSON 전체 실행·전체87·Linux·메인넷 live·legacy·latest 코드 관측 원인·최종 Web
+인수는 별도 잔여이며 임의 threshold/churn 전수로 확대하지 않는다.
+
 **2026-10-15 GOV-007·008 NCP 제거/자기 탈퇴와 첫 다음 에폭 제외 보강:** 멤버 수·
 제외 여부만 보고 기존 실패 영수증 거절을 유지하는 모델이 경로별26개 오류를 통과시키는
 RED를 확인했다. 이후 더 강한 판정도 늦은 에폭을 허용하는 두 RED를 추가로 확인했고,
