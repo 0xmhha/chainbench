@@ -182,6 +182,26 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-008 정확한 첫 반감·실제 proposer 원장 보강:** 양수/감소만 확인하는
+판정이 설정·반감 비율·태그/채굴 높이·부모·proposer·실제 잔액·수수료/분배 격리의23개
+오류를 허용하는 RED와 이를 거절하는 GREEN을 확인했다. 정적 검사가 지적한 조건식도
+단순화했고 실행·구성·관측 race와 최종 실행 엔진 race·전체 검사를 통과했다.
+
+첫 실제 시도는 준비 케이스 후 보상 RPC가 HTTP에 없어 -32601로 실패했다. 실패 자료를
+보존하고 기존 보상 fixture와 같은 노드별 http.api/wemix 선언을 명시한 뒤 검사·실제 증명을
+재통과했다. 실제 WBFT4/Croissant0/Brioche0에서 WBFT/Brioche 기본 보상을 모두2ETH로
+명시하고 firstHalving10/period10/rate50/times4/finish1000을 실제 genesis와 대조했다.
+공개 케이스 입력5/15와 경계9/10의 실제 채굴 블록에서 RPC2/2/1/1ETH와 proposer의 정확한
+parent→mined 잔액 증가가 일치했다. 거래0·gas0·등록staker0·beneficiary없음을 확인했으며
+독립 수치/헤더/신원/설정 대조도 통과했다. Brioche 활성화 경계를 넘은 증명은 아니다.
+
+최종 실제 검증(55.53초, skip0)의 고정 소스
+`ce82637ec29cc3b8728a56068d69824fd11c8f724a192ef1452cb4d0bbab4289` 전후가 같다.
+[정확한 반감·잔액 증거](brioche-reward-evidence.json)는 실패/성공 파일398개의 내용·권한·
+소유자·mtime을 보존했고 활성 프로세스·종료 DB는0개다. 원문87개는 확인 범위81·부분3·
+충돌2·병합1이다. Brioche 활성화 이전/이후·단계 이관·WEMIX 레거시 보상 분배·공개 JSON
+전체 실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 GOV-009·010 원문 threshold5·target7·NCP 순위 전환 보강:** 기존 플래그
 거절을 유지한 판정이 profile·신원·등록/NCP 수·고정 높이·금액·선정 집합/BLS·권한 투표의
 31가지 오류를 허용하는 RED와 이를 거절하는 GREEN을 확인했다. CLI 전체 race·정적 검사·

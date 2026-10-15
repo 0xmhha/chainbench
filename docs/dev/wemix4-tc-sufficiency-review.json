@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 80,
-    "partial": 4,
+    "confirmed_scope": 81,
+    "partial": 3,
     "conflict": 2,
     "merged": 1
   },
@@ -6658,13 +6658,23 @@
       "id": "RPC-008",
       "title": "wemix\\_getBriocheBlockReward",
       "criterionSha256": "361d43f7b6f762c0caa0ff03bd2e383343544fba918994d060d67cf5bc48aaef",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json",
           "sha256": "8d0f92c38d5934290a645f315c7c3e3dbf15fd70b1cf90a224195a0dec3e7838",
           "id": "wemix-brioche-block-reward"
+        },
+        {
+          "path": "internal/testengine/brioche_reward_test.go",
+          "function": "TestBriocheRewardRejectsDecreaseOnly",
+          "sha256": "ce075325966474e2802ab066f9a973305afa9c5deb54fa7760cc4fb2f1008807"
+        },
+        {
+          "path": "internal/testengine/brioche_reward_native_test.go",
+          "function": "TestNativeBriocheHalvingProposerLedger",
+          "sha256": "6b082ad92c53261df7bb16302582cff5738218bd8e47531440d015fda19b2645"
         }
       ],
       "observations": [
@@ -6698,12 +6708,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_configured_first_halving_and_exact_actual_proposer_mint_ledger",
       "remainingConditions": [
-        "pre/post 감소만확인하며 정확BlockReward 및50% coefficient·actualproposerbalance delta 비교없음"
+        "Brioche가 genesis부터 활성인 구성에서 첫 반감을 검증했다. 원문 표현의 Brioche 활성화 이전/이후 경계나 staged migration, WEMIX 레거시 보상 분배를 검증한 것은 아니다. 기존 공개 JSON 전체 재실행·전체87·Linux·메인넷 live·legacy·latest 코드 원인 조사·최종 Web 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 native WBFT4/Croissant0/Brioche0에서 WBFT/Brioche 기본 보상을 모두2ETH로 명시하고 firstHalving10/period10/rate50/times4/finish1000을 실제 genesis와 대조했다. 공개 케이스 입력5/15와 정확한9/10 경계의 실제 채굴 헤더를 읽었으며 RPC 보상2/2/1/1ETH와 실제 proposer의 parent→mined 잔액 증가가 정확히 같았다. 거래0/gas0/등록staker0/beneficiary없음의 격리 조건, 노드 신원·태그·부모 연결·원시 헤더도 독립 대조했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/brioche-reward-evidence.json",
+          "sha256": "57b52e28dbd5ec7ef1aa1d78ce9acf41bff4bd22ef13ec7918a93c55e2142b5d"
+        }
+      ]
     },
     {
       "id": "RPC-009",
