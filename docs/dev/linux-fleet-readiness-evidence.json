@@ -1,0 +1,530 @@
+{
+  "scope": "Fifteen isolated owned Linux virtual servers, current CLI SSH identity/regular executable checksums, real sudo root-only download, native binary version execution. Readiness only, no blockchain/L1/Web acceptance.",
+  "fleet15Ready": true,
+  "fullL1Accepted": false,
+  "blockchainExecutionClaimed": false,
+  "unitRed": "Count-only readiness missed10 invalid identity/checksum/platform/transport/root/sudo/running/disk controls; the existing missing-host guard rejected one additional control.",
+  "unitGreen": "Positive fixture and11 negative subtests pass. Actual content-address integration plus four malformed/incorrect address controls were RED then GREEN with strict prefix/payload/path validation.",
+  "run": {
+    "sourceBefore": "31ccf3be59b1affd6c50e1244c634ed850f400e9cef40465c5892664215a78a5",
+    "sourceAfter": "31ccf3be59b1affd6c50e1244c634ed850f400e9cef40465c5892664215a78a5",
+    "sourceUnchanged": true,
+    "configurationUnchanged": true,
+    "elapsedSeconds": 61.597152250004,
+    "proof": {
+      "path": "/private/tmp/cbui/lf-xjdy6jeu/reports/fleet-native2-proof.json",
+      "sha256": "248d4da9770e242676af9ba260e33dc89dd7d7b337cf243cfa08f8d9b69d1800",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056798191529049
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-linux-fleet-native2-summary.json",
+      "sha256": "248d4da9770e242676af9ba260e33dc89dd7d7b337cf243cfa08f8d9b69d1800",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056798192233544
+    },
+    "runner": {
+      "path": "/private/tmp/chainbench-linux-fleet-run2.py",
+      "sha256": "7220b9dbad10e0a737e27901928c77d59c77978afc4f6611ac7313b6e8e16bce",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056704380303219
+    },
+    "verifier": {
+      "path": "/private/tmp/chainbench-linux-fleet-verify.py",
+      "sha256": "c4a9a4828e2a1146fb3cd7a63230f5f9d94a065b8d0ea1665a96b0e804abb363",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056704379389935
+    }
+  },
+  "firstAttempt": {
+    "proof": {
+      "path": "/private/tmp/cbui/lf-xjdy6jeu/reports/fleet-native-proof.json",
+      "sha256": "b7600eb31cc9470b8b38098c15dde5a6c38b83cbdf40e75ea93a8f4f60044ea0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056576866861059
+    },
+    "ready": false,
+    "reason": "All15 real SSH/sudo/version observations completed, but driver compared standard sha256: content addresses to bare hashes. Raw responses retained and independently show matching payloads; projection corrected with strict format tests and all15 observations repeated.",
+    "runner": {
+      "path": "/private/tmp/chainbench-linux-fleet-run.py",
+      "sha256": "e503ffabee470d5e6955778871e73c13208caf689d8214f9e6b88ef276665dfc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056499038823598
+    }
+  },
+  "preparation": {
+    "path": "/private/tmp/cbui/lf-xjdy6jeu/reports/preparation.json",
+    "sha256": "77109034adc8609121b800fa5440c4527e93af29efb97a992ffa5b3f6201b42d",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792056230047503082
+  },
+  "preparationRunner": {
+    "path": "/private/tmp/chainbench-linux-fleet-prepare.py",
+    "sha256": "af3900fb40bc1305e2e7b28b526ec0955f4f225381120a4db0292cc6863fea76",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792056226183696896
+  },
+  "runtime": "/private/tmp/cbui/lf-xjdy6jeu",
+  "namespace": "chainbench-lf-xjdy6jeu",
+  "virtualServerIdentity": "Each new owned container receives its own persistent machine-id and SSH host keys on first startup. No claim of fifteen physical machines.",
+  "hosts": [
+    {
+      "index": 1,
+      "name": "chainbench-lf-xjdy6jeu-s1",
+      "dockerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+      "hostIdentity": "machine-sha256:f4fedbeee4629cb26eb7a0b580f2751913edfbb99d60416f9c9aab10f0f7b86d",
+      "sshFingerprint": "SHA256:Yf0YgDf0mjEfUm7enVObGA8C3/GVw36MCoTRgRZC29s",
+      "address": "172.31.42.11",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "fcd9a46dba5873e1e057a4bf0ad6bf5142e683401e8b5227c71b850bdfcb6bac",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 2,
+      "name": "chainbench-lf-xjdy6jeu-s2",
+      "dockerID": "860b16d0999727784041762314064d526e66bac57460f072c6bfc8afb0cb4471",
+      "hostIdentity": "machine-sha256:28c1bec4976ca7b4a89454395432949659575084150d406565d6bc4dc9e26770",
+      "sshFingerprint": "SHA256:FX0E3vwGKMyGkbcBHESuB7Bk70Oo0tNmYQj7eu3HzAU",
+      "address": "172.31.42.12",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "12a8e29f1352b45d2d55e8114890619b1717960165f4c857ef921d30417189c2",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 3,
+      "name": "chainbench-lf-xjdy6jeu-s3",
+      "dockerID": "3c43eeeda71d8f2d72bfd3335488b11102125330b990482d50e343a990d377b9",
+      "hostIdentity": "machine-sha256:37efd7c2590f52b06df1bdd95dd3764b271a67f9603666017046430df3fc58f6",
+      "sshFingerprint": "SHA256:fdXjTWZ5E/gGhWC0Z8WepmarR3WWZzztP5Fw9oKd/MM",
+      "address": "172.31.42.13",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "f033a67e855252e205509892085efd7c0e8265e66296c2937052f81e85c3cccd",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 4,
+      "name": "chainbench-lf-xjdy6jeu-s4",
+      "dockerID": "65f97ca8028284f7201e8d1f0141281a1e766c6e0715b456b88634e5e6d27d04",
+      "hostIdentity": "machine-sha256:1e477854a2b602d2cd5cd12b94c7e7a214e263e330cc3c5f83d90064851fb413",
+      "sshFingerprint": "SHA256:g6GeHNs45ziqRBHk3P5+kiVrJX7znsAtQHAPbcANAVU",
+      "address": "172.31.42.14",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "9c4e7221602de42317a96c7c8cf8f9b9530e5c5fdd8dc18001d158c74416007d",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 5,
+      "name": "chainbench-lf-xjdy6jeu-s5",
+      "dockerID": "4feab947ecaa2d4ab96d3b6fed1321ed352724c812d5b9ded54a1a59d6cc5798",
+      "hostIdentity": "machine-sha256:d29c5d2645c6338279eb8836716fa198e8b07605d2bf8fcea47cd82e01ce43e6",
+      "sshFingerprint": "SHA256:P1lrDmOrA//FFF/TyKzbODOP3k6MfumdazZh8H4KZvY",
+      "address": "172.31.42.15",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "b8bd75cb4da046e3095307db73175430c65100d5811b04234e137a3f8d44d703",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 6,
+      "name": "chainbench-lf-xjdy6jeu-s6",
+      "dockerID": "e4c378cabf5b1a0c349435b7d4955261c72bd1e223a74c9c9ba04e81bfd42ecc",
+      "hostIdentity": "machine-sha256:c7d4bc29b13fa5ad46ba70eeba00de8deb0aba9f15f6c92c3bc88a98106731ae",
+      "sshFingerprint": "SHA256:Fwfz9pdHcMCYH6PyQ4ej8aOD7v/NYsq5RYk58s59SbM",
+      "address": "172.31.42.16",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "8ace13c98e3f890f6f5cd2b3f9cf9b05aba06e67ff76750a15cedde6d4685024",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 7,
+      "name": "chainbench-lf-xjdy6jeu-s7",
+      "dockerID": "19c1c25638ab7b3ee2c3c0f64b937a295143525697fa3d2d499af4ed0c923e1e",
+      "hostIdentity": "machine-sha256:3d78fa880cde9cab937fb1f605dbedc5eefa431d3eaeb015f7ef59726b2d302d",
+      "sshFingerprint": "SHA256:s5mmIC7rGOwFDcnN8/IolEcxHkLQMA8Uxv7GgfFKfzU",
+      "address": "172.31.42.17",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "aeb714a88f04a3cea100f09835bbc7a81f5e39f683d8d96ef8bb58e16709cdb7",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 8,
+      "name": "chainbench-lf-xjdy6jeu-s8",
+      "dockerID": "5de074011df8d2158d399a64b08f63a62dfdd5defa0bd94cee2f8587fdce538c",
+      "hostIdentity": "machine-sha256:fb69d474c9820bbbfde1cf32d2dd826e20d75e328bb6bc41b0a5608e0dc9613d",
+      "sshFingerprint": "SHA256:r6gu+gteDeD2mnHoQ2C6R7u++OdwGR8BpqjeoscGgsA",
+      "address": "172.31.42.18",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "e957888221a017ab8e0959bce7e4f9bbd338616d2673adaf15fdcd8b06d5a9f1",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 9,
+      "name": "chainbench-lf-xjdy6jeu-s9",
+      "dockerID": "351da5028496dfb790074b158c6a058eb97168980d5604000f6ab6760e13004e",
+      "hostIdentity": "machine-sha256:57f04035b99d63074cd951d16777526d648816ed48a0a93fe14e27864cf65224",
+      "sshFingerprint": "SHA256:icgFXSv/dRBZBEmmpQcSHripejq7+rUmxfj/HehKtDw",
+      "address": "172.31.42.19",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "565de6877913d5a158fbe81f115bab637dd24664996df5d7664b711556232c7b",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 10,
+      "name": "chainbench-lf-xjdy6jeu-s10",
+      "dockerID": "f94cf8ae7290a88f23be0ca67ee8f3c19b5c6af75c91bbaeba7e7e17d960018b",
+      "hostIdentity": "machine-sha256:e3c2f00017578961aa0c9ca51d17394dfe17180eca6a9ecd66dcc69a46a95141",
+      "sshFingerprint": "SHA256:7zNeHdLOhOWcqkzqsZJQsdddzoj7RSfyzrvy6qCDqH4",
+      "address": "172.31.42.20",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "f58708f4d344d7e58a361c8cd1b1101ec4a0b322491a9a59cb02365a5c6c70c5",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 11,
+      "name": "chainbench-lf-xjdy6jeu-s11",
+      "dockerID": "c81aaab691a9821ef24667521af52dc168ea257e139d092bc7af38dae3d3fe5c",
+      "hostIdentity": "machine-sha256:37ca667d59f8c084d97319f0dd128498326a39c69c3b4b085bc0dd0dae550add",
+      "sshFingerprint": "SHA256:ghUtKKmPYtrCNgwn3GEQ1HmXIWrS1zvPeHfhL82/wZg",
+      "address": "172.31.42.21",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "0d8fe1fe18874ee49c722ff8b20ea92699cc18b72663691b0ef8e4b456f2e370",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 12,
+      "name": "chainbench-lf-xjdy6jeu-s12",
+      "dockerID": "360153a8418af37c9e43b2e6532279085b70065664456efdd6bafbdec70cafb1",
+      "hostIdentity": "machine-sha256:a277c7d705d3ac73bc224fd56e8e3bcb6720728d483faa3d60c133c8f92807d9",
+      "sshFingerprint": "SHA256:bjWf+SYioJ3J1Uc1J8jD+Fh2uJoHYmlrQNmftFZ2ZI4",
+      "address": "172.31.42.22",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "ddd7e35324adde5b5bb414ebd9dd277f07921ccace64fd91665c9b2ddc312480",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 13,
+      "name": "chainbench-lf-xjdy6jeu-s13",
+      "dockerID": "9b438fbcc282dc0d3f8403f565ba665987d3e725ea3e3e48d3fb430b3abcc80b",
+      "hostIdentity": "machine-sha256:0228e1b9681134e0d7ff674b00fe8767f51bc4a406b8a10e9da37814db82e979",
+      "sshFingerprint": "SHA256:LHYeeJfqTxfy6cTHGuyqlqNneZp/p//bdoMME7ZLOvY",
+      "address": "172.31.42.23",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "73029be9b91b218b21cc6989ae1673f85fc443ee6ababd66ce394aec20663ccb",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 14,
+      "name": "chainbench-lf-xjdy6jeu-s14",
+      "dockerID": "86d04537530c479232771f102e8073754abfb885e8f8dac83336170394581e67",
+      "hostIdentity": "machine-sha256:b5c99517d88d8c6e0601a7668f279ddb7ac162419d7efea0adda785515675885",
+      "sshFingerprint": "SHA256:39+U4k/GMkRPiMtUKAPEo5jBU0kYmDdSxYjv2A+rsNc",
+      "address": "172.31.42.24",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "d8bdefa419ec0f77e5131ef76e380a3d92e8604c72fdadf3fb1725015b19b8d9",
+      "diskFreeBytes": 36969697280
+    },
+    {
+      "index": 15,
+      "name": "chainbench-lf-xjdy6jeu-s15",
+      "dockerID": "0acfbc062c55365f88132b897536609bff9aed2121fb03d3a2c114b129dbd6c9",
+      "hostIdentity": "machine-sha256:5e63a1d75207b66ecd1061821b5afa04aa29a89f0e4563dacc496b10f958c4b8",
+      "sshFingerprint": "SHA256:dQoFAKfZJwApD1OWopLke87NjxfXfHA3kWjBIe0ckD8",
+      "address": "172.31.42.25",
+      "os": "linux",
+      "architecture": "arm64",
+      "transport": "ssh",
+      "dataPath": "/data/chainbench",
+      "checksums": {
+        "gstable": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "gwbft": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c"
+      },
+      "sudoReadSHA256": "928d512e5481032b42748c912ad5f281450f9b37d4b28c2ef5ab15ed4798e625",
+      "diskFreeBytes": 36969697280
+    }
+  ],
+  "existingContainersPreserved": [
+    {
+      "id": "4ac85d5a6a9bf051e548d2632d1e5eff7d94ee7e2ad69ad1ca793583f404985b",
+      "name": "/chainbench-mh-control",
+      "running": false,
+      "image": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35"
+    },
+    {
+      "id": "1a22279b358cdc311db4f0afcb2bb48e02bd77ee3e2f6cccbc3e727e0ee7b3a9",
+      "name": "/chainbench-mh-server2",
+      "running": false,
+      "image": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35"
+    },
+    {
+      "id": "73dc15628bbf81213311bb6dfb7349acf7fa46b47cb11cd64d448f8cef53bc4c",
+      "name": "/chainbench-server1",
+      "running": false,
+      "image": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35"
+    }
+  ],
+  "cli": {
+    "path": "/private/tmp/cbui/lf-xjdy6jeu/bin/chainbench",
+    "sha256": "99afa6705d38f851b12010594823c79ee890ae2abcd0fffbee6f98ee3550bee4",
+    "buildInfo": "/private/tmp/cbui/lf-xjdy6jeu/bin/chainbench: go1.26.8\n\tpath\tgithub.com/0xmhha/chainbench/cmd/chainbench\n\tmod\tgithub.com/0xmhha/chainbench\tv0.0.0-20261015090903-05b9a8b58eb6+dirty\t\n\tdep\tgithub.com/0xmhha/accounts\tv0.1.0\th1:wzaTpRrgg5gSsLDbF/BnV4SpwABWmZQJDzfoyr4oh5U=\n\tdep\tgithub.com/decred/dcrd/dcrec/secp256k1/v4\tv4.0.1\th1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1m5sE92cU+pd5Mcc=\n\tdep\tgithub.com/gorilla/websocket\tv1.5.3\th1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=\n\tdep\tgithub.com/kilic/bls12-381\tv0.1.0\th1:encrdjqKMEvabVQ7qYOKu1OvhqpK4s47wDYtNiPtlp4=\n\tdep\tgithub.com/spf13/cobra\tv1.10.2\th1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=\n\tdep\tgithub.com/spf13/pflag\tv1.0.9\th1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.1.0\th1:5eUemwrMargf3BSLRRCalXT93Ns6pQJIjYQN2nyfOP8=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.4\th1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=\n\tdep\tgolang.org/x/crypto\tv0.52.0\th1:RMs7fP2rXdep0CftQlK8Uf+kibLm7qkCcradZWYz988=\n\tdep\tgolang.org/x/sys\tv0.45.0\th1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=\n\tdep\tgolang.org/x/term\tv0.43.0\th1:S4RLU2sB31O/NCl+zFN9Aru9A/Cq2aqKpTZJ6B+DwT4=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=05b9a8b58eb6d4cb990decdfa4a88beab377061b\n\tbuild\tvcs.time=2026-10-15T09:09:03Z\n\tbuild\tvcs.modified=true\n",
+    "head": "05b9a8b58eb6d4cb990decdfa4a88beab377061b"
+  },
+  "configurationRefs": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/docker-compose.yml",
+      "sha256": "08e6e7922ec95e047ae52719fd9b219d3e1c426a044c0fe8852c321f16c1c340",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056356760357873
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/localmap.yaml",
+      "sha256": "546638d6af9dc51fb49c3b15b351b3fd00bb86d3e96a406936aab4588f75f318",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912378367
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set-bad-auth.yaml",
+      "sha256": "379e0f7d49e4b821592fcdf8449fc74fcd6dc24bbd50f6a9507fd1916995723e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056356767580609
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set-no-sudo.yaml",
+      "sha256": "a8711c33a4bc33d7acdbb60e8252833c8ab742796c963a5ac545955222c64a4f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056356764080764
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set-wemix.yaml",
+      "sha256": "c03392f7f3934a461b63fe3759ffa89b083aba9133fc313ec9eb2a97227221ba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226894737140
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set.yaml",
+      "sha256": "323fec0873b2efc0a4edb5b93318d74191cefde45a66ba20cc9f4c2111df23c0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226888185789
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/workspace-config.yaml",
+      "sha256": "1a5a5d33690766e03308057f3e338a9b6e10c804daf33af942c600670c6f6c8e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912806499
+    }
+  ],
+  "negativeControls": {
+    "wrongPasswordRejected": true,
+    "disabledSudoRejectedWithoutOutput": true
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-linux-fleet-evidence.py",
+    "sha256": "29ed078dd8a09068dcc179507276604bc607b0d7e1cc9155a156af5b4ac72940",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792057079230928259
+  },
+  "retainedFilesAtReadiness": 200,
+  "inventory": {
+    "path": "/private/tmp/cbui/lf-xjdy6jeu/reports/fleet-readiness-inventory.json",
+    "sha256": "7f3892aa7a86e443a697329905c3f322de56118b8074dda9e28671dbcedb3823",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792057109178736528
+  },
+  "remainingDatabases": 0,
+  "fixtureKeptRunningFor": "Subsequent serial owned Linux chain smoke/fullL1; no blockchain processes or databases started in readiness.",
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-linux-fleet-unit-red.log",
+      "sha256": "4932a496cb517b2cbe61b2c34d0678573a8c34175619dc4461440bf3b462ea1e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792055973638725086
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fleet-unit-red2.log",
+      "sha256": "f6cce9be378c64698c05c27389b7b53f696938f7e5431a4c470024709b12b82e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792055997369117782
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fleet-unit-green.log",
+      "sha256": "fe008aab760eb03ccac7578e2b84665b1b50b0d7f855b17a0c7a8d039435b658",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056024861313647
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fleet-unit-green2.log",
+      "sha256": "fe008aab760eb03ccac7578e2b84665b1b50b0d7f855b17a0c7a8d039435b658",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056704486585043
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fleet-address-red.log",
+      "sha256": "6ae23f8330e09a337598c06b136716c67af84654d0506d014c1c484660d85a46",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056686758072088
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fleet-address-green.log",
+      "sha256": "888a0c0ed615e57d32cf72be501b0c355f33b8613c81dfdaa99db33d7959487e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792056704443816191
+    }
+  ]
+}
