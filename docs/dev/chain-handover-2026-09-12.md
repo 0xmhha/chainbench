@@ -607,3 +607,27 @@ chainbench는 전체 블록 전파와 해시 통지 후 fetcher 조회를 각각
 출처·유한값을 확인한다. 이 케이스의 metric 조건을 제거하거나 downloader 누적값으로 대체하지 않았다.
 따라서 WEMIX 실시간 경로와 작업 목록 10번은 열린 상태로 남는다. 다른 동기화 경로 14개가
 통과한 것은 이 결함이나 기존 W3의 해결을 뜻하지 않는다. 체인팀에 메시지나 리뷰 요청은 보내지 않았다.
+
+
+### 6-1. W4 — 원격에서 확인했던 4538a9f5 바이너리 재확인 (2026-10-15)
+
+**여전히 미해결.** 위 2026-10-14 기록의 로컬1350376a와 구분해,
+원격에서 확인했던4538a9f5의 깨끗한 tracked 소스·출처 고정 바이너리로 재현했다.
+이번 단계에서 원격 HEAD를 다시 조회한 것은 아니다. 외부 체인 소스는 수정하지 않았다.
+
+공개 `CT-NODE-007`은 pass0/fail1/blocked0/skip0이며, 실패 단언 하나가 정확히
+`eth_fetcher_block_broadcasts_in`과 대체 announce 수신 지표였다. 선언한 metric을 제거하거나
+다른 downloader 지표로 바꾸지 않았다. 같은 실제 EN이 peer4를 유지하며71→91의 추가20블록을
+수신했고, 두 높이에서 BP의 hash/stateRoot와 같았다. 같은 EN의 원본 Prometheus·expvar에서도
+broadcast/announce가 모두0이다. 동일 바이너리의 실제 inittrace는 LES fetcher가 ETH보다 먼저였다.
+소스4파일을 Git blob과 대조하고 AST로 동일 이름의 두 meter 등록과 무시되는 등록 오류·
+DuplicateMetric 반환을 다시 확인했다. 이것은 충돌 원인의 진단 근거이며 수정 검증은 아니다.
+
+0이라는 관찰만으로 진단을 통과시키던 모델에17개 음성 대조를 RED→GREEN으로 추가했고,
+관련 engine/helper/collector race·정적 검사·전체 검사를 통과했다. 소스 지문
+`c1318dd65c180a914e38345a7251ec73f3043b247221e80408085dfed0e827d1`을 고정한
+실제 진단 race는142.493초/skip0으로 통과했으며, 독립 대조와 새 프로세스 전수 조회 후
+종료 DB0·129파일의 내용·권한·소유자·mtime를 보존했다.
+[원본·출처·독립 대조](wemix-w4-latest-evidence.json). 진단 PASS는 CT-NODE-007 통과가 아니며,
+`issueResolved=false`, `strictCaseAccepted=false`다. 작업10과 외부 W4는 계속 열린 상태다.
+체인팀 메시지나 리뷰 요청은 보내지 않았다.

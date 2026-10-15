@@ -1730,5 +1730,13 @@
     "Local native builds only; fresh Linux fleet/L1, broader tasks 9/11-14 and frozen full Web acceptance remain pending.",
     "RPC quantity failure was added case wiring and is not counted as functional metric RED.",
     "Transient admin_wemixInfo bootstrap errors were preserved, not treated as W3 reproduction."
-  ]
+  ],
+  "latestPinnedWemixRecheck": {
+    "path": "docs/dev/wemix-w4-latest-evidence.json",
+    "sha256": "9ae3e65322716174eb6a368175cc35f56cffd08a6293716c72c81ba0fb4dee2f",
+    "chainSourceCommit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+    "strictCaseAccepted": false,
+    "issueResolved": false,
+    "scope": "2026-10-15 pinned-source diagnostic recheck, not current remote HEAD claim. CT-NODE007 exact metric failure; actual EN71→91 with4 peers, canonical hash/root match, both raw exporters zero, LES-before-ETH init, source AST duplicate-registration anchors. No external source modification."
+  }
 }

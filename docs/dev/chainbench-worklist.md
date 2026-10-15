@@ -182,6 +182,19 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 W4 원격 확인 소스4538 재현·인계 보강:** 과거 로컬1350376 진단과 구분해
+원격에서 확인했던4538a9f5의 깨끗한 소스·바이너리로 다시 재현했다(현재 원격 HEAD 재조회는 아님).
+0 관찰만으로 잘못 판정하던17개 exporter/진행/헤더/피어/출처/초기화/해결 표기 음성 대조를
+RED→GREEN으로 보강하고 engine/helper/collector race·정적 검사·전체 make check를 통과했다.
+고정 소스 `c1318dd65c180a914e38345a7251ec73f3043b247221e80408085dfed0e827d1`에서
+실제 진단 race142.493초/skip0·독립 대조가 통과했다. 공개 CT-NODE-007은 정확한 수신 metric
+단언 하나로 pass0/fail1이며, 추가20블록 EN71→91/peer4와 BP hash/stateRoot 일치에도 두 원본
+exporter의 broadcast/announce가0이다. 실제 LES→ETH init 순서와 소스4파일의 AST 중복 등록도
+대조했다. 종료 DB0·129파일 보존. [증거](wemix-w4-latest-evidence.json),
+[상세 인계](chain-handover-2026-09-12.md#6-1-w4--원격에서-확인했던-4538a9f5-바이너리-재확인-2026-10-15).
+외부 소스 수정 없음·issueResolved=false·strictCaseAccepted=false이며 작업10과 W4는 미완료다.
+이는 전체87·Linux·메인넷·최종 Web14 인수를 대신하지 않는다.
+
 **2026-10-15 NODE-003/004 원문 cold full·snap 포크 replay 보강:** 높이/hash만 확인하는
 모델이 놓친 거래 종류·raw/inclusion·cold 시작·진행·pivot·정확한 상태/영수증 32개 음성 대조를
 RED로 확인하고 양성+32개를 GREEN으로 보강했다. 관련 CLI 전체 e2e race(100.762초), tagged vet,
