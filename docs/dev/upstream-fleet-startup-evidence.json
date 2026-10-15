@@ -1,0 +1,206 @@
+{
+  "scope": "Independent two-new-binary Linux original15-node startup assertion and PAX/filesystem/local-file preservation audit with fresh15 complete process/FD/binary/DB checks. Not full353, WEMIX rerun, S1 resolution or final Web acceptance.",
+  "sourceDigest": "de214fec706dde04ecc2ce717cfe3f63f2be0c23d79b7c2a9795cfd5c15fa0de",
+  "head": "398c71789b87b3ff6082e06d52069d90ed3c8485",
+  "runs": [
+    {
+      "chain": "stablenet",
+      "runExitCode": 0,
+      "stopExitCode": 0,
+      "casePassed": true,
+      "nodes": 15,
+      "roles": {
+        "bp": 7,
+        "en": 7,
+        "pn": 1
+      },
+      "distinctServers": 15,
+      "elapsedSeconds": 284.16564770799596,
+      "liveReclamationRefused": true,
+      "activeReferencesBeforeStop": 61,
+      "assertions": {
+        "path": "/private/tmp/cbui/us-7xc4bgpu/reports/stablenet/sessions/20261015-203046-1709/UTC-20261015-203046/tests/001_stablenet-chain-up-15/assert.json",
+        "sha256": "7ed8643e7d6a5b1139ffe1df721aace43b9a1999753fd29f1d4a022b6c4fb73b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792096386332099456
+      },
+      "proof": {
+        "path": "/private/tmp/cbui/us-7xc4bgpu/reports/stablenet/proof.json",
+        "sha256": "d37b09df58a67d06bbf2018478d27559e05ed631c336342e2392e2ce17f806c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792096528813570050
+      }
+    },
+    {
+      "chain": "wbft",
+      "runExitCode": 0,
+      "stopExitCode": 0,
+      "casePassed": true,
+      "nodes": 15,
+      "roles": {
+        "bp": 7,
+        "en": 7,
+        "pn": 1
+      },
+      "distinctServers": 15,
+      "elapsedSeconds": 342.19447004201356,
+      "liveReclamationRefused": true,
+      "activeReferencesBeforeStop": 61,
+      "assertions": {
+        "path": "/private/tmp/cbui/us-7xc4bgpu/reports/wbft/sessions/20261015-203855-11933/UTC-20261015-203855/tests/001_stablenet-chain-up-15/assert.json",
+        "sha256": "126942527343956662dd87023b3699d22f687044516b843ebb38279ec1b20812",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792096863214543607
+      },
+      "proof": {
+        "path": "/private/tmp/cbui/us-7xc4bgpu/reports/wbft/proof.json",
+        "sha256": "a8455227405fad21d733484c36711bb89d387e877040b0b4a63815da1cea5f68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792097075145596672
+      }
+    }
+  ],
+  "cli": {
+    "binary": {
+      "path": "/private/tmp/cbui/us-7xc4bgpu/bin/chainbench",
+      "sha256": "3c621b16400178c1ca3658c5838c8f6cd5ae3c94e496903d37910f406f582be6",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792096065465081223
+    },
+    "buildInfo": "/private/tmp/cbui/us-7xc4bgpu/bin/chainbench: go1.26.8\n\tpath\tgithub.com/0xmhha/chainbench/cmd/chainbench\n\tmod\tgithub.com/0xmhha/chainbench\tv0.0.0-20261015202255-398c71789b87+dirty\t\n\tdep\tgithub.com/0xmhha/accounts\tv0.1.0\th1:wzaTpRrgg5gSsLDbF/BnV4SpwABWmZQJDzfoyr4oh5U=\n\tdep\tgithub.com/decred/dcrd/dcrec/secp256k1/v4\tv4.0.1\th1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1m5sE92cU+pd5Mcc=\n\tdep\tgithub.com/gorilla/websocket\tv1.5.3\th1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=\n\tdep\tgithub.com/kilic/bls12-381\tv0.1.0\th1:encrdjqKMEvabVQ7qYOKu1OvhqpK4s47wDYtNiPtlp4=\n\tdep\tgithub.com/spf13/cobra\tv1.10.2\th1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=\n\tdep\tgithub.com/spf13/pflag\tv1.0.9\th1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.1.0\th1:5eUemwrMargf3BSLRRCalXT93Ns6pQJIjYQN2nyfOP8=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.4\th1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=\n\tdep\tgolang.org/x/crypto\tv0.52.0\th1:RMs7fP2rXdep0CftQlK8Uf+kibLm7qkCcradZWYz988=\n\tdep\tgolang.org/x/sys\tv0.45.0\th1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=\n\tdep\tgolang.org/x/term\tv0.43.0\th1:S4RLU2sB31O/NCl+zFN9Aru9A/Cq2aqKpTZJ6B+DwT4=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=398c71789b87b3ff6082e06d52069d90ed3c8485\n\tbuild\tvcs.time=2026-10-15T20:22:55Z\n\tbuild\tvcs.modified=true\n"
+  },
+  "runnerProof": {
+    "path": "/private/tmp/chainbench-upstream-20261016/startup-summary.json",
+    "sha256": "1bfeb77ac09bbc8815894554ab1c6184a4062cfa016299ff71db5962aa2b38b7",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792097075279859110
+  },
+  "independent": {
+    "report": {
+      "path": "/private/tmp/chainbench-upstream-20261016/startup-independent/summary.json",
+      "sha256": "a1a01e35f461abcf216372f7c82c8d1e143934631a46b99f51eb159615f8895c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097265884526040
+    },
+    "elapsedSeconds": 178.54796458303463,
+    "archives": 30,
+    "archiveEntries": 2023,
+    "retainedLocalFiles": 538,
+    "freshFleetAudits": 15,
+    "remainingDatabases": 0,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "metadataScope": "Exact regular bytes, mode, uid/gid, ns-mtime, file type and link target against pre/post filesystem inventories; no ACL/xattr claim."
+  },
+  "fleetRefresh": {
+    "ledger": {
+      "path": "/private/tmp/chainbench-upstream-20261016/fleet-refresh/progress.json",
+      "sha256": "764745059f1abf7c4e499b4134807c73a535fb44b5947999d4b8903a203d2bc3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096044342688248
+    },
+    "preparation": {
+      "path": "/private/tmp/chainbench-upstream-20261016/fleet-refresh/preparation.json",
+      "sha256": "b59b3a0e801b4ed2ca9fc028c975d738a2e7162ea4d3b8885a68054ba1fa154f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096044334807671
+    },
+    "checkpoint": {
+      "path": "/private/tmp/chainbench-upstream-20261016/fleet-checkpoint.json",
+      "sha256": "574312e979c5e777836c67b715e1779f7e2b3a533e8b456bd6e398b5ad990f21",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096044339177167
+    },
+    "servers": 15,
+    "updatedBinaries": 30,
+    "oldHostBinaryBytesAndPerServerMetadataRetained": true,
+    "originalUnrelatedContainersUnchanged": true,
+    "freshProcessAndFDChecksBeforeReplacement": true,
+    "atomicPlacement": true,
+    "originalSSHAndRootProbesRerun": false
+  },
+  "inputProvenance": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/upstream-pinned-build-evidence.json",
+    "sha256": "08847c9e5f73f5c726a3fb00fe87044f79d250cf32c8243449c11ce59f67b47a",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792095733214094265
+  },
+  "regression": [
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim-v3-contract.log",
+      "sha256": "24cefc2bc38a1c71e18591075993695fc72546b32ff6b5baab3d98032ce96fb5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095406938995750
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-retention-regression-20261016.log",
+      "sha256": "9ec9e3c52e7908b746c625587944c7e1eb71f90fc834fbb4527d510523684dd2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095407010778028
+    }
+  ],
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-upstream-fleet-refresh-20261016.py",
+      "sha256": "8fb6de784c5e4f4421175076ca23b61549ff1a72ecb9bb8cd71b5d4830260cd7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095158047756477
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-startup-20261016.py",
+      "sha256": "753543fe94a891011b621b47fdfced40a0b18592686f09f886c4846664081543",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095901653604523
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-startup-independent-20261016.py",
+      "sha256": "730c9f6393620263f4d3776ceb996f8d796a4c7c955c46557f351f3bf5baa125",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096109011907671
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim-v3.py",
+      "sha256": "1ea5fb5a94cb3af1cd5b04cd0f1335cd2fe14f11e04ddd4983dca5093c14eeb4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095185118326620
+    }
+  ],
+  "acceptedScope": true,
+  "fullL1Accepted": false,
+  "externalIssuesResolved": false,
+  "wemixStartupRerun": false
+}
