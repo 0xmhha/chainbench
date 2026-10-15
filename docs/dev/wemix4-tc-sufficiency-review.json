@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 67,
-    "partial": 17,
+    "confirmed_scope": 69,
+    "partial": 15,
     "conflict": 2,
     "merged": 1
   },
@@ -2519,13 +2519,23 @@
       "id": "TX-012",
       "title": "Gas Limit 초과 tx 거부",
       "criterionSha256": "5cca0e890dab76acc51f54f41298dd398ed9246b3b3d62f48c4658a0a9da4694",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-016-gas-limit-exceeds-block-rejected.json",
           "sha256": "d278b4730c57216c140411288f2ff20d19cae941a5bfb414809218a57e596c9a",
           "id": "gas-limit-exceeds-block-rejected"
+        },
+        {
+          "path": "cmd/chainbench/raw_refusal_e2e_test.go",
+          "sha256": "ef55e62f069de519e4e61e9ee96ef0eb05fbe790cd497cc7f4e985873ca28239",
+          "function": "TestRawRefusalRejectsUnboundErrorsAndMissingNullLookups"
+        },
+        {
+          "path": "cmd/chainbench/raw_refusal_native_test.go",
+          "sha256": "e8b8f99e7806a3c7616f460370b75bcf3b27a7cceb4f46cf3f469912f6deb0df",
+          "function": "TestWemixRawSubmissionRefusalsE2E"
         }
       ],
       "observations": [
@@ -2556,12 +2566,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_raw_submission_refusal_hash_absence_and_valid_signature_control",
       "remainingConditions": [
-        "from node eth_sendTransaction 경로 사용, raw txHash 조회null 없음"
+        "원문 raw 제출 명제는 새 native 대응 테스트에서 확인했다. 기존 공개 JSON은 node 서명 경로이며 이 실행에서 그 JSON을 raw 제출·해시 조회로 바꿨다고 주장하지 않는다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT Croissant20 뒤 높이24의 블록 가스 한도104488313에 정확히1을 더한104488314를 계정 어댑터로 로컬 서명해 raw 제출했다. 정확한 노드 거절·반환 hash 없음·raw Keccak 해시의 거래/영수증 즉시 및3블록 뒤 null·nonce/잔액 불변을 독립 확인했다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/raw-refusal-evidence.json",
+          "sha256": "502373c09a03f461d446e07b0703cce9915bbf0d93e7135718ad5a3613c6e0b8"
+        }
+      ]
     },
     {
       "id": "TX-013",
@@ -2791,7 +2806,7 @@
       "id": "TX-014",
       "title": "Fee Delegation Sender 서명 실패 시 거부",
       "criterionSha256": "c61aea066a123aacbcc39b179902e699c87294c7e692d7261e75740b572fe36b",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -2803,6 +2818,16 @@
           "path": "internal/testhelper/txprobe.go",
           "sha256": "4d1401dc12974fc42540f4735d160014db3f5fc4b6ae17c9bfe299b460292481",
           "function": "sendRawTamperedAction.Do"
+        },
+        {
+          "path": "cmd/chainbench/raw_refusal_e2e_test.go",
+          "sha256": "ef55e62f069de519e4e61e9ee96ef0eb05fbe790cd497cc7f4e985873ca28239",
+          "function": "TestRawRefusalRejectsUnboundErrorsAndMissingNullLookups"
+        },
+        {
+          "path": "cmd/chainbench/raw_refusal_native_test.go",
+          "sha256": "e8b8f99e7806a3c7616f460370b75bcf3b27a7cceb4f46cf3f469912f6deb0df",
+          "function": "TestWemixRawSubmissionRefusalsE2E"
         }
       ],
       "observations": [
@@ -2819,12 +2844,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_raw_submission_refusal_hash_absence_and_valid_signature_control",
       "remainingConditions": [
-        "변조된 raw transaction hash의 eth_getTransactionByHash null 검사가 없음. Sender 변조 후 현행 FD의 feePayer binding 거부사유와 원문의 ErrInvalidSig 예시 차이를 기록해야 함. 임의 오류만으로 통과하는 구현은 아님."
+        "현행 거절 명칭은 원문의 ErrInvalidSig 예시와 다르다. Sender 서명이 달라져 기존 payer 서명과의 결합 검증이 실패하는 실제 사유이며, 임의 RPC 오류로 통과시킨 것이 아니다. 공개 JSON을 이번 실행에서 다시 돌렸거나 hash null 검사를 추가했다고 주장하지 않는다. 전체87·Linux·메인넷 live·legacy·최종 Web 전수 인수는 별도 잔여다."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 이관 뒤 유효한 이중 서명 거래에서 Sender.S만 xor0xff로 바꾼 raw를 제출해 정확한 노드 invalid feePayer 거절을 확인했다. raw 해시의 거래/영수증 즉시 및3블록 뒤 null·nonce/잔액 불변, 같은nonce 정상 서명의 실제 status1 채굴을 확인했다. 독립 RLP 비교에서 Sender.S 외 모든 필드와 payer 서명은 같았다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/raw-refusal-evidence.json",
+          "sha256": "502373c09a03f461d446e07b0703cce9915bbf0d93e7135718ad5a3613c6e0b8"
+        }
+      ]
     },
     {
       "id": "TX-015",

@@ -1,0 +1,244 @@
+{
+  "scope": "TX012 raw legacy block gasLimit+1; TX014 only inner Sender.S corrupted while fee-payer signature remains over original signed sender. Actual typed node errors and raw hash transaction/receipt null immediately and after >=3 blocks; nonce and funded non-validator balances unchanged. Valid same-nonce dual-signature control mines. Current invalid-feePayer binding refusal is recorded, not described as ErrInvalidSig. Not public DSL re-execution/full87/Linux/mainnet/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Any-message model accepted nineteen wrong node/raw/hash/null-query/progress/ledger controls; the second RED explicitly includes missing/wrong-phase/wrong-method/wrong-hash lookup records.",
+  "unitGreen": "Positive and nineteen negative controls plus existing postfork input/scrubbing and submission-admission regressions.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "d6c6e6266d7a5f980684e1c6c0f3bff29a91328a0574be91fbea258d7e225647",
+    "sourceAfter": "d6c6e6266d7a5f980684e1c6c0f3bff29a91328a0574be91fbea258d7e225647",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixRawSubmissionRefusalsE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-z068v6nx"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-z068v6nx": []
+    },
+    "elapsedSeconds": 79.031,
+    "log": {
+      "path": "/private/tmp/chainbench-raw-refusal-native-native.jsonl",
+      "sha256": "449525832f17ba1d26c4340f8d441906672453af2cef8b256d5da35ee35fcb86",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039109138359682
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-raw-refusal-native-summary.json",
+      "sha256": "8805a5eef6ff6945c583fc0782f2e4f0d13c4bedd2edc21248ee4c132008106e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039109650780117
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-raw-refusal-native-start.json",
+      "sha256": "a8b396f5f68e14b927b2359009ee8844f49f0dec3b214fa57a4788527761709e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039027789484905
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-z068v6nx/reports/raw-refusal-proof.json",
+    "sha256": "57c4441533fd4b7ec94c21ca8a466eede696429d14a466c3c3cb4a2f678762b9",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792039106091372063
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-raw-refusal-evidence.py",
+    "sha256": "6a06d5022e3d21b20bd3e6033c7411e7f2453548412bbf2d5f5c859a9e5d9aa7",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792039076078989488
+  },
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "gasBoundary": {
+    "observedBlock": "0x18",
+    "blockGasLimit": "0x63a5d79",
+    "submittedGas": "104488314",
+    "refusal": "exceeds block gas limit",
+    "hash": "0xca14b8309e7368c4b8e5f7c8e3aa6ecafe534dd581f7b0ca5067866cd203b312"
+  },
+  "tamper": {
+    "changedField": "inner Sender.S xor 0xff only",
+    "refusal": "fee delegation: invalid feePayer",
+    "hash": "0xd87aa8530aaf0fd5fd66f0b5b65ec12fe99b540777ea022f09b5dd1bf29c768c",
+    "validHash": "0x4c76cca45603d7004e3b6f043a7a29ba9f0e45a1c77eebe6bc2c6566deddd0b0"
+  },
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-z068v6nx/w/genesis.json",
+      "sha256": "fc423c15603d697fc27ecc478c81eb28b1507554d579898466a9ea86e435ad35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039030779656053
+    },
+    {
+      "path": "/private/tmp/cbui/hf-z068v6nx/w/node1/genesis.json",
+      "sha256": "fc423c15603d697fc27ecc478c81eb28b1507554d579898466a9ea86e435ad35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039030805646228
+    },
+    {
+      "path": "/private/tmp/cbui/hf-z068v6nx/w/node2/genesis.json",
+      "sha256": "fc423c15603d697fc27ecc478c81eb28b1507554d579898466a9ea86e435ad35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039031067938201
+    },
+    {
+      "path": "/private/tmp/cbui/hf-z068v6nx/w/node3/genesis.json",
+      "sha256": "fc423c15603d697fc27ecc478c81eb28b1507554d579898466a9ea86e435ad35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039031326726874
+    },
+    {
+      "path": "/private/tmp/cbui/hf-z068v6nx/w/node4/genesis.json",
+      "sha256": "fc423c15603d697fc27ecc478c81eb28b1507554d579898466a9ea86e435ad35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039031539339644
+    },
+    {
+      "path": "/private/tmp/cbui/hf-z068v6nx/w/node5/genesis.json",
+      "sha256": "fc423c15603d697fc27ecc478c81eb28b1507554d579898466a9ea86e435ad35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039031766583194
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-z068v6nx",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 229,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-z068v6nx/reports/raw-refusal-inventory.json",
+        "sha256": "7ebd3ab3898495abbbcb6890103c7009d7ab268c4170ee54698524a12c078af5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792039126383254138
+      }
+    }
+  ],
+  "retainedFiles": 229,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-raw-refusal-publication.json",
+    "sha256": "b0df5cc86e8eef78344ca0b1a046fd90fb01e7f59ca9dc527df87e06b5d9ff7c",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792038551145351600
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-red.log",
+      "sha256": "ce2163824009d4d8ce8c6c812e2a0ff1d384496ec6c14cd3d750a1691f09d787",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792038695773436467
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-red2.log",
+      "sha256": "3dc0f747341d0c879983aa11e64ce841a1c4dbcc7c7a0fbcbc7dccd3c13aee8d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792038740411957973
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-green.log",
+      "sha256": "530827eaaec8147e902390f3c588dcb976802ac53f84c3b62718e621e13f4760",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792038798622064067
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-green2.log",
+      "sha256": "c21756c37101aaafb13a87a82217dbbd838006c7275d0663864bb07476fdf103",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792038853759995110
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-green3.log",
+      "sha256": "b39d01a8e9db605a7c620f9b5fb0cc4ab6abaf63c9d62adbbb6de11d0c27f54b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792038890635421884
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-related-race.log",
+      "sha256": "166936ee57299117b157d20dac2fc10fc572baa80fa6a03613fcf55d05395068",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039017679976029
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-check.log",
+      "sha256": "37f4e44e39c43798fc06cfb20b1c0de1e41102373f791382f7dbc020d14a7549",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039005306897902
+    },
+    {
+      "path": "/private/tmp/chainbench-raw-refusal-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792038911636759392
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}
