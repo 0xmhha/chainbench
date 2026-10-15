@@ -182,6 +182,27 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-009 등록 전후 읽기 보강:** 양수만 확인하는 판정이 잘못된 설정,
+minimum, total 증가량, 블록 조회, 등록 거래의 10가지 오류를 허용하는 RED→GREEN을 확인했다.
+실제 등록 영수증의 부모·채굴 블록을 고정했다. minimum getter는 생성 설정 1e25와 같고,
+totalStaking은 0→1e25로 정확히 증가했다. 기존 등록 input/value/receipt/event와 Rewardee의
+새 배포도 독립 대조했다. Tagged CLI 전체 race·e2e vet·최종 전체 검사와 실제 등록 검증
+(118.358초, skip 0)이 통과했다.
+
+첫 전체 검사는 충분성 검토 테스트가 records[0]을 항상 partial로 가정해 실패했다.
+NODE-001의 현행 상태를 유지하고 open/scoped 상태로 검사 대상을 선택하도록 고쳤다.
+목록을 뒤집거나 미완료 항목을 앞에 두어도 16가지 오류를 거절하는 회귀를 추가했고,
+검토 테스트 6개가 통과했다. 최초 실패 로그를 보존했다. 고정 소스
+`4b122ec9d8d08689bcce4e52f5e49a392bec9248af623004de7a79a6d9c4f45b` 전후가 같다.
+[등록 전후 읽기 증거](staking-read-evidence.json)는 실패한 준비 시도를 포함한 2개 실행의
+파일 454개 내용·권한·소유자·mtime을 보존했다. 활성 프로세스와 종료 DB는 0개다.
+
+**새 준비 상태 후속 잔여(§0a 9·11):** 첫 이관 준비에서 node1~3은 높이 21의 합의 기능이
+supported였지만, node4는 높이 19에서 unknown/rpc_probe_unavailable이어서 case가 blocked였다.
+일반적인 ready와 실제 포크 이후 합의 준비 상태를 구분해 후속 검토한다. 같은 소스의 재시도
+성공을 간헐적 문제 해결로 표시하지 않는다. 원문 87개 전체·Linux·메인넷 live·legacy·공개 DSL·
+최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 NODE-001 원문 헤더 경계 보강:** presence만 확인하는 판정이 잘못된
 높이/부모/Extra/포크전노드거절/epoch/API-to-wire12조건을 허용하는 RED→GREEN을 확인했다.
 실제 원문Croissant100 이관에서99의31bytes WPOA clientvanity와 정확한-32000/

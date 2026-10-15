@@ -111,6 +111,30 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 		t.Fatal(e)
 	}
 
+	// RPC-009 reads execution-adjacent state, so a later unrelated transaction
+	// cannot masquerade as this registration's totalStaking increase.
+	read := stakingReadWitness{Registration: w, ConfiguredMinimum: "10000000000000000000000000", ParentTag: parent, MinedTag: tag}
+	for _, q := range []struct {
+		sig, tag string
+		out      *string
+	}{
+		{"minimumStaking()", tag, &read.Minimum},
+		{"totalStaking()", parent, &read.BeforeTotal},
+		{"totalStaking()", tag, &read.AfterTotal},
+	} {
+		contract := e2eGovStaking
+		if q.sig == "minimumStaking()" {
+			contract = e2eGovConfig
+		}
+		if err := c.Call(ctx, "eth_call", q.out, map[string]string{"to": contract, "data": accounts.Selector(q.sig)}, q.tag); err != nil {
+			t.Fatal(err)
+		}
+	}
+	logGovernanceProof(t, "RPC-009-staking-read", read)
+	if err := verifyStakingRead(read); err != nil {
+		t.Fatal(err)
+	}
+
 }
 
 // TestWemixGovernanceDelegateE2E ports wemix4 GOV-011 (delegation) on top of the

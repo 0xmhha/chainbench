@@ -18,6 +18,13 @@ class CriterionReviewTests(unittest.TestCase):
         self.assertEqual(len(self.review['records']), 87)
 
     def test_unverified_claims_stale_sources_and_hidden_conditions_fail(self):
+        def open_row(review):
+            return next(r for r in review['records']
+                        if r['status'] in {'partial', 'conflict', 'not_verified', 'merged'})
+
+        def scoped_row(review):
+            return next(r for r in review['records'] if r['status'] == 'confirmed_scope')
+
         def self_merge(review):
             row = next(r for r in review['records'] if r['status'] == 'merged')
             row['mergedInto'] = row['id']
@@ -27,14 +34,14 @@ class CriterionReviewTests(unittest.TestCase):
             'duplicate criterion': lambda x: x['records'][0].update(id=x['records'][1]['id']),
             'unknown criterion': lambda x: x['records'][0].update(id='NODE-999'),
             'false overall completion': lambda x: x.update(allCriteriaAccepted=True),
-            'false partial completion': lambda x: x['records'][0].update(fullCriterionAccepted=True),
-            'hidden remaining condition': lambda x: x['records'][0].update(remainingConditions=[]),
+            'false partial completion': lambda x: open_row(x).update(fullCriterionAccepted=True),
+            'hidden remaining condition': lambda x: open_row(x).update(remainingConditions=[]),
             'stale original source': lambda x: x['criterionSource'].update(sha256='0' * 64),
             'stale criterion section': lambda x: x['records'][0].update(criterionSha256='0' * 64),
             'missing target': lambda x: x['records'][0]['targets'][0].update(path='missing.go'),
             'stale target': lambda x: x['records'][0]['targets'][0].update(sha256='0' * 64),
-            'false scoped proof': lambda x: x['records'][1].update(verifiedEvidence=[]),
-            'stale evidence': lambda x: x['records'][1]['verifiedEvidence'][0].update(sha256='0' * 64),
+            'false scoped proof': lambda x: scoped_row(x).update(verifiedEvidence=[]),
+            'stale evidence': lambda x: scoped_row(x)['verifiedEvidence'][0].update(sha256='0' * 64),
             'wrong merge target': lambda x: next(r for r in x['records'] if r['status']=='merged').update(mergedInto='WBFT-999'),
             'self merge': self_merge,
             'missing function': lambda x: next(t for r in x['records'] for t in r['targets'] if 'function' in t).update(function='UnknownFunction'),
@@ -45,6 +52,23 @@ class CriterionReviewTests(unittest.TestCase):
                 review = copy.deepcopy(self.review)
                 change(review)
                 self.assertTrue(validate_review(ROOT, review), name)
+
+    def test_negative_controls_do_not_depend_on_record_order(self):
+        original = self.review
+        try:
+            for order in ['reversed', 'open_first']:
+                with self.subTest(order=order):
+                    self.review = copy.deepcopy(original)
+                    rows = self.review['records']
+                    if order == 'reversed':
+                        rows.reverse()
+                    else:
+                        rows.sort(key=lambda r: r['status'] not in
+                                  {'partial', 'conflict', 'not_verified', 'merged'})
+                    self.assertEqual(validate_review(ROOT, self.review), [])
+                    self.test_unverified_claims_stale_sources_and_hidden_conditions_fail()
+        finally:
+            self.review = original
 
     def test_changed_assertion_and_escaping_paths_fail(self):
         for mode in ['statement', 'path']:
