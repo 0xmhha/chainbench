@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 86,609 |
+| `internal/` | 54 | 86,628 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 905 |
 | `tests/` | 1 | 135 |
-| **합계** | **78** | **93,348** |
+| **합계** | **78** | **93,367** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 61,971줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 61,990줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -166,7 +166,7 @@ internal/chainsetup/verb 1,509 [L4] 셋업 동사 — 표면이 부르는 함수
                           Hardfork{Plan,Execute}·ChainCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·
                           upHandlers·ChainUpComparing). chainsetup 객체 위에 얹히며 반대 방향 의존은 없다
 
-internal/nodemonitor  419 [L4] 테스트 실행 허가 판정 + 제한 복구(E6) — health·collector·inspector·process/inspect·
+internal/nodemonitor  438 [L4] 테스트 실행 허가 판정 + 제한 복구(E6) — health·collector·inspector·process/inspect·
                           preflight 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 판정(Classify),
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다

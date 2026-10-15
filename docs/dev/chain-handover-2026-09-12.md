@@ -631,3 +631,28 @@ DuplicateMetric 반환을 다시 확인했다. 이것은 충돌 원인의 진단
 [원본·출처·독립 대조](wemix-w4-latest-evidence.json). 진단 PASS는 CT-NODE-007 통과가 아니며,
 `issueResolved=false`, `strictCaseAccepted=false`다. 작업10과 외부 W4는 계속 열린 상태다.
 체인팀 메시지나 리뷰 요청은 보내지 않았다.
+
+
+## 7. S1 — StableNet의 previous prepared seal 거절 (2026-10-15)
+
+**관찰된 정지이며 원인은 미확정·미해결이다.** 외부 소스는 수정하지 않았고 체인팀에 메시지/리뷰 요청도 보내지 않았다.
+출처를 고정한 StableNet0937ac5c Linux arm64 바이너리(SHA256
+`49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d`)의 원래 공통 L1에서 두 번 관찰했다.
+4BP 각각의 보존 로그는 `failed to verify previous prepared seal ... err="invalid seal"`과
+`invalid PRE-PREPARE block proposal ... err="invalid prev prepared seals"`을 함께 기록한다.
+
+- `CT-NODE-005-snap-sync`: 부모107/제안108에서4생산자가 반복 거절했다. step12의600초 블록 대기가 실패했다.
+  reader 재시작/실제 snap 전송 단언에는 도달하지 않았으므로 snap 구현 원인으로 단정하지 않는다.
+- `CT-RPC-009-event-logs-query`: 부모2/제안3에서4생산자가 각각8회 거절했다. 테스트 본문 전 준비 확인이
+  WAITABLE을73회 기록했고480초 뒤 운영자가 소유 CLI를 정상 중단했다. 실제 종료130이며 원시스위프BLOCKED와 구분한다.
+
+소스에서 확인한 경로는 `go-stablenet/consensus/wbft/engine/engine.go:396`의 `verifyPrevSeals`다.
+`verifyAggregatedSeal` 오류를 `ErrInvalidPrevPreparedSeals`로 바꾸는 위치를 확인했을 뿐,
+잘못된 서명이 생성/선택된 원인, 재현 확률, 메인넷 영향은 이번 로그만으로 확정하지 않았다.
+두 로그 묶음의 네 생산자와 부모/다음 높이를 엄격히 대조하고 누락 노드·다른 높이·다른 오류를 거절했다.
+[부분 L1 원본·진단·중단·보존](linux-l1-cohort-evidence.json).
+
+별개로 chainbench의 준비 확인 예산이 관찰 시간을 제외하던 문제를 RED→GREEN으로 고쳤다.
+실제 Linux4BP에서 정상 케이스 후 채굴을 중지한 동일 workspace가8초 deadline으로 종료2를 반환했고,
+그 뒤 모든 자료를 보존하고 DB를 회수했다. [시간 제한 증거](node-readiness-deadline-evidence.json).
+이 수정은 seal 거절을 고치지 않는다. 전체 L1과 S1은 계속 열린 상태다.

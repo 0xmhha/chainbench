@@ -84,7 +84,8 @@
       닫혔다(§11.4.1·§11.4.2). `restart-at-boho` 도 2026-09-20 에 닫혔다 — pre/post 두 바이너리를
       golang 컨테이너 안에서 네이티브로 빌드해 쌍으로 돌렸다. 남은 것은 **HEAD 바이너리로 L1 재실행**
       (위 실행은 2026-08-10 빌드로 돌았다. `PlaceBinary` 는 절대 경로를 *대상 위의* 경로로 읽으므로
-      로컬 빌드가 함대에 올라가지 않았다) · 실제 망 대응 R2~R6.
+      로컬 빌드가 함대에 올라가지 않았다) · 실제 망 대응 R2~R6. 후속 Linux L1은 44통과·1실패·1운영자 중단의 부분 배치다.
+      StableNet의 previous prepared seal 거절은 [S1 인계](chain-handover-2026-09-12.md#7-s1--stablenet의-previous-prepared-seal-거절-2026-10-15)에 기록했으며 원인은 미확정·미해결이다.
 - [ ] **공통 TC 가 요구하는 도구 기능 둘이 어느 항목도 아니다** — 근거: [`architecture/mainnet-config-worklist.md` §8](architecture/mainnet-config-worklist.md) 의 대응표(2026-09-20 신설)와
       [`docs/tc/common/03-separate-implementation-items.md`](../tc/common/03-separate-implementation-items.md) §2.
       여덟 중 여섯은 R2~R6 이 덮지만 **동기화 경로 관찰**(어느 경로로 블록을 받았는지)과
@@ -175,12 +176,36 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
-| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 저장소의 로컬 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux15대 fleet·세 체인 원래15노드 시작·과거→현재 포크/서명 교체2건은 완료했고 전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
+| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 저장소의 로컬 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux15대 fleet·세 체인 원래15노드 시작·과거→현재 포크/서명 교체2건은 완료했다. 후속L1은44통과·1실패·1운영자 중단/353이며 준비 확인의 실제 시간 상한을 보강했다. 전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. NODE-002의 정확한 블록·트랜잭션·영수증 이관과 포크 이후 동기화도 실제 race로 보강했다. TX-017과 기존 RT-A-3-07의 실제 쓰기 뒤 롤백·가스·수수료도 세 체인에서 보강했다. GOV-019 미달 금액 채굴 거절과 GOV-020 즉시 이벤트·GOV-021 축약 지연 기준은 사용자 승인 뒤 정확한 실제 단언으로 보강했다. TX-018의 유한한 estimateGas - 1 입력은 실제 대조했지만 WBFT·StableNet에서 성공해 원문 기대와 충돌했고 사용자가 추정 상한과 실제 부족한 가스를 구분하도록 승인했다. 승인 기준의 공통 DSL 케이스와 세 체인 실제 회귀를 완료했다. WBFT-010의 실제 서명/mix 연쇄와 WBFT-002 건강한 개별 간격도 보강했다. TX-010 실제 영수증 순서와 TX-013 queued 교체 전후·기존 hash null도 세 체인에서 보강했다([증거](nonce-order-replacement-evidence.json)). 원문 충분성·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json), [NODE-002](data-migration-evidence.json), [실패 거래](transaction-failure-evidence.json), [거버넌스 거절·이벤트](governance-rejection-events-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-15 준비 확인의 전체 대기 시간 제한 보강 — 전체 L1은 미완료:**
+353회 계획을 고정 소스 `e967b7e1687a83d94cce5c716e16d265bc5c374c4f6342dd6ef60ac8f63ac0de`에서
+직렬 실행한 부분 결과는44통과·1실패·1운영자 중단이다.307행은 미실행이며 중단1행도 실제 판정을 다시 받아야 한다.
+기존28행과 이후1행·17행을 원본 로그/아카이브와 대조해 가져왔으며 재실행한 것처럼 세지 않았다.
+모든46 workspace의 자료를 보존하고 종료 DB를 회수했으며15서버 전수 확인도 완료했다.
+보조 재개 스크립트의 이전 pause 표시 경로 오류와 최종 보고서의 잔여28 상수도 원본·수정 기록을 분리했다.
+[부분 배치 증거](linux-l1-cohort-evidence.json).
+
+StableNet4생산자가 부모107/다음108 및 부모2/다음3에서 previous prepared seal을 거절했다.
+첫 snap 케이스는600초 대기 실패이며, 두 번째 이벤트 로그 케이스는 준비 확인73회/480초 뒤
+신선한 PID·부모·UID·명령을 대조한 소유 CLI에 한 번의 정상 중단 신호를 보냈다. 실제 종료130이므로
+스위프의 원시BLOCKED를 자연 발생한 제품 실패나 시간 초과로 확대하지 않는다. 외부 S1은 미해결이다.
+
+준비 확인은 휴식만 예산에서 빼고 관찰 시간을 제외하고 있었다. 관찰·복구·휴식에 같은 deadline을
+전달하고 늦은 READY를 거절했다. 부모 취소/부모 deadline은 오류로, 자체 deadline은 명시적 비준비 판정으로 구분한다.
+원래 소스 overlay에서 관찰·재시작·늦은 READY·휴식4개 RED, 부모 오류 구분과 수정본 전체 nodemonitor race GREEN,
+관련5패키지 race와 make check가 통과했다. 고정 소스
+`ef85c60f513251e405ffd7b7cf473d81efbc1de7c7bf3a0ca3f399c2f7256995`의 실제 Linux4BP 정상 케이스가 통과했다.
+같은 workspace에서4노드 채굴을 실제로 멈춰 RPC 응답/높이 정지를 확인한 뒤8초 제한이 종료2와 정확한 사유로 끝났다.
+CLI 전체12.020초는 preflight 등을 포함하며 gate 자체8초와 구분한다. 소스·보조 입력 전후 같음,
+4아카이브 원본/bytes·권한·uid/gid·ns mtime·링크 독립 대조와15서버 새 참조/DB0까지 통과했다.
+첫 임시 case의 상대 preset 해석 오류는 네이티브 시작 전 fixture 실패로 별도 보존했다.
+[시간 제한 증거](node-readiness-deadline-evidence.json). 새 변경 뒤 전체L1·R3/P4/R4/R5·승인 GOV-004/011 보강·최종 Web14는 남는다.
 
 **2026-10-15 L1에서 발견한 attach 주소 변환 수정:**211파일·353회 계획의 첫 배치는
 4행(3pass/1blocked) 뒤 중단했다. 원래 basic08의 host 체인은 정상 구동됐지만 스위프의 localmap
