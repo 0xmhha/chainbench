@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 86,633 |
+| `internal/` | 54 | 86,790 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 905 |
 | `tests/` | 1 | 135 |
-| **합계** | **78** | **93,372** |
+| **합계** | **78** | **93,529** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -97,7 +97,7 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 4,414줄
+## 2. 체인·합의 정의 — 11패키지 4,526줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
@@ -116,14 +116,14 @@ internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안�
 ├── wbft             52  go-wbft 플러그인 등록 — wbft 패밀리 + wbft accounts 프로토콜 + 매니페스트·croissant 템플릿(embed)
 └── wemix            68  wemix 특화 capability (poa/etcd 부트스트랩)
 
-internal/accounts  1,470  [L1] tx 서명 — 외부 accounts SDK 경계. EncodeABI·EncodeCall·EncodeCallArgs·Selector·
+internal/accounts  1,582  [L1] tx 서명 — 외부 accounts SDK 경계. EncodeABI·EncodeCall·EncodeCallArgs·Selector·
                           EventTopic·FindLog·CreateAddress·Word/WordAt/WordToBig·ForChain·GenerateKey
 internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 검증자셋과 관련 역할을 Load
 ```
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 61,995줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 62,040줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -144,7 +144,7 @@ internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인
                       + Unresolved(오프라인 이름 검증) + caseTimeout. 계약이 여기 사는 것이 핵심 —
                       testhelper(L3)가 구현하므로 testengine(L4)으로 올릴 수 없다
 
-internal/testhelper 7,028 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
+internal/testhelper 7,073 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 

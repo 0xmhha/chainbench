@@ -2860,7 +2860,7 @@
         },
         {
           "path": "internal/testhelper/txprobe.go",
-          "sha256": "c999f9cf571b802d9e0ba0499bff3de32ec0bca2d573872f43d11ac8abe06624",
+          "sha256": "629f725e26a2b98bb575ddd68ec47261865c9c58ac9ac90daafbc704d4823fb4",
           "function": "sendRawTamperedAction.Do"
         },
         {
@@ -2876,7 +2876,7 @@
       ],
       "observations": [
         {
-          "analysis": "CT-TX-006 sendRawTampered(which=sender)는 실제 chainID/nonce/headfee로 signed FD bytes를 만들고 sender를 변조해 eth_sendRawTransaction으로 제출한다. 성공은 실패이며 공통 checkSubmitRejected로 hash 부재·typed 제출 오류·프로토콜 오류 제외·노드 Message의 사유를 검사한다. HTTP/연결/응답형식/메서드명만의 reason 일치는 통과하지 않는다. 개인 계정 API 경로와 원문 전체 인수는 별도 잔여다."
+          "analysis": "CT-TX-006은 기존 키 기반 sendRawTampered(which=sender)를 쓴다. buildTamperedTransfer가 chainID/nonce/headfee로 생성하고, Do는 공통 checkSubmitRejected로 hash 부재·typed 제출 오류·규약 오류 제외·노드 Message의 사유를 검사한다. 새 raw 입력은 노드 서명 0x16의 지정 성분만 변조하고 builder 인자와 배타적이다. HTTP/연결/응답형식/메서드명만의 reason 일치는 통과하지 않는다. 새 개인 API 실행의 실제 인수와 원문 전체 인수는 별도다."
         },
         {
           "path": "tests/tc/common/tx/CT-TX-006-fd-sender-sig-tampered-rejected.json",

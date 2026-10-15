@@ -84,7 +84,8 @@ func (txMinedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessio
 // them. Args: senderKey, feePayerKey (hex, 0x optional), to, value (default 1),
 // which ("sender" | "feepayer"), on (target selector). The chain id and the
 // sender's nonce come from the node; the fee caps are read from the head so the
-// only reason the node can refuse the tx is the broken signature.
+// only reason the node can refuse the tx is the broken signature. Alternatively,
+// raw accepts a node-signed 0x16 envelope and excludes all four builder inputs.
 type sendRawTamperedAction struct{}
 
 func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
@@ -98,55 +99,35 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 	if which != "sender" && which != "feepayer" {
 		return fmt.Errorf("dsl: sendRawTampered requires \"which\" of \"sender\" or \"feepayer\"")
 	}
-	senderKey, err := hexKey(ac.Args["senderKey"], "senderKey")
-	if err != nil {
-		return err
+	var raw []byte
+	if supplied, present := ac.Args["raw"]; present {
+		for _, field := range []string{"senderKey", "feePayerKey", "to", "value"} {
+			if _, mixed := ac.Args[field]; mixed {
+				return fmt.Errorf("dsl: sendRawTampered raw and %s are mutually exclusive", field)
+			}
+		}
+		encoded, ok := supplied.(string)
+		if !ok || !strings.HasPrefix(encoded, "0x") {
+			return fmt.Errorf("dsl: sendRawTampered raw requires 0x-prefixed hex")
+		}
+		bytes, err := hex.DecodeString(encoded[2:])
+		if err != nil {
+			return fmt.Errorf("dsl: sendRawTampered raw: %w", err)
+		}
+		raw, err = accounts.TamperFeeDelegatedRaw(bytes, which)
+		if err != nil {
+			return fmt.Errorf("dsl: sendRawTampered raw: %w", err)
+		}
 	}
-	feePayerKey, err := hexKey(ac.Args["feePayerKey"], "feePayerKey")
-	if err != nil {
-		return err
-	}
-	toRef, _ := ac.Args["to"].(string)
-	if toRef == "" {
-		return fmt.Errorf("dsl: sendRawTampered requires \"to\"")
-	}
-	to, err := ResolveAddress(ac.Deps, toRef)
-	if err != nil {
-		return err
-	}
-	value, err := parseValueWei(ac.Args["value"])
-	if err != nil {
-		return err
-	}
-	if value == nil {
-		value = big.NewInt(1)
-	}
-
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
 	}
-	chainID, err := c.ChainID(ctx)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: chain id: %w", err)
-	}
-	senderAddr, err := accounts.AddressOf(senderKey)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: %w", err)
-	}
-	nonce, err := c.NonceAt(ctx, senderAddr)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: nonce: %w", err)
-	}
-	feeCap, tipCap, err := validFeesFor(ctx, c)
-	if err != nil {
-		return err
-	}
-
-	raw, err := accounts.EncodeFeeDelegatedTampered(senderKey, feePayerKey, to, value,
-		int64(chainID), nonce, feeCap, tipCap, which)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: build: %w", err)
+	if raw == nil {
+		raw, err = buildTamperedTransfer(ctx, ac, c, which)
+		if err != nil {
+			return err
+		}
 	}
 	var h string
 	sendErr := c.Call(ctx, "eth_sendRawTransaction", &h, "0x"+hex.EncodeToString(raw))
@@ -160,6 +141,58 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 		return fmt.Errorf("dsl: sendRawTampered (%s): %w", which, err)
 	}
 	return nil
+}
+
+// buildTamperedTransfer is the legacy key-based path. Raw input bypasses it
+// entirely, so it cannot replace a node-signed nonce, fee, or payload.
+func buildTamperedTransfer(ctx context.Context, ac *interp.ActionCtx, c *rpc.Client, which string) ([]byte, error) {
+	senderKey, err := hexKey(ac.Args["senderKey"], "senderKey")
+	if err != nil {
+		return nil, err
+	}
+	feePayerKey, err := hexKey(ac.Args["feePayerKey"], "feePayerKey")
+	if err != nil {
+		return nil, err
+	}
+	toRef, _ := ac.Args["to"].(string)
+	if toRef == "" {
+		return nil, fmt.Errorf("dsl: sendRawTampered requires \"to\"")
+	}
+	to, err := ResolveAddress(ac.Deps, toRef)
+	if err != nil {
+		return nil, err
+	}
+	value, err := parseValueWei(ac.Args["value"])
+	if err != nil {
+		return nil, err
+	}
+	if value == nil {
+		value = big.NewInt(1)
+	}
+
+	chainID, err := c.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: chain id: %w", err)
+	}
+	senderAddr, err := accounts.AddressOf(senderKey)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: %w", err)
+	}
+	nonce, err := c.NonceAt(ctx, senderAddr)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: nonce: %w", err)
+	}
+	feeCap, tipCap, err := validFeesFor(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := accounts.EncodeFeeDelegatedTampered(senderKey, feePayerKey, to, value,
+		int64(chainID), nonce, feeCap, tipCap, which)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: build: %w", err)
+	}
+	return raw, nil
 }
 
 // sendSetCodeAction sends an EIP-7702 (type 0x04) set-code transaction: the

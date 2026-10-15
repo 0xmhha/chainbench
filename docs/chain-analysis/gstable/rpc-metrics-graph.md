@@ -70,7 +70,10 @@ Type defs: `EthereumAPI` `internal/ethapi/api.go:61`; `BlockChainAPI` `:693`; `T
 - runtime `debug.Handler`: `node/api.go:40`. Tracer debug API: `eth/tracers/api.go:1020`.
 
 #### `personal` (registered `internal/ethapi/backend.go:124` → `PersonalAccountAPI` type `internal/ethapi/api.go:285`)
-Gated by `--personal` (`node.Config.EnablePersonal`).
+Gated by `--rpc.enabledeprecatedpersonal` (`node.Config.EnablePersonal`).
+The flag spelling is confirmed by the captured CLI flag list and the 2026-10-16
+owned native personal-signing proof; this correction does not remeasure the other
+RPC registrations in this snapshot ([evidence](../../dev/legacy-personal-delegation-evidence.json)).
 
 #### `miner` (registered `eth/backend.go:338` → `MinerAPI` type `eth/api_miner.go:29`)
 

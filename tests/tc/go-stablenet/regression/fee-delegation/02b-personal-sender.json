@@ -1,0 +1,280 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "legacy-personal-fd-sender",
+  "description": "Node personal import/unlock/double signing, then raw Sender.S-only mutation, exact invalid feePayer refusal and funded balances/sender nonce unchanged after three blocks. Fresh owned EOA keys and BP4 replace original EN roles; no production credentials or full legacy/L1 acceptance. Default node keystores are generated inside the owned workspace; do not override them with a shared key directory for personal import.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ],
+    "keys": {
+      "nodekeys": {
+        "source": "generate",
+        "ref": ""
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "payer",
+      "saveKey": "payerKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "recipient",
+      "saveKey": "recipientKey"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "$sender",
+      "value": "10000000000000000000",
+      "gas": "21000"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "$payer",
+      "value": "10000000000000000000",
+      "gas": "21000"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "personal_importRawKey",
+      "params": [
+        "$senderKey",
+        ""
+      ],
+      "save": "importedSender"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "personal_importRawKey",
+      "params": [
+        "$payerKey",
+        ""
+      ],
+      "save": "importedPayer"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "personal_unlockAccount",
+      "params": [
+        "$sender",
+        "",
+        120
+      ],
+      "compare": "Equal",
+      "is": true
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "personal_unlockAccount",
+      "params": [
+        "$payer",
+        "",
+        120
+      ],
+      "compare": "Equal",
+      "is": true
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "senderBefore",
+      "on": "node1"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$payer",
+      "save": "payerBefore",
+      "on": "node1"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$recipient",
+      "save": "recipientBefore",
+      "on": "node1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "$sender",
+        "pending"
+      ],
+      "save": "nonce"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$tip"
+      ],
+      "format": "hex",
+      "save": "cap"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "personal_signTransaction",
+      "params": [
+        {
+          "from": "$sender",
+          "to": "$recipient",
+          "nonce": "$nonce",
+          "value": "0x1",
+          "gas": "0x5208",
+          "maxFeePerGas": "$cap",
+          "maxPriorityFeePerGas": "$tip"
+        },
+        ""
+      ],
+      "save": "senderSigned",
+      "select": "raw"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "personal_signRawFeeDelegateTransaction",
+      "params": [
+        {
+          "feePayer": "$payer"
+        },
+        "$senderSigned",
+        ""
+      ],
+      "save": "feeSigned",
+      "select": "raw"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "web3_sha3",
+      "params": [
+        "$senderSigned"
+      ],
+      "compare": "NotNil"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "web3_sha3",
+      "params": [
+        "$feeSigned"
+      ],
+      "compare": "NotNil"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "beforeReject"
+    },
+    {
+      "do": "sendRawTampered",
+      "on": "node1",
+      "raw": "$feeSigned",
+      "which": "sender",
+      "reason": "fee delegation: invalid feePayer",
+      "save": "refusal"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$beforeReject",
+        "3"
+      ],
+      "format": "dec",
+      "save": "later"
+    },
+    {
+      "do": "waitBlock",
+      "on": "node1",
+      "target": "$later",
+      "timeout": "60s",
+      "pollInterval": "500ms"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "node1",
+      "address": "$sender",
+      "is": "$senderBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "node1",
+      "address": "$payer",
+      "is": "$payerBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "node1",
+      "address": "$recipient",
+      "is": "$recipientBefore"
+    },
+    {
+      "expect": "nonceAt",
+      "on": "node1",
+      "address": "$sender",
+      "is": "0"
+    }
+  ]
+}

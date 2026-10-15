@@ -31,6 +31,16 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 이것은 패닉 해결이나 과거 전체 환경·254개 전체 동등성이 아니다. 원문 높이100/역할 주소와 현재6/로컬EOA를 구분한다.
 [실패·성공·독립 증거와 한계](../legacy-extra-state-evidence.json).
 
+### personal 계정 API 네 경로의 현행 보강
+
+원문 대납01–04의 import/unlock·노드의 두 서명 API를 공개01b–04b로 추가했다.
+기존 공통 로컬 서명 케이스는 유지한다. 정상 송금/수수료·구조적 서명 변조·잔액 부족과 같은 바이트의
+자금 충전 후 성공 대조군을 실제 StableNet에서 확인했다. 기존 세 체인6회귀도 통과했다.
+전용 generated keystore가 기본이며, 첫 공용 경로 중단·키2개 격리와 다음 문구 불일치 실패는 별도 보존했다.
+이것은 원문 EN 토폴로지나 과거 대략적 바이트 offset 자체의 동일 실행, 전체254개 동등성 인수가 아니다.
+또한 API21 원문은 eth_signRawFeeDelegateTransaction의 존재 검사이며 personal API 시나리오와 구분한다.
+[원문 출처·실제·독립 검증과 차이](../legacy-personal-delegation-evidence.json).
+
 ## 방법
 
 양쪽을 AST 로 파싱해 그래프로 만든 뒤 테스트 단위로 대조했다.

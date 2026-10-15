@@ -131,6 +131,18 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 			parameterSchema["allOf"] = []any{map[string]any{"anyOf": editorAlternatives("on", "onEach")}}
 		}
 		switch e.Name {
+		case actionSendRawTampered:
+			props["raw"] = map[string]any{"type": "string", "minLength": 1, "pattern": `^(0x16(?:[0-9a-fA-F]{2})+|\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\}))$`, "description": "Signed 0x16 transaction from a node or a prior binding; excludes key-based builder arguments."}
+			for _, field := range []string{"senderKey", "feePayerKey", "to"} {
+				props[field].(map[string]any)["minLength"] = 1
+			}
+			rawOnly := map[string]any{"required": []string{"raw"}, "title": "Existing signed transaction"}
+			rules := []any{}
+			for _, field := range []string{"senderKey", "feePayerKey", "to", "value"} {
+				rules = append(rules, map[string]any{"not": map[string]any{"required": []string{field}}})
+			}
+			rawOnly["allOf"] = rules
+			parameterSchema["anyOf"] = []any{rawOnly, map[string]any{"title": "Build with keys", "required": []string{"senderKey", "feePayerKey", "to"}, "not": map[string]any{"required": []string{"raw"}}}}
 		case actionDeployContract:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data")
 		case assertContractChecksum:
@@ -173,7 +185,7 @@ var nodeTargeted = map[string]bool{actionStopNode: true, actionStartNode: true, 
 
 var editorRequired = map[string][]string{
 	"waitBlock": {"target"}, "read": {"source"}, "waitFor": {"source"}, "newAccount": {"saveKey"},
-	"sendRawTampered": {"which", "senderKey", "feePayerKey", "to"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
+	"sendRawTampered": {"which"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
 	"partition": {"groups"},
 	"faucet":    {"to", "amount"}, "registerContract": {"to", "data"}, "metric": {"name"},
 	"balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},

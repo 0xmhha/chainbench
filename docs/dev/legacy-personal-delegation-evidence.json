@@ -1,0 +1,726 @@
+{
+  "scope": "Four recovered personal fee-delegation flows implemented as public StableNet DSL cases, plus six unchanged common locally signed cases across StableNet/WBFT/WEMIX. Owned generated BP4 keystores, not original EN topology. No full legacy254/87/Linux/L1/WEB or external-defect resolution.",
+  "sourceDigest": "5381fcaeee26d7de39805ebe96618016b507a27deb16b601589bafebcc7d193e",
+  "headAtProof": "8525b8d6d0b647b8223c8e84afc2b8483953b288",
+  "implementation": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/accounts/tamper_raw.go",
+      "sha256": "431cf462399d795a9b00657f1a5131b34b79f9ac582992264dcb8a78556fb273",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792101602007356767
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/accounts/tamper_raw_test.go",
+      "sha256": "6522aff8027ad526919c22a34447da6bf4154a51d8b5ab8aa13c7f985dbc4d83",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103919667453420
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/txprobe.go",
+      "sha256": "629f725e26a2b98bb575ddd68ec47261865c9c58ac9ac90daafbc704d4823fb4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792101637583178675
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/arguments.go",
+      "sha256": "773fc14f6df845f7162270c98254f6dae99ff9e0be0bd52bee76dc3c0a1156f6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792101637584376816
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/editor_contract.go",
+      "sha256": "9144b654768dd74551e3de6e9621908c5a8ff7c73a997839206533106e789e6e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792101774239252164
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/tamper_raw_test.go",
+      "sha256": "e4a64ed1c17011ae6326cc4fcb38a7056d8b8d263fe9d841f123a810862134f0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792101539806653337
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/app/tamper_raw_schema_test.go",
+      "sha256": "6e416ccb274ebd2831b86baaf7e062921c5af2c22320931012ae51fe8381bdf1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792101993861273333
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/mcp/personal_delegation_test.go",
+      "sha256": "31c3812722feec1aada4522b3864c37dbbde7ba24d37692bd0dfa9a96a959eda",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103242246553172
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_personal_native_test.go",
+      "sha256": "ba495a8a20fb8e437fa6fbb7a165e3064d7b8ea0ae2ee58ee6284c98dad56f78",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103165213896195
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/personal_key_isolation_test.go",
+      "sha256": "42c0a02214a9e77136fadf6e2325eb47a3bdc14a9cd0117bf88b62db2ab5a8ee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103142431839494
+    }
+  ],
+  "publicCases": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/regression/fee-delegation/01b-personal-normal.json",
+      "sha256": "c4fc47f215f524cb082113c3904d27e1c5ffc71f0b2675cc2befc2fa56299e1b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103165212642511
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/regression/fee-delegation/02b-personal-sender.json",
+      "sha256": "60fea3776a253d1adbc337af92858a963fc72d2cad9d0b255408742c7fcc2b3b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103165211890042
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/regression/fee-delegation/03b-personal-feepayer.json",
+      "sha256": "dc3465500ec4ea73f030a94f845cc48d393d4c895da7af3b19915ebb820312b8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103165212251672
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/regression/fee-delegation/04b-personal-insufficient.json",
+      "sha256": "f8c56b9918bba857bc8ce1c44f2dbcb3b6cf46b64694b6428555bd656ce1e6e1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792103779825109430
+    }
+  ],
+  "originalCommit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+  "originals": [
+    {
+      "gitPath": "chainbench/tests/stablenet/regression/fee-delegation/tests/01-test-fee-delegate-normal.sh",
+      "blobOID": "b36350d95026cb0f7fed3074fc7ea9722f8949ac",
+      "sha256": "4f836c8fe0c97c6a182fefb575513897bf522fa72dfb8019f35fdca426f370cb",
+      "gitMode": "100755",
+      "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/fee-delegation/tests/01-test-fee-delegate-normal.sh",
+      "size": 6576
+    },
+    {
+      "gitPath": "chainbench/tests/stablenet/regression/fee-delegation/tests/02-test-sender-sig-invalid.sh",
+      "blobOID": "8b5ad2214496ec235c8fd84c58ada62ebe8e6032",
+      "sha256": "455799cdd77c50214a2f9a38bb2c345f5a8e6a140df1ff80b698a4a895e967b6",
+      "gitMode": "100755",
+      "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/fee-delegation/tests/02-test-sender-sig-invalid.sh",
+      "size": 3413
+    },
+    {
+      "gitPath": "chainbench/tests/stablenet/regression/fee-delegation/tests/03-test-feepayer-sig-invalid.sh",
+      "blobOID": "79d3125911a1e7ce2f8b3ce221789ea33ffc2c15",
+      "sha256": "fc1f77f8ebaadbbc720faf6b9f52f8d7bfa32ccbb61adf1fe9fdc2b1027f961d",
+      "gitMode": "100755",
+      "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/fee-delegation/tests/03-test-feepayer-sig-invalid.sh",
+      "size": 3356
+    },
+    {
+      "gitPath": "chainbench/tests/stablenet/regression/fee-delegation/tests/04-test-feepayer-insufficient.sh",
+      "blobOID": "8a4258f6756a4d3882545e846a552589512df441",
+      "sha256": "e7ba6aced39939df3034091d447639f9781ea25f3076f00d94d30d85156323ad",
+      "gitMode": "100755",
+      "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/fee-delegation/tests/04-test-feepayer-insufficient.sh",
+      "size": 3479
+    }
+  ],
+  "originalDifferences": [
+    "Original EN1/EN3/EN2 roles replaced by fresh owned non-validator EOAs on BP4. Normal0.001 ETH and negative1wei values, base+priority cap and actual personal import/unlock/two-signature API path retained.",
+    "Original approximate hex offsets are replaced with the structurally located Sender.S or FeePayer.R low-byte mutation. The source buffer, other fields and encoded data/access-list are preserved. This is semantic signature corruption, not identical historical byte offsets.",
+    "Current exact invalid-feePayer and insufficient-feePayer-funds prefixes tighten original broad reason checks. Insufficient payer additionally has a same-signed-bytes funded success control.",
+    "All cases now declare workspace-generated node keys with an empty inherited ref reset. Explicitly overriding a shared key dir is outside the isolated fixture; native preflight requires workspace-local generation.",
+    "Owned fixture unlock duration is120 seconds versus historical60; expiration behavior is not covered. Each actual signing flow runs immediately after unlock."
+  ],
+  "contract": {
+    "rawMutuallyExclusiveWith": [
+      "senderKey",
+      "feePayerKey",
+      "to",
+      "value"
+    ],
+    "which": [
+      "sender",
+      "feepayer"
+    ],
+    "rawWireLimitBytes": 1048576,
+    "doesNotValidateOriginalSignatureCryptographyOrNestedAccessList": true,
+    "typedSubmissionClassifierReused": true,
+    "editorOwnedSchema": "exclusive anyOf alternatives; old v1 contract generator expects full oneOf variants",
+    "MCP": "four actual shared planner calls with source generate and workspace/keys, no native MCP invocation claimed",
+    "editor": "15 schema input controls and four public import/export semantic round trips; not live browser acceptance"
+  },
+  "redGreen": {
+    "rawInputTests": {
+      "red": 11,
+      "description": "two valid raw paths missing; nine invalid/ambiguous input diagnostics",
+      "green": 11
+    },
+    "keyIsolation": {
+      "red": 4,
+      "green": 4
+    },
+    "cryptoAndWireTests": "Valid SDK double signature with nonempty data/access-list, exact expected encoding after only selected component changes, caller-buffer preservation, all truncations, trailing bytes, invalid signature/selector and fuzz seeds.",
+    "fuzzExecutions": [
+      256491,
+      312462
+    ],
+    "fuzzScope": "10 seconds each, second run includes signed wire seed. Not exhaustive proof.",
+    "fullFivePackageRace": true,
+    "additionalAccountsRaceWithNonemptyData": true,
+    "frontendTests": 71,
+    "fullMakeCheck": true,
+    "addressGolden": {
+      "before": 949,
+      "after": 997,
+      "onlyFourNewCasePrefixes": true
+    },
+    "environmentFailures": "Initial loopback bind refusal is not product RED; rerun with required local-network permission passed. Intermediate schema generator panic and MCP test field compile error were repaired before native acceptance."
+  },
+  "native": {
+    "driverSeconds": 232.63204287498957,
+    "passed": [
+      "TestNativeLegacyPersonalDelegation",
+      "TestNativeTamperSubmissionRejections/stablenet",
+      "TestNativeTamperSubmissionRejections/wbft",
+      "TestNativeTamperSubmissionRejections/wemix",
+      "TestNativeTamperSubmissionRejections"
+    ],
+    "failed": [],
+    "skipped": [],
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "presetFilesUnchanged": true,
+    "presetFilesChecked": 45,
+    "publicCases": 10,
+    "publicAssertions": 52,
+    "personalPublicCases": 4,
+    "personalAssertions": 46,
+    "commonPublicCases": 6,
+    "structuredDirectOrRepeatNodeRejections": 8,
+    "personalImportedKeysInOwnedKeystore": 8,
+    "actualCache64Launches": 16,
+    "binaries": [
+      {
+        "chain": "stablenet",
+        "revision": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+        "binary": {
+          "path": "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+          "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1792094963879863833
+        }
+      },
+      {
+        "chain": "wbft",
+        "revision": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+        "binary": {
+          "path": "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+          "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1792095013232017765
+        }
+      },
+      {
+        "chain": "wemix",
+        "revision": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+        "binary": {
+          "path": "/private/tmp/chainbench-w3-head-native/gwemix",
+          "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1791973660680382414
+        }
+      }
+    ]
+  },
+  "independent": {
+    "personalReport": {
+      "path": "/private/tmp/chainbench-personal-20261016-attempt3-independent.json",
+      "sha256": "921bdeb264ad5a7fe34eb16039fac7a42658f31b6493e3387a4fb973095cd25d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104547527173127
+    },
+    "commonReport": {
+      "path": "/private/tmp/chainbench-personal-20261016-attempt3-common-regression-independent.json",
+      "sha256": "e45e761af80875ac076d4b38c73051285d3fe6b6c4d6f69def90e6c8e219d80b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104564013916321
+    },
+    "retainedFiles": 785,
+    "remainingDB3Types": 0,
+    "retainedTrieCacheBytes": 2335098,
+    "freshHostProcessAndFDInventories": 4,
+    "preserved": [
+      "exact recorded file set",
+      "bytes",
+      "mode",
+      "uid",
+      "gid",
+      "ns mtime"
+    ],
+    "privateKeystorePathsAndEightImportedAddressesVerified": true,
+    "senderTypedWireExactlyPreservedInsideFeeDelegateEnvelope": true,
+    "normalAndSameByteFundedControlExactReceiptFeeLedgers": true,
+    "repeatSignatureRejectionsTypedCodeMethodReasonAndThreeBlockNullLookups": true,
+    "signatureCryptographyIndependentlyVerified": false,
+    "priorAbortedFilesPreserved": 213,
+    "priorFailedFilesPreserved": 260
+  },
+  "priorAttempts": [
+    {
+      "kind": "operator aborted shared-keystore fixture",
+      "sourceDigest": "de9f6d65138c7529b11eb8a9e6e8071a6b3e564c8b6b472fc367dcb4b6c52e8a",
+      "report": {
+        "path": "/private/tmp/chainbench-personal-20261016-aborted-independent.json",
+        "sha256": "d15c23a39d8a5d6edc27851d102d1adf96571b10b02fdc11667a57f4a6a2f29d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792103089143103254
+      },
+      "topTestAccepted": false,
+      "completedPublicCases": 1,
+      "nextPublicCaseIncomplete": true,
+      "retainedFiles": 213,
+      "remainingDB3Types": 0,
+      "sharedPresetCreatedKeys": 2,
+      "keysQuarantinedWithBytesModeOwnerMtimePreserved": true,
+      "quarantineJournal": {
+        "path": "/private/tmp/chainbench-personal-20261016-quarantined-keys.json",
+        "sha256": "4e51eaa512ad9efd576c334439600f87d5abfd005c6d167694acf8557682d0bb",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792103077547220390
+      },
+      "trackedEncryptedPresetKeystoresMatchedGit": 5,
+      "notAProductRed": true,
+      "snapshot": {
+        "path": "/private/tmp/chainbench-personal-aborted-source-20261016/manifest.json",
+        "sha256": "fdc37a1b2ac3b277465e47e580fd5ad3e7108952c6e49a21ab08bdf4b132804c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792103142378398860
+      }
+    },
+    {
+      "kind": "3 PASS and1 FAIL due to too-generic reason substring not matching actual node message",
+      "sourceDigest": "7f7d8e3900d59467bfe1cb8112f9750bb3753bd9899519b5d2a456bc982dc800",
+      "report": {
+        "path": "/private/tmp/chainbench-personal-20261016-attempt2-failure-independent.json",
+        "sha256": "cf6b736d87b7d740fe4f7eaef5224159b68a165961ef259720fe593fa0e14f5e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792103685576492354
+      },
+      "caseResults": [
+        {
+          "id": "legacy-personal-fd-normal",
+          "status": "pass",
+          "assertions": 12
+        },
+        {
+          "id": "legacy-personal-fd-sender",
+          "status": "pass",
+          "assertions": 8
+        },
+        {
+          "id": "legacy-personal-fd-feepayer",
+          "status": "pass",
+          "assertions": 8
+        },
+        {
+          "id": "legacy-personal-fd-insufficient",
+          "status": "fail",
+          "assertions": 18
+        }
+      ],
+      "failedAssertions": 1,
+      "retainedFiles": 260,
+      "remainingDB3Types": 0,
+      "presetFilesUnchanged": true,
+      "notSuccessfulWholeAcceptance": true
+    }
+  ],
+  "analysisUsed": {
+    "cliFlags": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/chain-analysis/gstable/cli-flags.txt",
+      "sha256": "4b049ec91a112e1152caa3b59ddd09f4c19f19899e2aad5ee0ad6a55b1ec9a47",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1787416671174406945
+    },
+    "rpcGraphInputSHA256": "05ee1f69060d9e2033d1bcb658a2088ae77fb164b613530f75c74747b5b767e4",
+    "rpcGraphFlagCorrectionAfterProof": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/chain-analysis/gstable/rpc-metrics-graph.md",
+      "sha256": "9b2ff976eecba963ea282d87d869e2b03de3867105f535e2794f7a6e1fcdebc3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792104885874198109
+    },
+    "actualFlag": "--rpc.enabledeprecatedpersonal",
+    "namespace": "personal",
+    "scope": "Correct flag spelling against actual owned launch and recorded cli flags only; other graph registrations are still prior measurements."
+  },
+  "plannedWholeL1": {
+    "caseFiles": 215,
+    "caseRuns": 357,
+    "unmapped": 0,
+    "executedWholePlan": false,
+    "plan": {
+      "path": "/private/tmp/chainbench-personal-plan-20261016.json",
+      "sha256": "54defe16f7145441ad7ced276b6307baa5e6724bb1330ee43d7a2a0a8f12c9ce",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102570540549954
+    },
+    "historical353CohortsUnchanged": true
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-red-20261016.log",
+      "sha256": "7a79c955d69c0fa434f3ea40296b64f9875ce801e2a9ece5eadff18f3a9403e4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101546457228601
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-green-20261016.log",
+      "sha256": "c0ed175498fb6485a6aa86d761c29cb59ba8d4a1fc0fd7ec3aa4cc267940ab05",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101643766702729
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-contracts-20261016.log",
+      "sha256": "32de63efbfb160cb47c21e69688a5682f2b33c1a6d79d83b9423c6ae14b1c83a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101712181887335
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-contracts-fixed-20261016.log",
+      "sha256": "da3b2e7a831634e15b276e61bf3c2d1ee9c01ab561c6e62db602fe10746c6790",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101788110154630
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-editor-20261016.log",
+      "sha256": "fc0cdf87f8fd918f1407afc0e0f1f3c5371c48f62afc817979ed1205edec5c55",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101886732626908
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-editor-fixed-20261016.log",
+      "sha256": "6919f49e5aa9ad8a211e09fab9ae87854c11376929c54d237f4277576fd62137",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101999666103154
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-race-20261016.log",
+      "sha256": "ae49ad5aafc15cad3f7065d7a9abb871099c352ce72db77378c7442dd199fce6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102148728665838
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-race-final-20261016.log",
+      "sha256": "bc941d29f64c081cd69f7b0b9fe17e139bec1167eb45ea233869865cd7766a69",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102270829546756
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-isolated-race-20261016.log",
+      "sha256": "9553dbfcc35f75fb6df9b4d311e69009c962c45b4f0dfb9d8ed88cabad10ef0d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103294874657987
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-key-isolation-red-20261016.log",
+      "sha256": "4725cc48efd56cd64c8e3de91cb4540831cc1382922b38e2ead559130529c5aa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103147333353986
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-key-isolation-green-20261016.log",
+      "sha256": "52078a627e1bacecaac27f9ef3ba611fdd7e0c23f654f4c6cd8692d9fc7eb5da",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103173853186566
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-isolated-mcp-20261016.log",
+      "sha256": "a27a1d84180fc75b73540500802888604d752e388d6be759995157337adaa4a8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103248117272846
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-exact-reason-race-20261016.log",
+      "sha256": "0bf0fa1507ff7301406baefbdbe87b815d0528208c3ffc1fc6f39e161261fa13",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103846962221984
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-nonempty-race-20261016.log",
+      "sha256": "87f9f986bd59eb3b87ae462ecb9b643892526a01bbf9edea6ff511ff5090d571",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103924272980847
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-nonempty-race-full-20261016.log",
+      "sha256": "231755d28505997fe8cbec13771f5e4e17995ec36511e9d58fc9f965fd099b33",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104029395807958
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-check-20261016.log",
+      "sha256": "d7548f9a1de15a464d147195dee6879385039bd75529f8ddd4889740b857da3f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102512055574703
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-isolated-check-20261016.log",
+      "sha256": "f8f0d826bdf71665e11faf64d28080304bbc349c94db4efd0eba840eb2864acb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103490930298750
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-exact-reason-check-20261016.log",
+      "sha256": "410be9a0eed1c7ec05aa366af2b2d6538bc9dbf53b90b9ae015abf5300d19d68",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103973573267659
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-final-check-20261016.log",
+      "sha256": "e55b2a65789069088a451e93609502f30ddb0cfe08ac2b5faa8d93657c5b532c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104170597911847
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-node-tests-20261016.log",
+      "sha256": "c9848e55f87533aee0f39434308b1e0b5834ff39f50410b97caaa0f74ddb44bb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102294149808851
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-fuzz-20261016.log",
+      "sha256": "2946cc2972e2db37af04368be84c69f25b5234005d7fb4f8076c1350cbcb71e7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102064558231026
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-raw-fuzz-seeded-20261016.log",
+      "sha256": "84fb967dd3f043125e1eff5e8ea2542ecb2af33bd0cee83ed1684602b391ed29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102462923755754
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-driver-20261016.log",
+      "sha256": "65f2da5746a97d3e65042a9164b013cb2e67c281e4433dba2a7ed22807c6ffb7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792102720373973843
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-driver2-20261016.log",
+      "sha256": "0badf490ac3f96b9b954a3a855131ecdaa2e4dc2311ed0932179ac16be893a84",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103587426512050
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-driver3-20261016.log",
+      "sha256": "138d28f2c090893b5f383796a25f17e53e283842c10eaab053a7f235a7e94b47",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104510402443581
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-independent3-20261016.log",
+      "sha256": "395b41f5327bc8cd87721d9731cee7bb35b5ad688dc1392a891269ae1d8d6ebf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104547527515460
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-common-independent3-20261016.log",
+      "sha256": "27c95308f60623993c4e3f26e2a74405c6ebb17b47c922d3c04341929025ecee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104564014145071
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-quarantine-20261016.log",
+      "sha256": "26dbaf3f4c0d8b7df30c53063713ada6b2db4f8507035dd252b7a046914c3171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103077547334517
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-abort-audit-complete-20261016.log",
+      "sha256": "e7f756ebf5a50b816cc73220f18d63ddd14c99541b10fbd2e6d214f9014406f4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103089143281090
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-failure2-audit-20261016.log",
+      "sha256": "a3571bb3ba14ea8cc1c10b4b73cd05cda2a7ed497217517576585df97a6cbe05",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103685576662937
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-20261016-attempt3-start.json",
+      "sha256": "a73440f3ceefca93645ddb1ce08696f08c749176fb043eec145a22a51a418d61",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104277632633104
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-20261016-attempt3-summary.json",
+      "sha256": "8feb9f35ba5bc46d051bda07bf27bd36427c21f30f1a01f2eeff32cf12e05748",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104510402018330
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-20261016-attempt3-native.jsonl",
+      "sha256": "182f7d66955209a22875c47a223aff32e16b997a2a421490487654ebaa492bea",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104507814042491
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-20261016-attempt3-common-regression-summary.json",
+      "sha256": "dbe130bed777b5d490bf77cf286a3996d176c4d4efdb6ba81404509e3dbb340b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792104544740510190
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-run3-20261016.py",
+      "sha256": "6f72b4a094106f83905576318715d51f235edca3cee6ff41f2e57eeeaa6aa7ed",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103779825551472
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-independent3-20261016.py",
+      "sha256": "7b837e67aea742e45593229aa7c0834c49cbf278d5c64323f06e2c8d1c3026f5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103779826059680
+    },
+    {
+      "path": "/private/tmp/chainbench-personal-common-independent3-20261016.py",
+      "sha256": "19ed96a59581d871cd93ba90655b6ae6902c989ddec67c05c9497c4125a327cd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792103779826503888
+    }
+  ],
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "allR5Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "externalIssuesResolved": false
+}
