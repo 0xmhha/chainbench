@@ -1,0 +1,170 @@
+{
+  "scope": "GOV016 exact two-minimum full unstake after actual WEMIX\u2192WBFT handoff, active\u2192inactive and stake2min\u21920, exact Unstaked/StakerRemoved/input/value/receipt. GOV004 deactivation portion only; maturity and withdrawal remain separate. Related native below-minimum guard regression. Not full87/Linux/mainnet/legacy/public DSL/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Stake-zero-only model accepted thirteen malformed input/event/activation controls.",
+  "unitGreen": "One positive and thirteen negative controls.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "4442968ac09277d1423c6284c84a09bfe4d990b247a37de8bb69bdd7291e53fa",
+    "sourceAfter": "4442968ac09277d1423c6284c84a09bfe4d990b247a37de8bb69bdd7291e53fa",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceUnstakeMinimumGuardE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-7ii_wn47",
+      "/private/tmp/cbui/hf-u5l0la3l"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-7ii_wn47": [],
+      "/private/tmp/cbui/hf-u5l0la3l": []
+    },
+    "elapsedSeconds": 148.711,
+    "summary": {
+      "path": "/private/tmp/chainbench-full-unstake-native-summary.json",
+      "sha256": "42df17e7ac81c593240efcecfe0c1133c88e186e06fe3ca46a19a46f9f82195b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029506911828661
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-full-unstake-native-native.jsonl",
+      "sha256": "cacb307db83b379d4ec698d9bcad4bfbba349f2e1ab207985279eeb4cca3779e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029506445036567
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-full-unstake-native-start.json",
+      "sha256": "698b4d4341a2cd4aad58da5611fe62dde981e6d468e9dfa0469cfafe388b46a6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029355299797935
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-full-unstake-observed.json",
+    "sha256": "dac1aa80b7aacd48edfa6586358ab07c57168fb734ea7a2482af67bde6360d33",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792029527788352329
+  },
+  "minimum": "10000000000000000000000000",
+  "amount": "20000000000000000000000000",
+  "activeBefore": true,
+  "activeAfter": false,
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-7ii_wn47",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-7ii_wn47/reports/full-unstake-inventory.json",
+        "sha256": "77c043a23e41ed86df03930b11bfd62353aae8cc1615594e055330fdcb558283",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792029527825983808
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-u5l0la3l",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-u5l0la3l/reports/full-unstake-inventory.json",
+        "sha256": "6f4b6ceb860d050cf5fb51b13f77878279c8880964796657e3fcb3cea2be6c69",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792029527864578564
+      }
+    }
+  ],
+  "retainedFiles": 456,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-full-unstake-publication.json",
+    "sha256": "8f81c7c9d4e0027fd66a3054a30125a1e57cd6ecdf079cda03a2547bff3b9271",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792029243647506860
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-full-unstake-red.log",
+      "sha256": "7f3ab2f00b0436321f071c0c2c9f2f86bec40b15c9e261a262f12e092bc989ef",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029167265319720
+    },
+    {
+      "path": "/private/tmp/chainbench-full-unstake-green.log",
+      "sha256": "e2cc13d15f7bc3019956bbaaa0f21476c9934f9e753608ea67b8662ef50a8fd1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029192051796279
+    },
+    {
+      "path": "/private/tmp/chainbench-full-unstake-related-race.log",
+      "sha256": "d78652856dfab5eb794f822d7752aae5bbc879df678bc57a6bd24af8cfc64bc9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029319592473056
+    },
+    {
+      "path": "/private/tmp/chainbench-full-unstake-check.log",
+      "sha256": "dc5a51d0d5011b0db42b8a10d0c4de47edc93b6ff20cd62f34dfba6ec9921833",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029329464768908
+    },
+    {
+      "path": "/private/tmp/chainbench-full-unstake-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029244768720120
+    }
+  ],
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

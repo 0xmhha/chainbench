@@ -198,7 +198,8 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	}
 	staker := presetNodeAddr(t, 1)
 	blsPK, blsSig := presetNodeBLS(t, 1)
-	amount := govConfigUint(t, c, "minimumStaking()")
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	amount := new(big.Int).Mul(minimum, big.NewInt(2))
 	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
 
 	// The registered stake is the staker's own amount.
@@ -209,6 +210,7 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 		t.Fatal("staker not registered before unstake")
 	}
 
+	p := fullUnstakeWitness{Operator: operator.Address(), Staker: staker, Minimum: minimum.String(), Amount: amount.String(), Before: stakingUint(t, c, "getStakerAmount(address)", staker).String(), ActiveBefore: stakingIsStaker(t, c, staker)}
 	// Full unstake by the operator: staker's amount -> 0.
 	data := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount))
 	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
@@ -225,6 +227,21 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Sign() != 0 {
 		t.Fatalf("getStakerAmount = %s after full unstake, want 0", staked)
 	}
+	p.Hash = hash
+	p.After = stakingUint(t, c, "getStakerAmount(address)", staker).String()
+	p.ActiveAfter = stakingIsStaker(t, c, staker)
+	p.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(ctx, "eth_getTransactionByHash", &p.Transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getTransactionReceipt", &p.Receipt, hash); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-016-full-unstake-witness", p)
+	if e := verifyFullUnstakeWitness(p); e != nil {
+		t.Fatal(e)
+	}
+
 }
 
 // TestWemixGovernanceUnstakeMinimumGuardE2E verifies the original two-minimum

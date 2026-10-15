@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 32,
-    "confirmed_scope": 53,
+    "partial": 31,
+    "confirmed_scope": 54,
     "conflict": 1,
     "merged": 1
   },
@@ -4479,7 +4479,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceRegisterStakerE2E"
         },
         {
@@ -4514,26 +4514,42 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceUnstakeE2E"
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
+        },
+        {
+          "path": "cmd/chainbench/full_unstake_e2e_test.go",
+          "sha256": "d49669056860e1f471f42a9c1ed1801c6a48f1f763ecc8106ca3f4f5b29af2e8",
+          "function": "TestFullUnstakeRejectsBalanceOnlyAndMissingEvents"
         }
       ],
       "observations": [
         {
           "analysis": "full unstake status1 amount0; 다른credentialfixture 두 maturity withdrawal"
+        },
+        {
+          "analysis": "원문2minimum fullunstake input·receipt·exact Unstaked/StakerRemoved·active true→false·stake2min→0 보강. native 독립 대조 대기. 만료 출금은 별도 잔여."
+        },
+        {
+          "analysis": "실제2minimum input/value0/status1·Unstaked amount2min/StakerRemoved exact(emitter/subject/unique/data)·active true→false·stake2min→0 독립 대조, 미달 거절 실제 회귀 통과."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "fullunstake isStakerfalse+Unstaked/StakerRemoved exactevent, early withdraw exactfailure, later Withdrawn index/amount 일관흐름 없음"
+        "full unstake activefalse·Unstaked/StakerRemoved exact와2minimum input은 검증됐다. 조기 withdraw의 정확한 채굴 거절/상태불변과 만료후 동일credential Withdrawn index/amount·잔액 ledger의 일관 흐름은 남음. 원문 메인넷7일/현행fixture초 단위 범위는 구분."
       ],
       "confirmedScope": null,
-      "verifiedEvidence": []
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/full-unstake-evidence.json",
+          "sha256": "185d2ad4addbbd70e4c9855d3678dad7686b8fe8a85d9294e41d7c6d8049f3a1"
+        }
+      ]
     },
     {
       "id": "GOV-005",
@@ -4684,7 +4700,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceStabilizingE2E"
         },
         {
@@ -4714,12 +4730,12 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceDelegateE2E"
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
         }
       ],
@@ -4744,7 +4760,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceBlockRewardE2E"
         },
         {
@@ -4794,7 +4810,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceOperatorClaimE2E"
         },
         {
@@ -4829,7 +4845,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceDelegatorClaimE2E"
         },
         {
@@ -4869,7 +4885,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceUnstakeMinimumGuardE2E"
         },
         {
@@ -4909,31 +4925,47 @@
       "id": "GOV-016",
       "title": "전액 언스테이킹 — INACTIVE 전환 확인",
       "criterionSha256": "5921f9f9cc58745be647a873d86d4e0c286cb482e9255c353b053a3a22626319",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceUnstakeE2E"
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceReactivateE2E"
+        },
+        {
+          "path": "cmd/chainbench/full_unstake_e2e_test.go",
+          "sha256": "d49669056860e1f471f42a9c1ed1801c6a48f1f763ecc8106ca3f4f5b29af2e8",
+          "function": "TestFullUnstakeRejectsBalanceOnlyAndMissingEvents"
         }
       ],
       "observations": [
         {
           "analysis": "fullunstake status1 amount0 및 Reactivate inactive/list제외"
+        },
+        {
+          "analysis": "원문2minimum fullunstake input·receipt·exact Unstaked/StakerRemoved·active true→false·stake2min→0 보강. native 독립 대조 대기. 만료 출금은 별도 잔여."
+        },
+        {
+          "analysis": "실제2minimum input/value0/status1·Unstaked amount2min/StakerRemoved exact(emitter/subject/unique/data)·active true→false·stake2min→0 독립 대조, 미달 거절 실제 회귀 통과."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "Unstaked/StakerRemoved 두 exactevents 없음; 2min 입력 대신min"
+        "원문87개 전체·메인넷·Linux·legacy·공개 DSL·최종 Web 인수는 별도."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "실제 WEMIX→WBFT 이관 후 원문2minimum의 전액 해제·정확 이벤트/상태/거래 대조.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/full-unstake-evidence.json",
+          "sha256": "185d2ad4addbbd70e4c9855d3678dad7686b8fe8a85d9294e41d7c6d8049f3a1"
+        }
+      ]
     },
     {
       "id": "GOV-017",
@@ -4944,7 +4976,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceEmergencyModeE2E"
         },
         {
@@ -4989,7 +5021,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceEmergencyModeE2E"
         }
       ],
@@ -5019,7 +5051,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceReactivateE2E"
         }
       ],
@@ -5049,7 +5081,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceFeeChangeE2E"
         }
       ],
@@ -5079,7 +5111,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceFeeChangeDelayedE2E"
         }
       ],
@@ -5109,7 +5141,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceClaimGuardE2E"
         },
         {
@@ -5149,7 +5181,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
         },
         {
@@ -8032,7 +8064,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceStabilizingE2E"
         }
       ],
@@ -8062,7 +8094,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "7ef43261dad5017625d36d86320911d9f5fbaeba193ade1de6fbec06146a2ecf",
+          "sha256": "085c43b9e87a7a3aab97d16f2c0ca4c3c1aeef9da56471042e6c69e0d7d4616e",
           "function": "TestWemixGovernanceReactivateE2E"
         },
         {
