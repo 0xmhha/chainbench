@@ -3,11 +3,16 @@
 package e2e
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 // wemixGenesisTemplate is a minimal complete wemix/croissant genesis with a
@@ -46,17 +51,57 @@ const wemixGenesisTemplate = `{
   "gasLimit": "0x2faf080"
 }`
 
-// gwemixInit writes a genesis with the given ncps CSV and runs `gwemix init`,
-// returning whether it succeeded and the combined output.
-func gwemixInit(t *testing.T, bin, ncps string) (bool, string) {
+type ncpInitOutcome struct {
+	ExitCode                                                int
+	Binary, BinarySHA256, Genesis, OutputPath, OutputSHA256 string
+	Args                                                    []string
+	Output                                                  string `json:"-"`
+}
+
+// gwemixInit preserves its input, exact command, exit status and output before
+// reclaiming only the completed process's disposable node databases.
+func gwemixInit(t *testing.T, bin, ncps string) ncpInitOutcome {
 	t.Helper()
-	dir := t.TempDir()
+	dir := ncpInitRuntime(t)
 	genesis := filepath.Join(dir, "genesis.json")
 	if err := os.WriteFile(genesis, []byte(fmt.Sprintf(wemixGenesisTemplate, ncps)), 0o644); err != nil {
 		t.Fatalf("write genesis: %v", err)
 	}
-	out, err := exec.Command(bin, "init", "--datadir", filepath.Join(dir, "data"), genesis).CombinedOutput()
-	return err == nil, string(out)
+	args := []string{"init", "--datadir", filepath.Join(dir, "node1"), genesis}
+	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, bin, args...).CombinedOutput()
+	result := ncpInitOutcome{Binary: bin, Genesis: genesis, Args: args, Output: string(out), OutputPath: filepath.Join(dir, "reports", "init-output.log"), OutputSHA256: fmt.Sprintf("%x", sha256.Sum256(out))}
+	var nodeExit *exec.ExitError
+	if err != nil {
+		result.ExitCode = -1
+		if errors.As(err, &nodeExit) {
+			result.ExitCode = nodeExit.ExitCode()
+		}
+	}
+	binary, readErr := os.ReadFile(bin)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	result.BinarySHA256 = fmt.Sprintf("%x", sha256.Sum256(binary))
+	if err := os.WriteFile(result.OutputPath, out, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	body, marshalErr := json.MarshalIndent(result, "", "  ")
+	if marshalErr != nil {
+		t.Fatal(marshalErr)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "reports", "init-result.json"), body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("ncp-init-proof: %s", body)
+	if ctx.Err() != nil {
+		t.Fatalf("init command deadline: %v", ctx.Err())
+	}
+	if err != nil && nodeExit == nil {
+		t.Fatalf("node process did not run: %v", err)
+	}
+	return result
 }
 
 // TestE2E_WbftGenesisNCPWhitespace ports wemix4 NODE-006: `gwemix init` must
@@ -71,9 +116,9 @@ func TestE2E_WbftGenesisNCPWhitespace(t *testing.T) {
 		"0x0f6f5ed0dc34278bea20334195f184db09d8f8df ,  0xc6431440769af72662427dfa23b10a7b65904110  ," +
 		"   0xb7a6b5850ab7a56f28a793067e3eb57603bcdbcd,0xe234fe723580b4c1e4a8de9d2e2545942a5c5f7b   ," +
 		"    0x71504dae060cdcceae845f4b1fb14df2e7b9331c    "
-	ok, out := gwemixInit(t, bin, ncps)
-	if !ok {
-		t.Fatalf("gwemix init failed on whitespace-padded NCP addresses (should be trimmed):\n%s", out)
+	result := gwemixInit(t, bin, ncps)
+	if result.ExitCode != 0 {
+		t.Fatalf("gwemix init failed on whitespace-padded NCP addresses (should be trimmed):\n%s", result.Output)
 	}
 }
 
@@ -83,8 +128,8 @@ func TestE2E_WbftGenesisNCPWhitespace(t *testing.T) {
 //	WBFT_BIN=/path/to/go-wbft/build/bin/gwemix go test -tags e2e -run TestE2E_WbftGenesisEmptyNCP -v ./tests/e2e/
 func TestE2E_WbftGenesisEmptyNCP(t *testing.T) {
 	bin := requireBinary(t, "WBFT_BIN", "gwbft")
-	ok, out := gwemixInit(t, bin, "")
-	if ok {
-		t.Fatalf("gwemix init succeeded with an empty NCP list (should fail):\n%s", out)
+	result := gwemixInit(t, bin, "")
+	if err := verifyEmptyNCPRefusal(result.ExitCode, result.Output); err != nil {
+		t.Fatalf("%v\n%s", err, result.Output)
 	}
 }

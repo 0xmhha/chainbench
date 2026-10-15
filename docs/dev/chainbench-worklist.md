@@ -182,6 +182,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 NODE-007 초기화 거절 원인 보강:** 기존의 어떤 실패든 통과시키는
+판정이 다른 genesis 오류, 빈 출력, 실행 실패, signal/timeout, 잘못된 인자, 불완전한 사유의
+6가지 오류를 허용하는 RED→GREEN을 확인했다. 정상 종료한 노드 프로세스의 비정상 코드와
+정확한 `govNCP is configured but no initial NCPs provided` 사유를 함께 확인한다.
+
+검증된 WBFT 바이너리에서 useNCP=true·빈 목록은 init exit1/정확한 사유였고, 7개 공백 패턴
+주소는 init exit0이었다. Tagged 관련 race·e2e vet·최종 전체 검사와 실제 두 초기화
+(6.448초, skip 0)가 통과했다. 첫 전체 검사의 새 주석 규율 실패도 고쳐 재검사했고 로그를
+보존했다. 고정 소스 `9f65ea8a600b16a904e06f881023b454d0f73f8676fa5aeb301dbde3b4ba3490`
+전후가 같다. [NCP 초기화 증거](ncp-init-evidence.json)는 실제 명령·바이너리 SHA·genesis·
+종료 코드·전체 출력의 파일 14개 내용·권한·소유자·mtime을 보존했다. 공통 소유권·공간 검사와
+종료 후 DB 회수를 사용하며, 활성 프로세스와 종료 DB는 0개다. NODE-006의 실제 ncpCount,
+isNCP, 블록 생산과 원문 87개 전체·Linux·메인넷 live·legacy·최종 Web는 별도 잔여다.
+
 **2026-10-15 이관 이후 활성화 높이 준비 판정 보강(§0a 9·11):** 이전 실제 자료에서
 네트워크 높이 21·후속 node4 높이 19인데 일반 2블록 허용치 때문에 READY였고, 이어진 합의
 probe는 unknown이어서 case가 blocked였다. 같은 조건을 단위 테스트에서 재현했다. 기존

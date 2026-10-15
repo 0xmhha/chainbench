@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 58,
-    "partial": 26,
+    "confirmed_scope": 59,
+    "partial": 25,
     "conflict": 2,
     "merged": 1
   },
@@ -410,13 +410,16 @@
       "targets": [
         {
           "path": "tests/e2e/wbft_genesis_test.go",
-          "sha256": "3d85959ab958ed0e8cdde7da6fd3154e3e1c749d71378cdadf43d01973dcc997",
+          "sha256": "81330c9e0974e7cac29c3d89bab5f49e60920eb519524267e8662ef7f45d8941",
           "function": "TestE2E_WbftGenesisNCPWhitespace"
         }
       ],
       "observations": [
         {
           "analysis": "7개 공백패턴 ncps로 init 성공"
+        },
+        {
+          "analysis": "현행검증바이너리로7개공백패턴주소 init0 다시확인하고 입력/명령/출력·종료자료 보존. 실제RPC·블록생산은아직별도미검증."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
@@ -424,32 +427,50 @@
         "기동/RPC ncpCount>0, trim한 실제 주소 isNCP=true, blockNumber>0 없음"
       ],
       "confirmedScope": null,
-      "verifiedEvidence": []
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-init-evidence.json",
+          "sha256": "83f49754dc8bbdb88133a15cef74390214d362ee0efd89a3c8f26d7949192cd1"
+        }
+      ]
     },
     {
       "id": "NODE-007",
       "title": "빈 NCP 목록 설정 시 초기화 실패 검증",
       "criterionSha256": "051b98c81a137e5cfcc3df3d0158c4dd47014bfc793c981143c8df7310e7fe78",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_genesis_test.go",
-          "sha256": "3d85959ab958ed0e8cdde7da6fd3154e3e1c749d71378cdadf43d01973dcc997",
+          "sha256": "81330c9e0974e7cac29c3d89bab5f49e60920eb519524267e8662ef7f45d8941",
           "function": "TestE2E_WbftGenesisEmptyNCP"
+        },
+        {
+          "path": "tests/e2e/ncp_init_refusal_test.go",
+          "sha256": "1085c0f1f9cc378d28216e10a2773f925ef218271024ec52fcc1c1f853b2c1de",
+          "function": "TestEmptyNCPRefusalRejectsUnrelatedFailures"
         }
       ],
       "observations": [
         {
           "analysis": "빈 ncps init 비정상 종료"
+        },
+        {
+          "analysis": "검증된 WBFT 실제 init: useNCP=true·ncps빈문자열에서 exit1 및 정확한 govNCP is configured but no initial NCPs provided 사유. 정상7공백주소 init0 대조. 명령/바이너리SHA/입력/출력SHA·실제파일 보존, 종료DB0·독립대조. process start/signal/timeout/다른genesis오류를성공으로세지않음."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "confirmed_original_predicates_in_native_init",
       "remainingConditions": [
-        "어떤 원인으로 실패해도 통과; 정확 no initial NCPs 오류를 검사하지 않음"
+        "원문 초기화 거절 명제는 native범위 확인. NODE006 실제ncpCount/isNCP/블록생산, 전체87·Linux·메인넷live·legacy·최종Web는 별도 잔여."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "useNCP=true·빈NCP 실제WBFT init 비정상종료1·정확한필수사유 및7공백주소 init0 대조·출처/실제출력·종료자료 보존.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/ncp-init-evidence.json",
+          "sha256": "83f49754dc8bbdb88133a15cef74390214d362ee0efd89a3c8f26d7949192cd1"
+        }
+      ]
     },
     {
       "id": "TX-001",
