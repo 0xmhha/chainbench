@@ -1,0 +1,248 @@
+{
+  "scope": "Original restart-at-Boho and forward1.0.1-to1.1.0 signature compatibility on owned Linux fleet; no test file edits. Not fullL1.",
+  "acceptedScope": true,
+  "fullL1Accepted": false,
+  "sourceDigest": "f812907e751ac9f46497f3b1d14c4bf31accff7e2ae6b0107343c775421a260e",
+  "elapsedSeconds": 437.3156912919949,
+  "proof": {
+    "path": "/private/tmp/cbui/lc2-2bz44rfs/reports/proof.json",
+    "sha256": "e264b100bef80f2682b9e0c6777c4a2d64c24b385314ac76ca34129d3d195313",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792062880980408702
+  },
+  "summary": {
+    "path": "/private/tmp/chainbench-linux-legacy-cases-native2-summary.json",
+    "sha256": "e264b100bef80f2682b9e0c6777c4a2d64c24b385314ac76ca34129d3d195313",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792062880981483881
+  },
+  "cases": [
+    {
+      "workspace": "/private/tmp/cbui/lc2-2bz44rfs/work/c1",
+      "nodes": 4,
+      "declaredBinaries": {
+        "default": "/data/chainbench/bin/gstable-prefork",
+        "postfork": "/data/chainbench/bin/gstable"
+      },
+      "crossFork": {
+        "done": true,
+        "result": "done",
+        "detail": "boho at 200: 4 node(s) relaunched on postfork at head 27, before the fork",
+        "startedAt": "2026-10-15T11:09:22Z",
+        "at": "2026-10-15T11:09:22Z"
+      },
+      "archives": 4
+    },
+    {
+      "workspace": "/private/tmp/cbui/lc2-2bz44rfs/work/c2",
+      "nodes": 5,
+      "declaredBinaries": {
+        "default": "/data/chainbench/bin/gstable-boho-v101",
+        "upgrade": "/data/chainbench/bin/gstable"
+      },
+      "crossFork": null,
+      "archives": 5
+    }
+  ],
+  "assertionRecordsPassed": 8,
+  "forkHeightObserved": 202,
+  "contractBeforeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be",
+  "contractAfterSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49",
+  "versionBefore": "Gstable/v1.0.1-stable-bf17c960/linux-arm64/go1.25.14",
+  "versionAfter": "Gstable/v1.1.0-stable-0937ac5c/linux-arm64/go1.25.14",
+  "preservedTransaction": {
+    "hash": "0xcde4d600c0b400bc79c3ed2999b2b8d902375e5db89bc348be3db86ac114a063",
+    "blockNumber": "0x10",
+    "status": "0x1",
+    "from": "0xbd283a6407fcac2d4c7785242620f74da7be7f22",
+    "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+  },
+  "rawSignatureRecoveryClaimed": false,
+  "signatureScope": "Original public case sends a locally signed raw transaction and compares the node-returned sender plus receipt block/status/to before and after binary replacement. Independent raw-RLP cryptographic recovery is not claimed here.",
+  "reclamation": {
+    "archives": 9,
+    "freshIndependentServerAudits": 9,
+    "remainingDatabasePaths": 0,
+    "beforeArchiveAndAfterArchiveMetadataCompared": true,
+    "sharedKeyNote": "Each case preserves shared key bytes before the next case regenerates them. Earlier snapshots are checked against their own archive and captured before/after filesystem manifests, not against later regenerated global keys."
+  },
+  "retainedFiles": 131,
+  "inventory": {
+    "path": "/private/tmp/cbui/lc2-2bz44rfs/reports/inventory.json",
+    "sha256": "d4c692565b9467e8f252810e82cc38800de284ba3796fa9259e0880c1ac59fec",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792063176800679912
+  },
+  "independentAudit": {
+    "path": "/private/tmp/cbui/lc2-2bz44rfs/reports/independent-audit.json",
+    "sha256": "96beb12422714390287dabb867f70e4a1e316c74f05182f143ce04747ed77c51",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792063176384781465
+  },
+  "deployment": {
+    "path": "/private/tmp/cbui/lc2-2bz44rfs/reports/deployment.json",
+    "sha256": "f1bf4952f70fb0d6e330317118dde92776e13e7654f1acf718ac97f899503d12",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792062488159629960
+  },
+  "extraBinarySourceProof": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/linux-legacy-build-evidence.json",
+    "sha256": "294e1e6f1644f28950601b6fbafcef1a1eebe3901bc576c2ac10dfb8289e01b0",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792061999035902023
+  },
+  "firstAttempt": {
+    "proof": {
+      "path": "/private/tmp/cbui/lc-dp9kf2vo/reports/proof.json",
+      "sha256": "a154b6c253f6c2be57ae4a17c7ea9828a8c8308900892e87761c23a38fb7449a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062223910900934
+    },
+    "detail": {
+      "path": "/private/tmp/cbui/lc-dp9kf2vo/reports/deployment-first-error.json",
+      "sha256": "6dca7612a13de07d36cfe4fa9cfde0387d8688c62a55453a4aab94315b34f276",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062381528810040
+    },
+    "chainCasesStarted": false,
+    "inactiveDuplicateELFReclaimedAfterHashMetadataAndProcessVerification": true,
+    "cleanup": {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-first-reclaim.py",
+      "sha256": "67e89d65eee8249c04da16adc3b1791d7203603e4183f72a90138886bf9e3ad4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062379816266401
+    }
+  },
+  "unitRed": "Unbound preset model fails both required forward binary mappings; full-version equality fails actual GOPATH-only environment difference.",
+  "unitGreen": "Correct forward bindings and unchanged control/unrelated calls; strict client and six identity fields plus SHA, missing/duplicate/changed identity controls; existing CLI/engine binding race tests pass.",
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-binding-red.log",
+      "sha256": "7956f484ce042acf87a86e75858d187d4c1845788858cf76afe8088c9968da25",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062129792180396
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-binding-green.log",
+      "sha256": "fe008aab760eb03ccac7578e2b84665b1b50b0d7f855b17a0c7a8d039435b658",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062150617316941
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-version-identity-red.log",
+      "sha256": "121b18b290ee19b3f8cca65e9995d90d5582c52baa6987cc287dae7036eeb805",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062342677788402
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-version-identity-green.log",
+      "sha256": "33060fd73862c5e1af97335504d5b45211fce6d229657f556d8deceeadc52ce4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062379809071783
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-bindings.log",
+      "sha256": "21edbfbf3557884e0e04537f63549cc70ce5bc2830dd7650ba712f061716cbe0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062135798667807
+    }
+  ],
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-prepare2.py",
+      "sha256": "48607eaa2cffdf15e3e52392b8b5f666004e0d0a5342a9bc5f4008fae193d07e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062407257977640
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-run2.py",
+      "sha256": "93e93b6d093b6c0ff92501588ae22d3be0d98b8b06c7f6e93ac0e0dc617c8e10",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062407259178611
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-cli2",
+      "sha256": "326be46da30a6a50ad3f780ab0da9e85f73575856c17320f325df9201d0fcb5a",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062407258179892
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-retain2",
+      "sha256": "9fcdbc69f1fddaa563e05279a274f35dafaef54cbdf2c2b86a028a152cdc4ade",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062407258450854
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-bind.py",
+      "sha256": "79ee63ae857fbe894263b4eb578537d92d4487f6d0303e6ee71ed331af1f6436",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062129663133856
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-version-identity.py",
+      "sha256": "659e00d92c1e808eb840cbdf5de4990b02e8350eb11151b6cd7fc6c2a1b885cc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062342623669035
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-evidence.py",
+      "sha256": "3678afb8c77ead98e043b99c40dcfd82dccb12cda55c619c85e1e19362e7ac2b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792063087389294547
+    }
+  ],
+  "completedBuildCacheReclamation": {
+    "path": "/private/tmp/cbui/lc2-2bz44rfs/reports/legacy-build-cache-reclamation.json",
+    "sha256": "45417e57fb68b13e1ccd0a744288805d6d07b61e05eb0bc21079c0b003c0d97d",
+    "ownedCacheBytes": 835538014,
+    "newBuilderImageReferenceRemoved": true,
+    "nativeClosureInventoryNote": "The131-file inventory precedes this separately referenced cleanup ledger."
+  },
+  "publicationCheck": {
+    "passed": true,
+    "path": "/private/tmp/chainbench-linux-legacy-cases-publication-check.log",
+    "sha256": "d146659fb8dfc1068fc23a36111e1a9596e6856470fb2858c41c0eaac8d02411"
+  }
+}
