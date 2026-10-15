@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 40,
-    "confirmed_scope": 45,
+    "partial": 39,
+    "confirmed_scope": 46,
     "conflict": 1,
     "merged": 1
   },
@@ -1602,30 +1602,43 @@
       "id": "TX-007",
       "title": "AccessList Tx (type 0x1)",
       "criterionSha256": "62a3bab6c4e61384aef6fd772a721131d4765b2914912710603d60a89ba4e077",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
-          "sha256": "a040b72b2773fc53640d115548df3946cde96fc1486ee741f37a44b9ecf5d092",
+          "sha256": "6c82af79e2e2e9ab3e78aec39800abb4f9f5301ac2f6af2719162b60c0f5de47",
           "id": "access-list-tx"
+        },
+        {
+          "path": "internal/testhelper/access_list_semantics_test.go",
+          "sha256": "c59e30ea2e82d1e803cb52313a50c60ba0686952be89eb7e824c07585002a580",
+          "function": "TestPublicAccessListRequiresDeployedSlotZero"
+        },
+        {
+          "path": "internal/testhelper/access_list_semantics_test.go",
+          "sha256": "c59e30ea2e82d1e803cb52313a50c60ba0686952be89eb7e824c07585002a580",
+          "function": "TestAccessListCaseUsesDedicatedSignedDeployment"
+        },
+        {
+          "path": "internal/testhelper/access_list_semantics_test.go",
+          "sha256": "c59e30ea2e82d1e803cb52313a50c60ba0686952be89eb7e824c07585002a580",
+          "function": "TestAccessListPreparationUsesBoundedCurrentFeeInputs"
+        },
+        {
+          "path": "internal/testhelper/access_list_semantics_test.go",
+          "sha256": "c59e30ea2e82d1e803cb52313a50c60ba0686952be89eb7e824c07585002a580",
+          "function": "TestAccessListFundingBudgetScalesWithActualQuote"
+        },
+        {
+          "path": "internal/testengine/access_list_native_test.go",
+          "sha256": "7dc4102d07b0bbc9f2d2155ee0de9b17f4b9df1f01b689fd2fba144e3749ccca",
+          "function": "TestNativeDeployedSlotAccessList"
         }
       ],
       "observations": [
         {
-          "analysis": "eth_createAccessList 기반 type1/status1, list address 확인"
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
-          "pointer": "/steps/0",
-          "statement": {
-            "do": "sendTx",
-            "from": "node1",
-            "gas": "200000",
-            "data": "0x6018600c60003960186000f37300000000000000000000000000000000c0ffee0d315000",
-            "save": "dhash",
-            "expect": "receipt"
-          }
+          "analysis": "두 준비오류 시도는 별도 accepted=false로 보존. 전용 deployContract·노드 quote 기반 예산과 명시한 fee/gas로 수정 후 세 native case·39단언·서명 원문/해시/서명자/저장값 독립 대조 통과."
         },
         {
           "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
@@ -1663,14 +1676,154 @@
             ],
             "select": "accessList.0.address"
           }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/18",
+          "statement": {
+            "expect": "txStatus",
+            "hash": "$slotHash",
+            "is": "0x1"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/19",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "type",
+            "compare": "Equal",
+            "is": "0x1"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/20",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "type",
+            "compare": "Equal",
+            "is": "0x1"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/21",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "to",
+            "compare": "EqualCI",
+            "is": "$slotBox"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/22",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "input",
+            "compare": "Equal",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/23",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "accessList.#",
+            "compare": "Equal",
+            "is": "1"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/24",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "accessList.0.address",
+            "compare": "EqualCI",
+            "is": "$slotBox"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/25",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "accessList.0.storageKeys.#",
+            "compare": "Equal",
+            "is": "1"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/26",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$slotHash"
+            ],
+            "select": "accessList.0.storageKeys.0",
+            "compare": "Equal",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+          "pointer": "/steps/27",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getStorageAt",
+            "params": [
+              "$slotBox",
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "latest"
+            ],
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
       "remainingConditions": [
-        "원문 deployed contractAddr와 slot0 storageKeys 대신 balance읽기 외부주소 accessList. slot0 warming입력 누락"
+        "원문87개 전체·메인넷·Linux·legacy·단계적 이관·최종 Web 인수는 별도."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "기존 BALANCE 회귀와 원문 contractAddr/slot0 입력을 세 체인에서 실제 검증. 전용 signed deploy·node quote 예산·explicit simulation·type1 원문RLP/Keccak/서명자 복원·receipt타입/상태·slot0=42. WBFT Croissant0 직접 구성.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/access-list-evidence.json",
+          "sha256": "b7d802a12b42f2153b240f7aca496b2c806586e294caee125ae43239dad7a39d"
+        }
+      ]
     },
     {
       "id": "TX-008",

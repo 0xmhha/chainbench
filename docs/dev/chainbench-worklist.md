@@ -182,6 +182,26 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 TX-007 배포된 slot0 접근 목록 보강:** 기존 BALANCE/eth_createAccessList
+회귀를 유지하면서 원문의 contractAddr/slot0 입력을 추가했다. 잘못된 주소·슬롯·배열·거래/영수증
+타입·저장값7조건 RED→GREEN을 확인했다. 최초 actual은 로컬 sendTx 생성의 수신자 제한으로
+세 체인 모두 실패했다. 전용 deployContract로 바꾼 다음 시도는 WEMIX만 통과했고 StableNet은
+SDK의 기본 수수료 상한13.52e18 upfront·WBFT는 기본 access-list 시뮬레이션5e18 예산으로
+준비가 실패했다. 이를 제품 결함/전체 통과로 세지 않고 두 시도 모두 accepted=false로 보존했다.
+
+전용 배포 계약과 bounded 준비 입력 RED→GREEN, 이전 상수 예산을 세 quote에서 실행한
+RED→GREEN을 확인했다. 현재 노드 quote×500000+1e18로 준비 금액을 계산하고 배포의
+실제 gasPrice·시뮬레이션gas100000/quote hex를 선언한다. 최종 관련 전체 race·전체 검사와
+세 체인 native race(164.546초, skip0), 공개 단언39개가 통과했다. 원문 type1의 단일 생성주소/
+slot0 접근 목록·영수증status/type·7바이트 SSTORE 런타임·실제 채굴 높이의 slot0=42를 확인했고,
+원문RLP·Keccak 거래hash·ECDSA 복원sender를 독립 대조했다.
+
+고정 소스 `37107141ed39e0bc1db1e0a4aa7e242fe873c119060aa5c40dd0fe630a5ed957`
+전후가 같다. [배포 slot0 증거](access-list-evidence.json)는 실패 포함9실행의1533파일 내용·
+권한·소유자·mtime을 보존했고 활성 프로세스·종료 DB는0이다. 주소 corpus는 의도한 새 참조3곳만
+갱신했다. WBFT는 Croissant0 직접 구성이고 단계적 이관·원문87개 전체·Linux·메인넷·legacy·
+최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 RPC-003/004/010/011/013 합의 조회 연결 보강:** presence 판정 모델이 잘못된
 노드/역할·신원·제네시스ID·에폭·쿼럼·연결19조건을 허용하는 RED→GREEN을 확인했다.
 초기 import 준비 오류는 별도 보존하고 제품 RED로 세지 않았다. 최초 실제 실행은 공개4케이스가
