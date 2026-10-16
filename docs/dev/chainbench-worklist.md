@@ -169,7 +169,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 
 | 순서 | 작업 | 완료 기준 | 상태 |
 |---|---|---|---|
-| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — Linux 보존 전송을27계약/6개 RED·CI와 실제 파일6회/거절5회, 세 체인 실제 시도15보관/735항목의 독립 대조로 보강했다([증거](linux-retention-transport-evidence.json)). 기능 결과는2통과·WEMIX EN 합의 확인1BLOCKED이며 전체 인수는 아니다. 격리 Linux 경로 선택14개 RED·10계약/관련/전체 검사와 종료6노드364항목의 읽기 전용 capture·독립 대조를 보강했다([증거](isolated-linux-retention-evidence.json)). 기존 보존 계약·압축 검증 완료; 새 JSON/Markdown/인계 참조 보강·47계약·실제 보존/압축·호환 명령 dry run 완료. 과거 56 receipt는 28 일치·26 없음·2 다른 해시이므로 자료 전수 확인/후속 인수는 미완료. 추가 복사본·Git·314압축 파일 검색에서29/56의 동일 bytes 위치를 확인했으나27개는 범위 내 미발견이며 원본을 덮어쓰지 않았다([복구 검색](historical-receipt-recovery-evidence.json)). [새 증거](storage-document-evidence.json). 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
+| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 작업 Go 빌드 캐시의 보존 계약24개·전체 검사와 실제17,132개/약3.86GiB 회수·남긴20,121파일 독립 대조를 보강했다([증거](go-cache-maintenance-evidence.json)). 과거 receipt 미발견분과 전체 인수는 여전히 남는다. Linux 보존 전송을27계약/6개 RED·CI와 실제 파일6회/거절5회, 세 체인 실제 시도15보관/735항목의 독립 대조로 보강했다([증거](linux-retention-transport-evidence.json)). 기능 결과는2통과·WEMIX EN 합의 확인1BLOCKED이며 전체 인수는 아니다. 격리 Linux 경로 선택14개 RED·10계약/관련/전체 검사와 종료6노드364항목의 읽기 전용 capture·독립 대조를 보강했다([증거](isolated-linux-retention-evidence.json)). 기존 보존 계약·압축 검증 완료; 새 JSON/Markdown/인계 참조 보강·47계약·실제 보존/압축·호환 명령 dry run 완료. 과거 56 receipt는 28 일치·26 없음·2 다른 해시이므로 자료 전수 확인/후속 인수는 미완료. 추가 복사본·Git·314압축 파일 검색에서29/56의 동일 bytes 위치를 확인했으나27개는 범위 내 미발견이며 원본을 덮어쓰지 않았다([복구 검색](historical-receipt-recovery-evidence.json)). [새 증거](storage-document-evidence.json). 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
 | 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건; 후속 공개 명령 안내도202→216 갱신·14누락 해소·3실패 대조/재생성·CI 누락 RED→직접 실행/4계약·216셸 구문/209단일 스위프 정의의 독립 대조와 CI 래칫 보강([증거](case-command-docs-evidence.json)) |
 | 3 | suite 실패 테스트 3건 보강 | 존재하고 유효한 DSL·키 입력으로 실제 setup 실패까지 도달; JSON/비JSON 동일 code 2와 구체 원인 | 완료 — `setup_failure_test.go` 세 경로 RED→GREEN; suite 전체 race와 실제 CLI 단일·다중·비JSON 실행 모두 code 2·바이너리 셋업 원인 확인 |
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
@@ -183,6 +183,19 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — 명시한 구문·재평가 범위 유지. 기존 N3/A7b 판단과 [이전 고정 소스](all-code-graph-evidence.json)를 보존했다. 2026-10-16 후속 고정 소스는 14언어/형식 2,060파일·Go 테스트790파일·내장 AST36개, 미해석 동적 입력33개를 명시하고 누락/끊어진 간선0을 확인했다. A8 비메서드 공개심볼1,890개/도달 불가0. 10계약·관련 race·전체 검사, 두 별도 capture의 해시 일치와 별도 감사10실패 대조 통과. 전체 실행 커버리지나 최종 Web 인수는 아님; [갱신 증거](all-code-graph-refresh-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-16 작업 Go 캐시의 선택 정리:**
+8시간 이상 사용/변경되지 않은 정규 캐시 파일만 최대4GiB 회수하고 최소1GiB는 남기는 도구를 추가했다.
+최근/미래 시각·참조 해시·알 수 없는 이름·링크·실행 디렉터리·제어 파일은 보존한다.
+Go 도구나 캐시 FD가 보이거나 조회가 실패하면 거절하고, 두 최신 조회와 삭제 직전 파일/디렉터리 신원 검사를 수행한다.
+기본값은 조회다. 새 보고서 경로를 정해 `python3 -B scripts/prune_go_cache.py --report /private/tmp/chainbench-cache-review.json`로 확인하고,
+회수할 때는 별도의 새 보고서 경로와 `--delete`를 쓴다. 보고서를 덮어쓰지 않는다. 각 큰 빌드 묶음의 전후·실제 증명 시작 전 여유를 확인하고,
+20GiB 미만이면 기존 승인 정리 규칙을 먼저 적용한다. 실행 중에는 정리하지 않고 새 빌드도 함께 시작하지 않는다.
+초기 반복 문서 검색은 삭제 전 중단해 실패 자료를 보존했다. 해시 식별자를 한 번 추출하도록 보강한 후,
+고정 소스 `a17a517391d03a8c1bbe10b5e447a03adb05e44eeae9741978bf7ec95364c2cd`에서 실제 열린 파일의 거절과
+17,132개/4,148,563,968바이트 회수를 확인했다. 독립 감사는 남은 일반20,121파일의 해시·메타데이터와 전체 경로 집합을 대조했다.
+여유는 약21.1→25.0GiB였다. 캐시는 재생성 가능하므로 이후 빌드에서 다시 늘 수 있고, 주기별 예산과 기존 종료 DB 회수를 함께 유지한다.
+이 단계는 모듈 소스·증명·사용자 앱·swap을 정리하지 않았고 전체 L1/Web 인수를 뜻하지 않는다. [계약·실제 회수·독립 감사](go-cache-maintenance-evidence.json).
 
 **2026-10-16 Linux 보존 전송 보강 — 기능 결과와 종료 검증 분리:**
 정상/변조 패키지·보호 경로·키 별칭·노드 그룹의27계약을 추가했다. 실제6개 RED와 관련/전체 검사,
