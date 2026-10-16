@@ -23,8 +23,8 @@ import (
 // sameBlockHashAssertion passes when every target node reports the same hash for
 // a block — a cross-node no-fork / same-chain check. Spec: block (tag, default
 // "latest"; use "0x0" for genesis agreement), on/onEach (default: every node).
-// A node that does not answer fails the check; a node that answers without the
-// block is skipped, and it fails if none has it.
+// Every target must answer with the requested block. A missing block must not
+// turn an all-node comparison into agreement among only the remaining nodes.
 type sameBlockHashAssertion struct{}
 
 // Check compares the targets' hashes for the block.
@@ -40,8 +40,12 @@ type sameBlockHashAssertion struct{}
 func (sameBlockHashAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertSameBlockHash, Provenance: ac.Spec}
 	targets := assertTargets(ac)
-	if len(ac.On) == 0 {
-		targets = allTargets(ac)
+	if len(ac.On) == 0 && ac.Env != nil {
+		// Unlike RPC-only target helpers, this comparison must retain even
+		// recorded nodes without an endpoint so their absence fails clearly.
+		allRecorded := *ac
+		allRecorded.On = ac.Env.Nodes()
+		targets = assertTargets(&allRecorded)
 	}
 	if len(targets) == 0 {
 		err := fmt.Errorf("dsl: sameBlockHash: no target node RPC URL")
@@ -73,14 +77,16 @@ func (sameBlockHashAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 			return res, err
 		}
 		if b.Hash == "" {
-			continue // node has not produced this block yet
+			perNode[tgt.name] = nil
+			continue
 		}
 		hashes = append(hashes, b.Hash)
 		perNode[tgt.name] = b.Hash
 	}
 	res.Actual = perNode
-	if len(hashes) == 0 {
-		res.Pass, res.Source = false, "no node returned block "+tag
+	if len(hashes) != len(targets) {
+		res.Pass = false
+		res.Source = fmt.Sprintf("only %d of %d target node(s) returned block %s", len(hashes), len(targets), tag)
 		return res, nil
 	}
 	pass, detail := assert.HashesEqual(hashes)

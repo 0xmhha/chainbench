@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -143,5 +144,48 @@ func TestSameBlockHash_OnEachStillNamesTheNodes(t *testing.T) {
 	on := []node.Node{{Index: 1, RPCURL: ua}, {Index: 2, RPCURL: ub}}
 	if r := checkSameBlockHash(t, env, on, map[string]any{}); !r.Pass {
 		t.Fatalf("the two named nodes agree, yet: %v", r.Source)
+	}
+}
+
+func TestSameBlockHash_MissingTargetBlockCannotPassWithOtherNodes(t *testing.T) {
+	for _, tag := range []string{"latest", "0x5"} {
+		for _, missing := range []int{0, 1} {
+			t.Run(tag+"/"+[]string{"node1", "node2"}[missing], func(t *testing.T) {
+				nodes := []*chainNode{
+					{head: 5, hashes: map[string]string{"0x5": "0xaaaa"}},
+					{head: 5, hashes: map[string]string{"0x5": "0xaaaa"}},
+				}
+				delete(nodes[missing].hashes, "0x5")
+				env := envOf(t, nodes[0].serve(t).URL, nodes[1].serve(t).URL)
+				r := checkSameBlockHash(t, env, nil, map[string]any{"block": tag})
+				if r.Pass {
+					t.Fatalf("one target omitted its block but all-node comparison passed: %+v", r)
+				}
+				if r.Source == "" {
+					t.Fatal("missing-block failure must explain why the nodes could not be compared")
+				}
+				actual, ok := r.Actual.(map[string]any)
+				if !ok || len(actual) != 2 || actual[[]string{"node1", "node2"}[missing]] != nil {
+					t.Fatalf("missing target must remain in the observation as null: %+v", r.Actual)
+				}
+			})
+		}
+	}
+}
+
+func TestSameBlockHash_RecordedNodeWithoutRPCIsNotSilentlyExcluded(t *testing.T) {
+	live := &chainNode{head: 5, hashes: map[string]string{"0x5": "0xaaaa"}}
+	url := live.serve(t).URL
+	env := envOf(t, url, "")
+	d := deps()
+	result, err := (sameBlockHashAssertion{}).Check(context.Background(), &interp.AssertCtx{Deps: &d, Env: env, Spec: map[string]any{"block": "latest"}})
+	if err == nil && result.Pass {
+		t.Fatalf("default comparison ignored the recorded node without RPC: %+v", result)
+	}
+	if err == nil || !strings.Contains(err.Error(), "no target node RPC URL") {
+		t.Fatalf("missing endpoint must have an explicit failure: %+v, %v", result, err)
+	}
+	if r := checkSameBlockHash(t, env, []node.Node{{Index: 1, RPCURL: url}}, map[string]any{"block": "latest"}); !r.Pass {
+		t.Fatalf("explicit healthy-node selection changed: %+v", r)
 	}
 }

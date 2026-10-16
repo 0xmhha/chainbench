@@ -1,0 +1,986 @@
+{
+  "scope": "Reject incomplete recorded-node block comparisons and add bounded consensus failure observations. Three public native BP4/EN1 cases passed on a repeated, unchanged source; failed initial attempts remain preserved. Not full L1 or final Web acceptance.",
+  "sourceDigestAtNativeProof": "c8075c12986e7b42262bf581dfdd9fd0a0da76b32ff536c1a2d47c09b6d9a91e",
+  "headAtNativeProof": "b2f1c48071924d7a44b8e314bcd0043928d2f46f",
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/blockassert.go",
+      "sha256": "67fd4a87f4a5ca199798af9868c2610834060250fde4081339cbd79549d082fe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792134001882099654
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/sameblockhash_test.go",
+      "sha256": "054b56475a81cc14184d949dd21af3c8f7c643a3b3d6442c12a70aeead7a0f27",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792134049343122748
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/outcome.go",
+      "sha256": "9f9f88ab524667a7b9fb70a6677ade209a7f4ac61422b12e854f7b392d4cbedb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792134391541806318
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/capability_probe.go",
+      "sha256": "8100d28b7a96544897e9b2d2afef01d42255586a7aacd516c2d0caa73606f805",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792133434571177117
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/capability_probe_failure_test.go",
+      "sha256": "4176623ad156788478ca93a8fbf1af04dfea4df85920054a2339c08a5380d086",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792133408396603547
+    }
+  ],
+  "implementation": {
+    "defaultTargets": "Every recorded node, including missing RPC endpoints; explicit on/onEach selection is preserved",
+    "missingBlock": "Failure with every target in Actual, missing hash represented as null",
+    "removedUnusedFunction": "allTargets had no remaining caller after strict default targeting",
+    "failureKinds": [
+      "deadline",
+      "cancelled",
+      "rpc_error",
+      "response_type",
+      "response_syntax",
+      "transport_timeout",
+      "transport_error",
+      "probe_error"
+    ],
+    "rpcCodeZeroPreserved": true,
+    "upstreamMessagesOrURLsCopied": false,
+    "existingVerdictsAndReasonsUnchanged": true,
+    "requirementsTimeoutsOrExternalChainSourcesChanged": false
+  },
+  "tests": {
+    "red2": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-red2-20261016.jsonl",
+        "sha256": "400b86185ccc861fa94ee5467adbf79950ee8cf7d1ec73ec5c68bdc74723601d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792133329982259102
+      },
+      "counts": {
+        "pass": {
+          "topLevelTests": 1
+        },
+        "fail": {
+          "subtests": 14,
+          "topLevelTests": 3
+        },
+        "skip": {}
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testhelper",
+          "Action": "fail"
+        },
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "fail"
+        }
+      ]
+    },
+    "timeout-red": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-timeout-red-20261016.jsonl",
+        "sha256": "50290f008e8d03b92def0485745d5da5d419362000137d4123888a90b8367310",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792133415121914749
+      },
+      "counts": {
+        "pass": {},
+        "fail": {
+          "topLevelTests": 1
+        },
+        "skip": {}
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "fail"
+        }
+      ]
+    },
+    "no-rpc-red": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-no-rpc-red-20261016.jsonl",
+        "sha256": "b8731afd4b0dacb6acad8a32216421f9d57e947d464104bc0bbcbc12ac0095cc",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792133979251959596
+      },
+      "counts": {
+        "pass": {},
+        "fail": {
+          "topLevelTests": 1
+        },
+        "skip": {}
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testhelper",
+          "Action": "fail"
+        }
+      ]
+    },
+    "green3": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-green3-20261016.jsonl",
+        "sha256": "35f8ad7c6ff0fc32a90086db4aca32e6063e204203e31bc0a8a88f40dd268250",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792134009898426652
+      },
+      "counts": {
+        "pass": {
+          "subtests": 16,
+          "topLevelTests": 10
+        },
+        "fail": {},
+        "skip": {}
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testhelper",
+          "Action": "pass"
+        },
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "pass"
+        }
+      ]
+    },
+    "race2": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-race2-20261016.jsonl",
+        "sha256": "07ed81df47fad96790b16a8b9ded5161f5fceb9fd9f71237af48514c386b9943",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792134090226172371
+      },
+      "counts": {
+        "pass": {
+          "topLevelTests": 416,
+          "subtests": 1475
+        },
+        "fail": {},
+        "skip": {
+          "topLevelTests": 40
+        }
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testhelper",
+          "Action": "pass"
+        },
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "pass"
+        }
+      ]
+    },
+    "race3": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-race3-20261016.jsonl",
+        "sha256": "3c211042aab8f8d61a644fbe44b66aaad36e1735f58183ca19b203b3fd7d8550",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792134710159442050
+      },
+      "counts": {
+        "pass": {
+          "topLevelTests": 414,
+          "subtests": 1474
+        },
+        "fail": {
+          "topLevelTests": 2,
+          "subtests": 1
+        },
+        "skip": {
+          "topLevelTests": 40
+        }
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testhelper",
+          "Action": "pass"
+        },
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "fail"
+        }
+      ]
+    },
+    "restart-diagnostic": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-restart-diagnostic-20261016.jsonl",
+        "sha256": "e211a32f7a2285db5f338a796ac6e86e4b4b2de3e44516767ed36a47a6daea8a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792134755491098449
+      },
+      "counts": {
+        "pass": {
+          "topLevelTests": 20,
+          "subtests": 20
+        },
+        "fail": {},
+        "skip": {}
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "pass"
+        }
+      ]
+    },
+    "race4": {
+      "log": {
+        "path": "/private/tmp/chainbench-all-node-probe-race4-20261016.jsonl",
+        "sha256": "0be15426ea6ca01fa6bc6ea1ff3982facc8211f67bdc7b905eb7128c4b0dd3e3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792134808157462206
+      },
+      "counts": {
+        "pass": {
+          "topLevelTests": 416,
+          "subtests": 1475
+        },
+        "fail": {},
+        "skip": {
+          "topLevelTests": 40
+        }
+      },
+      "packageResults": [
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testhelper",
+          "Action": "pass"
+        },
+        {
+          "Package": "github.com/0xmhha/chainbench/internal/testengine",
+          "Action": "pass"
+        }
+      ]
+    }
+  },
+  "meaningfulRedConditions": 16,
+  "readinessTimingFailures": {
+    "log": {
+      "path": "/private/tmp/chainbench-all-node-probe-race3-20261016.jsonl",
+      "sha256": "3c211042aab8f8d61a644fbe44b66aaad36e1735f58183ca19b203b3fd7d8550",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792134710159442050
+    },
+    "tests": [
+      "TestRestartIdentityWaitsForRPCReadiness",
+      "TestRestartReadinessRejectsWrongIdentityAndDeadline/wrong_identity"
+    ],
+    "implementationChangedToMakeThemPass": false,
+    "isolatedTenRepeatsPassed": true,
+    "fullRelatedRaceRerunPassed": true,
+    "issueResolved": false
+  },
+  "makeCheckBeforeNative": {
+    "exitCode": 0,
+    "log": {
+      "path": "/private/tmp/chainbench-all-node-probe-ready-check3-20261016.log",
+      "sha256": "782522184f64010616ee1e5c143ae71493841438587e9f1e4b0ac469a56fad38",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792134661313876675
+    },
+    "earlierFailedChecksRetained": [
+      {
+        "path": "/private/tmp/chainbench-all-node-probe-ready-check-20261016.log",
+        "sha256": "14528a97587df148ac235a121cc4c4bc3f2539c994954feb1e036f216ac0e553",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792133762930079667
+      },
+      {
+        "path": "/private/tmp/chainbench-all-node-probe-ready-check2-20261016.log",
+        "sha256": "88cc997536a6c8237536f2b31a39eb9280f41f1e23f267b2a12b351bb667e343",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792134363507738952
+      }
+    ],
+    "earlierFailures": [
+      "stale package-tree counts",
+      "unused allTargets definition"
+    ]
+  },
+  "localQA": {
+    "scope": "Local process and read-only artifact probes; no external QA judge verdict",
+    "externalJudgeExecuted": false,
+    "externalJudgeBlockedByAutomaticApproval": true,
+    "externalCodeTransferApprovalPending": true,
+    "sourceFiles": [
+      {
+        "path": "internal/testhelper/blockassert.go",
+        "sha256": "67fd4a87f4a5ca199798af9868c2610834060250fde4081339cbd79549d082fe"
+      },
+      {
+        "path": "internal/testhelper/sameblockhash_test.go",
+        "sha256": "054b56475a81cc14184d949dd21af3c8f7c643a3b3d6442c12a70aeead7a0f27"
+      },
+      {
+        "path": "internal/testhelper/outcome.go",
+        "sha256": "9f9f88ab524667a7b9fb70a6677ade209a7f4ac61422b12e854f7b392d4cbedb"
+      },
+      {
+        "path": "internal/testengine/capability_probe.go",
+        "sha256": "8100d28b7a96544897e9b2d2afef01d42255586a7aacd516c2d0caa73606f805"
+      },
+      {
+        "path": "internal/testengine/capability_probe_failure_test.go",
+        "sha256": "4176623ad156788478ca93a8fbf1af04dfea4df85920054a2339c08a5380d086"
+      }
+    ],
+    "processProbe": {
+      "log": "/private/tmp/chainbench-process-probe-integrity-fivefile-buiwrfwp.jsonl",
+      "exitCode": 0,
+      "topLevelTestsPassed": 10,
+      "subtestsPassed": 16,
+      "failures": 0,
+      "skips": 0,
+      "allFivePrePostSHAIdentical": true,
+      "sha256": "d20639321ec4a3ba9ef06d6a640fe8a1bc39b2c5ffe06968c6faa193c630e083"
+    },
+    "artifactProbe": {
+      "findings": [],
+      "allTargetsDeletionOnlyUnusedDefinitionAndComment": true,
+      "remainingReferences": 0,
+      "noRPCAndMissingBlockSemanticsPreserved": true,
+      "failureVerdictsUnchanged": true,
+      "limitation": "Neither local probe attests full L1, native or final Web acceptance"
+    },
+    "priorFindingsCorrected": [
+      "recorded node without RPC silently omitted",
+      "stale package-tree counts",
+      "unused allTargets definition"
+    ],
+    "browserDesktop": "Not applicable to internal Go assertion and probe changes"
+  },
+  "externalQAJudgeExecuted": false,
+  "nativeInitialAttempt": {
+    "runtime": "/private/tmp/cbui/ap-pk137xrl",
+    "nativeCasesAllPassed": false,
+    "caseExitCodes": {
+      "stablenet": 2,
+      "wbft": 1,
+      "wemix": 2
+    },
+    "failureAudit": {
+      "sourceDigest": "c8075c12986e7b42262bf581dfdd9fd0a0da76b32ff536c1a2d47c09b6d9a91e",
+      "scope": "Independent audit of failed native observations; not functional case acceptance",
+      "files": {
+        "/private/tmp/chainbench-all-node-probe-native-20261016-summary.json": "ef34f05fd4668073fc4678893e81758e6562730dfd5c8e659dde9a42fa5cef5a",
+        "/private/tmp/chainbench-all-node-probe-native-20261016-independent.json": "511ed0b64f927710c9d40dde9cb28f41872c7cba1f14d6394908ec4f58203ade",
+        "/private/tmp/cbui/ap-pk137xrl/reports/c2/sessions/20261016-072452-69928/UTC-20261016-072452/tests/001_basic-consensus/assert.json": "9c3bc8e9252baabe29332f3c3d4344bf1cecef5d70b4108a9af9818dee36c92a",
+        "/private/tmp/cbui/ap-pk137xrl/reports/c3/sessions/20261016-073254-83126/UTC-20261016-073254/tests/001_basic-consensus/observations/capability-probes.json": "5d20c698004b77edefb435c352ae95f89ae5df01f4339f1a0c5bef2e5eeb3642"
+      },
+      "WBFTExecutedAssertions": 3,
+      "WBFTPassedHashComparisons": 2,
+      "WBFTFailedProgressAssertions": 1,
+      "WEMIXFourBPSupportedAndENUnknownRPCCode": -32000,
+      "negativeControlsRejected": [
+        "comparison omits EN",
+        "comparison divergence hidden",
+        "progress failure hidden",
+        "probe omits EN",
+        "wrong RPC code",
+        "missing failure kind",
+        "changed verdict"
+      ],
+      "sealRejectionObservations": [
+        {
+          "chain": "stablenet",
+          "originalExitCode": 2,
+          "fourBPSealRejectionCounts": {
+            "1": 8,
+            "2": 8,
+            "3": 8,
+            "4": 8
+          },
+          "logPaths": {
+            "1": "ap-pk137xrl/c1/logs/d912bb2542af/node1.log",
+            "2": "ap-pk137xrl/c1/logs/d912bb2542af/node2.log",
+            "3": "ap-pk137xrl/c1/logs/d912bb2542af/node3.log",
+            "4": "ap-pk137xrl/c1/logs/d912bb2542af/node4.log"
+          },
+          "rootCauseEstablished": false,
+          "issueResolved": false
+        },
+        {
+          "chain": "wbft",
+          "originalExitCode": 1,
+          "fourBPSealRejectionCounts": {
+            "1": 7,
+            "2": 7,
+            "3": 7,
+            "4": 7
+          },
+          "logPaths": {
+            "1": "ap-pk137xrl/c2/logs/4226b414dd16/node1.log",
+            "2": "ap-pk137xrl/c2/logs/4226b414dd16/node2.log",
+            "3": "ap-pk137xrl/c2/logs/4226b414dd16/node3.log",
+            "4": "ap-pk137xrl/c2/logs/4226b414dd16/node4.log"
+          },
+          "rootCauseEstablished": false,
+          "issueResolved": false
+        }
+      ],
+      "nativeCasesAllPassed": false,
+      "priorWemixUnknownRootCauseEstablished": false,
+      "fullL1Accepted": false,
+      "finalWebAccepted": false
+    },
+    "storageAudit": {
+      "acceptedStorageScope": true,
+      "sourceDigest": "c8075c12986e7b42262bf581dfdd9fd0a0da76b32ff536c1a2d47c09b6d9a91e",
+      "runtime": "/private/tmp/cbui/ap-pk137xrl",
+      "cases": [
+        {
+          "chain": "stablenet",
+          "exitCode": 2,
+          "nativeCasePassed": false,
+          "assertions": 0,
+          "storageClosed": true
+        },
+        {
+          "chain": "wbft",
+          "exitCode": 1,
+          "nativeCasePassed": false,
+          "assertions": 0,
+          "storageClosed": true
+        },
+        {
+          "chain": "wemix",
+          "exitCode": 2,
+          "nativeCasePassed": false,
+          "assertions": 0,
+          "storageClosed": true
+        }
+      ],
+      "nativeCasesAllPassed": false,
+      "archiveEntries": 735,
+      "archiveCount": 15,
+      "archives": [
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c1/retention/server1-metadata.tar.gz",
+          "sha256": "339b5d132a0acd21ffe40af90836d6bd5a501a7a7d73c6f6781ad9b9c4f4544d",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135286706027466
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c1/retention/server2-metadata.tar.gz",
+          "sha256": "bc999ba904ee75c81eaafa60ff4a19686437d0c95eb578073679b1101adf6fb6",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135328409430027
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c1/retention/server3-metadata.tar.gz",
+          "sha256": "7979a119ee998ba9da00df41902f491e3c298400ff42229e8eac2238578516c7",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135376037247109
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c1/retention/server4-metadata.tar.gz",
+          "sha256": "28e7c6c43cda010b80f3aa58663b7830568321d5fa67163be2a0dfde9d18acb2",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135413715657212
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c1/retention/server5-metadata.tar.gz",
+          "sha256": "853e3733603e852377ea19fc7e34b3dba0b87cfa404881d961f5dee24c205fa2",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135472648133744
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c2/retention/server1-metadata.tar.gz",
+          "sha256": "92e6aefabc8c72fd424de2e7302f071266c8d8f6aa437f59337b87ba897952e3",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135725529806618
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c2/retention/server2-metadata.tar.gz",
+          "sha256": "b22b718175f6e6908738a12a84f6ee0254c4b5c05da604933fd598245a13c1d4",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135769624069842
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c2/retention/server3-metadata.tar.gz",
+          "sha256": "aea297b5ab97d39ca7ffaafd2df82e822f257095d4747fa65d87d2746d054ce2",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135816448166741
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c2/retention/server4-metadata.tar.gz",
+          "sha256": "57c680d0e0a24bacd0a9b66361498c2fa79914eb53295f67905cc9591762a145",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135860816753324
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c2/retention/server5-metadata.tar.gz",
+          "sha256": "a1468eef9032fd6c283ce263e93f60e32b3e8ed717eb1f0fb92687506292f91f",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792135966468076853
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c3/retention/server1-metadata.tar.gz",
+          "sha256": "f2706acb5c098e484fe9aa95632b8a54fb3494e5f30fef07b9646eb6331c7b1d",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136165594875647
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c3/retention/server2-metadata.tar.gz",
+          "sha256": "1b7254703af3d9248e058efc42f8fdc4dd886f8fa709281be3ac69776dd15b8b",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136177181946724
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c3/retention/server3-metadata.tar.gz",
+          "sha256": "82c82d2a99389f9d16be91693e153d789e4b21440694ca5b7c4c2bd96836cf26",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136188303812541
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c3/retention/server4-metadata.tar.gz",
+          "sha256": "de9d2609ab8cbf391e4b7c099b982f19e20f5878acaeff534b79e9712f40f5c2",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136198802333573
+        },
+        {
+          "path": "/private/tmp/cbui/ap-pk137xrl/reports/c3/retention/server5-metadata.tar.gz",
+          "sha256": "4190de332a1f2bb9e38fe8cb11e9075cf8b538d6dd1d1b1807dcd7558496576a",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136205729105108
+        }
+      ],
+      "localFilesPreserved": 353,
+      "liveExecutableHashesVerified": 0,
+      "independentRPCObservations": 0,
+      "freshIndependentProcessInventories": 30,
+      "remainingDatabasePaths": 0,
+      "sharedRemoteKeysUnchanged": true,
+      "presetFilesUnchanged": 45,
+      "assertionControlsRejected": [],
+      "capabilityObservations": [],
+      "priorWemixUnknownResolved": false,
+      "fullL1Accepted": false,
+      "finalWebAccepted": false
+    }
+  },
+  "nativeRepeatedAttempt": {
+    "runtime": "/private/tmp/cbui/aq-2gduvvt7",
+    "sourceAndCLIBinaryIdenticalToInitialAttempt": true,
+    "nativeCasesAllPassed": true,
+    "assertions": 9,
+    "cli": {
+      "path": "/private/tmp/cbui/aq-2gduvvt7/bin/chainbench",
+      "sha256": "7dee6e035a9fd2337cdb5e18b5909b5e9805823071803cf8c747e59879326b0b",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792136351664687410
+    },
+    "caseExitCodes": {
+      "stablenet": 0,
+      "wbft": 0,
+      "wemix": 0
+    },
+    "audit": {
+      "acceptedStorageScope": true,
+      "sourceDigest": "c8075c12986e7b42262bf581dfdd9fd0a0da76b32ff536c1a2d47c09b6d9a91e",
+      "runtime": "/private/tmp/cbui/aq-2gduvvt7",
+      "cases": [
+        {
+          "chain": "stablenet",
+          "exitCode": 0,
+          "nativeCasePassed": true,
+          "assertions": 3,
+          "storageClosed": true
+        },
+        {
+          "chain": "wbft",
+          "exitCode": 0,
+          "nativeCasePassed": true,
+          "assertions": 3,
+          "storageClosed": true
+        },
+        {
+          "chain": "wemix",
+          "exitCode": 0,
+          "nativeCasePassed": true,
+          "assertions": 3,
+          "storageClosed": true
+        }
+      ],
+      "nativeCasesAllPassed": true,
+      "archiveEntries": 735,
+      "archiveCount": 15,
+      "archives": [
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c1/retention/server1-metadata.tar.gz",
+          "sha256": "37193cfdeb5d1aaed2d0b55cd45f936f7df579dbda815e00ae56fae7dccc2d7d",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136403723146902
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c1/retention/server2-metadata.tar.gz",
+          "sha256": "b9823e3f33d6069edd4e42a98b64e4711dbd6b540b3982af1be167fdbe57ee2c",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136404978030409
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c1/retention/server3-metadata.tar.gz",
+          "sha256": "fb3720c3c909a33ad3b712f260f6cf23633728c44cb5ef42df48d5d110828fca",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136407334587262
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c1/retention/server4-metadata.tar.gz",
+          "sha256": "2bd799bcdbc245d0b7494dcdc33dd651cf600966e4251ea5347bbc6e60f5e065",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136408940046189
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c1/retention/server5-metadata.tar.gz",
+          "sha256": "a805229a46db7a22e426942ad885f62bc9b267c3239c5a3209d097c81985d5a8",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136411071436767
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c2/retention/server1-metadata.tar.gz",
+          "sha256": "f0eaa8e31de618f89f90c328be597b7ae27ce076ee678a934046e167fb60cbb7",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136455064088202
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c2/retention/server2-metadata.tar.gz",
+          "sha256": "5d72aa1b1276e5b03addd085c1a13760cf3061d7f1150d0913b27d9892ea2378",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136455981233548
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c2/retention/server3-metadata.tar.gz",
+          "sha256": "84121d37cfa240f423a95b35e1d6b10bac1a4239c76a5c8d9e7cde0f8677d27a",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136457024858913
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c2/retention/server4-metadata.tar.gz",
+          "sha256": "1d956c7da7fb6ec53c71f8090f48b9fc51b297c26907caee1804fc85703042ee",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136457994699378
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c2/retention/server5-metadata.tar.gz",
+          "sha256": "97a25e67bd8a50256bf2bd522a75c88e1c63c041383705e3cf6248d500dc36f2",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136458916157339
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c3/retention/server1-metadata.tar.gz",
+          "sha256": "9ca2bffa03f53eafac6156378d6944b987820a67a074b53beacb25399bbf7d89",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136590821789321
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c3/retention/server2-metadata.tar.gz",
+          "sha256": "f662c4495b8a4b70ce2ecfecb24ad410ad2270022742f0e36c5c9f9092883959",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136591892411203
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c3/retention/server3-metadata.tar.gz",
+          "sha256": "60960b814051af01c19615d925adcbc5c9b7a4efe4d0189ae6a44b4e12117ab3",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136593054736814
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c3/retention/server4-metadata.tar.gz",
+          "sha256": "4278f30f5db24bffb535c13ebe0868ea6827c07c024f14289625438ba1aebac6",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136594230340684
+        },
+        {
+          "path": "/private/tmp/cbui/aq-2gduvvt7/reports/c3/retention/server5-metadata.tar.gz",
+          "sha256": "39c89cea4fcb80e8c80aa035f15a738549ca12a38d2cf4cf4a27af3b3823fa84",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792136595440287095
+        }
+      ],
+      "localFilesPreserved": 384,
+      "liveExecutableHashesVerified": 15,
+      "independentRPCObservations": 45,
+      "freshIndependentProcessInventories": 30,
+      "remainingDatabasePaths": 0,
+      "sharedRemoteKeysUnchanged": true,
+      "presetFilesUnchanged": 45,
+      "assertionControlsRejected": [
+        "stablenet:EN omitted",
+        "stablenet:hash diverged",
+        "stablenet:failed assertion hidden",
+        "stablenet:head stalled",
+        "wbft:EN omitted",
+        "wbft:hash diverged",
+        "wbft:failed assertion hidden",
+        "wbft:head stalled",
+        "wemix:EN omitted",
+        "wemix:hash diverged",
+        "wemix:failed assertion hidden",
+        "wemix:head stalled"
+      ],
+      "capabilityObservations": [
+        {
+          "chain": "stablenet",
+          "probe": "/private/tmp/cbui/aq-2gduvvt7/reports/c1/sessions/20261016-073918-96813/UTC-20261016-073918/tests/001_basic-consensus/observations/capability-probes.json",
+          "fiveNodesSupported": true,
+          "noFalseFailureMetadata": true
+        },
+        {
+          "chain": "wbft",
+          "probe": "/private/tmp/cbui/aq-2gduvvt7/reports/c2/sessions/20261016-074012-97638/UTC-20261016-074012/tests/001_basic-consensus/observations/capability-probes.json",
+          "fiveNodesSupported": true,
+          "noFalseFailureMetadata": true
+        },
+        {
+          "chain": "wemix",
+          "probe": "/private/tmp/cbui/aq-2gduvvt7/reports/c3/sessions/20261016-074059-98414/UTC-20261016-074059/tests/001_basic-consensus/observations/capability-probes.json",
+          "fiveNodesSupported": true,
+          "noFalseFailureMetadata": true
+        }
+      ],
+      "priorWemixUnknownResolved": false,
+      "fullL1Accepted": false,
+      "finalWebAccepted": false
+    },
+    "binaryPins": {
+      "/data/chainbench/bin/gstable": "9ca995c38dc9fc3c0921577c7f91860f956189c9e34618d9004797337e863a47",
+      "/data/chainbench/bin/gwbft": "cb9bc31632a852c27e9dddaeb24911aea32c8c0f5ea78bfbcb1df644b54235c2",
+      "/data/chainbench/bin/gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c",
+      "/data/chainbench/bin/gstable-prefork": "39cf9101357b1e6caa5626c5537a95524816975d635f5361be89700ac5f90856",
+      "/data/chainbench/bin/gstable-boho-v101": "89e62a36028ef44302f119b44347f70b12fd074b162af9c89c7224052de7d83f",
+      "/data/chainbench/bin/aq-2gduvvt7-rpc-observer": "8623bec7a430527cb18c13b072c08174b6a9eb9764ad3a242479883ffebe6079"
+    }
+  },
+  "artifactReferences": [
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native-20261016-summary.json",
+      "sha256": "ef34f05fd4668073fc4678893e81758e6562730dfd5c8e659dde9a42fa5cef5a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136209352800102
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native-20261016-independent.json",
+      "sha256": "511ed0b64f927710c9d40dde9cb28f41872c7cba1f14d6394908ec4f58203ade",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136256146576805
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native2-20261016-summary.json",
+      "sha256": "454d4ddb1c705ded45cda0a9552ea6968ef4b0930d5d0c735ac24e86e40c61bc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136597945601786
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native2-20261016-independent.json",
+      "sha256": "d5d25e744051f1bcef85829416b9e4eb24f7cbaaa7f9b43494c6213b0a5a9851",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136649512911357
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-failure-audit-20261016.json",
+      "sha256": "b21cdfe802cad8a17e4078de697beaae8d76add61633f041dd96ef1eb3b758fe",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136327044066893
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-local-qa-20261016.json",
+      "sha256": "e64ccb446d960c11d33d1d737fb4eed62f493bd7107b16c2e99bbf770f3932c7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792134541077079072
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-wemix-post-gate-20261016.json",
+      "sha256": "be38b55e6dfe0ab56454dddfb8e366a56cff91a689a40204f5b7704dd324a271",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136203248327815
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native-20261016.py",
+      "sha256": "a824b8e6de60bf79213bf0672bc242b130496d1cd66dadd4c0933228120b02b1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792134686370443704
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native-independent-20261016.py",
+      "sha256": "ccdfad4ed75c868463915ef7ee3299cbee3da37036c125098a67ba013b596db0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792133545285383193
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native-fallback-20261016.py",
+      "sha256": "04e2fb13cbe22167019fba20b5e6defecb1672863ee7b1f49d17ced963fb0dc5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792133545284963069
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native2-20261016.py",
+      "sha256": "d5394744595a358bc326ef4599a61b48ed0e95a3d5980718fa7b02b35a323fa9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136345174525624
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native2-independent-20261016.py",
+      "sha256": "a4f19044842144745f83a9ad2febe441d1303e11c8a4978f32ee6bdd188bb5b2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136345176139286
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-native2-fallback-20261016.py",
+      "sha256": "82fccf92fd5ae19a6d7a4c41b94386ef1b2b078e141f8860d1287b1eadaa9eba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136345177136701
+    },
+    {
+      "path": "/private/tmp/chainbench-all-node-probe-failure-audit-20261016.py",
+      "sha256": "bff72ba0170a017f19f663ee32095e5e09b77f038cd5f987b7ed795386a206a9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136326399477287
+    }
+  ],
+  "limitations": [
+    "Initial StableNet readiness blocked; WBFT stalled at height21 despite two all-five hash agreements; both had four-BP seal rejection logs. No root cause or external repair established.",
+    "Initial WEMIX EN observation is now a typed RPC error -32000. The exact failing RPC method/message was not retained; it does not establish the cause of older unknown observations.",
+    "Post-gate observer failed after normal shutdown had started; it is not the original failed request.",
+    "A repeated unchanged fixture passed; this does not repair intermittent chain or readiness timing failures.",
+    "Related race skipped40 gated native tests; those are not accepted native coverage.",
+    "Local probes passed their declared scope; the external QA call was rejected by automatic approval review and was not retried or presented as a judge PASS.",
+    "Linux preservation audited POSIX bytes/type/mode/uid/gid/nsmtime/link target; no Linux ACL/xattr claim.",
+    "Publishing this evidence and worklist changes the full source digest; source references preserve the exact implementation tested.",
+    "Current full L1, original/legacy sufficiency, final AST refresh and WEB01-14 remain separate open gates."
+  ],
+  "priorWemixUnknownResolved": false,
+  "sealIssueResolved": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net"
 	"slices"
 	"time"
 
@@ -23,6 +25,8 @@ type capabilityNodeProbe struct {
 	Source         string `json:"source,omitempty"`
 	Reason         string `json:"reason,omitempty"`
 	ValidatorCount int    `json:"validatorCount,omitempty"`
+	FailureKind    string `json:"failureKind,omitempty"`
+	RPCErrorCode   *int   `json:"rpcErrorCode,omitempty"`
 }
 
 // Consensus support is checked on every recorded endpoint before execution.
@@ -101,6 +105,7 @@ func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node
 	case err == nil && validators != nil:
 		result.Status, result.Reason, result.ValidatorCount = "supported", "", len(validators)
 	case err != nil:
+		result.FailureKind, result.RPCErrorCode = consensusProbeFailure(err)
 		var serverErr *rpc.ServerError
 		if errors.As(err, &serverErr) && serverErr.Code == -32601 {
 			result.Status, result.Reason = "unsupported", "rpc_method_unavailable"
@@ -111,4 +116,32 @@ func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node
 		result.Reason = "rpc_response_unusable"
 	}
 	return result
+}
+
+// consensusProbeFailure records a bounded vocabulary without copying upstream
+// messages or endpoint URLs into observations. Existing verdicts stay unchanged.
+func consensusProbeFailure(err error) (string, *int) {
+	var serverErr *rpc.ServerError
+	var typeErr *json.UnmarshalTypeError
+	var syntaxErr *json.SyntaxError
+	var transportErr net.Error
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		return "deadline", nil
+	case errors.Is(err, context.Canceled):
+		return "cancelled", nil
+	case errors.As(err, &serverErr):
+		return "rpc_error", &serverErr.Code
+	case errors.As(err, &typeErr):
+		return "response_type", nil
+	case errors.As(err, &syntaxErr), errors.Is(err, io.ErrUnexpectedEOF), errors.Is(err, io.EOF):
+		return "response_syntax", nil
+	case errors.As(err, &transportErr):
+		if transportErr.Timeout() {
+			return "transport_timeout", nil
+		}
+		return "transport_error", nil
+	default:
+		return "probe_error", nil
+	}
 }
