@@ -9,20 +9,26 @@ import tarfile
 DATABASE_NAMES = ("chaindata", "lightchaindata", "etcd", "triecache")
 
 
-def selected_roots(record, nodes):
-    """Keep shared keys and this composition, rather than every historical run."""
+def selected_roots(record, nodes, *, data_root="/data/chainbench"):
+    """Keep this fixture's keys/composition inside an explicit, canonical root.
+
+    The caller binds an isolated root to its owned runtime; never infer it from
+    a record that might name a different run. The existing fixture is the default.
+    """
+    if not isinstance(data_root, str) or not re.fullmatch(r"/data/chainbench(?:/[A-Za-z0-9_-]+)*", data_root):
+        raise ValueError("data root is not a canonical owned fixture path")
     composition = record["compositionId"]
     if not re.fullmatch(r"[a-zA-Z0-9_-]+", composition):
         raise ValueError("unsafe composition identifier")
     roots = {
-        "/data/chainbench/keys",
-        "/data/chainbench/runtime/" + composition,
-        "/data/chainbench/logs/" + composition,
+        data_root + "/keys",
+        data_root + "/runtime/" + composition,
+        data_root + "/logs/" + composition,
     }
     for node in nodes:
         for key, base in (("dataDir", "node"), ("configPath", "runtime"), ("logPath", "logs")):
             value = node[key]
-            prefix = "/data/chainbench/" + base + "/" + composition + "/"
+            prefix = data_root + "/" + base + "/" + composition + "/"
             if not value.startswith(prefix) or any(part in {".", "..", ""} for part in value.split("/")[1:]):
                 raise ValueError("path outside current composition")
         roots.add(node["dataDir"])

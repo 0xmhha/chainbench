@@ -32,6 +32,32 @@ class RetentionContract(unittest.TestCase):
                         "dataDir": path, "configPath": "/data/chainbench/runtime/abc123/configs/node1.toml",
                         "logPath": "/data/chainbench/logs/abc123/node1.log"}])
 
+    def test_explicit_isolated_data_root_keeps_shared_keys_outside_selection(self):
+        root = "/data/chainbench/proof-batch/c1"
+        nodes = [{"dataDir": root + "/node/abc123/node1",
+                  "configPath": root + "/runtime/abc123/configs/node1.toml",
+                  "logPath": root + "/logs/abc123/node1.log"}]
+        selected = retention.selected_roots({"compositionId": "abc123"}, nodes, data_root=root)
+        self.assertEqual(selected, [root + "/keys", root + "/logs/abc123",
+                                    root + "/node/abc123/node1", root + "/runtime/abc123"])
+        self.assertNotIn("/data/chainbench/keys", selected)
+
+    def test_isolated_selection_refuses_other_runs_and_path_aliases(self):
+        root = "/data/chainbench/proof-batch/c1"
+        for actual in ["/data/chainbench", "/data/chainbench/proof-batch/c10",
+                       root + "/../c2", root + "/node/abc123/../../c2"]:
+            with self.subTest(actual=actual), self.assertRaises(ValueError):
+                retention.selected_roots({"compositionId": "abc123"}, [{
+                    "dataDir": actual + "/node/abc123/node1",
+                    "configPath": root + "/runtime/abc123/configs/node1.toml",
+                    "logPath": root + "/logs/abc123/node1.log"}], data_root=root)
+
+    def test_isolated_data_root_must_remain_canonical_inside_the_owned_fixture(self):
+        for root in ["/", "/data", "/etc", "/data/chainbench-other", "/data/chainbench/../other",
+                     "/data/chainbench//run", "/data/chainbench/run/", "data/chainbench/run", None]:
+            with self.subTest(root=root), self.assertRaises(ValueError):
+                retention.selected_roots({"compositionId": "abc123"}, [], data_root=root)
+
     def test_matching_archive(self):
         retention.require_match([self.row()], [self.row()])
 
