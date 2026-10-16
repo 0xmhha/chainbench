@@ -252,7 +252,7 @@ python3 scripts/gen-case-commands.py --write
 
 <!-- BEGIN generated: scripts/gen-case-commands.py -->
 
-케이스 **202건**이다. 각 케이스에 두 갈래를 적는다 — `bin/chainbench` 로 한 건만 돌리는 것과, `scripts/tcsweep.sh` 로 같은 한 건을 돌리는 것이다. 스크립트 쪽은 망을 세우고 내리고 지우는 것까지 하고 판정 한 줄을 남긴다.
+케이스 **216건**이다. 각 케이스에 두 갈래를 적는다 — `bin/chainbench` 로 한 건만 돌리는 것과, `scripts/tcsweep.sh` 로 같은 한 건을 돌리는 것이다. 스크립트 쪽은 망을 세우고 내리고 지우는 것까지 하고 판정 한 줄을 남긴다.
 
 ### `basic` — 2건
 
@@ -270,7 +270,7 @@ GSTABLE_RPC=<값> bin/chainbench run tests/tc/basic/08-attached-chain-produces.j
 ```
 > 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
 
-### `common/contract` — 7건
+### `common/contract` — 8건
 
 **CT-CONTRACT-001-deploy-and-call.json** · `contract-roundtrip`
 ```sh
@@ -326,6 +326,14 @@ bin/chainbench run tests/tc/common/contract/CT-CONTRACT-007-out-of-gas-consumes-
   --workspace-dir ~/cbw/one/CT-CONTRACT-007-out-of-gas-consumes-all --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log 'CT-CONTRACT-007-out-of-gas-consumes-all'
+```
+
+**CT-CONTRACT-008-finite-gas-boundary.json** · `finite-gas-boundary`
+```sh
+bin/chainbench run tests/tc/common/contract/CT-CONTRACT-008-finite-gas-boundary.json \
+  --workspace-dir ~/cbw/one/CT-CONTRACT-008-finite-gas-boundary --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log 'CT-CONTRACT-008-finite-gas-boundary'
 ```
 
 ### `common/fault` — 6건
@@ -557,7 +565,7 @@ bin/chainbench run tests/tc/common/node/CT-NODE-016-block-period.json \
 scripts/tcsweep.sh ~/cbw/one.log 'CT-NODE-016-block-period'
 ```
 
-### `common/rpc` — 14건
+### `common/rpc` — 15건
 
 **CT-RPC-001-block-number-advances.json** · `basic-rpc-health`
 ```sh
@@ -669,6 +677,14 @@ bin/chainbench run tests/tc/common/rpc/CT-RPC-015-metric-head-block.json \
   --workspace-dir ~/cbw/one/CT-RPC-015-metric-head-block --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log 'CT-RPC-015-metric-head-block'
+```
+
+**CT-RPC-016-isolated-en-pending-queued.json** · `isolated-en-pending-queued`
+```sh
+bin/chainbench run tests/tc/common/rpc/CT-RPC-016-isolated-en-pending-queued.json \
+  --workspace-dir ~/cbw/one/CT-RPC-016-isolated-en-pending-queued --binary $GWBFT
+
+scripts/tcsweep.sh ~/cbw/one.log 'CT-RPC-016-isolated-en-pending-queued'
 ```
 
 ### `common/tx` — 20건
@@ -885,7 +901,7 @@ WBFT_STABLENET_BIN=<값> bin/chainbench run tests/tc/go-stablenet/mixed/05-takeo
 scripts/tcsweep.sh ~/cbw/one.log '05-takeover-over-f-halts-and-recovers'
 ```
 
-### `go-stablenet/post-v1.0.0-change/common-all` — 16건
+### `go-stablenet/post-v1.0.0-change/common-all` — 17건
 
 **01-stablenet-delayed-fork.json** · `stablenet-delayed-fork`
 ```sh
@@ -989,6 +1005,14 @@ bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/common-all/17-estima
   --workspace-dir ~/cbw/one/17-estimategas-authorizationlist-cost --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '17-estimategas-authorizationlist-cost'
+```
+
+**17b-estimategas-deployed-authorizationlist.json** · `estimategas-deployed-authorizationlist-cost`
+```sh
+bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/common-all/17b-estimategas-deployed-authorizationlist.json \
+  --workspace-dir ~/cbw/one/17b-estimategas-deployed-authorizationlist --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '17b-estimategas-deployed-authorizationlist'
 ```
 
 **19-upgrade-registry-order.json** · `upgrade-registry-order`
@@ -1474,9 +1498,43 @@ scripts/tcsweep.sh ~/cbw/one.log '09-dynamic-fee-tx'
 **18-set-code-delegation.json** · `set-code-delegation`
 ```sh
 bin/chainbench run tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json \
-  --workspace-dir ~/cbw/one/18-set-code-delegation --binary $GSTABLE
+  --workspace-dir ~/cbw/one/18-set-code-delegation --binary $GWBFT
 
 scripts/tcsweep.sh ~/cbw/one.log '18-set-code-delegation'
+```
+
+### `go-stablenet/regression/fee-delegation` — 4건
+
+**01b-personal-normal.json** · `legacy-personal-fd-normal`
+```sh
+bin/chainbench run tests/tc/go-stablenet/regression/fee-delegation/01b-personal-normal.json \
+  --workspace-dir ~/cbw/one/01b-personal-normal --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '01b-personal-normal'
+```
+
+**02b-personal-sender.json** · `legacy-personal-fd-sender`
+```sh
+bin/chainbench run tests/tc/go-stablenet/regression/fee-delegation/02b-personal-sender.json \
+  --workspace-dir ~/cbw/one/02b-personal-sender --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '02b-personal-sender'
+```
+
+**03b-personal-feepayer.json** · `legacy-personal-fd-feepayer`
+```sh
+bin/chainbench run tests/tc/go-stablenet/regression/fee-delegation/03b-personal-feepayer.json \
+  --workspace-dir ~/cbw/one/03b-personal-feepayer --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '03b-personal-feepayer'
+```
+
+**04b-personal-insufficient.json** · `legacy-personal-fd-insufficient`
+```sh
+bin/chainbench run tests/tc/go-stablenet/regression/fee-delegation/04b-personal-insufficient.json \
+  --workspace-dir ~/cbw/one/04b-personal-insufficient --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '04b-personal-insufficient'
 ```
 
 ### `go-stablenet/regression/system-contracts` — 23건
@@ -1763,7 +1821,7 @@ GSTABLE_TESTNET_KEY_FILE=<값> GSTABLE_TESTNET_RPC=<값> bin/chainbench run test
 ```
 > 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
 
-### `go-stablenet/vocabulary` — 2건
+### `go-stablenet/vocabulary` — 9건
 
 **01-derived-address-and-checksum.json** · `stablenet-derived-vocabulary`
 ```sh
@@ -1779,6 +1837,62 @@ bin/chainbench run tests/tc/go-stablenet/vocabulary/03-register-contract.json \
   --workspace-dir ~/cbw/one/03-register-contract --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '03-register-contract'
+```
+
+**11-arguments-transfers.json** · `web05-transfers`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/11-arguments-transfers.json \
+  --workspace-dir ~/cbw/one/11-arguments-transfers --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '11-arguments-transfers'
+```
+
+**12-arguments-contracts.json** · `web05-contracts`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/12-arguments-contracts.json \
+  --workspace-dir ~/cbw/one/12-arguments-contracts --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '12-arguments-contracts'
+```
+
+**13-arguments-websocket.json** · `web05-websocket`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/13-arguments-websocket.json \
+  --workspace-dir ~/cbw/one/13-arguments-websocket --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '13-arguments-websocket'
+```
+
+**14-arguments-probes.json** · `web05-probes`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/14-arguments-probes.json \
+  --workspace-dir ~/cbw/one/14-arguments-probes --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '14-arguments-probes'
+```
+
+**15-arguments-delegation.json** · `web05-delegation`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/15-arguments-delegation.json \
+  --workspace-dir ~/cbw/one/15-arguments-delegation --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '15-arguments-delegation'
+```
+
+**16-arguments-node-control.json** · `web05-node-control`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/16-arguments-node-control.json \
+  --workspace-dir ~/cbw/one/16-arguments-node-control --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '16-arguments-node-control'
+```
+
+**17-declared-accounts.json** · `web05-declared-accounts`
+```sh
+bin/chainbench run tests/tc/go-stablenet/vocabulary/17-declared-accounts.json \
+  --workspace-dir ~/cbw/one/17-declared-accounts --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '17-declared-accounts'
 ```
 
 ### `go-wbft/accounts` — 3건

@@ -170,7 +170,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 순서 | 작업 | 완료 기준 | 상태 |
 |---|---|---|---|
 | 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 기존 보존 계약·압축 검증 완료; 새 JSON/Markdown/인계 참조 보강·47계약·실제 보존/압축·호환 명령 dry run 완료. 과거 56 receipt는 28 일치·26 없음·2 다른 해시이므로 자료 전수 확인/후속 인수는 미완료. 추가 복사본·Git·314압축 파일 검색에서29/56의 동일 bytes 위치를 확인했으나27개는 범위 내 미발견이며 원본을 덮어쓰지 않았다([복구 검색](historical-receipt-recovery-evidence.json)). [새 증거](storage-document-evidence.json). 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
-| 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건 |
+| 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건; 후속 공개 명령 안내도202→216 갱신·14누락 해소·3실패 대조/재생성·CI 누락 RED→직접 실행/4계약·216셸 구문/209단일 스위프 정의의 독립 대조와 CI 래칫 보강([증거](case-command-docs-evidence.json)) |
 | 3 | suite 실패 테스트 3건 보강 | 존재하고 유효한 DSL·키 입력으로 실제 setup 실패까지 도달; JSON/비JSON 동일 code 2와 구체 원인 | 완료 — `setup_failure_test.go` 세 경로 RED→GREEN; suite 전체 race와 실제 CLI 단일·다중·비JSON 실행 모두 code 2·바이너리 셋업 원인 확인 |
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
 | 5 | feature usecase 등록 | 잔여 app usecase 전부를 의미 있는 레지스트리 호출·타입 계약으로 연결; 미등록 0 래칫과 CLI/MCP 회귀 | 완료 — 59건 미등록 RED→90/90 함수 연결 GREEN; typed·키링·네트워크·RPC 계약, 관련 전체 race와 세 체인 native 호출 통과; `feature-registry-evidence.json` |
@@ -183,6 +183,17 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — 명시한 구문·재평가 범위 유지. 기존 N3/A7b 판단과 [이전 고정 소스](all-code-graph-evidence.json)를 보존했다. 2026-10-16 후속 고정 소스는 14언어/형식 2,060파일·Go 테스트790파일·내장 AST36개, 미해석 동적 입력33개를 명시하고 누락/끊어진 간선0을 확인했다. A8 비메서드 공개심볼1,890개/도달 불가0. 10계약·관련 race·전체 검사, 두 별도 capture의 해시 일치와 별도 감사10실패 대조 통과. 전체 실행 커버리지나 최종 Web 인수는 아님; [갱신 증거](all-code-graph-refresh-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-16 공개 명령 안내216개 정합성 — 실제 체인 실행과 구분:**
+공개216케이스 중 명령 안내가202개만 싣고 있던14누락을 발견했다. 실제 파일 집합·표시 수·생성기 결과를 검사하는
+세 계약을 RED로 확인한 뒤 기존 생성기로 목록을216개로 다시 만들었다. 새 `case-docs` 검사는 `make check`에 포함한다.
+CI가 `make check`를 부르지 않아 이 검사도 빠지는 것을 추가 RED로 확인했고, test job에 직접 연결해4계약을 통과했다.
+별도 고정 소스 `3600dfe51211f1cc3d88dd80672a6e6d7e481b846cb410f92b184b2acd0507ca`에서
+셸216블록/AST5,574노드를 파싱하고 CLI216개가 각 파일을 정확히 한 번씩 가리키는지 대조했다.
+CI 연결까지 포함한 후속 고정 소스 `db592f179cc0b2deb7229b48342b4bee8e6675a70d047b234500585ed5f911c8`도 같은 결과로 재확인했다.
+안내된 스위프209개도 실제 grep 선택 결과가 정의 파일 하나인지 확인했다. 필수 입력 자리표시는 구문 분석용으로만
+치환했고 명령을 실행하지 않았다. 따라서 전체358회 L1·체인 실행 성공·최종 Web으로 세지 않는다.
+[실제 누락·RED/GREEN·별도 구문/파일 대조](case-command-docs-evidence.json).
 
 **2026-10-16 공개 서명 교체 영수증 송수신자 보강 — 전체 legacy/L1는 미완료:**
 앞선36단언 고정 소스는 독립 RPC에서 영수증 송수신자를 대조했지만, 공개 DSL은 그 필드를 직접 판정하지 않았다.
@@ -198,7 +209,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 [새 RED/GREEN·고정 소스·정상 종료·독립 대조](legacy-signature-receipt-evidence.json).
 
 후속 문서 점검에서 공개216케이스 중 사용 안내 명령14개 누락도 확인했다. 문서의202개 표시는 현재 수치가 아니며,
-다음 보강에서 목록을 재생성하고 재발을 막는 검사를 추가한다. [누락 목록](/private/tmp/chainbench-case-command-drift-20261016.json).
+후속 [명령 안내 보강](case-command-docs-evidence.json)에서216개로 재생성하고 재발 방지 검사를 추가했다. [누락 목록](/private/tmp/chainbench-case-command-drift-20261016.json).
 
 **2026-10-16 원문 서명 교체 두 EN의 현행 보강 — 전체 legacy/L1는 미완료:**
 원문의 셸 두 개를13b5e12c Git blob과 다시 대조했다. 허용 높이 차이는2블록이며, 기존 공개 케이스는
