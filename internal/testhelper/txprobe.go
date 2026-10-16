@@ -467,6 +467,8 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 // (-32601) means the method is absent. Args: method (required), params
 // (optional array), on. It is the indirect presence check for a
 // chain-distinctive RPC whose full flow another case exercises.
+// Transport, malformed responses and parse/request/internal protocol errors
+// cannot establish registration; an invalid-argument probe (-32602) can.
 type methodPresentAssertion struct{}
 
 func (methodPresentAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
@@ -500,6 +502,15 @@ func (methodPresentAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 	}
 	var out any
 	callErr := c.Call(ctx, method, &out, params...)
+	var se *rpc.ServerError
+	if callErr != nil && !errors.As(callErr, &se) {
+		res.Pass, res.Actual = false, callErr.Error()
+		return res, fmt.Errorf("dsl: %s: %w", assertMethodPresent, callErr)
+	}
+	if se != nil && (se.Code == -32700 || se.Code == -32600 || se.Code == -32603) {
+		res.Pass, res.Actual = false, callErr.Error()
+		return res, fmt.Errorf("dsl: %s: RPC protocol failure cannot establish registration: %w", assertMethodPresent, callErr)
+	}
 	if isMethodNotFound(callErr) {
 		res.Pass, res.Actual = false, callErr.Error()
 		res.Source = "method not found"

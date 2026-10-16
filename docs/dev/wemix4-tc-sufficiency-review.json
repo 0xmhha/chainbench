@@ -2860,7 +2860,7 @@
         },
         {
           "path": "internal/testhelper/txprobe.go",
-          "sha256": "d707c0c4bce0b259641b95fb870e0d3b71e1750753c930ddcebf74d24c68433e",
+          "sha256": "e2064129fce1ae8fe7a8900562e12edee93254ce7b342facc92c55b745f0c6fe",
           "function": "sendRawTamperedAction.Do"
         },
         {
@@ -2889,6 +2889,9 @@
         },
         {
           "analysis": "2026-10-16: 같은 파일의 rpcErrorAssertion도 두 제출 메서드에는 checkSubmitRejected를 소비한다. sendRawTamperedAction.Do와 그 입력/결과 계약은 그대로이며 이 SHA 갱신으로 과거 native 증거를 현재 소스 재실행으로 간주하지 않는다."
+        },
+        {
+          "analysis": "2026-10-16: 같은 파일의methodPresent는 transport/protocol 실패를 메서드 존재로 세지 않는다. sendRawTampered 본체는 그대로이며 RPC 클라이언트의 모순 응답 거절은 새 반례·native 회귀로 별도 확인한다."
         }
       ],
       "semanticAssessment": "confirmed_raw_submission_refusal_hash_absence_and_valid_signature_control",

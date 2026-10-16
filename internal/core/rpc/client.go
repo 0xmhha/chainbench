@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -47,8 +48,8 @@ type rpcRequest struct {
 }
 
 type rpcError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code    *int    `json:"code"`
+	Message *string `json:"message"`
 }
 
 // ServerError is a JSON-RPC error the node answered with, as opposed to a
@@ -96,11 +97,28 @@ func (c *Client) Call(ctx context.Context, method string, out any, params ...any
 	}
 
 	var rr rpcResponse
-	if err := json.NewDecoder(resp.Body).Decode(&rr); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&rr); err != nil {
 		return fmt.Errorf("rpc: decode %s: %w", method, err)
 	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err != nil {
+			return fmt.Errorf("rpc: decode %s trailing data: %w", method, err)
+		}
+		return fmt.Errorf("rpc: %s: response must contain exactly one JSON value", method)
+	}
 	if rr.Error != nil {
-		return &ServerError{Method: method, Code: rr.Error.Code, Message: rr.Error.Message}
+		if len(rr.Result) > 0 && !bytes.Equal(bytes.TrimSpace(rr.Result), []byte("null")) {
+			return fmt.Errorf("rpc: %s: response contains both a result and an error", method)
+		}
+		if rr.Error.Code == nil || rr.Error.Message == nil {
+			return fmt.Errorf("rpc: %s: response error requires code and message", method)
+		}
+		return &ServerError{Method: method, Code: *rr.Error.Code, Message: *rr.Error.Message}
+	}
+	if len(rr.Result) == 0 {
+		return fmt.Errorf("rpc: %s: response contains neither result nor error", method)
 	}
 	if out != nil {
 		if err := json.Unmarshal(rr.Result, out); err != nil {

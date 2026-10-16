@@ -40,6 +40,7 @@ func TestTamperRequiresActualNodeSubmissionRejection(t *testing.T) {
 		{"http", "http", "eth_sendRawTransaction", "", 0, false},
 		{"malformed json", "malformed", "eth_sendRawTransaction", "", 0, false},
 		{"wrong result type", "shape", "eth_sendRawTransaction", "", 0, false},
+		{"hash and error", "ambiguous", "eth_sendRawTransaction", reason, -32000, false},
 		{"closed connection", "disconnect", "eth_sendRawTransaction", "", 0, false},
 		{"method name is not reason", "node", "eth_sendRawTransaction", "eth_sendRawTransaction", -32000, false},
 		{"different rejection", "node", "eth_sendRawTransaction", "insufficient funds", -32000, false},
@@ -98,6 +99,8 @@ func TestTamperRequiresActualNodeSubmissionRejection(t *testing.T) {
 						_ = json.NewEncoder(w).Encode(map[string]any{"id": q.ID, "result": map[string]any{"error": reason}})
 					case "accepted":
 						_ = json.NewEncoder(w).Encode(map[string]any{"id": q.ID, "result": "0xaccepted"})
+					case "ambiguous":
+						_ = json.NewEncoder(w).Encode(map[string]any{"id": q.ID, "result": "0xaccepted", "error": map[string]any{"code": c.code, "message": reason}})
 					default:
 						_ = json.NewEncoder(w).Encode(map[string]any{"id": q.ID, "error": map[string]any{"code": c.code, "message": reason}})
 					}

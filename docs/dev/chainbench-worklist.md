@@ -183,6 +183,20 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-16 RPC 응답 명확성과 메서드 존재 보강 — R3/R5 전체는 미완료:**
+non-null result와 error의 동시 반환, 오류 필드 누락, 결과 없는 응답, 후행 JSON의 core RED 20개를 확인했다.
+변조 액션 1개, HTTP·깨진 응답 등의 존재 오탐 5개, rpcError 모순 1개, 존재 검사 프로토콜 3개도 RED→GREEN으로 확인했다.
+명확한 노드 오류만 typed로 보존하며 결과를 버리는 호출도 검사한다. 기존 result:null+완전한 error 호환과 인자 오류 probe는 유지한다.
+관련 6패키지 전체 race와 최종 ready-check가 통과했다. 중간 전체 검사의 추가 3개 RED도 보존했다.
+고정 소스 `9375d652e85e6ca5c997ec64344dddf465dc50c2dcc446939d06d18809d08e3c`에서
+세 체인의 공개 메서드 존재 3건과 StableNet personal 4건을 직렬로 통과했다(공개 7건/49단언·별도 12노드 probe).
+12노드 모두 -32000/missing FeePayer였으며, cache64 시작 16개와 전용 키 경로를 확인했다.
+두 묶음의 독립 대조와 마지막 합동 대조로 814파일의 내용·권한·소유자·ns 수정 시각, 프리셋 키 45개의 불변과 종료 DB 0개를 확인했다.
+trie cache 2,256,903바이트는 보존했다. 메서드 등록 smoke와 정상 서명 행동을 구분하며 원문 EN 환경 전체는 아니다.
+rpcError/methodPresent는 현재 on만 지원하고 onEach는 계약에 없으므로 새 미완료 기능으로 세지 않는다.
+ID·버전·중복 키를 전부 검증하거나 WS를 변경한 것은 아니며 전체 R3/R5/L1/legacy/87/최종 Web은 열려 있다.
+[RED·고정 실제·독립·합동 보존 증거](rpc-response-contract-evidence.json).
+
 **2026-10-16 rpcError 제출 오류 분류 보강 — R5 전체는 미완료:**
 두 거래 제출 메서드의 rpcError가 JSON 파싱·요청·인자·내부 오류를 기대 문구만으로 통과시키는8개 RED를 확인했다.
 공통 checkSubmitRejected를 소비하며 표준 프로토콜5코드를 거절하고 일반 서명API의 인자 오류 검사는 유지한다.
@@ -192,7 +206,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 StableNet4d17eea0 BP4에서 기존 personal 공개4건/46단언을 재실행했고 직접 변조 거절·충전 후 같은 서명 바이트
 성공·정확 송금/수수료·3블록 비포함과 독립 대조를 확인했다.254파일과8개 전용 import 키를 보존했고 DB/trie는0이다.
 두 메서드의 프로토콜 오류는 단위 주입이며 실제 증명은raw제출 경로다. 잔액부족 단언의 숫자 오류코드는 별도 기록하지 않는다.
-onEach 대상·모순된 result/error 응답·다른 R5 조합·전체L1/87/legacy/Web은 아직 열려 있다.
+onEach는 현재 계약에 없으므로 새 미완료 기능으로 세지 않는다. 모순 result/error 응답은 위의 후속 RPC 응답 단계에서 다뤘으며, 다른 R5 조합·전체 L1/87/legacy/Web은 열려 있다.
 [RED·실제·독립 증거와 한계](rpcerror-submission-classification-evidence.json).
 
 **2026-10-16 원문18 EOA·1wei 가스 기준선 보강 — 원문17 전체 fixture는 미완료:**
