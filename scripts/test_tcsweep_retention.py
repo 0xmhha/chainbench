@@ -31,6 +31,7 @@ if args[0]=='run':
   (ws/'chain-record.json').write_text(json.dumps({'keysDir':'presets/keys'}))
  elif os.environ.get('GSTABLE_RPC')!='http://127.0.0.1:46001':
   print('attach endpoint is not reachable from caller');sys.exit(2)
+ if os.environ.get('REQUEST_STOP_DURING_RUN')=='1' and ws.name=='c'+os.environ.get('STOP_ON_CASE','1'):pathlib.Path(os.environ['TCSWEEP_STOP_FILE']).touch()
  print('pass=0 fail=1 blocked=0 skip=0' if os.environ.get('CASE_FAIL') else 'pass=1 fail=0 blocked=0 skip=0')
  sys.exit(1 if os.environ.get('CASE_FAIL') else 0)
 if args[:2]==['chain','stop']:sys.exit(int(os.environ.get('STOP_EXIT','0')))
@@ -47,6 +48,7 @@ raise SystemExit(3)
 import json, os, pathlib, sys
 with open(os.environ['HOOK_CALLS'],'a') as out:out.write(json.dumps(sys.argv[1:])+'\\n')
 assert (pathlib.Path(sys.argv[1])/'evidence.log').read_text()=='original evidence'
+if os.environ.get('REQUEST_STOP_IN_HOOK')=='1' and pathlib.Path(sys.argv[1]).name=='c'+os.environ.get('STOP_ON_CASE','1'):pathlib.Path(os.environ['TCSWEEP_STOP_FILE']).touch()
 raise SystemExit(int(os.environ.get('HOOK_EXIT','0')))
 ''')
         self.hook.chmod(0o700)
@@ -63,6 +65,10 @@ raise SystemExit(int(os.environ.get('HOOK_EXIT','0')))
             "STOP_EXIT": "0",
             "HOOK_EXIT": "0",
             "SHOW_NO_RPC": "",
+            "TCSWEEP_STOP_FILE": "",
+            "REQUEST_STOP_DURING_RUN": "0",
+            "REQUEST_STOP_IN_HOOK": "0",
+            "STOP_ON_CASE": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
         }
 
@@ -148,6 +154,83 @@ raise SystemExit(int(os.environ.get('HOOK_EXIT','0')))
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertEqual(self.calls("hooks"), [[str(self.root / "work/c1"), "0"]])
         self.assertIn("returned no reachable RPC URL", (self.root / "out.log").read_text())
+
+    def stop_totals(self):
+        lines = (self.root / "out.log").read_text().splitlines()
+        return json.loads(next(line for line in reversed(lines) if line.startswith('{"pass":')))
+
+    def test_stop_request_before_first_case_keeps_marker_and_runs_nothing(self):
+        marker = self.root / "stop requested"
+        marker.write_text("operator request")
+        result = self.invoke(TCSWEEP_STOP_FILE=str(marker))
+        self.assertEqual(result.returncode, 130, result.stdout + result.stderr)
+        self.assertEqual(self.calls(), [])
+        self.assertEqual(self.calls("hooks"), [])
+        self.assertEqual(marker.read_text(), "operator request")
+        self.assertEqual(self.stop_totals(), {"pass": 0, "fail": 0, "blocked": 0, "skip": 0, "notrun": 2})
+
+    def test_stop_request_during_case_finishes_stop_and_retention_first(self):
+        result = self.invoke(TCSWEEP_STOP_FILE=str(self.root / "stop requested"), REQUEST_STOP_DURING_RUN="1")
+        self.assertEqual(result.returncode, 130, result.stdout + result.stderr)
+        self.assertEqual([args[0] for args in self.calls()], ["run", "chain"])
+        self.assertEqual(self.calls()[-1][:2], ["chain", "stop"])
+        self.assertEqual(self.calls("hooks"), [[str(self.root / "work/c1"), "1"]])
+        self.assertFalse((self.root / "work/c2").exists())
+        self.assertEqual((self.root / "work/c1/evidence.log").read_text(), "original evidence")
+        self.assertEqual(self.stop_totals(), {"pass": 1, "fail": 0, "blocked": 0, "skip": 0, "notrun": 1})
+        self.assertNotIn("\nDONE\n", result.stdout)
+
+    def test_stop_request_from_retention_halts_before_next_case(self):
+        result = self.invoke(TCSWEEP_STOP_FILE=str(self.root / "stop"), REQUEST_STOP_IN_HOOK="1")
+        self.assertEqual(result.returncode, 130, result.stdout + result.stderr)
+        self.assertEqual(len(self.calls("hooks")), 1)
+        self.assertEqual(len([args for args in self.calls() if args[0] == "run"]), 1)
+        self.assertEqual(self.stop_totals()["notrun"], 1)
+
+    def test_stop_request_keeps_failed_case_verdict(self):
+        result = self.invoke(TCSWEEP_STOP_FILE=str(self.root / "stop"), REQUEST_STOP_DURING_RUN="1", CASE_FAIL="1")
+        self.assertEqual(result.returncode, 130, result.stdout + result.stderr)
+        self.assertEqual(self.calls("hooks"), [[str(self.root / "work/c1"), "0"]])
+        self.assertEqual(self.stop_totals(), {"pass": 0, "fail": 1, "blocked": 0, "skip": 0, "notrun": 1})
+
+    def test_stop_request_cannot_hide_stop_or_retention_failure(self):
+        for field in ["STOP_EXIT", "HOOK_EXIT"]:
+            with self.subTest(field=field):
+                # Each failure needs a fresh untouched workspace.
+                if (self.root / "work").exists():
+                    shutil.rmtree(self.root / "work")
+                result = self.invoke(TCSWEEP_STOP_FILE=str(self.root / "stop"), REQUEST_STOP_DURING_RUN="1", **{field: "9"})
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertNotIn("STOPPED at case boundary", result.stdout)
+                self.assertFalse((self.root / "work/c2").exists())
+                (self.root / "stop").unlink()
+
+    def test_stop_request_does_not_start_next_attach_host(self):
+        (self.root / "tests/tc/fixture/2.json").write_text('{"chainPreset":"stablenet-attached"}')
+        (self.root / "presets/chain/stablenet-attached.json").write_text(json.dumps({
+            "chain": "stablenet", "attach": {"rpc": ["${GSTABLE_RPC}"]}}))
+        result = self.invoke(TCSWEEP_STOP_FILE=str(self.root / "stop"), REQUEST_STOP_IN_HOOK="1")
+        self.assertEqual(result.returncode, 130, result.stdout + result.stderr)
+        runs = [args for args in self.calls() if args[0] == "run"]
+        self.assertEqual(len(runs), 1)
+        self.assertTrue(runs[0][1].endswith("fixture/1.json"))
+        self.assertFalse(any(args[:2] == ["chain", "show"] for args in self.calls()))
+        self.assertFalse((self.root / "work/c2").exists())
+        self.assertEqual(self.stop_totals()["notrun"], 1)
+
+    def test_stop_request_after_last_case_is_completed_run(self):
+        result = self.invoke(TCSWEEP_STOP_FILE=str(self.root / "stop"), REQUEST_STOP_IN_HOOK="1", STOP_ON_CASE="2")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(self.calls("hooks")), 2)
+        self.assertEqual(self.stop_totals(), {"pass": 2, "fail": 0, "blocked": 0, "skip": 0, "notrun": 0})
+
+    def test_stop_request_broken_link_is_preserved_and_stops(self):
+        marker = self.root / "stop"
+        marker.symlink_to(self.root / "absent")
+        result = self.invoke(TCSWEEP_STOP_FILE=str(marker))
+        self.assertEqual(result.returncode, 130, result.stdout + result.stderr)
+        self.assertEqual(self.calls(), [])
+        self.assertTrue(marker.is_symlink())
 
     def attach_fixture(self):
         for number in (1, 2):

@@ -11,7 +11,8 @@
 # the case and is not a pass, and a BLOCKED run could not ask the question at
 # all, which is not the same as the case answering "no". The exit code says
 # which — 0 ran, 1 a case failed, 2 the run could not proceed — and the summary
-# line carries the counts.
+# line carries the counts. An operator-requested boundary stop exits 130; the
+# unattempted remainder is NOTRUN, never a completed passing sweep.
 #
 # Usage: scripts/tcsweep.sh <out.log> [pattern]
 set -uo pipefail
@@ -26,6 +27,10 @@ WS_BASE="${TCSWEEP_WS:-$HOME/cbw/sweep}"
 # reclaim only verified inactive disposable data, returning non-zero on doubt.
 # With this hook the sweep never calls chain rm or deletes the workspace.
 RETAIN_HOOK="${TCSWEEP_RETAIN_HOOK:-}"
+# Touch this optional marker to request a stop. It is checked only between
+# workspaces, after normal stop and the retention hook (when configured).
+# The sweep never reads marker contents, writes to it or deletes it.
+STOP_FILE="${TCSWEEP_STOP_FILE:-}"
 if [ -n "$RETAIN_HOOK" ] && [ ! -x "$RETAIN_HOOK" ]; then
   echo "retention hook is not executable: $RETAIN_HOOK" >&2
   exit 2
@@ -393,7 +398,7 @@ while IFS= read -r plan_line; do
   PLAN+=("$plan_line")
 done < <(planGroups "${CASES[@]}")
 
-pass=0 fail=0 blocked=0 skip=0 notrun=0 i=0 c=0
+pass=0 fail=0 blocked=0 skip=0 notrun=0 i=0 c=0 operator_stopped=0
 # The denominator is case-RUNS, not cases: tests/tc/common is walked once per
 # chain, so two cases there are six runs, and counting cases printed [3/2].
 # Runs and invocations are the same number, because one case is one
@@ -445,7 +450,12 @@ record() {
   [ "$verdict" = PASS ]
 }
 
+stopRequested() {
+  [ "$i" -lt "$total" ] && [ -n "$STOP_FILE" ] && { [ -e "$STOP_FILE" ] || [ -L "$STOP_FILE" ]; }
+}
+
 for plan_line in "${PLAN[@]}"; do
+  if stopRequested; then operator_stopped=1; break; fi
   kind=$(cut -f1 <<<"$plan_line")
   if [ "$kind" = UNMAPPED ]; then
     chain=$(cut -f2 <<<"$plan_line"); base=$(cut -f3 <<<"$plan_line"); spec=$(cut -f4 <<<"$plan_line")
@@ -496,6 +506,7 @@ for plan_line in "${PLAN[@]}"; do
   printf '          %s: %d case(s)%s\n' "$glabel" "${#SPECS[@]}" \
     "$([ "$override" != "-" ] && echo " on $override")" | tee -a "$OUT"
   for spec in "${SPECS[@]}"; do
+    if stopRequested; then operator_stopped=1; break 2; fi
     c=$((c + 1)); ws="$WS_BASE/c$c"
     if [ -n "$RETAIN_HOOK" ] && { [ -e "$ws" ] || [ -L "$ws" ]; }; then
       printf 'workspace already exists; refusing to overwrite evidence: %s\n' "$ws" | tee -a "$OUT" >&2
@@ -540,12 +551,18 @@ for plan_line in "${PLAN[@]}"; do
 
 done
 
+if [ "$operator_stopped" -eq 1 ]; then
+  remaining=$((total - i))
+  notrun=$((notrun + remaining))
+  printf 'STOPPED at case boundary: attempted %d of %d; %d remaining NOTRUN\n' "$i" "$total" "$remaining" | tee -a "$OUT"
+fi
+
 {
   echo ""
   echo "=== TOTAL ==="
   printf '{"pass": %d, "fail": %d, "blocked": %d, "skip": %d, "notrun": %d}\n' \
     "$pass" "$fail" "$blocked" "$skip" "$notrun"
-  echo "DONE"
+  if [ "$operator_stopped" -eq 1 ]; then echo "STOPPED"; else echo "DONE"; fi
 } | tee -a "$OUT"
 
 # The exit code the header promises. It was never written, so every sweep ended
@@ -555,6 +572,9 @@ done
 #
 # A failure outranks a block: a case that answered "no" is a result, and one
 # that could not be asked is not, so a sweep with both reports the result.
+if [ "$operator_stopped" -eq 1 ]; then
+  exit 130
+fi
 if [ "$fail" -gt 0 ]; then
   exit 1
 fi
