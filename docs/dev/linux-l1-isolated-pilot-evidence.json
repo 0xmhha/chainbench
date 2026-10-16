@@ -1,0 +1,490 @@
+{
+  "scope": "One completed isolated L1 case and recovery of an interrupted second attach host; not completion of the216-file/358-run plan.",
+  "acceptedPreservationScope": true,
+  "fullL1Accepted": false,
+  "executionCompleted": false,
+  "finalWebAccepted": false,
+  "sourceDigest": "31db8357515ec717a36451239fb2146dc9c221253609cea947b47e0c0fea17c8",
+  "headAtProof": "5a787c5c4e785e20858a4479533b5ebfd65300a8",
+  "runtime": "/private/tmp/cbui/l1i-q2fdoykf",
+  "plannedSourceFiles": 216,
+  "plannedCaseRuns": 358,
+  "completedPublicCases": 1,
+  "completedPublicAssertions": 2,
+  "completedCasePath": "tests/tc/basic/07-basic-wbft-consensus.json",
+  "secondCasePath": "tests/tc/basic/08-attached-chain-produces.json",
+  "secondCaseCompleted": false,
+  "tdd": {
+    "inputBindingGreenTestMethods": 10,
+    "originalBindingRedFailedSubcases": 12,
+    "originalBindingRedErrors": 1,
+    "initialGreenAttemptRefusedNoncanonicalTestFixture": true,
+    "testFixtureCanonicalizedWithoutWeakeningProductionPathChecks": true
+  },
+  "observations": {
+    "nativeSweepExitCode": -15,
+    "schedulerWasStoppedForTransportOptimization": true,
+    "secondHostAlreadyStartedBeforeVerifiedSchedulerStop": true,
+    "secondHostStopExitCode": 0,
+    "secondHostRetentionExitCode": 0,
+    "archiveEntries": 600,
+    "localFilesPreserved": 232,
+    "freshIndependentProcessInventories": 30,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true
+  },
+  "limitations": [
+    "The full358-row attempt intentionally remains incomplete. Only row1 is completed; row2 has no completed outcome and is not imported as PASS.",
+    "The original producer summary records1 retention at its closure. A separate c2 recovery then completed the second retention; the original summary was not rewritten.",
+    "Scheduler signalling alone did not prove a case boundary: the c2 attach host was already started. A replacement scheduler must check a boundary after full stop/retention before launching another case.",
+    "Repeated remote inventory and digest commands were slow on the8GiB machine. No source, case criterion or archive field was weakened to speed up this attempt.",
+    "No fullL1, legacy, external defect fix, new mixed build availability or finalWeb acceptance is claimed."
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-20261016-checkpoint.json",
+      "sha256": "8b645394769bed54a9b9fdd5f1cb7c62108a8c4e4921fe3c719ef799e6bda8d7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123409816083354
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-20261016-summary.json",
+      "sha256": "a28a5bfd4ab466c3979f0d88b4881c6c966b9aa70ed4674347b19f1a1523a953",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124131605423765
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-20261016-independent.json",
+      "sha256": "54442d359f224e80cb5d26439f4a911d14e1ad804fd614914504a8249e803dad",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124762856311842
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-20261016-c2-recovery.json",
+      "sha256": "ecb62ad7752e3fb760afa4617538d9d987a215e7ce522d1cc03a22f6d8ea2312",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124478317613960
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-operational-stop-20261016.json",
+      "sha256": "7c21c26f16955930a3b0795d797f7ee7f75d2119f791f77aa96700fb6468b210",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124127555012536
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/start.json",
+      "sha256": "3aa05ac7eb3453836583ed2c051bc29014788a34a758aafbbe46f2c1e48f94d0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123670116304725
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/plan.json",
+      "sha256": "2f209a224c011a09984258af8eab5f23d5dee7600593451c863b8475c7664d17",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123409798026081
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/plan.tsv",
+      "sha256": "d4d32894dd8273e877b883aabab3992e0145e465c85f4b1f934820fd69faaabf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123409797078838
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/isolated-bindings.json",
+      "sha256": "46dd5d0c3be83c33330577541908dfa788d997b9fa730b5a3527550967913649",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123670212863839
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/proof.json",
+      "sha256": "a28a5bfd4ab466c3979f0d88b4881c6c966b9aa70ed4674347b19f1a1523a953",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124131604119062
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/sweep.log",
+      "sha256": "b7cf2fa8b80de2749ac6a9a8f1951545a9a35010a18441df44f808c6f4f707c5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124083989351855
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c1.json",
+      "sha256": "cefdf482ab34c85d2bef27e3f27a4849f7a0de0fb924a534aed0258c56e7e5a6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124083867879018
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c2.json",
+      "sha256": "197205e79f2c53060347165f5abeaa9569676c72f913ed861bd67eec1bff9f3c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124477914426871
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c1/server1-metadata.tar.gz",
+      "sha256": "a0c2d7d377867bc60a07637b7d5d19cd9eef19ecc8448e88d1504df61e947d30",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123989934288529
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c1/server2-metadata.tar.gz",
+      "sha256": "d97046df93c9302252634fce358e63edf5f550b8b6a252ef44af5b1f5763c72b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124002183504905
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c1/server3-metadata.tar.gz",
+      "sha256": "a4fa57796a8809fa4bd9182d831951b843b3c8a3dced310481a82339662b31a6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124018988263814
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c1/server4-metadata.tar.gz",
+      "sha256": "8a02d954f7df86c080911da3b2d9d056bd83d58d3787a75603d85b22d3d0d680",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124060738162788
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c1/server5-metadata.tar.gz",
+      "sha256": "5669e9bf1293d29969a582d83fbdd75b19ea243514b5bb9de7cdbcf2794d40ab",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124080084957688
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c2/server1-metadata.tar.gz",
+      "sha256": "62b0466ab115baab32ef3ecff3dbad71d01e3f3193332d9151dd83950d3916f0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124394069455994
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c2/server2-metadata.tar.gz",
+      "sha256": "73f7eda6dcf727ee4a0778c7638fe12a7f884daf5fe3fd9764e14bf8fa4fcc49",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124413704490868
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c2/server3-metadata.tar.gz",
+      "sha256": "3a09b4a2304fc6e401aa16ef494fb4154778ede4aecba98c2874d60df1960d32",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124435715851884
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c2/server4-metadata.tar.gz",
+      "sha256": "2d2a56955f472d1790c2af573367bab462bf57432b456f8d5584e4dd03d73240",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124449777531233
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/reports/retention-c2/server5-metadata.tar.gz",
+      "sha256": "1e2664047a66590a813528b633e1f988558d2088db19f8cff3283f526a635455",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124474742632752
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-run-20261016.py",
+      "sha256": "1436207811b2c14bf67e07cea103b3eed4e221786aa8de1f5cc0bd5841abad18",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123652074003772
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-20261016-sweep.sh",
+      "sha256": "ee66858e43d2427edee825cda45fdafc38b64167f293bbf3d238467132703895",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123409798180019
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-cli-20261016.py",
+      "sha256": "6f73f0c8df5948f3d14cb76e92468d02cf9f1bc48fa537c77ee6026ae78f482d",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123530033753994
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-hook-20261016.py",
+      "sha256": "bba233f2fc82260a874e8fdc64b99875acee4e3415bd982beba7ca8ab9f13d91",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123470360777009
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-retention-20261016.py",
+      "sha256": "42657c7baddc7ffc69e1ab1bcc9ef421fd0baf4269b88213053b498d949ce132",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123404454725017
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-independent-20261016.py",
+      "sha256": "1d2b698efddc8d672e67de15eb03c8ac8733c3778ae922fdfbab92004d657241",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123651980242562
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-20261016.py",
+      "sha256": "d35eb33baeb94384f110ef9626a989e95a0d3602af185688518b3328cf5a698e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123313440015831
+    },
+    {
+      "path": "/private/tmp/test-chainbench-l1-isolation-20261016.py",
+      "sha256": "bc61afbc7aa545a214127b7c09fa704008aa7221e190011be56fe4448fedfa39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123319838610737
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim.py",
+      "sha256": "df42710eb09c5e26d7b4243c06161989274e179265609b059ad8561c417a2f2a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058683337025254
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.py",
+      "sha256": "22690981c761e3d26e8c4423ea3861d96933fd6400d4140649188675ad704196",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226767850317
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.sh",
+      "sha256": "3f5f8a801c95144c2afe6cbf4df70cc86eff5d4cb53acada4ece4e7490979e29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226765223461
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-q2fdoykf/bin/chainbench",
+      "sha256": "dee48030bc1ee261d4cdae1792337e96289cae99a4063193e962792a3f304ed7",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792123409699759650
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/fleet-refresh/preparation.json",
+      "sha256": "b59b3a0e801b4ed2ca9fc028c975d738a2e7162ea4d3b8885a68054ba1fa154f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096044334807671
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/linux-provenance.json",
+      "sha256": "bff5097c2cdb1a04fc19615828521e3d39e917850066e4710371a45114baba57",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095510251243350
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    },
+    {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/boho-v101/proof.json",
+      "sha256": "a40cff33b773503fae0ecdb281d3465f96a2418e55df2c8fb6a249dfbdaab176",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061542260694576
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-checkpoint2.json",
+      "sha256": "fe5f6eb49edbb5d7100c0bbd066193bc991e22ec8f12c962b40a81653109691d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062409736789349
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-checkpoint.json",
+      "sha256": "06de3c04c860dffff4aca8dd4ecffef4b17558fe379a33249b3d1087b0bc970f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061229795713721
+    },
+    {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/prefork/proof.json",
+      "sha256": "71071b816eca8aa919e7cb429042c67beb71e7e014dc984302113a5dd20be8ca",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061497507061800
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set.yaml",
+      "sha256": "323fec0873b2efc0a4edb5b93318d74191cefde45a66ba20cc9f4c2111df23c0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226888185789
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set-wemix.yaml",
+      "sha256": "c03392f7f3934a461b63fe3759ffa89b083aba9133fc313ec9eb2a97227221ba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226894737140
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/workspace-config.yaml",
+      "sha256": "1a5a5d33690766e03308057f3e338a9b6e10c804daf33af942c600670c6f6c8e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912806499
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/localmap.yaml",
+      "sha256": "546638d6af9dc51fb49c3b15b351b3fd00bb86d3e96a406936aab4588f75f318",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912378367
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-red-20261016.log",
+      "sha256": "7953e316635e6ad77d3ab4587cf48010a52ad69e7861f56ada7f63f8e0e597b1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123286961187998
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-green-20261016.log",
+      "sha256": "d0396df63b028919ffd3feb0180a3fb8516ae12315e800224491dee42819f201",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123313599003387
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-green2-20261016.log",
+      "sha256": "d4be35de3d82250986690334669c4d88ae35b2993f723c16c8c675d6299bc32e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123320179946797
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-frozen-tests-20261016.log",
+      "sha256": "d9853af017010fbcf76d87c8fe46b87ae058237da982d900a1181a4a916ad331",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123652405861135
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-prepare-20261016.log",
+      "sha256": "f7f0c7e9884c2e7a570170770bd1d492c36f46cbf21c7cf3ba916671bab1c840",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123410113106338
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-driver-20261016.log",
+      "sha256": "75dd9752daedd1dfdf8af3c21fdfac29163523fa9d8d795f8786c40f0916cff8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124131605883137
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-recover-c2-20261016.log",
+      "sha256": "7e24fe5b59800305d18d2f323ee6cfe47066f09ac35a624b7ba643e605a1a4b2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124478318825413
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-independent-20261016.log",
+      "sha256": "0cb4261ffdab59f473c5790872a8b2d32898352647de310f01e62bf5e47d37d4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792124762860114033
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolated-published-check-20261016.log",
+      "sha256": "f91dc79cebd2ae6ff8e0b71a5a33645cbef4f54d3aff5b9c346d2e2d0358d7b6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125077216935481
+    }
+  ],
+  "publishedWholeCheckPassed": true
+}
