@@ -66,6 +66,7 @@
 - [x] **2단계·3단계 (netmap 트랙) — 현행 재평가 완료 (2026-10-14)** — 근거: §1m과 §0a 13번.
       서버 배치·패밀리별 BLS 잔여, 현행 소유자·역할 계약, A8 재측정과 A7b 판단을 확인했다.
       전체 코드 AST 그래프 capture·독립 재현에서 누락과 끊어진 간선이 0이다. [증거](all-code-graph-evidence.json).
+      2026-10-16 후속 고정 소스도 [별도 갱신](all-code-graph-refresh-evidence.json)으로 확인했다.
       원문 TC 충분성과 외부 W3·W4는 이 완료에 포함하지 않는다.
 - [x] **통폐합 — 닫을지 판단** — **완료 (2026-09-20). 닫았다.**
       `architecture/consolidation-plan.md` (2026-09-24 삭제) 을 `[이력]` 으로 내렸다.
@@ -180,8 +181,25 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 공개 제네시스의 모든 노드 해시·부모·ID를 세 체인 실제·독립 검증으로 보강했다([증거](legacy-genesis-evidence.json)). 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. NODE-002의 정확한 블록·트랜잭션·영수증 이관과 포크 이후 동기화도 실제 race로 보강했다. TX-017과 기존 RT-A-3-07의 실제 쓰기 뒤 롤백·가스·수수료도 세 체인에서 보강했다. GOV-019 미달 금액 채굴 거절과 GOV-020 즉시 이벤트·GOV-021 축약 지연 기준은 사용자 승인 뒤 정확한 실제 단언으로 보강했다. TX-018의 유한한 estimateGas - 1 입력은 실제 대조했지만 WBFT·StableNet에서 성공해 원문 기대와 충돌했고 사용자가 추정 상한과 실제 부족한 가스를 구분하도록 승인했다. 승인 기준의 공통 DSL 케이스와 세 체인 실제 회귀를 완료했다. WBFT-010의 실제 서명/mix 연쇄와 WBFT-002 건강한 개별 간격도 보강했다. TX-010 실제 영수증 순서와 TX-013 queued 교체 전후·기존 hash null도 세 체인에서 보강했다([증거](nonce-order-replacement-evidence.json)). 승인 GOV-004/011의30초·70초 실제 출금과 원문 설정의 별도 배포 조회도6개 실제 race/독립 대조로 보강했다([증거](approved-unbonding-evidence.json)). 원문 검토85 scoped-confirmed·1충돌·1병합이며37개 WEMIX 전체 native race/종료 보존 대조를 완료했다([증거](wemix37-regression-evidence.json)). 원문 전체·공개 DSL·legacy 소비자 재평가는 남음. 캐시된 Git 커밋에서 legacy셸460개를 복구해 bytes/모드·외부셸AST를 확인했다. 원문02/10의 코드 해시·경계 상태·4슬롯·v2조회는14개 RED→GREEN과 새StableNet의2공개케이스·14실제단언·독립대조로 보강했다([증거](legacy-code-state-evidence.json)). extra02/07b의 양방향·여섯 상태·경계 잔액도18개 RED와22개 대조, 두 실제구성·36단언으로 보강했다([증거](legacy-extra-state-evidence.json)). 첫 실제시도의 StableNet ProcessExtraSeal 패닉/BLOCKED는 보존했고 미해결이다. 개인API 원문4건도 공개DSL·전용키·실제4건과기존6회귀로 보강했다([증거](legacy-personal-delegation-evidence.json)). 전체legacy 시나리오 동등성은 미확인([입력 복구](legacy-source-recovery-evidence.json)); [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json), [NODE-002](data-migration-evidence.json), [실패 거래](transaction-failure-evidence.json), [거버넌스 거절·이벤트](governance-rejection-events-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
-| 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
+| 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — 명시한 구문·재평가 범위 유지. 기존 N3/A7b 판단과 [이전 고정 소스](all-code-graph-evidence.json)를 보존했다. 2026-10-16 후속 고정 소스는 14언어/형식 2,060파일·Go 테스트790파일·내장 AST36개, 미해석 동적 입력33개를 명시하고 누락/끊어진 간선0을 확인했다. A8 비메서드 공개심볼1,890개/도달 불가0. 10계약·관련 race·전체 검사, 두 별도 capture의 해시 일치와 별도 감사10실패 대조 통과. 전체 실행 커버리지나 최종 Web 인수는 아님; [갱신 증거](all-code-graph-refresh-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-16 전체 코드 AST 갱신·실행 문자열 파싱 — 전체 실행 인수는 미완료:**
+이전 그래프의 1,922파일은 과거 고정 소스의 결과다. 후속 HEAD의 새136파일·변경53파일을 먼저 대조해
+과거 그래프를 현재 커버리지로 사용할 수 없음을 확인했다. 실행 문자열을 놓치던7대조를 RED로 확인했고,
+Go os/exec·Python subprocess·셸의 정적 프로그램을 각 언어로 파싱하도록 보강했다.
+변수 가림·재할당, shell=True 인자 의미, 빈 셸 인자, heredoc 데이터와 코드 구분, 제외 바이너리와
+내장 코드 출처도 실패 대조로 보강했다. 10개 계약·관련 race·전체 검사가 통과했다.
+고정 소스 `80c435d629c56c2e622d041b771cbf0ea358631cabfaeab5f9c560463dcd274f`에서
+14언어/형식 2,060파일·Go 테스트790파일·내장 AST36개를 파싱했다. 구조 노드134,579개·간선143,659개,
+제외401개·누락/끊어진 간선0개다. 동적 프로그램 입력33개는 해결된 코드로 표시하지 않았다.
+별도 프로세스의 두 그래프 SHA256은 `909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e`로 같았다.
+별도 감사는 파일 집합·내용 해시·간선·내장 코드 출처와10개 변조 거절을 검증했다.
+기존 두 그래프의 내용·권한·소유자·ns 수정 시각과 파서 입력24개의 불변도 확인했다.
+A8은 비메서드 공개심볼1,890개(내부454·외부1,171·테스트176·시그니처80·상수집합9), 도달 불가0이다.
+메서드·런타임 도달성·모든 동적 프로그램·전체 L1/legacy/87개·최종 Web은 이번 증명 범위가 아니다.
+실제 노드나 DB를 만들지 않았으며 새 그래프 두 개는 각53,783,260바이트다.
+[고정 소스·실패 대조·파서 출처·별도 감사](all-code-graph-refresh-evidence.json).
 
 **2026-10-16 원문17 배포 delegate 가스 추정 보강 — 전체 legacy는 미완료:**
 원문 Git blob의 Simple7702Delegate를 solc-js 0.8.28로 별도 컴파일해 공개17b에 배포한다.

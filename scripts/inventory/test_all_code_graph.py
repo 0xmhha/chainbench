@@ -82,6 +82,7 @@ class AllCodeGraphTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.fixture(root, 'node_modules/vendor.js', 'not JavaScript')
+            (root / 'node_modules/vendor.bin').write_bytes(b'\xff')
             self.fixture(root, 'README.md', '# Documentation')
             self.fixture(root, 'source.py', 'print("safe")\n')
             (root / 'linked.py').symlink_to(root / 'source.py')
@@ -89,7 +90,106 @@ class AllCodeGraphTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             graph = json.loads(result.stdout)
             self.assertTrue(any(f['path'] == 'node_modules/vendor.js' and f['reason'] == 'external dependency' for f in graph['excluded']))
+            self.assertTrue(any(f['path'] == 'node_modules/vendor.bin' and f['reason'] == 'external dependency' for f in graph['excluded']))
             self.assertTrue(any(f['path'] == 'linked.py' and f['reason'] == 'symlink' for f in graph['missing']))
+
+    def test_executed_inline_programs_are_parsed_in_their_own_language(self):
+        cases = [
+            ('inline.go', 'package main\nimport "os/exec"\nfunc f() { exec.Command("python3", "-B", "-c", `def broken(:`) }\n'),
+            ('context.go', 'package main\nimport "os/exec"\nconst script = `if then`\nfunc f() { exec.CommandContext(nil, "sh", "-c", script) }\n'),
+            ('inline.py', 'import subprocess\nsubprocess.run(["node", "-e", "function broken( {"])\n'),
+            ('inline.sh', "#!/bin/bash\npython3 -c 'def broken(:'\n"),
+        ]
+        for path, source in cases:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.fixture(root, path, source)
+                result = self.run_graph(root)
+                self.assertNotEqual(result.returncode, 0, 'executed source was opaque: ' + path)
+                graph = json.loads(result.stdout)
+                self.assertIn(path, [failure['path'] for failure in graph['missing']])
+
+    def test_inline_constant_programs_expose_inner_calls(self):
+        cases = [
+            ('inline.go', 'package main\nimport "os/exec"\nconst script = `import json; json.dumps({})`\nfunc f() { exec.CommandContext(nil, "python3", "-B", "-c", script) }\n', 'json.dumps'),
+            ('inline.py', 'import subprocess,sys\nscript = "import json; json.dumps({})"\nsubprocess.run([sys.executable,"-c",script])\n', 'json.dumps'),
+            ('inline.sh', "#!/bin/bash\nnode -e 'JSON.stringify({})'\n", 'JSON.stringify'),
+        ]
+        for path, source, inner in cases:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.fixture(root, path, source)
+                result = self.run_graph(root)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                graph = json.loads(result.stdout)
+                self.assertGreater(graph['files'][0]['embeddedASTs'], 0)
+                self.assertTrue(any(n.get('kind') == 'call' and n.get('name') == inner for n in graph['nodes']))
+
+    def test_dynamic_payloads_are_marked_without_parsing_stale_bindings(self):
+        sources = {
+            'dynamic.go': 'package main\nimport "os/exec"\nfunc f(script string) { exec.Command("python3", "-c", script) }\n',
+            'reassigned.go': 'package main\nimport "os/exec"\nfunc f() { script := `def broken(:`; script = input(); exec.Command("python3", "-c", script) }\n',
+            'dynamic.py': 'import subprocess\ndef f(script):\n    subprocess.run(["python3", "-c", script])\n',
+            'reassigned.py': 'import subprocess\nscript = "def broken(:"\nscript = input()\nsubprocess.run(["python3", "-c", script])\n',
+            'dynamic.sh': '#!/bin/bash\npython3 -c "$script"\n',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items():
+                self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            dynamic = [n for n in graph['nodes'] if n['kind'] == 'dynamic-program-input']
+            self.assertEqual({n['file'] for n in dynamic}, set(sources))
+            self.assertEqual(len(dynamic), len(sources))
+            self.assertTrue(all(f['embeddedASTs'] == 0 for f in graph['files']))
+
+    def test_shadowed_imports_and_script_arguments_are_not_child_programs(self):
+        sources = {
+            'shadow.py': 'import subprocess\ndef f(subprocess):\n    subprocess.run(["python3", "-c", "def broken(:"])\n',
+            'lambda.py': 'import subprocess\nf = lambda subprocess: subprocess.run(["python3", "-c", "def broken(:"])\n',
+            'comprehension.py': 'import subprocess\n[subprocess.run(["python3", "-c", "def broken(:"]) for subprocess in []]\n',
+            'shell-list.py': 'import subprocess\nsubprocess.run(["python3", "-c", "def broken(:"], shell=True)\n',
+            'script.py': 'import subprocess\nsubprocess.run(["python3", "script.py", "-c", "def broken(:"])\n',
+            'script.go': 'package main\nimport "os/exec"\nfunc f() { exec.Command("python3", "script.py", "-c", `def broken(:`) }\n',
+            'script.sh': "python3 script.py -c 'def broken(:'\n",
+            'empty.sh': "python3 script.py '' \"\"\n",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items():
+                self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout[-2000:])
+            self.assertFalse(any(n.get('name') == 'broken' for n in json.loads(result.stdout)['nodes']))
+
+    def test_scope_and_shell_quoting_preserve_actual_constant_program(self):
+        sources = {
+            'scope.py': 'import subprocess\n[subprocess.run(["python3", "-c", "def broken(:"]) for subprocess in []]\nsubprocess.run(["python3", "-c", "import json; json.dumps({})"])\n',
+            'alias.py': 'from subprocess import run as launch\nlaunch(args=["python3", "-c", "import json; json.dumps({})"])\n',
+            'quoted.sh': 'python3 -c "import json; json.dumps({\\\"ok\\\": 1})"\n',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items():
+                self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            inner = [n for n in graph['nodes'] if n.get('name') == 'json.dumps']
+            self.assertEqual({n['file'] for n in inner}, set(sources))
+            self.assertTrue(all(n.get('sourceContext', {}).get('language') == 'python' for n in inner))
+
+    def test_heredoc_data_is_not_misclassified_as_interpreter_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root, 'data.sh', "python3 script.py <<'DATA'\ndef broken(:\nDATA\npython3 -c 'print(1)' <<'DATA'\ndef broken(:\nDATA\npython3 -B - arg <<'PY'\nimport json; json.dumps({})\nPY\n")
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertEqual(graph['files'][0]['embeddedASTs'], 2)
+            self.assertTrue(any(n.get('name') == 'json.dumps' for n in graph['nodes']))
 
 
 if __name__ == '__main__':

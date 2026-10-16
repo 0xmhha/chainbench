@@ -23,10 +23,11 @@ type node struct {
 	End   int    `json:"end"`
 }
 type result struct {
-	Path  string `json:"path"`
-	Count int    `json:"astNodes"`
-	Nodes []node `json:"nodes"`
-	Error string `json:"error,omitempty"`
+	Path     string            `json:"path"`
+	Count    int               `json:"astNodes"`
+	Nodes    []node            `json:"nodes"`
+	Error    string            `json:"error,omitempty"`
+	Embedded []embeddedProgram `json:"embedded,omitempty"`
 }
 
 func callable(expr ast.Expr) string {
@@ -51,7 +52,7 @@ func callable(expr ast.Expr) string {
 func parse(in input) result {
 	r := result{Path: in.Path, Nodes: []node{}}
 	fs := token.NewFileSet()
-	f, err := parser.ParseFile(fs, in.Path, in.Source, parser.SkipObjectResolution)
+	f, err := parser.ParseFile(fs, in.Path, in.Source, 0)
 	if err != nil {
 		r.Error = err.Error()
 		return r
@@ -59,6 +60,7 @@ func parse(in input) result {
 	add := func(kind, name string, n ast.Node) {
 		r.Nodes = append(r.Nodes, node{kind, name, fs.Position(n.Pos()).Line, fs.Position(n.Pos()).Offset, fs.Position(n.End()).Offset})
 	}
+	programs := newInlinePrograms(f)
 	ast.Inspect(f, func(n ast.Node) bool {
 		if n == nil {
 			return true
@@ -81,6 +83,13 @@ func parse(in input) result {
 			}
 		case *ast.CallExpr:
 			add("call", callable(v.Fun), v)
+			if language, body, known := programs.command(v); language != "" {
+				if known {
+					r.Embedded = append(r.Embedded, embeddedProgram{language, body, fs.Position(v.Pos()).Line})
+				} else {
+					add("dynamic-program-input", language+" interpreter payload", v)
+				}
+			}
 		case *ast.ImportSpec:
 			name, e := strconv.Unquote(v.Path.Value)
 			if e == nil {

@@ -24,10 +24,22 @@ the initial dependency versions was not established; the pinned runtime and
 retained parser objects have passed the full scan.
 
 Make recipes, workflow runs, Docker shell commands, HTML script/style and known
-interpreter heredocs are parsed separately. Make variables, workflow expressions,
+interpreter heredocs are parsed separately. Go os/exec and Python subprocess
+calls, and shell commands with known interpreter `-c`/`-e` payloads are also
+parsed when their lexical bindings resolve to constant source. Python import
+aliases and local scopes are respected; shell standard input is treated as code
+only when the interpreter reads it as a program. Data passed to a script file
+is not parsed as interpreter source. Make variables, workflow expressions,
 genesis placeholders and heredoc expansions remain symbolic; their transformations
 and source positions/digests are recorded. Source code, make recipes and workflow
-commands are never executed. Dynamically assembled programs are not resolved.
+commands are never executed. Each extracted program has a language, embedding
+line and source hash; its nodes retain a `sourceContext` with that identity.
+Their node line numbers refer to the extracted source, not the outer file.
+Recognized interpreter invocations with unresolved payloads have explicit
+`dynamic-program-input` nodes. This is a conservative lexical subset, not
+interprocedural evaluation: arbitrary command wrappers, runtime mutation,
+unknown interpreters, option grammars and dynamically assembled programs are
+not fully resolved. Zero missing files does not mean zero dynamic programs.
 
 Prepare dependencies outside the repository (macOS example):
 

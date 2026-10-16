@@ -26,9 +26,9 @@
 |---|---|---|
 | `internal/` | 54 | 86,830 |
 | `cmd/` | 19 | 5,699 |
-| `scripts/inventory/` | 4 | 905 |
+| `scripts/inventory/` | 4 | 1,104 |
 | `tests/` | 1 | 135 |
-| **합계** | **78** | **93,569** |
+| **합계** | **78** | **93,768** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -227,7 +227,7 @@ cmd/chainbench-dashboard 195  main. 대시보드 데몬(요구 19) — obs 이�
 
 ---
 
-## 5. `scripts/inventory/` — 4패키지 905줄
+## 5. `scripts/inventory/` — 4패키지 1,104줄
 
 측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` (2026-09-24 삭제) 의 숫자가
 여기서 나온다. (`consolidation-plan.md` (2026-09-24 삭제) 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
@@ -236,7 +236,7 @@ cmd/chainbench-dashboard 195  main. 대시보드 데몬(요구 19) — obs 이�
 scripts/inventory/
 ├── code-graph        449  chainbench 모듈의 AST 그래프 — 패키지=노드, import=엣지, 그 엣지가 실제로
 │                          참조하는 exported 심볼. 빌드 불필요
-├── source-ast        115  Go 표준 파서로 모든 Go 파일·테스트·빌드 태그를 파싱하고 선언·호출·import를 JSON으로 내보낸다
+├── source-ast        314  Go 표준 파서로 모든 Go 파일·테스트·빌드 태그를 파싱하고 선언·호출·import를 JSON으로 내보낸다
 ├── chain-flag-graph  282  go-ethereum 파생 체인 저장소의 명령/플래그 그래프를 cmd/ 트리 파싱으로 추출
 └── surface-graph      59  각 표면(CLI·MCP·DSL)이 등록한 것과 그중 app 층을 넘는 것 — U 트랙 진척을
                            추정이 아니라 코드에서 읽는다

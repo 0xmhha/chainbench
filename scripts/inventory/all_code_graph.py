@@ -16,6 +16,8 @@ import re
 import subprocess
 import sys
 
+from inline_python import extract as python_programs, inline_program, interpreter
+
 REPO = Path(__file__).resolve().parents[2]
 LANGUAGES = {'.go': 'go', '.py': 'python', '.sh': 'bash', '.js': 'javascript',
              '.mjs': 'javascript', '.svelte': 'svelte', '.html': 'html', '.css': 'css',
@@ -94,7 +96,50 @@ def python_nodes(source):
             kind, label = 'import', '.' * n.level + (n.module or '')
         if kind:
             nodes.append({'kind': kind, 'name': label, 'line': n.lineno})
-    return {'astNodes': sum(1 for _ in ast.walk(tree)), 'nodes': nodes}
+    embedded, dynamic = python_programs(tree)
+    return {'astNodes': sum(1 for _ in ast.walk(tree)), 'nodes': nodes + dynamic, 'embedded': embedded}
+
+
+def shell_literal(parts, quoted=False):
+    chunks = []
+    for part in parts:
+        kind = part.get('Type')
+        if kind == 'Lit':
+            value = part.get('Value', '')
+            if not quoted and re.search(r'(?<!\\)[*?\[~]', value):
+                return None
+            pattern = r'\\([\\"$`\n])' if quoted else r'\\(.)'
+            chunks.append(re.sub(pattern, lambda m: '' if m[1] == '\n' else m[1], value, flags=re.S))
+        elif kind == 'SglQuoted' and not part.get('Dollar'):
+            chunks.append(part.get('Value', ''))
+        elif kind == 'DblQuoted' and not part.get('Dollar'):
+            value = shell_literal(part.get('Parts', []), quoted=True)
+            if value is None:
+                return None
+            chunks.append(value)
+        else:
+            return None
+    return ''.join(chunks)
+
+
+def stdin_program(arguments):
+    if not arguments:
+        return None
+    language = interpreter(arguments[0])
+    if language is None:
+        return None
+    for flag in arguments[1:]:
+        if not isinstance(flag, str):
+            return None
+        if flag == '-' or (language == 'bash' and flag == '-s'):
+            return language
+        if flag in {'-c', '-e', '--eval', '-m', '--help', '--version', '-V'}:
+            return None
+        if not flag.startswith('-') or flag == '--':
+            return None
+        if language == 'bash' and not flag.startswith('--') and 'c' in flag:
+            return None
+    return language
 
 
 def shell_nodes(source):
@@ -114,26 +159,29 @@ def shell_nodes(source):
                 count += 1
             command = value.get('Cmd', {})
             args = command.get('Args', []) if command.get('Type') == 'CallExpr' else []
-            if args and len(args[0].get('Parts', [])) == 1:
-                program = Path(args[0]['Parts'][0].get('Value', '')).name
-                language = ('python' if program in {'python', 'python3'} else
-                            'javascript' if program == 'node' else
-                            'bash' if program in {'bash', 'sh'} else None)
-                if language:
-                    for redirect in value.get('Redirs', []):
-                        body = redirect.get('Hdoc')
-                        if body:
-                            chunks, substitutions = [], []
-                            for part in body.get('Parts', []):
-                                if part.get('Type') == 'Lit':
-                                    chunks.append(part['Value'])
-                                else:
-                                    expression = raw[part['Pos']['Offset']:part['End']['Offset']].decode()
-                                    symbolic = 'CB_SHELL_' + re.sub(r'[^A-Za-z0-9_]', '_', expression)
-                                    chunks.append(symbolic)
-                                    substitutions.append({'expression': expression, 'symbol': symbolic, 'line': part['Pos']['Line']})
-                            embedded.append({'language': language, 'source': ''.join(chunks), 'line': body['Pos']['Line'],
-                                             'substitutions': substitutions})
+            arguments = [shell_literal(arg.get('Parts', [])) for arg in args]
+            language, body = inline_program(arguments)
+            if language:
+                if body is None:
+                    nodes.append({'kind': 'dynamic-program-input', 'name': language + ' interpreter payload', 'line': value['Pos']['Line']})
+                else:
+                    embedded.append({'language': language, 'source': body, 'line': value['Pos']['Line']})
+            language = stdin_program(arguments)
+            if language:
+                for redirect in value.get('Redirs', []):
+                    body = redirect.get('Hdoc')
+                    if body:
+                        chunks, substitutions = [], []
+                        for part in body.get('Parts', []):
+                            if part.get('Type') == 'Lit':
+                                chunks.append(part.get('Value', ''))
+                            else:
+                                expression = raw[part['Pos']['Offset']:part['End']['Offset']].decode()
+                                symbolic = 'CB_SHELL_' + re.sub(r'[^A-Za-z0-9_]', '_', expression)
+                                chunks.append(symbolic)
+                                substitutions.append({'expression': expression, 'symbol': symbolic, 'line': part['Pos']['Line']})
+                        embedded.append({'language': language, 'source': ''.join(chunks), 'line': body['Pos']['Line'],
+                                         'substitutions': substitutions})
             if value.get('Type') == 'FuncDecl':
                 nodes.append({'kind': 'function', 'name': value['Name']['Value'], 'line': value['Pos']['Line']})
             if value.get('Type') == 'CallExpr' and value.get('Args'):
@@ -299,12 +347,16 @@ def json_nodes(source, template=False):
 def build(root, all_files=False):
     graph = {'files': [], 'nodes': [], 'edges': [], 'excluded': [], 'missing': [],
              'scope': 'all owned source including tests/build tags and generated SPA; external dependencies and non-executable data classified separately',
-             'limitations': 'Syntax-derived declarations/imports/calls; no type resolution, runtime coverage or complete dynamic call graph.'}
+             'limitations': 'Syntax-derived declarations/imports/calls and statically resolved interpreter payloads; dynamic-program-input nodes mark unresolved recognized payloads. No type resolution, runtime coverage, interprocedural evaluation or complete dynamic call graph.'}
     inputs, parsed = [], {}
     for path in files_at(root, all_files):
         p = root / path
         if p.is_symlink():
             graph['missing'].append({'path': path, 'reason': 'symlink'})
+            continue
+        _, reason = classify(path, '')
+        if reason and not reason.startswith('unsupported'):
+            graph['excluded'].append({'path': path, 'reason': reason})
             continue
         try:
             source = p.read_text()
@@ -364,10 +416,12 @@ def build(root, all_files=False):
                 if e['language'] != 'html':
                     embedded.extend(er.get('embedded', []))
             all_nodes = [n for n in r['nodes'] if n['kind'] != 'embedded-html']
-            for er in embedded_results:
-                all_nodes.extend(er['nodes'])
+            for e, er in zip(embedded, embedded_results):
+                context = {'language': e['language'], 'embeddingLine': e['line'], 'sha256': hashlib.sha256(e['source'].encode()).hexdigest()}
+                all_nodes.extend({**n, 'sourceContext': context} for n in er['nodes'])
             entry = {'path': path, 'language': language, 'area': area(path), 'sha256': hashlib.sha256(source.encode()).hexdigest(),
                      'astNodes': r['astNodes'], 'embeddedASTs': len(embedded_results), 'generated': path.startswith('internal/dashboard/spa/'), 'test': path.endswith('_test.go') or '/tests/' in '/' + path, 'transformations': r.get('transformations', []) + [{'kind': 'embedded-shell-expansions', 'line': e['line'], 'substitutions': e['substitutions']} for e in embedded if e.get('substitutions')]}
+            entry['embeddedPrograms'] = [{'language': e['language'], 'line': e['line'], 'sha256': hashlib.sha256(e['source'].encode()).hexdigest()} for e in embedded]
             graph['files'].append(entry)
             graph['nodes'].append({'id': path, 'kind': 'file', 'name': path, 'area': entry['area']})
             for index, n in enumerate(all_nodes):
