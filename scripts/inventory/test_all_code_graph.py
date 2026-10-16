@@ -192,5 +192,68 @@ class AllCodeGraphTest(unittest.TestCase):
             self.assertTrue(any(n.get('name') == 'json.dumps' for n in graph['nodes']))
 
 
+    def test_explicit_command_takes_precedence_over_shell_stdin_mode(self):
+        source = "sh -s -c 'printf ok' <<'DATA'\nif then\nDATA\n"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); self.fixture(root, 'data.sh', source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['files'][0]['embeddedASTs'], 1)
+
+    def test_python_docker_stdin_and_nested_xargs_are_parsed(self):
+        sources = {
+            'direct.py': 'import subprocess\nsubprocess.run(["sh", "-s", "--", "arg"], input=b"printf direct_ok")\n',
+            'docker.py': 'import subprocess\nSCRIPT = "printf docker_ok"\ndef launch(container, arguments):\n    subprocess.run(["docker", "exec", "-i", "-u", "root", container, "/bin/sh", "-s", "--", *arguments], input=SCRIPT.encode())\n',
+            'nested.py': 'import subprocess\nSCRIPT = "xargs -0 -r /bin/sh -c \\"printf nested_ok\\" -- /data"\nsubprocess.run(["sh", "-s"], input=SCRIPT.encode("utf-8"))\n',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items(): self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertTrue(all(f['embeddedASTs'] >= 1 for f in graph['files']))
+            self.assertGreaterEqual(next(f['embeddedASTs'] for f in graph['files'] if f['path'] == 'nested.py'), 2)
+            self.assertEqual({n['file'] for n in graph['nodes'] if n.get('kind') == 'call' and n.get('name') == 'printf'}, set(sources))
+
+    def test_malformed_stdin_and_nested_shell_cannot_pass_inventory(self):
+        sources = {
+            'stdin.py': 'import subprocess\nsubprocess.run(["python3", "-"], input=b"def broken(:")\n',
+            'docker.py': 'import subprocess\nsubprocess.run(["docker", "exec", "--interactive", "owned", "sh", "-s"], input="if then".encode())\n',
+            'nested.sh': 'xargs -0 -r /bin/sh -c "if then" -- /data\n',
+        }
+        for path, source in sources.items():
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory); self.fixture(root, path, source)
+                result = self.run_graph(root)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(path, [r['path'] for r in json.loads(result.stdout)['missing']])
+
+    def test_stdin_data_and_noninteractive_docker_are_not_programs(self):
+        source = 'import subprocess\nsubprocess.run(["docker", "exec", "owned", "sh", "-s"], input=b"if then")\nsubprocess.run(["docker", "exec", "-i", "owned", "python3", "script.py"], input=b"def broken(:")\nsubprocess.run(["sh", "-c", "printf ok"], input=b"if then")\n'
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); self.fixture(root, 'data.py', source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['files'][0]['embeddedASTs'], 1)
+
+    def test_dynamic_stdin_and_unsupported_wrapper_options_remain_explicit(self):
+        sources = {
+            'dynamic.py': 'import subprocess\ndef f(script):\n    subprocess.run(["docker", "exec", "-i", "owned", "sh", "-s"], input=script.encode())\n',
+            'rebound.py': 'import subprocess\nscript = "if then"\nscript = input()\nsubprocess.run(["sh", "-s"], input=script.encode())\n',
+            'encoding.py': 'import subprocess\nsubprocess.run(["sh", "-s"], input="printf ok".encode(input()))\n',
+            'replace.sh': 'xargs -I{} sh -c "printf {}"\n',
+            'option.py': 'import subprocess\ndef launch(option):\n    subprocess.run(["docker", "exec", option, "owned", "sh", "-s"], input=b"if then")\n',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items(): self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertEqual({n['file'] for n in graph['nodes'] if n['kind'] == 'dynamic-program-input'}, set(sources))
+            self.assertTrue(all(f['embeddedASTs'] == 0 for f in graph['files']))
+
+
 if __name__ == '__main__':
     unittest.main()

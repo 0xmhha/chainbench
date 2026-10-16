@@ -19,9 +19,100 @@ def interpreter(program):
     return None
 
 
+def command_target(arguments):
+    """Unwrap only understood Docker exec and xargs option grammars.
+
+    Return argv, whether standard input reaches it, and an unresolved language.
+    Unknown options remain dynamic rather than being mistaken for operands.
+    """
+    if not isinstance(arguments, (list, tuple)) or not arguments:
+        return [], False, None
+    name = Path(arguments[0]).name if isinstance(arguments[0], str) else ''
+    if name not in {'docker', 'xargs'}:
+        return arguments, True, None
+    fallback = next((interpreter(a) for a in arguments[1:] if interpreter(a)), None)
+    i, forwards = 1, False
+    if name == 'docker':
+        if len(arguments) < 2 or arguments[1] != 'exec':
+            return [], False, None
+        i = 2
+        values = {'-u', '--user', '-w', '--workdir', '-e', '--env', '--env-file', '--detach-keys'}
+        while i < len(arguments):
+            flag = arguments[i]
+            if flag is None or (isinstance(flag, str) and not flag.startswith('-')):
+                # A dynamic container is safe to skip only when the command
+                # boundary itself is known. Otherwise this may be an option.
+                if flag is None and (i + 1 >= len(arguments) or not interpreter(arguments[i + 1])):
+                    return [], False, fallback
+                return arguments[i + 1:], forwards, None
+            if flag == '--':
+                return arguments[i + 2:], forwards, None
+            if flag in {'-i', '--interactive', '-it', '-ti'}:
+                forwards = True
+            elif flag in {'-t', '--tty', '--privileged'}:
+                pass
+            elif flag in values:
+                i += 1
+                if i >= len(arguments):
+                    return [], False, fallback
+            elif isinstance(flag, str) and '=' in flag and flag.split('=', 1)[0] in values:
+                pass
+            else:
+                return [], False, fallback
+            i += 1
+    else:
+        while i < len(arguments):
+            flag = arguments[i]
+            if isinstance(flag, str) and not flag.startswith('-'):
+                return arguments[i:], False, None
+            if flag == '--':
+                return arguments[i + 1:], False, None
+            if flag not in {'-0', '--null', '-r', '--no-run-if-empty'}:
+                # In particular -I can substitute runtime text into the program.
+                return [], False, fallback
+            i += 1
+    return [], False, fallback
+
+
+def stdin_program(arguments):
+    # An explicit -c/-e program takes precedence even if -s appeared first.
+    if inline_program(arguments)[0] is not None:
+        return None
+    arguments, forwards, unresolved = command_target(arguments)
+    if unresolved or not forwards or not arguments:
+        return None
+    language = interpreter(arguments[0])
+    if language is None:
+        return None
+    for flag in arguments[1:]:
+        if not isinstance(flag, str):
+            return None
+        if flag == '-' or (language == 'bash' and flag == '-s'):
+            return language
+        if flag in {'-c', '-e', '--eval', '-m', '--help', '--version', '-V'}:
+            return None
+        if not flag.startswith('-') or flag == '--':
+            return None
+        if language == 'bash' and not flag.startswith('--') and 'c' in flag:
+            return None
+    return language
+
+
+def source_text(value):
+    if isinstance(value, bytes):
+        try:
+            return value.decode('utf-8')
+        except UnicodeDecodeError:
+            return None
+    return value if isinstance(value, str) else None
+
+
 def inline_program(arguments):
     """Return language/body, or None body when a known payload is dynamic."""
-    if not isinstance(arguments, (list, tuple)) or not arguments:
+    arguments, _, unresolved = command_target(arguments)
+    if unresolved:
+        return unresolved, None
+    if not arguments:
         return None, None
     language = interpreter(arguments[0])
     if language is None:
@@ -183,7 +274,7 @@ class Programs(ast.NodeVisitor):
 
     def resolve(self, node, scope, seen=()):
         if isinstance(node, ast.Constant):
-            return node.value if isinstance(node.value, str) else None
+            return node.value if isinstance(node.value, (str, bytes)) else None
         if isinstance(node, ast.Name):
             owner, binding = scope.lookup(node.id)
             key = (owner, node.id)
@@ -198,6 +289,14 @@ class Programs(ast.NodeVisitor):
                 return 'python3'
             if isinstance(owner, tuple) and owner[0] == 'import':
                 return ('import', owner[1] + '.' + node.attr)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'encode':
+            value = self.resolve(node.func.value, scope, seen)
+            if not isinstance(value, str) or node.keywords or len(node.args) > 1:
+                return None
+            encoding = self.resolve(node.args[0], scope, seen) if node.args else 'utf-8'
+            if isinstance(encoding, str) and encoding.lower().replace('_', '-') in {'utf-8', 'utf8'}:
+                return value.encode('utf-8')
+            return None
         if isinstance(node, (ast.List, ast.Tuple)):
             return [self.resolve(value, scope, seen) for value in node.elts]
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
@@ -228,6 +327,10 @@ def extract(tree):
             language, body = 'bash', None
         else:
             language, body = inline_program(arguments)
+            if language is None:
+                language = stdin_program(arguments)
+                supplied = next((k.value for k in call.keywords if k.arg == 'input'), None)
+                body = source_text(programs.resolve(supplied, scope))
         if language and body is not None:
             embedded.append({'language': language, 'source': body, 'line': call.lineno})
         elif language:

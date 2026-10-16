@@ -16,7 +16,7 @@ import re
 import subprocess
 import sys
 
-from inline_python import extract as python_programs, inline_program, interpreter
+from inline_python import extract as python_programs, inline_program, stdin_program
 
 REPO = Path(__file__).resolve().parents[2]
 LANGUAGES = {'.go': 'go', '.py': 'python', '.sh': 'bash', '.js': 'javascript',
@@ -120,26 +120,6 @@ def shell_literal(parts, quoted=False):
         else:
             return None
     return ''.join(chunks)
-
-
-def stdin_program(arguments):
-    if not arguments:
-        return None
-    language = interpreter(arguments[0])
-    if language is None:
-        return None
-    for flag in arguments[1:]:
-        if not isinstance(flag, str):
-            return None
-        if flag == '-' or (language == 'bash' and flag == '-s'):
-            return language
-        if flag in {'-c', '-e', '--eval', '-m', '--help', '--version', '-V'}:
-            return None
-        if not flag.startswith('-') or flag == '--':
-            return None
-        if language == 'bash' and not flag.startswith('--') and 'c' in flag:
-            return None
-    return language
 
 
 def shell_nodes(source):

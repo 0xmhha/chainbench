@@ -29,7 +29,14 @@ calls, and shell commands with known interpreter `-c`/`-e` payloads are also
 parsed when their lexical bindings resolve to constant source. Python import
 aliases and local scopes are respected; shell standard input is treated as code
 only when the interpreter reads it as a program. Data passed to a script file
-is not parsed as interpreter source. Make variables, workflow expressions,
+is not parsed as interpreter source. Python subprocess `input=` supports constant
+UTF-8 bytes and constant strings encoded with the default/explicit UTF-8 codec.
+Direct interpreter stdin, Docker `exec -i` stdin and literal `xargs -0 -r sh -c`
+programs are included. Docker exec options are deliberately limited to known
+interactive/tty/privileged flags and user/workdir/env values; unsupported options
+and xargs substitutions (`-I`) remain explicit dynamic inputs. Without Docker's
+interactive flag, subprocess input is not forwarded as the child program.
+No container, shell, Python payload or xargs command is executed by this scan. Make variables, workflow expressions,
 genesis placeholders and heredoc expansions remain symbolic; their transformations
 and source positions/digests are recorded. Source code, make recipes and workflow
 commands are never executed. Each extracted program has a language, embedding
