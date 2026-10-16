@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,11 +23,22 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	sessiondata "github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
+	"golang.org/x/crypto/sha3"
 )
 
 func TestNativeLegacyAuthorizationEstimates(t *testing.T) {
+	runLegacyAuthorizationEstimates(t, false)
+}
+
+func TestNativeLegacyDeployedAuthorizationEstimates(t *testing.T) {
+	runLegacyAuthorizationEstimates(t, true)
+}
+
+func runLegacyAuthorizationEstimates(t *testing.T, deployed bool) {
+	t.Helper()
 	families := []struct{ chain, variable string }{{"stablenet", "GSTABLE_BIN"}, {"wbft", "GWBFT_BIN"}}
 	for _, f := range families {
 		if os.Getenv(f.variable) == "" {
@@ -38,9 +51,19 @@ func TestNativeLegacyAuthorizationEstimates(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 6*time.Minute)
 			defer cancel()
 			name := "17-estimategas-authorizationlist-cost.json"
+			if deployed {
+				name = "17b-estimategas-deployed-authorizationlist.json"
+			}
 			path := filepath.Join(repoRoot(t), "tests/tc/go-stablenet/post-v1.0.0-change/common-all", name)
 			b, err := os.ReadFile(path)
 			if err != nil {
+				t.Fatal(err)
+			}
+			var originalCase struct {
+				ID    string
+				Steps []map[string]any
+			}
+			if err = json.Unmarshal(b, &originalCase); err != nil {
 				t.Fatal(err)
 			}
 			if err = os.WriteFile(filepath.Join(root, name), b, 0600); err != nil {
@@ -56,6 +79,10 @@ func TestNativeLegacyAuthorizationEstimates(t *testing.T) {
 				t.Fatal("refuse keys outside owned workspace", plan.Keys, err)
 			}
 			proof := map[string]any{"chain": f.chain, "binary": input.Binary, "plannedKeysDir": plan.Keys.Dir, "scope": "Unchanged public case run through attach interpreter after shared planner/ChainUp on owned BP4, with a byte-preserving HTTP recorder; original18 EOA transfer baseline plus existing 0/1/2 authorization cost bounds. Fresh code-free delegate, not original17 deployed Simple7702Delegate, original EN topology, or whole legacy/L1/87/Web."}
+			proof["deployedDelegate"] = deployed
+			if deployed {
+				proof["scope"] = "Public original17 deployed Simple7702Delegate, same-address/value-omitted estimates and original 0/1/2 authorization cost bounds. Owned BP4 with generated identities, not historical EN topology or whole legacy/L1/87/Web."
+			}
 			defer func() {
 				b, err := json.MarshalIndent(proof, "", "  ")
 				if err != nil {
@@ -161,8 +188,63 @@ func TestNativeLegacyAuthorizationEstimates(t *testing.T) {
 				t.Fatal("expected exactly one public pass and four unchanged RPC observations", session.Summary, len(observations))
 			}
 			code := observations[0]["response"].(map[string]any)
-			if code["result"] != "0x" || code["error"] != nil {
+			if !deployed && (code["result"] != "0x" || code["error"] != nil) {
 				t.Fatal("receiver is not a code-free EOA")
+			}
+			if deployed {
+				var steps []sessiondata.StepResult
+				path := filepath.Join(sessionRoot, "tests", "001_"+originalCase.ID, "steps.json")
+				data, err := os.ReadFile(path)
+				if err != nil || json.Unmarshal(data, &steps) != nil {
+					t.Fatal("missing actual deployment steps", err)
+				}
+				var deployment *sessiondata.StepResult
+				for i := range steps {
+					if steps[i].Type == "deployContract" {
+						if deployment != nil {
+							t.Fatal("unexpected extra deployment")
+						}
+						deployment = &steps[i]
+					}
+				}
+				if deployment == nil || deployment.Hash == "" || deployment.Error != "" || deployment.Deployment == nil || deployment.Deployment.ObservationError != "" || deployment.Receipt["status"] != "0x1" {
+					t.Fatal("missing successful observed delegate deployment")
+				}
+				client := rpc.Dial(target)
+				var tx, receipt map[string]any
+				if err := client.Call(ctx, "eth_getTransactionByHash", &tx, deployment.Hash); err != nil {
+					t.Fatal(err)
+				}
+				if err := client.Call(ctx, "eth_getTransactionReceipt", &receipt, deployment.Hash); err != nil {
+					t.Fatal(err)
+				}
+				address, _ := receipt["contractAddress"].(string)
+				if tx["hash"] != deployment.Hash || receipt["transactionHash"] != deployment.Hash || tx["to"] != nil || tx["input"] != originalCase.Steps[0]["bytecode"] || tx["gas"] != "0xf4240" || receipt["status"] != "0x1" || tx["blockHash"] != receipt["blockHash"] || address == "" || !strings.EqualFold(address, deployment.Deployment.ExpectedAddress) || !strings.EqualFold(address, deployment.Deployment.ActualAddress) {
+					t.Fatal("deployment transaction/receipt differs from public input")
+				}
+				var runtime string
+				if err := client.Call(ctx, "eth_getCode", &runtime, address, receipt["blockNumber"]); err != nil {
+					t.Fatal(err)
+				}
+				decoded, err := hex.DecodeString(strings.TrimPrefix(runtime, "0x"))
+				if err != nil || len(decoded) == 0 || runtime != code["result"] {
+					t.Fatal("missing consistent actual delegate runtime", err)
+				}
+				h := sha3.NewLegacyKeccak256()
+				_, _ = h.Write(decoded)
+				hash := fmt.Sprintf("0x%x", h.Sum(nil))
+				if hash != originalCase.Steps[5]["is"] {
+					t.Fatal("runtime differs from public compiled fixture hash", hash)
+				}
+				creation, err := hex.DecodeString(strings.TrimPrefix(fmt.Sprint(tx["input"]), "0x"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				sha := sha256.Sum256(creation)
+				if deployment.Deployment.BytecodeSHA256 != hex.EncodeToString(sha[:]) {
+					t.Fatal("recorded creation fingerprint differs")
+				}
+				proof["deployment"] = map[string]any{"transaction": tx, "receipt": receipt, "runtime": runtime, "runtimeKeccak256": hash, "recorded": deployment.Deployment}
 			}
 			var from, to string
 			for i, o := range observations[1:] {
@@ -175,7 +257,12 @@ func TestNativeLegacyAuthorizationEstimates(t *testing.T) {
 				auth, _ := tx["authorizationList"].([]any)
 				gas, e := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(a["result"]), "0x"), 16, 64)
 				upper := []uint64{21000, 46690, 72065}[i]
-				if q["method"] != "eth_estimateGas" || o["httpStatus"] != http.StatusOK || a["error"] != nil || e != nil || gas < uint64(21000+i*25000) || gas > upper || from == "" || to == "" || from == to || tx["from"] != from || tx["to"] != to || tx["value"] != "0x1" || len(auth) != i {
+				transferMatches := from != to && tx["value"] == "0x1"
+				if deployed {
+					upper = []uint64{21000, 47500, 74000}[i]
+					transferMatches = from == to && tx["value"] == nil
+				}
+				if q["method"] != "eth_estimateGas" || o["httpStatus"] != http.StatusOK || a["error"] != nil || e != nil || gas < uint64(21000+i*25000) || gas > upper || from == "" || to == "" || !transferMatches || tx["from"] != from || tx["to"] != to || len(auth) != i {
 					t.Fatal("wrong actual transfer baseline or authorization bound", i, gas, e)
 				}
 			}

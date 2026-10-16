@@ -55,9 +55,20 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 과거 부분 포팅 표는18번 원문이 authorizationList와 비교한다고 적었으나, 복구 원문18은 별도의 기준선 검사다.
 공개17에 서로 다른 수신자·value0x1·eth_getCode0x를 추가하고 기존9개 authorization 비용 검사는 유지했다.
 11개 단위 대조와 기록기gzip RED→GREEN·관련 race·전체 검사·StableNet/WBFT 실제2케이스/20단언·독립 대조가 통과했다.
-원문EN 주소 대신BP coinbase/새EOA를 사용하며, 원문17의배포된Simple7702Delegate는 아직 구현/검증하지 않았다.
+이 단계는 원문 EN 주소 대신 BP coinbase/새 EOA를 사용하며 원문17의 배포된 Simple7702Delegate를 제외했다.
+그 배포 부분은 아래의 후속17b에서 별도로 검증했다.
 첫 중계기록0개 실패의215파일과 성공430파일도 별도 보존했다. 이것은254개 전체 동등성 인수가 아니다.
 [원문·범위 차이·실패/성공·독립 증거](../legacy-authorization-estimate-evidence.json).
+
+### 원문17의 배포된 delegate 비용 검증 보강
+
+공개17b는 원문 Simple7702Delegate를 정확한 Git blob에서 컴파일해 실제 배포하고,
+원래 sponsor→sponsor·금액 생략 조건과 authorizationList 0/1/2건의 원래 비용 범위를 검사한다.
+기존17의 EOA·1wei 기준선은 유지했다. 누락6개 RED·12대조와 관련 race·전체 검사,
+두 체인의 기존/신규4실행·42단언·실제 생성주소/코드/영수증·독립 보존 대조가 통과했다.
+같은 컴파일러 재실행과 AST44노드/43포함간선을 확인했으며 독립 컴파일러 구현의 검증은 아니다.
+원문 EN/Foundry 캐시 환경과 현재 BP4/solc-js fixture의 차이를 남겼고 전체254개를 닫지 않는다.
+[원문·컴파일 출처·실제·독립 증거](../legacy-deployed-authorization-evidence.json).
 
 ## 방법
 

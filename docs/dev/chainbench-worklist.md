@@ -176,12 +176,26 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
-| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 저장소의 로컬 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. 컨트랙트 조회의 노드별 체인 주소표·미등록 체인 거절·과거 기록 fallback도 실제 전환4노드3프로필로 보강했다([증거](recorded-contract-capability-evidence.json)). Linux15대 fleet·세 체인 원래15노드 시작·과거→현재 포크/서명 교체2건은 완료했다. 후속L1은 소스e967의46행과 소스908의32행인 별도 부분 배치다([두 번째 배치](linux-l1-second-cohort-evidence.json)). 공식 StableNet4d17eea0·WBFTd535dd3d의 별도 Mac/Linux 빌드·출처를 확인했다([입력](upstream-pinned-build-evidence.json)). 새 두 입력의 원래15노드 시작·정지·독립 보존은 통과했다([실제 검증](upstream-fleet-startup-evidence.json)). StableNet Mac의 ProcessExtraSeal nil패닉도 추가 관찰했으며 원인·빈도·해결은 미확정이다([기록](legacy-extra-state-evidence.json)). 새 개인API4건을 더한 현행 계획은215파일·357회(미실행)이며 준비 확인의 실제 시간 상한을 보강했다. 전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·서명 변조의 typed 제출 거부는17대조·공개6실행·노드6관측으로 보강했다([증거](tamper-submission-rejection-evidence.json)). R5 다른 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
+| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 저장소의 로컬 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. 컨트랙트 조회의 노드별 체인 주소표·미등록 체인 거절·과거 기록 fallback도 실제 전환4노드3프로필로 보강했다([증거](recorded-contract-capability-evidence.json)). Linux15대 fleet·세 체인 원래15노드 시작·과거→현재 포크/서명 교체2건은 완료했다. 후속L1은 소스e967의46행과 소스908의32행인 별도 부분 배치다([두 번째 배치](linux-l1-second-cohort-evidence.json)). 공식 StableNet4d17eea0·WBFTd535dd3d의 별도 Mac/Linux 빌드·출처를 확인했다([입력](upstream-pinned-build-evidence.json)). 새 두 입력의 원래15노드 시작·정지·독립 보존은 통과했다([실제 검증](upstream-fleet-startup-evidence.json)). StableNet Mac의 ProcessExtraSeal nil패닉도 추가 관찰했으며 원인·빈도·해결은 미확정이다([기록](legacy-extra-state-evidence.json)). 배포 delegate 케이스까지 더한 현행 계획은216파일·358회(미실행)이며 준비 확인의 실제 시간 상한을 보강했다. 전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·서명 변조의 typed 제출 거부는17대조·공개6실행·노드6관측으로 보강했다([증거](tamper-submission-rejection-evidence.json)). R5 다른 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 공개 제네시스의 모든 노드 해시·부모·ID를 세 체인 실제·독립 검증으로 보강했다([증거](legacy-genesis-evidence.json)). 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. NODE-002의 정확한 블록·트랜잭션·영수증 이관과 포크 이후 동기화도 실제 race로 보강했다. TX-017과 기존 RT-A-3-07의 실제 쓰기 뒤 롤백·가스·수수료도 세 체인에서 보강했다. GOV-019 미달 금액 채굴 거절과 GOV-020 즉시 이벤트·GOV-021 축약 지연 기준은 사용자 승인 뒤 정확한 실제 단언으로 보강했다. TX-018의 유한한 estimateGas - 1 입력은 실제 대조했지만 WBFT·StableNet에서 성공해 원문 기대와 충돌했고 사용자가 추정 상한과 실제 부족한 가스를 구분하도록 승인했다. 승인 기준의 공통 DSL 케이스와 세 체인 실제 회귀를 완료했다. WBFT-010의 실제 서명/mix 연쇄와 WBFT-002 건강한 개별 간격도 보강했다. TX-010 실제 영수증 순서와 TX-013 queued 교체 전후·기존 hash null도 세 체인에서 보강했다([증거](nonce-order-replacement-evidence.json)). 승인 GOV-004/011의30초·70초 실제 출금과 원문 설정의 별도 배포 조회도6개 실제 race/독립 대조로 보강했다([증거](approved-unbonding-evidence.json)). 원문 검토85 scoped-confirmed·1충돌·1병합이며37개 WEMIX 전체 native race/종료 보존 대조를 완료했다([증거](wemix37-regression-evidence.json)). 원문 전체·공개 DSL·legacy 소비자 재평가는 남음. 캐시된 Git 커밋에서 legacy셸460개를 복구해 bytes/모드·외부셸AST를 확인했다. 원문02/10의 코드 해시·경계 상태·4슬롯·v2조회는14개 RED→GREEN과 새StableNet의2공개케이스·14실제단언·독립대조로 보강했다([증거](legacy-code-state-evidence.json)). extra02/07b의 양방향·여섯 상태·경계 잔액도18개 RED와22개 대조, 두 실제구성·36단언으로 보강했다([증거](legacy-extra-state-evidence.json)). 첫 실제시도의 StableNet ProcessExtraSeal 패닉/BLOCKED는 보존했고 미해결이다. 개인API 원문4건도 공개DSL·전용키·실제4건과기존6회귀로 보강했다([증거](legacy-personal-delegation-evidence.json)). 전체legacy 시나리오 동등성은 미확인([입력 복구](legacy-source-recovery-evidence.json)); [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json), [NODE-002](data-migration-evidence.json), [실패 거래](transaction-failure-evidence.json), [거버넌스 거절·이벤트](governance-rejection-events-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-16 원문17 배포 delegate 가스 추정 보강 — 전체 legacy는 미완료:**
+원문 Git blob의 Simple7702Delegate를 solc-js 0.8.28로 별도 컴파일해 공개17b에 배포한다.
+생성 코드 479바이트·실행 코드 451바이트와 AST 44노드/43포함간선을 확인했다. 같은 컴파일러 재실행의 코드·ABI·메타데이터·AST도 일치했다.
+비용만 검사하는 유효 초안의 누락 6개를 RED로 확인했고, 배포 코드 해시·초기 getter·원래 같은 주소/금액 생략 조건을 더해 12대조를 통과했다.
+주소 기준선은 새 배포 from 참조 1개만 997→998로 추가했으며 기존 997개는 그대로다.
+관련 2패키지 전체 race와 전체 검사가 통과했다. 컴파일 fixture도 기존 고정 소스 지문에 포함되는 텍스트로 보관한다.
+고정 소스 `15d361b79087ee65f34cf927fe362c2bf6065955e10088acb62dc7d48649f3b3`의
+StableNet4d17eea0·WBFTd535dd3d에서 새17b와 기존 EOA·1wei 케이스를 직렬 통과했다(공개 4건/42단언·실제 RPC 16관측).
+모두 21000/46382/71865였고, 실제 생성 거래·영수증·CREATE 주소·코드와 원래 비용 범위를 독립 대조했다.
+컴파일러 파일 95개/링크 2개와 프리셋 키 45개의 불변, 증명 860파일의 내용·권한·소유자·ns 수정 시각과 종료 DB/trie 0개를 확인했다.
+이번 단계가 만든 미사용 npm 다운로드 캐시 39파일/7,893,232바이트만 두 차례 사용 여부를 확인해 제거했고 컴파일러 입력은 보존했다.
+현재 계획은 216파일·358회이며 전체 실행은 아니다. 원문 EN 토폴로지·Foundry 캐시 바이트·배포 fee 표현과 현재 fixture를 구분한다.
+전체 254개 동등성·L1·87개·최종 Web은 열려 있다. [원문·컴파일·실제·독립 증거](legacy-deployed-authorization-evidence.json).
 
 **2026-10-16 RPC 응답 명확성과 메서드 존재 보강 — R3/R5 전체는 미완료:**
 non-null result와 error의 동시 반환, 오류 필드 누락, 결과 없는 응답, 후행 JSON의 core RED 20개를 확인했다.
@@ -209,7 +223,7 @@ StableNet4d17eea0 BP4에서 기존 personal 공개4건/46단언을 재실행했�
 onEach는 현재 계약에 없으므로 새 미완료 기능으로 세지 않는다. 모순 result/error 응답은 위의 후속 RPC 응답 단계에서 다뤘으며, 다른 R5 조합·전체 L1/87/legacy/Web은 열려 있다.
 [RED·실제·독립 증거와 한계](rpcerror-submission-classification-evidence.json).
 
-**2026-10-16 원문18 EOA·1wei 가스 기준선 보강 — 원문17 전체 fixture는 미완료:**
+**2026-10-16 원문18 EOA·1wei 가스 기준선 보강 — 이 단계에서는 원문17 배포 fixture 제외:**
 기존 공개17은 같은 주소·금액 생략으로 추정했고 수신자의 코드 없는 EOA 조건이 없었다.
 서로 다른 새 수신자·value0x1·eth_getCode0x를 더하고 기존0/1/2 authorization의9개 비용 검사는 유지했다.
 단위11대조에서 조건4개 거짓 통과와 잘못된 요청 형태1개를 RED로 확인한 뒤 GREEN으로 만들었다.
@@ -220,7 +234,7 @@ StableNet4d17eea0·WBFTd535dd3d BP4에서 공개2실행/20단언과8개 실제 R
 성공430파일과 첫 기록누락 실패215파일 내용·권한·소유자·ns수정시각을 보존했고 종료 DB와 trie cache는0이다.
 첫 공개케이스PASS/10단언은 중계기록0개로 증명 전체FAIL이었으며 성공으로 합산하지 않는다.
 원문18의EN1→EN2 대신BP coinbase→새EOA를 쓰고, 원문17의배포된Simple7702Delegate 대신 코드없는delegate를
-쓰는 차이도 남겼다. 원문17전체·254개동등성·L1·87개·최종Web은 열려 있다.
+쓰는 차이도 남겼다. 원문17 배포 부분은 위의 후속17b에서 별도 검증했으며, 전체254개 동등성·L1·87개·최종Web은 열려 있다.
 [원문·실패·재시도·독립 증거](legacy-authorization-estimate-evidence.json).
 
 **2026-10-16 공개 제네시스 전체 노드 검증 보강 — 전체 legacy는 미완료:**

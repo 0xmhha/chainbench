@@ -1,0 +1,533 @@
+{
+  "scope": "Recovered original17 deployed Simple7702Delegate and same-address/value-omitted authorization gas estimates implemented as new public17b, with retained original18 EOA/one-wei baseline as regression. Current pinned StableNet/WBFT owned BP4 only; not historical EN topology, all legacy254/87/Linux L1 or final Web acceptance.",
+  "sourceDigest": "15d361b79087ee65f34cf927fe362c2bf6065955e10088acb62dc7d48649f3b3",
+  "headAtProof": "e64de660dacd92488a652389e60c0b4661bd2ee8",
+  "implementation": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/17b-estimategas-deployed-authorizationlist.json",
+      "sha256": "3d9ebdcb473f979abca01b8e23009ec4b1f5e0121d24663bc3f168695f06d3ab",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792110598549272752
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/authorization_deployed_semantics_test.go",
+      "sha256": "0add4f8839bdc77dae5ab02e21e5a96aec2ed0ee0203dcf5ed12c727cdf8d2c0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792111132508064673
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/simple7702-runtime.txt",
+      "sha256": "3c5dfcc8bc2dd41fc73e85c67782994eca938b74914bfad7540e8a3eb2f024e6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792110508584881793
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "a6160f79d19cefb690d748448297bd81ea6233fd5564fe186aefd99175805f08",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792110762654787869
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/authorization_estimate_native_test.go",
+      "sha256": "026d712c1b37f0f670d439ce0c6a76bd42a8f0e2fb0b041ddc5221f18a41910f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792110687749869337
+    }
+  ],
+  "originalContract": {
+    "repository": "/Users/0xtopaz/work/github/stablenet/packages",
+    "commit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+    "path": "chainbench/tests/stablenet/post-v1.0.0-change/contracts/Simple7702Delegate.sol",
+    "blobOID": "e02ed7f8795b648a500c27b9ef547ffd8fb68eb0",
+    "sha256": "3e013919e0ec436b353527fe93c498fd0e0611b9f8e38851feceb7e5839aa4f7",
+    "originalWorkingHead": "cca35a2e7f0a8929dc77bd237fd41b035b971e51"
+  },
+  "compiler": {
+    "version": {
+      "version": "0.8.28+commit.7893614a.Emscripten.clang",
+      "node": "v24.4.1"
+    },
+    "distribution": {
+      "version": "0.8.28",
+      "dist.tarball": "https://registry.npmjs.org/solc/-/solc-0.8.28.tgz",
+      "dist.integrity": "sha512-AFCiJ+b4RosyyNhnfdVH4ZR1+TxiL91iluPjw0EJslIu4LXGM9NYqi2z5y8TqochC4tcH9QsHfwWhOIC9jPDKA=="
+    },
+    "settings": {
+      "optimizerEnabled": false,
+      "optimizerRuns": 200,
+      "evmVersion": "cancun"
+    },
+    "creationBytes": 479,
+    "runtimeBytes": 451,
+    "creationKeccak256": "0x7d2300c6dd35d54f16386bc19343f143693ab66c7954783fb7c63cb0bdd965f8",
+    "runtimeKeccak256": "0x3adfd91f5bd2fb415d9791da4f139dc10eea4b6c1ec98d19979c01377522ef89",
+    "creationSHA256": "03bf5cf2128502ed72a642eb2310e5ce77104281d7c90942562015b8d4ac0236",
+    "runtimeSHA256": "9e6e6fe823fdbd870db4408e8d79f441ef5784a7e946352f2ad4741d6a2e21e9",
+    "getterSelector": "0xf2c9ecd8",
+    "sameCompilerReplayIdentical": true,
+    "independentCompilerImplementationClaimed": false,
+    "filesChecked": 95,
+    "linksChecked": 2,
+    "externalAST": {
+      "sourceFiles": 1,
+      "nodes": 44,
+      "containmentEdges": 43,
+      "danglingContainmentEdges": 0
+    },
+    "warnings": [
+      "1878 missing SPDX identifier in recovered source",
+      "3420 missing pragma in recovered source"
+    ],
+    "externalWorkingHeadUnchanged": true
+  },
+  "originalDifferences": [
+    "Original17 uses Foundry/cast and historical EN sponsor; current fixture compiles the exact recovered contract using solc-js0.8.28 and uses owned BP1 coinbase/generated authorities. Same from/to and omitted value, explicit deployment gas1000000 and original gas ranges are preserved.",
+    "Original Forge configuration/cache artifact bytes were not recovered. This fixture declares Cancun/no-optimizer settings and verifies its own compiler output exactly, without claiming historical binary byte identity.",
+    "Deployment fees use the existing chainbench SDK defaults instead of the original cast fee-cap expression. This does not relabel deployment fee behavior as tested.",
+    "Code Keccak and initial getNumber()==0 assertions strengthen the original non-empty deployed-code check. No actual authorization transaction is sent by this cost-only scenario.",
+    "Existing17 EOA/one-wei transfer case and its narrower1.5-percent bounds remain unchanged as a separate regression."
+  ],
+  "redGreen": {
+    "semanticControls": 12,
+    "redFailures": 6,
+    "redDetails": [
+      "valid scaffold lacked code/hash/getter observations",
+      "empty code ignored",
+      "STOP-only code ignored",
+      "wrong runtime hash ignored",
+      "wrong getter ignored",
+      "code RPC error ignored"
+    ],
+    "allControlsGreen": true,
+    "golden": {
+      "oldReferences": 997,
+      "newReferences": 998,
+      "added": [
+        "go-stablenet/post-v1.0.0-change/common-all/17b-estimategas-deployed-authorizationlist.json\t.steps[0]\tfrom\t0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      ],
+      "removed": [],
+      "unrelatedReferencesUnchanged": true
+    },
+    "relatedWholeRacePackages": [
+      "internal/testhelper",
+      "internal/testengine"
+    ],
+    "wholeCheckPassed": true,
+    "firstWholeCheckFailure": "Staticcheck requested a tagged switch in the new fault fixture; corrected before native proof.",
+    "productionCodeChanged": false
+  },
+  "native": {
+    "passed": [
+      "TestNativeLegacyAuthorizationEstimates/stablenet",
+      "TestNativeLegacyAuthorizationEstimates/wbft",
+      "TestNativeLegacyAuthorizationEstimates",
+      "TestNativeLegacyDeployedAuthorizationEstimates/stablenet",
+      "TestNativeLegacyDeployedAuthorizationEstimates/wbft",
+      "TestNativeLegacyDeployedAuthorizationEstimates"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-11noxrx9",
+      "/private/tmp/cbui/txfail-hwmgo193",
+      "/private/tmp/cbui/txfail-o0xyu_i3",
+      "/private/tmp/cbui/txfail-xwtcjil_"
+    ],
+    "elapsedSeconds": 175.2951160420198,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "presetFilesUnchanged": true
+  },
+  "independent": {
+    "acceptedScope": true,
+    "publicCases": 4,
+    "publicAssertions": 42,
+    "rpcObservations": 16,
+    "redactionNegativeControls": 36,
+    "retainedFiles": 860,
+    "remainingDatabases": 0,
+    "trieCacheBytes": 0,
+    "runtimes": [
+      {
+        "root": "/private/tmp/cbui/txfail-11noxrx9",
+        "chain": "wbft",
+        "deployedDelegate": true,
+        "publicCases": 1,
+        "publicAssertions": 11,
+        "forwardedRPCObservations": 4,
+        "gas": [
+          21000,
+          46382,
+          71865
+        ],
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-hwmgo193",
+        "chain": "stablenet",
+        "deployedDelegate": false,
+        "publicCases": 1,
+        "publicAssertions": 10,
+        "forwardedRPCObservations": 4,
+        "gas": [
+          21000,
+          46382,
+          71865
+        ],
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-o0xyu_i3",
+        "chain": "wbft",
+        "deployedDelegate": false,
+        "publicCases": 1,
+        "publicAssertions": 10,
+        "forwardedRPCObservations": 4,
+        "gas": [
+          21000,
+          46382,
+          71865
+        ],
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-xwtcjil_",
+        "chain": "stablenet",
+        "deployedDelegate": true,
+        "publicCases": 1,
+        "publicAssertions": 11,
+        "forwardedRPCObservations": 4,
+        "gas": [
+          21000,
+          46382,
+          71865
+        ],
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      }
+    ],
+    "checks": [
+      "Exact original Git blob/source and compiler module/input files unchanged",
+      "Same pinned compiler replay matches bytecode/ABI/metadata/AST",
+      "Actual creation bytes/transaction/receipt/runtime match compiler output",
+      "CREATE address independently recomputed from recorded sender and nonce using RLP/Keccak",
+      "Public code hash/getter and nine gas assertions independently checked",
+      "Gzip raw responses match recorded decoded JSON; same transfer fields and original17 bounds",
+      "Two fresh complete host process/FD inventories, exact retained file set/SHA256/mode/uid/gid/nsmtime",
+      "45 existing preset key files unchanged"
+    ],
+    "independentSignatureCryptographyClaimed": false
+  },
+  "sweepPlan": {
+    "sourceCaseFiles": 216,
+    "plannedCaseRuns": 358,
+    "unmapped": [],
+    "groupCount": 40,
+    "wholePlanExecuted": false
+  },
+  "storage": {
+    "cacheCleanup": {
+      "scope": "Only the npm download cache proven created by this phase after its metadata request; installed pinned compiler and all95 input/output files remain unchanged. No Go cache, runtime evidence, node data or user folder removed.",
+      "cache": "/private/tmp/chainbench-solc-npm-cache",
+      "removedFiles": 39,
+      "removedBytes": 7893232,
+      "allocatedBytes": 7999488,
+      "compilerFilesPreserved": 95,
+      "freshProcessFDInventories": 2
+    },
+    "installedCompilerAndInputsKept": true,
+    "goCacheKeptForOngoingWork": true
+  },
+  "evidence": [
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-20261016-start.json",
+      "sha256": "8b84da7b7af0914baf34c6b40b81e66f9f3528cce906be3a5c169bed09542e8f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111484566905905
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-20261016-native.jsonl",
+      "sha256": "45881b521cb84ab97ecd0f5a84ac973e3491fd4ea8a785d786875951f17c4bbe",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111657879636972
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-20261016-summary.json",
+      "sha256": "cc84a925d9cfbbb3c47f7a064c9fdf7fc37f3b31ad3a0430003e8ca0c799b627",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111660014374954
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-20261016-independent.json",
+      "sha256": "f65a63078311d0507ca535877eec5bf02d6216b3d3f08c5cd18f01a5a1915ad6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111722339238532
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-red-20261016.log",
+      "sha256": "1d7d164c75942e1bd2c0932ec69fa0bcb9b2df6b29f2e8616d84fc17b58a28cb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110515725623748
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-green-20261016.log",
+      "sha256": "e2407d7ea3a90b88d59a1479a0c2509e06c1c4830eeb0a8e9d163ddf3fc06876",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110603830669228
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-addresses-red-20261016.log",
+      "sha256": "53ba6f6d970d2f9146319f87e488e333fe5dccc8b17f544bd0c79cce66924f07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110757494775348
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-addresses-update-20261016.log",
+      "sha256": "c66130f9977fd26a6d34651da78414c6314eaed9072e397a5c67bf55932db89b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110762656732002
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-race-20261016.log",
+      "sha256": "03c6547c220478bb58769c51d2168605e51f1184a8e471769b506506544d62b7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110842924396927
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-check-20261016.log",
+      "sha256": "031733b6c29216cedbb9c4dd36fe1ee04bfcfc0d471b6b03d95d83a9f3602db0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110826343238359
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-ready-race-20261016.log",
+      "sha256": "6a6693cde339b3bc35f4033c23e866edcad0f0c11c11c9b6df3a9e4e05b733d8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111093155541053
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-ready-check-20261016.log",
+      "sha256": "a3e2fc12027fd5e23d967e9c2bf96c60af65fa65e3526650f51dac02c989105a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111206395282459
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-fixture-green-20261016.log",
+      "sha256": "c28e32f7c3b0b1a0a4307ef6443c0088acdc10972697492d891d5c7a87d20b39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111141946751361
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-driver-20261016.log",
+      "sha256": "daf7014e859ec8f58ae210185685a8993a29f3d4fc65c75ed76ee15257e82ceb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111660015648417
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-independent-20261016.log",
+      "sha256": "5716e092cdf195bba63c84e24ab1558ad3b0c106bb15e62f79a81f25f1eb07cb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111722339730534
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-golden-review-20261016.json",
+      "sha256": "5589c71275c2e359ab2cbc65f1b4cd45855ce77974b81ab50dbcb69cbc3bdbe2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110814960649845
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-plan-20261016.json",
+      "sha256": "b234f6ad4564fa5dbff505b5d4388de74ae62e6f2f3c549515431d79284c935b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110932376250790
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-run-20261016.py",
+      "sha256": "9dd17577cf4bad818e04942017a3ce771212da1cfdd672e04752edc7b6e9baa6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111472242275663
+    },
+    {
+      "path": "/private/tmp/chainbench-deployed-auth-independent-20261016.py",
+      "sha256": "5b92e8f2fce122ecb3d8dc6dc37d694febab482cbf578ce47fa000ace3e38dfa",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111363179568299
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-input-inventory-20261016.json",
+      "sha256": "7007df5a636675eaed8c0861727185585088fe52a9ac7500969ce75adf441c4a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111071654191486
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28-metadata.json",
+      "sha256": "6a703131ea2050aa3bb88737068f055a5c0b1e42b0cfc96a1946dcf7bf1d7f53",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110262718643856
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28-install.log",
+      "sha256": "a2ad63f5975a773350595d3f7bd50c83645b3be5fe235f2a9f9d92a09775d41f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110286904565277
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-cache-cleanup-20261016.json",
+      "sha256": "800a2abbaaf8e70f359d31a232341624f2074a8b31f979fa4b05e2a55577596f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111921551503030
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-cache-cleanup-20261016.py",
+      "sha256": "2bb824efdbbfbc65111f52cf9de3d25cfbff030290650f65ed4ea9c7571bf7c5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111918221729119
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-cache-cleanup-20261016.log",
+      "sha256": "8da4ef7f00b4a3e39496e94ed2395b7ddb81a2e24fde9ef97add13a42a73586d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792111921551932115
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/inputs/source-provenance.json",
+      "sha256": "154f6a77e46913a614399e394e82341e34365924eb70f6fca0c7d94f3aafa974",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110369791144911
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/inputs/standard-json.json",
+      "sha256": "8b9cd660ae5b6107f5dad3db1ec4bb8a7d1d57b691a89b291267d78d04630c9a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110369783185961
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/compiler-output.json",
+      "sha256": "d6a5135111b8e932656d38ce3dede79ac68607165b6c8507878236a9f6084336",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110370456619216
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/compiler-version.json",
+      "sha256": "baacb27a9c4b777afd8e3bd5f599e0c5e35307c59289456c4833886880743b51",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110370457107259
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/compiler-replay.json",
+      "sha256": "41e234e2e9cf3a14d97c36e83cf7db1c15ca023d98d00656446983ee7155db6e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110432990261273
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/solidity-ast-graph.json",
+      "sha256": "3f7985df05b936334bc74b77400f86aed3a75a8fed86c63ea4d89fd8b3e5f298",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110432469723811
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/delegate-plan.json",
+      "sha256": "8a1f5011052aecbf9d96ae4738439629e3d674c8e3d3588300fb731c278cbc29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110568424169830
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/package-lock.json",
+      "sha256": "7a0b5f3052c8087229f04952cecfa63e753706e0f5ba89a2bd5b37e40eb6485b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110286903278855
+    },
+    {
+      "path": "/private/tmp/chainbench-solc-0.8.28/node_modules/solc/soljson.js",
+      "sha256": "9ef37cc1d2597ed6d2f706a960f449e33eb9eee920936cea77b11e6f43861970",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792110286895865366
+    }
+  ],
+  "original17ScopedBehaviorAccepted": true,
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}
