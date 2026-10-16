@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "signature-compat-across-swap",
-  "description": "TC-3-1-04 — 서로 다른 빌드로 두 EN을 데이터 유지 재시작한다. 원래 키로 직접 서명한 성공 거래의 해시·블록·송수신자·영수증을 양쪽 EN에서 보존하고, 교체 후 BP가 두 블록 이상 전진하며 두 EN이 이후 높이와 현재 BP의 ±2블록 이내까지 따라왔는지 확인한다. 두 EN의 버전 변경·eth_syncing=false·정확한 이전 블록 해시를 검증한다. 교체 전후 로그는 각각 완전한 1MiB 미만 캡처여야 하며, 이전 접두가 유지된 새 구간에 원문의 서명 오류 패턴이 없어야 한다. 로그 읽기 실패·잘림·접두 손실은 실패다. 원문은 15노드 중 EN8/11을 사용하며 이 fixture는 BP4/EN2다. 두 번째 빌드가 필요해 StableNet 전용이며 전체 legacy나 원문 전체 토폴로지 인수는 아니다.",
+  "description": "TC-3-1-04 — 서로 다른 빌드로 두 EN을 데이터 유지 재시작한다. 원래 키로 직접 서명한 성공 거래의 해시·블록·송수신자·영수증(송수신자 포함)을 양쪽 EN에서 보존하고, 교체 후 BP가 두 블록 이상 전진하며 두 EN이 이후 높이와 현재 BP의 ±2블록 이내까지 따라왔는지 확인한다. 두 EN의 버전 변경·eth_syncing=false·정확한 이전 블록 해시를 검증한다. 교체 전후 로그는 각각 완전한 1MiB 미만 캡처여야 하며, 이전 접두가 유지된 새 구간에 원문의 서명 오류 패턴이 없어야 한다. 로그 읽기 실패·잘림·접두 손실은 실패다. 원문은 15노드 중 EN8/11을 사용하며 이 fixture는 BP4/EN2다. 두 번째 빌드가 필요해 StableNet 전용이며 전체 legacy나 원문 전체 토폴로지 인수는 아니다.",
   "requires": [
     "rpc",
     "consensus",
@@ -95,6 +95,28 @@
       "compare": "Equal",
       "is": "0x1",
       "select": "status"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "from",
+      "compare": "EqualCI",
+      "is": "$sender"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$toBefore"
     },
     {
       "do": "read",
@@ -277,6 +299,28 @@
       "compare": "Equal",
       "is": "0x1",
       "select": "status"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "from",
+      "compare": "EqualCI",
+      "is": "$sender"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$toBefore"
     },
     {
       "expect": "rpc",
@@ -470,6 +514,28 @@
       "compare": "Equal",
       "is": "0x1",
       "select": "status"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "from",
+      "compare": "EqualCI",
+      "is": "$sender"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$toBefore"
     },
     {
       "expect": "rpc",

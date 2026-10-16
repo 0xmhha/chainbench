@@ -125,3 +125,7 @@ effectivegasprice 3건의 노드 간 값 일치와 wbft add-validator 의 에폭
 최초 종료 옵션 오류는 보존했고 같은 소스의 정상 종료·보존·DB 회수와 독립 대조를 마쳤다.
 원문15노드의 EN8/11 전체 환경·모든 버전 쌍·254개 전체 동등성은 아니다.
 [고정 소스·최초 실패·복구·독립 증거](../legacy-signature-compatibility-evidence.json).
+
+후속 고정 소스에서는 영수증 송수신자6개를 공개 DSL에도 직접 넣었다. 네 거짓 통과 RED와23대조를 확인했고,
+새 Linux 실제1건/42단언·독립 RPC18관측·정상 종료·파일 보존/DB 회수를 통과했다. 이전36단언 자료는 그대로다.
+[공개 영수증 판정의 새 증거](../legacy-signature-receipt-evidence.json).

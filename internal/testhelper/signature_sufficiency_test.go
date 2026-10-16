@@ -66,7 +66,7 @@ func (c *signatureFixture) Log(_ context.Context, n node.Node, limit int) (strin
 }
 
 func TestPublicSignatureSwapRequiresPreservedBlocksCurrentHeadsAndCleanLogs(t *testing.T) {
-	for _, fault := range []string{"valid", "legacy transaction reverted", "missing legacy block", "changed legacy block", "changed receipt block hash", "changed receipt transaction hash", "source head stalled", "second EN stale", "second EN exactly two blocks behind", "second EN three blocks behind", "second EN still syncing", "second EN same version", "second EN wrong sender", "new signature error", "lost log prefix", "truncated log", "second EN log unavailable", "missing all EN logs", "partial signature boundary"} {
+	for _, fault := range []string{"valid", "legacy transaction reverted", "primary receipt wrong sender", "primary receipt wrong recipient", "second EN receipt wrong sender", "second EN receipt wrong recipient", "missing legacy block", "changed legacy block", "changed receipt block hash", "changed receipt transaction hash", "source head stalled", "second EN stale", "second EN exactly two blocks behind", "second EN three blocks behind", "second EN still syncing", "second EN same version", "second EN wrong sender", "new signature error", "lost log prefix", "truncated log", "second EN log unavailable", "missing all EN logs", "partial signature boundary"} {
 		t.Run(fault, func(t *testing.T) {
 			const sender = "0x1212121212121212121212121212121212121212"
 			const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
@@ -122,7 +122,14 @@ func TestPublicSignatureSwapRequiresPreservedBlocksCurrentHeadsAndCleanLogs(t *t
 						if fixture.swapped[index] && index == 6 && fault == "changed receipt transaction hash" {
 							transactionHash = "0x" + strings.Repeat("ef", 32)
 						}
-						result = map[string]any{"blockNumber": "0x3", "status": status, "blockHash": hash, "transactionHash": transactionHash, "from": sender, "to": recipient}
+						receiptFrom, receiptTo := sender, recipient
+						if (index == 1 && fault == "primary receipt wrong sender") || (index == 6 && fixture.swapped[6] && fault == "second EN receipt wrong sender") {
+							receiptFrom = "0x" + strings.Repeat("34", 20)
+						}
+						if (index == 1 && fault == "primary receipt wrong recipient") || (index == 6 && fixture.swapped[6] && fault == "second EN receipt wrong recipient") {
+							receiptTo = "0x" + strings.Repeat("56", 20)
+						}
+						result = map[string]any{"blockNumber": "0x3", "status": status, "blockHash": hash, "transactionHash": transactionHash, "from": receiptFrom, "to": receiptTo}
 					case "eth_getTransactionByHash":
 						from := sender
 						if fixture.swapped[index] && index == 6 && fault == "second EN wrong sender" {
