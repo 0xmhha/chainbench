@@ -29,7 +29,7 @@ var builtinArguments = map[string]string{
 	"action:newAccount":                  "save saveKey",
 	"action:partition":                   "groups method",
 	"action:read":                        "on onEach save source",
-	"action:readNodeLog":                 "maxBytes on onEach save",
+	"action:readNodeLog":                 "maxBytes on onEach requireComplete save",
 	"action:registerContract":            "data from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout to value",
 	"action:resetNode":                   "on onEach",
 	"action:restartNode":                 "on onEach",
@@ -56,7 +56,7 @@ var builtinArguments = map[string]string{
 	"assertion:codeAt":                   "address compare delta expected on onEach tol",
 	"assertion:contractChecksum":         "address bytecode compare data expected on onEach",
 	"assertion:createAddress":            "compare delta deployer expected from nonce on onEach tol",
-	"assertion:derive":                   "compare delta expected format index of on onEach op selector tol",
+	"assertion:derive":                   "compare delta expected format index of on onEach op pattern selector since tol",
 	"assertion:estimateGas":              "compare data delta expected from on onEach to tol",
 	"assertion:gasPrice":                 "compare delta expected on onEach tol",
 	"assertion:gasPriceIsBaseFeePlusTip": "on",
@@ -82,7 +82,7 @@ var builtinArguments = map[string]string{
 	"reader:codeAt":                      "address",
 	"reader:contractChecksum":            "address bytecode data",
 	"reader:createAddress":               "deployer from nonce",
-	"reader:derive":                      "format index of op selector",
+	"reader:derive":                      "format index of op pattern selector since",
 	"reader:estimateGas":                 "data from to",
 	"reader:gasPrice":                    "",
 	"reader:logs":                        "address fromBlock index select toBlock topics",
@@ -301,6 +301,10 @@ func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes [
 		}
 	case assertDerive:
 		if op, ok := text("op"); ok {
+			if op != "regexpCount" {
+				refuse("pattern", "read only with op regexpCount")
+				refuse("since", "read only with op regexpCount")
+			}
 			if op != "abiCall" {
 				refuse("selector", "read only with op abiCall")
 			}

@@ -157,7 +157,9 @@ func nodeAnswers(ctx context.Context, ac *interp.ActionCtx, n node.Node) bool {
 
 // readNodeLogAction binds the tail of one node's captured stdout/stderr under
 // "save", so an assertion can match what the node said. Args: on (selector,
-// required), maxBytes (optional, defaults to nodeLogDefaultMaxBytes).
+// required), maxBytes (optional, defaults to nodeLogDefaultMaxBytes), and
+// requireComplete (optional boolean). A complete read refuses a capture that
+// reaches its limit because a tail cannot prove absence across the whole log.
 //
 // It needs a control that owns the node processes; attach mode says so rather
 // than binding an empty string.
@@ -184,9 +186,23 @@ func (readNodeLogAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		}
 		maxBytes = b
 	}
+	complete := false
+	if raw, present := ac.Args["requireComplete"]; present {
+		var valid bool
+		complete, valid = raw.(bool)
+		if !valid {
+			return fmt.Errorf("dsl: readNodeLog requireComplete must be a boolean")
+		}
+	}
 	out, err := reader.Log(ctx, n, maxBytes)
 	if err != nil {
 		return fmt.Errorf("dsl: readNodeLog node%d: %w", n.Index, err)
+	}
+	if complete && len(out) >= maxBytes {
+		return fmt.Errorf("dsl: readNodeLog node%d: capture reached maxBytes %d; complete log required", n.Index, maxBytes)
+	}
+	if complete && out == "" {
+		return fmt.Errorf("dsl: readNodeLog node%d: empty or missing capture cannot establish a complete log", n.Index)
 	}
 	ac.Value = out
 	return nil

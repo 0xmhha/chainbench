@@ -328,9 +328,20 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 주소는 대소문자를 무시하며, 빈 집합은 아무것도 통과시키지 않는다. "이 주소가 아니다"를
 `NotEqual` 로 쓰면 세상의 다른 모든 주소가 통과하므로, 허용 집합이 있으면 `In` 을 쓴다.
 
-`derive` 의 `op` 는 일곱 가지다. `sum` `diff` `mul` `min` `word` `quorum` `abiCall`.
+`derive` 의 `op` 는 여덟 가지다. `sum` `diff` `mul` `min` `word` `quorum` `abiCall` `regexpCount`.
 `min`은 임의 정밀도의 정수 중 최솟값을 고른다. 동적 수수료의 포함 블록 기본 수수료와
 실제 거래 cap/tip을 읽은 뒤 `baseFee + min(tipCap, feeCap - baseFee)`를 검증할 때 쓴다.
+
+`regexpCount`는 `of`에 캡처 문자열 하나와 `pattern`에 Go 정규식을 받아 일치 수를 10진 문자열로 돌려준다.
+선택 `since`는 이전 로그 캡처의 정확한 접두를 제거한다. 캡처 경계는 줄 끝이어야 하며, 마지막 개행이 정규화돼 빠졌다면 다음 문자가 개행이어야 한다.
+접두가 사라졌거나 줄 중간에서 잘린 경계·입력 형식·정규식이 잘못되면 실패한다.
+`readNodeLog`의 `requireComplete: true`는 빈 캡처와 `maxBytes` 한도에 닿은 캡처를 거절한다.
+다음은 완전한 두 로그에서 재시작 이후의 서명 오류가 없음을 검증하는 예다.
+
+```json
+{"expect":"derive","op":"regexpCount","of":["$logAfter"],"since":"$logBefore","pattern":"(?i)invalid.*signature","is":"0"}
+```
+로그 읽기의 기본값은 기존처럼 꼬리 캡처다. 오류 부재를 판정할 때는 두 읽기 모두 `requireComplete`를 사용한다.
 
 ---
 
@@ -351,7 +362,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `load` | `blocks`, `fillPercent`, `from`, `gas`, `on`, `pollInterval`, `timeout`, 수수료 인자 | 4 | `internal/testhelper/load.go` |
 | `newAccount` | `saveKey` | 52 | `internal/testhelper/builtins.go` |
 | `partition` | `groups`, `method` | 1 | `internal/testhelper/partition.go` |
-| `readNodeLog` | `maxBytes`, `on` | 5 | `internal/testhelper/fault.go` |
+| `readNodeLog` | `maxBytes`, `on`, `requireComplete` | 5 | `internal/testhelper/fault.go` |
 | `registerContract` | `data`, `from`, `gas`, `on`, `pollInterval`, `timeout`, `to`, `value`, 수수료 인자 | 1 | `internal/testhelper/assets.go` |
 | `resetNode` | `on` | 3 | `internal/testhelper/fault.go` |
 | `restartNode` | `on` | 6 | `internal/testhelper/fault.go` |
@@ -409,7 +420,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `codeAt` | `address` | `Equal` | 15 | `internal/testhelper/read.go` |
 | `contractChecksum` | `address`, `bytecode`, `data` | `Equal` | 1 | `internal/testhelper/read.go` |
 | `createAddress` | `deployer`, `from`, `nonce` | `Equal` | 1 | `internal/testhelper/read.go` |
-| `derive` | `format`, `index`, `of`, `op`, `selector` | `Equal` | 79 | `internal/testhelper/derived.go` |
+| `derive` | `format`, `index`, `of`, `op`, `pattern`, `selector`, `since` | `Equal` | 79 | `internal/testhelper/derived.go` |
 | `estimateGas` | `data`, `from`, `to` | `GreaterOrEqual` | 2 | `internal/testhelper/read.go` |
 | `gasPrice` | — | `GreaterOrEqual` | 5 | `internal/testhelper/derived.go` |
 | `logs` | `address`, `fromBlock`, `index`, `select`, `toBlock`, `topics` | `Equal` | 13 | `internal/testhelper/logs.go` |
@@ -438,7 +449,7 @@ chainbench validate tests/tc/<path>.json
 
 `IGNORED ARGUMENT: chainId.timeout` 처럼 나오면 그 어휘가 읽지 않는 인자를 적은 것이다. 읽지 않는 인자는 아무 효과가 없어서, 받아 주면 케이스가 갖지 않은 제한 시간이나 노드나 저장값을 가진 것처럼 읽힌다. 그래서 `validate` 와 실행 전 검사, Web 편집기가 모두 거절한다. 어휘마다 읽는 인자는 `internal/testhelper/arguments.go` 의 `builtinArguments` 에 적혀 있고, 테스트가 구현 코드에서 같은 목록을 뽑아 대조하므로 코드와 어긋나면 빌드가 깨진다. 이 목록은 해석기가 대신 읽는 것까지 포함한다. `save` 는 값을 돌려주는 동작에만 붙는다. `onEach` 는 동작에는 노드마다 한 번씩 돌리는 뜻으로 붙고, 판정에는 고른 노드를 모두 보는 것에만 붙는다. `blockStalled`·`blockInterval`·`txMined`·`callError`·`rpcError`·`methodPresent`·`gasPriceIsBaseFeePlusTip`·`wsSubscribe` 는 첫 노드만 보므로 `on` 만 받는다.
 
-어떤 인자는 정해진 경로에서만 읽힌다. 그 경로를 타지 않는 문장에 적으면 같은 이유로 거절하고, 괄호 안에 이유를 붙인다. `delta`·`tol` 은 `compare: "InDelta"` 일 때만 읽고, 둘을 함께 쓰면 `delta` 만 읽는다. `sendTx` 의 `reason` 은 거절이나 `keptOut` 을 기대할 때만, `blocks` 는 `keptOut` 일 때만 읽는다. `expectPerChain` 으로 체인마다 결과가 갈리면 어느 한 체인에서라도 읽히는 인자는 받는다. `startNode`·`swapNode` 의 `reason` 은 노드가 뜨지 않기를 기대할 때만 읽는다. `derive` 의 `selector` 는 `abiCall`, `index` 는 `word`, `format` 은 `sum`·`diff`·`mul`·`min` 에서만 읽는다. `key` 로 서명하는 `sendTx` 는 `from` 을, `deployContract` 는 `from`·`gas`·수수료 인자·`nonce` 를 읽지 않는다. `swapNode` 의 `purpose` 는 `config` 를 바꿀 때 그 기록 이름으로만 쓰인다. `blockInterval` 은 `maxMillis`·`minMillis` 가 있으면 초 단위 경계를 읽지 않는다. `contractChecksum` 과 `validators` 의 값은 수가 아니어서 `InDelta` 로 비교할 수 없다. `bytecode` 와 `data`, `deployer` 와 `from`, `gas` 와 `fillPercent` 처럼 앞의 것만 읽는 짝은 하나만 쓴다. `on` 과 `onEach` 도 하나만 쓴다.
+어떤 인자는 정해진 경로에서만 읽힌다. 그 경로를 타지 않는 문장에 적으면 같은 이유로 거절하고, 괄호 안에 이유를 붙인다. `delta`·`tol` 은 `compare: "InDelta"` 일 때만 읽고, 둘을 함께 쓰면 `delta` 만 읽는다. `sendTx` 의 `reason` 은 거절이나 `keptOut` 을 기대할 때만, `blocks` 는 `keptOut` 일 때만 읽는다. `expectPerChain` 으로 체인마다 결과가 갈리면 어느 한 체인에서라도 읽히는 인자는 받는다. `startNode`·`swapNode` 의 `reason` 은 노드가 뜨지 않기를 기대할 때만 읽는다. `derive` 의 `pattern`·`since`는 `regexpCount`, `selector` 는 `abiCall`, `index` 는 `word`, `format` 은 `sum`·`diff`·`mul`·`min` 에서만 읽는다. `key` 로 서명하는 `sendTx` 는 `from` 을, `deployContract` 는 `from`·`gas`·수수료 인자·`nonce` 를 읽지 않는다. `swapNode` 의 `purpose` 는 `config` 를 바꿀 때 그 기록 이름으로만 쓰인다. `blockInterval` 은 `maxMillis`·`minMillis` 가 있으면 초 단위 경계를 읽지 않는다. `contractChecksum` 과 `validators` 의 값은 수가 아니어서 `InDelta` 로 비교할 수 없다. `bytecode` 와 `data`, `deployer` 와 `from`, `gas` 와 `fillPercent` 처럼 앞의 것만 읽는 짝은 하나만 쓴다. `on` 과 `onEach` 도 하나만 쓴다.
 
 `is` 와 `expected` 를 한 문장에 함께 쓰면 거절한다. 낮추는 단계가 `is` 를 `expected` 로 옮기면서 하나를 덮어쓰기 때문이다.
 

@@ -284,6 +284,9 @@ func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[strin
 	}
 
 	op, _ := spec["op"].(string)
+	if op == "regexpCount" {
+		return deriveRegexpCount(spec)
+	}
 	if op == "abiCall" {
 		return deriveAbiCall(spec)
 	}
