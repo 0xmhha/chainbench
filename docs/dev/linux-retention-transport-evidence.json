@@ -1,0 +1,960 @@
+{
+  "scope": "Batched preservation and reclamation of isolated stopped Linux proof fixtures, including failure paths. Three real chain attempts do not imply all three functional cases passed.",
+  "acceptedStorageScope": true,
+  "sourceDigest": "dc0a43aa6bc2985d53ab7c8fc5f71476fb1314b601a03184361b5048a0fa0eec",
+  "headAtProof": "7c84b189488b1c8b1a18db9067d5d7d1135c3414",
+  "tdd": {
+    "redConditions": 6,
+    "protectedNamespaceAndCIConditions": 3,
+    "privateKeyAliasCondition": 1,
+    "emptyOrUnrecordedNodeGroupConditions": 2,
+    "greenTestMethods": 27,
+    "relatedSweepLifecycleTestsPassed": true,
+    "wholeCheckPassed": true,
+    "CIInvokesSweepContracts": true,
+    "initialFormattingSyntaxFailurePreserved": true,
+    "publishedWholeCheckPassed": true
+  },
+  "transport": {
+    "remoteCaptureCommandsPerStoppedServer": 1,
+    "remoteDeletionCommandsPerStoppedServer": 1,
+    "freshProcessAndFDInventoriesPerServer": 2,
+    "freshContainerOwnershipChecksPerServer": 2,
+    "filesystemArchiveAndAfterSnapshotsCompared": true,
+    "writtenArchiveReadBackBeforeDeletion": true,
+    "archiveFilesFsynced": true,
+    "archiveFileMode": "0600",
+    "disposableNamespaces": [
+      "geth",
+      "gwemix",
+      "gwbft",
+      "gstable"
+    ],
+    "rootLevelEtcdAllowed": true,
+    "unknownNamespaceOrProtectedExportRefused": true,
+    "localPrivateKeyAliasesRefused": true,
+    "partialNodeGroupsRefused": true
+  },
+  "filesystemProof": {
+    "acceptedScope": true,
+    "sourceDigest": "dc0a43aa6bc2985d53ab7c8fc5f71476fb1314b601a03184361b5048a0fa0eec",
+    "runtime": "/private/tmp/cbui/rt-f8dlto6x",
+    "positiveClosures": 6,
+    "negativeRefusals": 5,
+    "archives": [
+      {
+        "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c1/server1-metadata.tar.gz",
+        "sha256": "8332a91c58b7202ae51de8a93ab30e8ecf0d8683543c11026992cefb03b01530",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792126544725561183
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c2/server1-metadata.tar.gz",
+        "sha256": "ccfe3db5871ced54fb5ef75033274538c6999b5673b8e8c6009e4e837333e83d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792126546550996101
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c3/server1-metadata.tar.gz",
+        "sha256": "13a49c4f2fecbbd8fb98c0a682883ea6bebf03f3a39dc7be5e27ad65f639e554",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792126548165891275
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c4/server1-metadata.tar.gz",
+        "sha256": "2e132489c63fd9f89d26c88e4d419609e01499b3e0753babc47383724125b36e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792126549610172667
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c5/server1-metadata.tar.gz",
+        "sha256": "4248d8ee87edb6afec0ccc1dff8f8b72c7bbe5c04cc0ef6e64ce9b85939c45db",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792126550877900088
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c6/server1-metadata.tar.gz",
+        "sha256": "0a8b10447cbee085642b90e02441449311b320a1292881b0ac99beb8ac443adc",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792126552753023869
+      }
+    ],
+    "archiveEntries": 61,
+    "localFilesPreserved": 60,
+    "freshIndependentInventories": 2,
+    "preservedCanaries": 2,
+    "remainingDatabasePaths": 0,
+    "nativeCasesExecuted": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "nativeStorageProof": {
+    "acceptedStorageScope": true,
+    "sourceDigest": "dc0a43aa6bc2985d53ab7c8fc5f71476fb1314b601a03184361b5048a0fa0eec",
+    "runtime": "/private/tmp/cbui/rn-a0czx6ou",
+    "cases": [
+      {
+        "chain": "stablenet",
+        "exitCode": 0,
+        "nativeCasePassed": true,
+        "assertions": 3,
+        "storageClosed": true
+      },
+      {
+        "chain": "wbft",
+        "exitCode": 0,
+        "nativeCasePassed": true,
+        "assertions": 3,
+        "storageClosed": true
+      },
+      {
+        "chain": "wemix",
+        "exitCode": 2,
+        "nativeCasePassed": false,
+        "assertions": 0,
+        "storageClosed": true
+      }
+    ],
+    "nativeCasesAllPassed": false,
+    "archiveEntries": 735,
+    "archiveCount": 15,
+    "archives": [
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server1-metadata.tar.gz",
+        "sha256": "79a6d2a8b14431a5448daa172d58bac5a254715f94af8173872b43a4b892889e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128332850074301
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server2-metadata.tar.gz",
+        "sha256": "9d8ad011dc515fedee22ba9b403c98d9250f31fcaaa61956f6029d1d9b2a4443",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128342630521278
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server3-metadata.tar.gz",
+        "sha256": "c3843ab7a88af69715ba3d24e954b6092848296ba784a8901f56db76c94d9b59",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128357291971401
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server4-metadata.tar.gz",
+        "sha256": "758fc3fa21381c5187d70a0812cbbb176bcc1e4dad57df66139c76fa3a99dffd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128369326713372
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server5-metadata.tar.gz",
+        "sha256": "91ef306febbe79583382e756d6fbcf80116553e0e9ae7d20990ee98b2a43ece2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128385112236149
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server1-metadata.tar.gz",
+        "sha256": "2aad330ae44e2a760008eda0ead01608612fa6598d49402f89cda46b4b950234",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128471915856158
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server2-metadata.tar.gz",
+        "sha256": "766d4c1ed8e426c0881e25df5a0a520ceeca9d8d5cbc520c890cdf8848d24e56",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128496100131249
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server3-metadata.tar.gz",
+        "sha256": "d865e02f1beb47c11920bf4f4c4e74d9c251412d268172e3fea6feec851e431c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128520965504021
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server4-metadata.tar.gz",
+        "sha256": "609a26d3cc29461a34853251527aa13d209b24246439399668998202b0d1e0d8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128538791796660
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server5-metadata.tar.gz",
+        "sha256": "eb241275717ab1a18adbfcb1b50c7cfdf2b4af1020fdea437de19e6dc6c4a0a9",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128559703450346
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server1-metadata.tar.gz",
+        "sha256": "5b9e485159f525b0e3d5df9a5c137b54aea5962cf3f3d66280cb63f566dce732",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128703079806311
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server2-metadata.tar.gz",
+        "sha256": "21e20c19e4338f828443ffbb200619dc8d349a99eabd663b76852be253ec73fa",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128711495384160
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server3-metadata.tar.gz",
+        "sha256": "5e3c59392cf0b30ebff0c1334ec6e4e458807729f02dbcbff6e8f3f187b2db89",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128719944513621
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server4-metadata.tar.gz",
+        "sha256": "37396436ad74511dda782717bb8654afb4476388e2d6f136fa529f05f54c765f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128728504076443
+      },
+      {
+        "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server5-metadata.tar.gz",
+        "sha256": "ae0eb0fa2e6c5c2386f9dfce04ee8816de46c45ca53e17ae3696f2629cfb2ed2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792128737028277171
+      }
+    ],
+    "localFilesPreserved": 374,
+    "liveExecutableHashesVerified": 10,
+    "independentRPCObservations": 30,
+    "freshIndependentProcessInventories": 30,
+    "remainingDatabasePaths": 0,
+    "sharedRemoteKeysUnchanged": true,
+    "presetFilesUnchanged": 45,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "functionalResults": {
+    "passed": 2,
+    "blocked": 1,
+    "allPassed": false,
+    "wemixStatus": {
+      "id": "basic-consensus",
+      "seq": 1,
+      "result": "blocked",
+      "env": "env-fbdedd0a7bb7",
+      "reason": "consensus capability unknown: rpc_probe_unavailable",
+      "presetId": "wemix-bp4-en1"
+    },
+    "wemixCapabilityProbe": {
+      "capability": "consensus",
+      "status": "unknown",
+      "source": "poa runtime validators",
+      "node": 1,
+      "reason": "rpc_probe_unavailable",
+      "validatorCount": 4,
+      "nodes": [
+        {
+          "chain": "wemix",
+          "node": 1,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 2,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 3,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 4,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 5,
+          "role": "en",
+          "status": "unknown",
+          "source": "poa runtime validators",
+          "reason": "rpc_probe_unavailable"
+        }
+      ]
+    },
+    "wemixAllFiveRPCNodesReachedHeight": "51",
+    "wemixUnauthorizedBlockOccurrencesObserved": 0,
+    "causeOfENConsensusProbeUnknown": "Not yet established; do not classify this as W3."
+  },
+  "firstNativeAttempt": {
+    "acceptedTransportAttempt": false,
+    "reason": "Observer installed only on server1 was incorrectly required on every target by the private producer. The transport refused the missing file.",
+    "originalSummaryRetained": true,
+    "batchedArchives": 1,
+    "fallbackArchives": 5,
+    "fallbackPreservationAuditAccepted": true,
+    "remainingDatabasePaths": 0,
+    "newAttemptUsesPerTargetInputManifest": true,
+    "sameSourceCLIReusedWithIndependentInode": true
+  },
+  "preservationFields": [
+    "file bytes/SHA256",
+    "type",
+    "mode",
+    "uid",
+    "gid",
+    "nanosecond mtime",
+    "symlink target"
+  ],
+  "limitations": [
+    "Filesystem fixtures execute no blockchain case; six closures and five refusals are separate from the native chain attempts.",
+    "Native StableNet and WBFT each passed one public case with three assertions; WEMIX was BLOCKED before DSL assertions because its EN consensus capability query was unknown. No criterion was weakened or skipped.",
+    "The WEMIX blocked attempt still exercised real five-node start/stop and successful data preservation/reclamation. Only the two passing profiles have live executable and independent raw RPC verification.",
+    "Thirty native independent process/FD observations,735 native archive entries,374 local files and45 original preset files were checked. Fifteen archives do not mean15 distinct functional cases.",
+    "Only the listed POSIX metadata fields are attested; extended ACL/xattr preservation is not claimed by this Linux archive protocol.",
+    "Unknown/protected paths cause refusal; exported data is not silently deleted. Synthetic canary files were explicitly relocated with their metadata preserved after refusal.",
+    "Full L1, original87, whole legacy, W3/W4 resolution and final Web acceptance remain open."
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/linux_retention_transport.py",
+      "sha256": "6ffba337e27dca300039d6f32e793580a20faa3d319aee96d0c378295dd42838",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792125845246182864
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/test_linux_retention_transport.py",
+      "sha256": "6eafd9e5b3449cb0e06a564b1ca401105d0db8fb7d12de3d3688cfef4364c3a1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792125630566458607
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/Makefile",
+      "sha256": "94cdf2a3bb6e2b8d6e21a7a87ba8d23a5e15219a3b70c043351185033de97be3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792125377366921890
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/.github/workflows/ci.yml",
+      "sha256": "9df66002183fd132c9b0ea63c8399cdcd5ecb013542a3b024e1979f9f6d1f82e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792125377367278847
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-20261016-start.json",
+      "sha256": "c86e1cfb62d8b0ab81c8d777ab05573068a136afa4814a3e9b1ef333b701f366",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126538580604285
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-20261016-summary.json",
+      "sha256": "093a8783c85bf80229b989bd5c70a48a51d8022f96fd9e6e6d590f3da88227ba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126553479100379
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-20261016-independent.json",
+      "sha256": "ff6227c220cbbfa489ea190e95e960f5c384eaa019b0ee14ff3fe275e0c8bb98",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126664606912989
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-20261016-start.json",
+      "sha256": "013f327aba6d8caac607077a0934a9c56d62bff108c9eda5fe0b8a2b40ae7ee6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128212294953983
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-20261016-summary.json",
+      "sha256": "c2fddf61cfe8b97b16583031f22f0f88eb87974016677410c667f47fed11efc5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128741518184810
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-20261016-independent.json",
+      "sha256": "4b4fc47573dc59d858869d1f4912d552cab734833cff2385387577cb0506c1f9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792129068113178822
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-20261016-start.json",
+      "sha256": "7a0c3bf85e2659acedba96b0f6d4e880a9f3639cf64c7fe20cda4d832e2bf632",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127212592301625
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-20261016-summary.json",
+      "sha256": "50aa1f0c9b24c84b0b191a8690fab5a2a0e0ee0a8680ad89f63478b22fb1e113",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127547330322399
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-20261016-failure-independent2.json",
+      "sha256": "97882d8f4f34957f7f78c26a19f5960f87c3a6a01a359e0be56aae642a438338",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128064189290371
+    },
+    {
+      "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c1/server1-metadata.tar.gz",
+      "sha256": "8332a91c58b7202ae51de8a93ab30e8ecf0d8683543c11026992cefb03b01530",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126544725561183
+    },
+    {
+      "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c2/server1-metadata.tar.gz",
+      "sha256": "ccfe3db5871ced54fb5ef75033274538c6999b5673b8e8c6009e4e837333e83d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126546550996101
+    },
+    {
+      "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c3/server1-metadata.tar.gz",
+      "sha256": "13a49c4f2fecbbd8fb98c0a682883ea6bebf03f3a39dc7be5e27ad65f639e554",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126548165891275
+    },
+    {
+      "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c4/server1-metadata.tar.gz",
+      "sha256": "2e132489c63fd9f89d26c88e4d419609e01499b3e0753babc47383724125b36e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126549610172667
+    },
+    {
+      "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c5/server1-metadata.tar.gz",
+      "sha256": "4248d8ee87edb6afec0ccc1dff8f8b72c7bbe5c04cc0ef6e64ce9b85939c45db",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126550877900088
+    },
+    {
+      "path": "/private/tmp/cbui/rt-f8dlto6x/reports/positive-c6/server1-metadata.tar.gz",
+      "sha256": "0a8b10447cbee085642b90e02441449311b320a1292881b0ac99beb8ac443adc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126552753023869
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server1-metadata.tar.gz",
+      "sha256": "79a6d2a8b14431a5448daa172d58bac5a254715f94af8173872b43a4b892889e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128332850074301
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server2-metadata.tar.gz",
+      "sha256": "9d8ad011dc515fedee22ba9b403c98d9250f31fcaaa61956f6029d1d9b2a4443",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128342630521278
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server3-metadata.tar.gz",
+      "sha256": "c3843ab7a88af69715ba3d24e954b6092848296ba784a8901f56db76c94d9b59",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128357291971401
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server4-metadata.tar.gz",
+      "sha256": "758fc3fa21381c5187d70a0812cbbb176bcc1e4dad57df66139c76fa3a99dffd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128369326713372
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c1/retention/server5-metadata.tar.gz",
+      "sha256": "91ef306febbe79583382e756d6fbcf80116553e0e9ae7d20990ee98b2a43ece2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128385112236149
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server1-metadata.tar.gz",
+      "sha256": "2aad330ae44e2a760008eda0ead01608612fa6598d49402f89cda46b4b950234",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128471915856158
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server2-metadata.tar.gz",
+      "sha256": "766d4c1ed8e426c0881e25df5a0a520ceeca9d8d5cbc520c890cdf8848d24e56",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128496100131249
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server3-metadata.tar.gz",
+      "sha256": "d865e02f1beb47c11920bf4f4c4e74d9c251412d268172e3fea6feec851e431c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128520965504021
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server4-metadata.tar.gz",
+      "sha256": "609a26d3cc29461a34853251527aa13d209b24246439399668998202b0d1e0d8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128538791796660
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c2/retention/server5-metadata.tar.gz",
+      "sha256": "eb241275717ab1a18adbfcb1b50c7cfdf2b4af1020fdea437de19e6dc6c4a0a9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128559703450346
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server1-metadata.tar.gz",
+      "sha256": "5b9e485159f525b0e3d5df9a5c137b54aea5962cf3f3d66280cb63f566dce732",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128703079806311
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server2-metadata.tar.gz",
+      "sha256": "21e20c19e4338f828443ffbb200619dc8d349a99eabd663b76852be253ec73fa",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128711495384160
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server3-metadata.tar.gz",
+      "sha256": "5e3c59392cf0b30ebff0c1334ec6e4e458807729f02dbcbff6e8f3f187b2db89",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128719944513621
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server4-metadata.tar.gz",
+      "sha256": "37396436ad74511dda782717bb8654afb4476388e2d6f136fa529f05f54c765f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128728504076443
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/retention/server5-metadata.tar.gz",
+      "sha256": "ae0eb0fa2e6c5c2386f9dfce04ee8816de46c45ca53e17ae3696f2629cfb2ed2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128737028277171
+    },
+    {
+      "path": "/private/tmp/cbui/rn-h5a19467/reports/c1/retention/server1-metadata.tar.gz",
+      "sha256": "8af6beb4f489929de0d1f56fa68c2d8d964d3e97a6e51f62df04f32e9be04d34",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127381743374398
+    },
+    {
+      "path": "/private/tmp/cbui/rn-h5a19467/reports/c1/fallback-retention/server1-metadata.tar.gz",
+      "sha256": "c7c2aef71bf0ccf636b86881f110898e82cc0cca0e2c3cf3d73e9f40e6c6a90d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127432745617742
+    },
+    {
+      "path": "/private/tmp/cbui/rn-h5a19467/reports/c1/fallback-retention/server2-metadata.tar.gz",
+      "sha256": "94fd9f44ea1f27fabb71d5f20387b7e85e577f574852a1e31bcb14c6c6c72f51",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127456492667010
+    },
+    {
+      "path": "/private/tmp/cbui/rn-h5a19467/reports/c1/fallback-retention/server3-metadata.tar.gz",
+      "sha256": "e62837eade5aa18016b4d2c3cca48b1b617bc7c47cf3ac7328a60d3865c8e71b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127485526607153
+    },
+    {
+      "path": "/private/tmp/cbui/rn-h5a19467/reports/c1/fallback-retention/server4-metadata.tar.gz",
+      "sha256": "92023e9278e290cc07dc0b15720277a629b951cd928f987cb4eeabe36386929d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127513885040806
+    },
+    {
+      "path": "/private/tmp/cbui/rn-h5a19467/reports/c1/fallback-retention/server5-metadata.tar.gz",
+      "sha256": "a19aad9bc6407c10e04b59ebcef3720d86cdf34fd0b928605ed58facd0e555ab",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127542109853255
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/sessions/20261016-052923-40322/UTC-20261016-052923/tests/001_basic-consensus/status.json",
+      "sha256": "7988e11f76ba90f4919dcf1b57a3db6aa7a673be7d44043cf4218b647259c513",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128689585481273
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/sessions/20261016-052923-40322/UTC-20261016-052923/tests/001_basic-consensus/observations/capability-probes.json",
+      "sha256": "42b0f6c0a0a541263024bef79d34483794581dee37802aea112090ed2650db79",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128689580898696
+    },
+    {
+      "path": "/private/tmp/cbui/rn-a0czx6ou/reports/c3/sessions/20261016-052923-40322/UTC-20261016-052923/tests/001_basic-consensus/observations/network-capability-probes.json",
+      "sha256": "e7d1356cf89eb67e536f285e16663f308266d4c33a5f5dc490dfd1311b630b06",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128689584997236
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-20261016.py",
+      "sha256": "6f329a9f60e91873b2f51ae07670a3e25dcde345492bf901a53b94a6d9ad4f19",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126537866332237
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-independent-20261016.py",
+      "sha256": "e85610effc0b7eaa4de0555f414a45c3b9b1d201f2f2ef6a40f02042efbb4d6e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126537866853148
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-20261016.py",
+      "sha256": "a2fc061ca5d8cd6492b2727121689a8ac39ac63abb9b6e72bf3ae717fb7d5945",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127155693428154
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-independent-20261016.py",
+      "sha256": "c43df2f56f55146eb8c4d6629d274b03b6f15612a091f928a066e2879ec1a608",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127155704275542
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-fallback-20261016.py",
+      "sha256": "5eae89b1046e6a51dc08f9d960ffe5a00f1bc8857f2f7b43f08633b9d7cfc6bd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127061438114523
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-failure-independent-20261016.py",
+      "sha256": "c9d258beed2475949bcdb687ebdfdcd73ad276ad365538e1302ebc45ab4d32b0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127761150756431
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-failure-independent2-20261016.py",
+      "sha256": "cd60df5d7b9e3b826517c4a0c366c0c950c98ca53298dfe6cf9f496b24f998ca",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128045812158976
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-20261016.py",
+      "sha256": "9130de4ec0c42c90b825b6106df1f6f53e7c3f7a9c4c2e75427e128e62a34aca",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128045812599889
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-independent-20261016.py",
+      "sha256": "8255f64e4cf7a61315f7305f3d20f245561177000fcd1d889bcdcfbcaa62fd8b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127890356962123
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-fallback-20261016.py",
+      "sha256": "1f9cd497ef7a00f3bb3bd6783c56992361ff02cc6fcdd706ca677302d365e76e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127890355608595
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-capture-ast-20261016.json",
+      "sha256": "3155bda712b37e9f51e71cbb313b9f4e1718d0598d118c78581df1489166b758",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126792826515317
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-delete-ast-20261016.json",
+      "sha256": "06f62c77236b04a3fef878c9aae2b406482900317f5592e0c0d1a54826d57e53",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126792835392142
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-red-20261016.log",
+      "sha256": "43978a51b8bbd327387ac3eeb241df4afefa3fc3b7467b1ccffc234752c95c46",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125250692998152
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-key-alias-red-20261016.log",
+      "sha256": "3ab1122c3781347f75bb1a7b0f24eb84ff9e9fdbe5ed3f538ff90fe450af684d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125446229269081
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-node-group-red-20261016.log",
+      "sha256": "1cb6b1057c27257f33bf95d374a1e18e357a7b9488659c5ae9f40f1f24e56ed8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125630993859715
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-green-20261016.log",
+      "sha256": "837075977bcb1b6c115c621296c75d898d5a9d4c21f4316b80fa8af2bbe05dae",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125377467029572
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-green2-20261016.log",
+      "sha256": "bea9256c681c1a6fc6ac6f10f3baba9e0685da59076878d895c09eba17715270",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125510380387677
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-green3-20261016.log",
+      "sha256": "1fc786ec09971f45973026963001c119106185fe80a590edc5513d7692643108",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125529800671753
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-green4-20261016.log",
+      "sha256": "fad58bc9700829bd72229d937ce27bc153962be7620966eac439614b2ed6e4e1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125666911386394
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-related-20261016.log",
+      "sha256": "ffa828a4335644c4956493383744658e60aa34da574bade27cd9c371398e0957",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125517288703457
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-related2-20261016.log",
+      "sha256": "5b876a99621df0259f96138ed970b3ed2ebb42e31050467b92f61ad192b32ff4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125536081589269
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-related3-20261016.log",
+      "sha256": "723885ec405425a305673ae5fb39a7144ea0f884e6fc11b9bd0e60b4be6fc91a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125673313383999
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-ready-check-20261016.log",
+      "sha256": "fd1f7e61ecca06bdedf6a7fb0340f0c789efa88793f03bee84adf2ad43496509",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792125951706449538
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-driver-20261016.log",
+      "sha256": "050f3456b032269679207eba4b0886e618e55edeb8fe3fca79ee2319e3900cd1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126553479584624
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-filesystem-independent-20261016.log",
+      "sha256": "f2f867fe5a92503f33913340d4a30ef0fb203ea0ea17c69b57bb2d338e8d4045",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792126664609347172
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-driver-20261016.log",
+      "sha256": "c1dd7307aacb6ee45b85ba91798817bb1db27ba12c853778291b805f566678b4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127547345123079
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-failure-independent-20261016.log",
+      "sha256": "96deeb410ede85f004e46a6849eb125d425bc42992a5918ee3b5971eaebe8883",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792127765064163101
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native-failure-independent2-20261016.log",
+      "sha256": "e7c93c16e1f06796fc38f8fd7f97934e15462dbfe19f9fa9e1ea7fef1f5f9003",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128064189520743
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-driver-20261016.log",
+      "sha256": "d89a4948a0419b0eedf8b9adc106a9324ef620af63840bf62ba755773ad6cf2d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792128741551145887
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-transport-native2-independent-20261016.log",
+      "sha256": "1187257910db223f07aa3bfdf3d3ade54296d705517c2716b7fbccb76fe402b4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792129068113833259
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-transport-published-check-20261016.log",
+      "sha256": "f9a981ea58e9b7a678b346a2d077c1a96bbaa314ae64c87f375809cca5362afb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130353148700601
+    }
+  ]
+}

@@ -60,6 +60,8 @@ jobs:
         run: make tc-review
       - name: Public case command guide guard
         run: make case-docs
+      - name: Sweep retention lifecycle contracts
+        run: make sweep-test
       # The e2e suites need chain binaries and never run here, so nothing else
       # compiles them. That is how two of them came to reference a type deleted
       # months earlier: the removal checked for callers, and a build tag hid
