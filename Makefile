@@ -16,7 +16,7 @@ GOLANGCI ?= $(BIN_DIR)/golangci-lint
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build $(CMDS) test test-race test-e2e tc-review sweep-test case-docs cover lint lint-tool fmt fmt-check vet tidy secrets check clean
+.PHONY: help build $(CMDS) test test-race test-e2e tc-review sweep-test case-docs fixture-test cover lint lint-tool fmt fmt-check vet tidy secrets check clean
 
 help: ## list the targets
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -48,6 +48,9 @@ sweep-test: ## verify sweep retention and failure lifecycle contracts
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_tcsweep_rounds.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention_transport.py
+
+fixture-test: ## verify owned Docker fixture selection without Docker
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_docker_regression_prepare.py
 
 case-docs: ## verify every current public case has an up-to-date command entry
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_case_command_docs.py
@@ -115,7 +118,7 @@ tidy: ## go mod tidy
 secrets: ## scan the tree for secrets (pre-commit gate)
 	bash scripts/check-secrets.sh --all
 
-check: fmt-check vet lint test tc-review sweep-test case-docs ## everything a commit should pass
+check: fmt-check vet lint test tc-review sweep-test case-docs fixture-test ## everything a commit should pass
 
 clean: ## remove build output
 	rm -rf $(BIN_DIR) coverage.out coverage.html

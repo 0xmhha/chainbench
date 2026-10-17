@@ -342,3 +342,11 @@ three times, protects an open dependency, then deliberately fails each reproduct
 and checks that dependency copies disappear while locks, partial verdicts and all
 existing JSON proof bytes, modes and mtimes remain unchanged. It writes a separate
 `/private/tmp/chainbench-browser-dependency-proof.json` report.
+
+Docker-gated regression preparation requires `CHAINBENCH_DOCKER_SERVERS` to name
+the same generated build directory as the Go tests. The preparation helper uses
+the real server-set/local-map loaders and checks the selected Compose service,
+container ID, running state, bridge address and loopback SSH publication before
+writing. Existing fixture bytes, types, ownership and permissions must match;
+conflicts are refused and preserved. Only missing fixtures are installed, and
+private staging is removed. Run `make fixture-test` for the Docker-free contracts.

@@ -27,8 +27,8 @@
 | `internal/` | 54 | 86,948 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 1,104 |
-| `tests/` | 1 | 135 |
-| **합계** | **78** | **93,886** |
+| `tests/` | 2 | 392 |
+| **합계** | **79** | **94,143** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -244,10 +244,12 @@ scripts/inventory/
 
 ---
 
-## 6. `tests/` — 1패키지 135줄 · 소유 fixture 도구
+## 6. `tests/` — 2패키지 392줄 · 소유 fixture 도구
 
 ```
 tests/webui/fixtures/
+├── dockerprepare  257  지정된 서버 설정·compose 출처·주소·SSH 매핑을 대조해 live 준비 파일을 생성한다.
+│                         기존 bytes/권한이 다르면 덮어쓰지 않고 거절한다.
 └── legacykeys  135  중지한 전용 Web 보안 fixture에 구형 노드 키 문서/암호화 import를 준비한다.
                      실제 서버 재시작·격리·공개 읽기/export·SSE 검증용. 사용자 저장소에는 실행하지 않는다.
 ```
