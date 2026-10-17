@@ -191,6 +191,80 @@ class AllCodeGraphTest(unittest.TestCase):
             self.assertEqual(graph['files'][0]['embeddedASTs'], 2)
             self.assertTrue(any(n.get('name') == 'json.dumps' for n in graph['nodes']))
 
+    def test_shell_stdin_marker_accepts_dynamic_program_arguments(self):
+        sources = {
+            'arguments.sh': "python3 - \"$1\" \"$ROOT\" <<'PY'\nimport json; json.dumps({})\nPY\n",
+            'options.sh': "python3 -B - \"$arg\" -c <<'PY'\nimport json; json.dumps({})\nPY\n",
+            'docker.sh': "docker exec -i \"$container\" python3 - \"$arg\" <<'PY'\nimport json; json.dumps({})\nPY\n",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items():
+                self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            calls = [n for n in graph['nodes'] if n.get('name') == 'json.dumps']
+            self.assertEqual({n['file'] for n in calls}, set(sources))
+            self.assertTrue(all(n.get('sourceContext', {}).get('language') == 'python' for n in calls))
+
+    def test_python_subprocess_stdin_marker_accepts_dynamic_arguments(self):
+        source = 'import subprocess\ndef launch(argument):\n    subprocess.run(["python3", "-", argument], input="import json; json.dumps({})", text=True)\n'
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); self.fixture(root, 'child.py', source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertTrue(any(n.get('name') == 'json.dumps' and n.get('sourceContext', {}).get('language') == 'python' for n in graph['nodes']))
+
+    def test_node_stdin_marker_accepts_dynamic_arguments(self):
+        source = "node - \"$arg\" <<'JS'\nJSON.stringify({});\nJS\n"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); self.fixture(root, 'child.sh', source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertTrue(any(n.get('name') == 'JSON.stringify' and n.get('sourceContext', {}).get('language') == 'javascript' for n in graph['nodes']))
+
+    def test_dynamic_arguments_cannot_hide_invalid_stdin_programs(self):
+        cases = [
+            ('child.sh', "python3 - \"$arg\" <<'PY'\ndef broken(:\nPY\n"),
+            ('child.py', 'import subprocess\ndef launch(argument):\n    subprocess.run(["python3", "-", argument], input="def broken(:", text=True)\n'),
+            ('node.sh', "node - \"$arg\" <<'JS'\nfunction broken( {\nJS\n"),
+        ]
+        for path, source in cases:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory); self.fixture(root, path, source)
+                result = self.run_graph(root)
+                self.assertNotEqual(result.returncode, 0, 'known stdin source was opaque')
+                self.assertIn(path, [x['path'] for x in json.loads(result.stdout)['missing']])
+
+    def test_eval_flag_after_stdin_marker_is_data(self):
+        source = "python3 - -c 'def broken(:' <<'PY'\nimport json; json.dumps({})\nPY\n"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); self.fixture(root, 'data.sh', source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertEqual(graph['files'][0]['embeddedASTs'], 1)
+            self.assertTrue(any(n.get('name') == 'json.dumps' for n in graph['nodes']))
+
+    def test_dynamic_options_before_marker_and_script_file_stdin_remain_opaque(self):
+        sources = {
+            'unknown.sh': "python3 \"$mode\" - <<'PY'\ndef broken(:\nPY\n",
+            'script.sh': "python3 script.py - \"$arg\" <<'DATA'\ndef broken(:\nDATA\n",
+            'explicit.sh': "python3 -c 'print(1)' - \"$arg\" <<'DATA'\ndef broken(:\nDATA\n",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, source in sources.items():
+                self.fixture(root, path, source)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertEqual([n['file'] for n in graph['nodes'] if n['kind'] == 'dynamic-program-input'], ['unknown.sh'])
+            self.assertFalse(any(n.get('name') == 'broken' for n in graph['nodes']))
+
 
     def test_explicit_command_takes_precedence_over_shell_stdin_mode(self):
         source = "sh -s -c 'printf ok' <<'DATA'\nif then\nDATA\n"

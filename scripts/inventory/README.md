@@ -29,7 +29,9 @@ calls, and shell commands with known interpreter `-c`/`-e` payloads are also
 parsed when their lexical bindings resolve to constant source. Python import
 aliases and local scopes are respected; shell standard input is treated as code
 only when the interpreter reads it as a program. Data passed to a script file
-is not parsed as interpreter source. Python subprocess `input=` supports constant
+is not parsed as interpreter source. An explicit `-` selects stdin source before
+later dynamic program arguments; option-looking operands after it are data.
+Unknown options before the marker remain unresolved. Python subprocess `input=` supports constant
 UTF-8 bytes and constant strings encoded with the default/explicit UTF-8 codec.
 Direct interpreter stdin, Docker `exec -i` stdin and literal `xargs -0 -r sh -c`
 programs are included. Docker exec options are deliberately limited to known

@@ -1,0 +1,676 @@
+{
+  "date": "2026-10-18",
+  "scope": "Fix conservative interpreter stdin boundary classification and refresh all owned code graphs after sweep family/output regressions. Syntax inventory, not complete dynamic evaluation, typed call graph, blockchain runtime coverage, full L1 or final Web acceptance.",
+  "headAtProof": "e7a5dd1d87f2ff128f08270cd8256ddfba4e4628",
+  "red": {
+    "canonicalParserContracts": 21,
+    "failingObservations": 7,
+    "reason": "An explicit stdin marker did not end inline-option scanning: later dynamic program arguments hid known payloads and a later -c data operand was parsed as code. Shell/Python/Node source fixtures fail under the old boundary.",
+    "log": {
+      "path": "/private/tmp/chainbench-ast-stdin-argument-red-callable-20261018.log",
+      "sha256": "a833115976ebbac536b8be3f0616f7a622cfd651023046cfe4e7c24421d5a6c7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268052898250128
+    }
+  },
+  "green": {
+    "parserContracts": 21,
+    "makeCheckExitCode": 0,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-argument-green-20261018.log",
+        "sha256": "d6765208d492af68d56ea9cd790181f117d564f23e50ed6fb67e53fbdc0c384b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268079349790756
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-argument-check-20261018.log",
+        "sha256": "f1a1bbada2404ccc57862efe420f02fa06f8a547e334a18f74f812161d384805",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268221865382167
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-parser-contracts-20261018.log",
+        "sha256": "39821b010b79c2330b3df642ecabea931bad8ddfe6473d9cdaef1cae77ee38cf",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792267892378106645
+      }
+    ]
+  },
+  "implementation": "Treat standalone - as an interpreter operand boundary before subsequent program arguments. Preserve explicit command precedence, opaque script-file stdin and unresolved options before the marker. Programs are parsed, never executed by inventory.",
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "369a135548272f467ecb920c15c3a7a3c69187f485bf841c64c1c79a5b222963",
+    "sourceAfter": "369a135548272f467ecb920c15c3a7a3c69187f485bf841c64c1c79a5b222963",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-sweep-round-refresh-run-20261018.py": "88392e4138078e64d085e694723617be4cedd9b664c33963622f80e0172ed769",
+      "/private/tmp/chainbench-ast-stdin-argument-red-callable-20261018.log": "a833115976ebbac536b8be3f0616f7a622cfd651023046cfe4e7c24421d5a6c7",
+      "/private/tmp/chainbench-ast-stdin-argument-green-20261018.log": "d6765208d492af68d56ea9cd790181f117d564f23e50ed6fb67e53fbdc0c384b",
+      "/private/tmp/chainbench-ast-sweep-round-refresh-specific-20261018.py": "b1db1f787557593a887a8ec06972f09bdb343ffd055cbee912ea72d6dccaf8f6",
+      "/private/tmp/chainbench-ast-sweep-round-refresh-independent-20261018.py": "df84fc2436171a4d09235e15e7aabce01d9e2cfd475f79cfe6799a5999b355c5",
+      "/private/tmp/chainbench-ast-stdin-red-20261016.log": "e1db9a7976fc2942a1def26d38bd51dfa4200ee834b0da4969e4a5e0a765eacb",
+      "/private/tmp/chainbench-ast-stdin-option-red-20261016.log": "623d0808abe9edfd0c21d4aea64b580bca57d66e3de65fffc8884bd5577ca049",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-sweep-round-refresh-run-20261018.py": "88392e4138078e64d085e694723617be4cedd9b664c33963622f80e0172ed769",
+      "/private/tmp/chainbench-ast-stdin-argument-red-callable-20261018.log": "a833115976ebbac536b8be3f0616f7a622cfd651023046cfe4e7c24421d5a6c7",
+      "/private/tmp/chainbench-ast-stdin-argument-green-20261018.log": "d6765208d492af68d56ea9cd790181f117d564f23e50ed6fb67e53fbdc0c384b",
+      "/private/tmp/chainbench-ast-sweep-round-refresh-specific-20261018.py": "b1db1f787557593a887a8ec06972f09bdb343ffd055cbee912ea72d6dccaf8f6",
+      "/private/tmp/chainbench-ast-sweep-round-refresh-independent-20261018.py": "df84fc2436171a4d09235e15e7aabce01d9e2cfd475f79cfe6799a5999b355c5",
+      "/private/tmp/chainbench-ast-stdin-red-20261016.log": "e1db9a7976fc2942a1def26d38bd51dfa4200ee834b0da4969e4a5e0a765eacb",
+      "/private/tmp/chainbench-ast-stdin-option-red-20261016.log": "623d0808abe9edfd0c21d4aea64b580bca57d66e3de65fffc8884bd5577ca049",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-capture.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268269240845841
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274154302635
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274866457837
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268275462092118
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-capture.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138728191556278
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-independent.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138732584954949
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733279929901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733858826845
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-capture.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256047559989444
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-independent.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256052213855427
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256054193014048
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256055161286677
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-capture.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260738390205874
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-independent.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260742921095712
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260743646057877
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260744252072557
+      }
+    ],
+    "elapsedSeconds": 12.084145417087711,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independentAudit": {
+    "accepted": true,
+    "sourceDigest": "369a135548272f467ecb920c15c3a7a3c69187f485bf841c64c1c79a5b222963",
+    "graphReproduced": true,
+    "counts": {
+      "parsedFiles": 2075,
+      "languages": {
+        "toml": 1,
+        "yaml": 11,
+        "make": 1,
+        "go": 1402,
+        "json": 352,
+        "python": 124,
+        "gomod": 2,
+        "bash": 62,
+        "dockerfile": 1,
+        "gosum": 1,
+        "html": 3,
+        "css": 1,
+        "javascript": 89,
+        "svelte": 25
+      },
+      "nodes": 136638,
+      "edges": 145824,
+      "excluded": 425,
+      "missing": 0
+    },
+    "ownedPaths": 2500,
+    "goTestFilesParsed": 797,
+    "embeddedASTs": 44,
+    "dynamicProgramInputs": 31,
+    "areas": {
+      ".betterleaks.toml": 1,
+      ".github": 1,
+      ".golangci.yml": 1,
+      "Makefile": 1,
+      "cmd": 180,
+      "docs": 109,
+      "env": 5,
+      "examples": 23,
+      "go.mod": 1,
+      "go.sum": 1,
+      "install.sh": 1,
+      "accounts": 31,
+      "app": 194,
+      "internal": 41,
+      "chains": 23,
+      "chainsetup": 149,
+      "consensus": 29,
+      "core": 287,
+      "dashboard": 47,
+      "dsl": 48,
+      "feature": 18,
+      "mcp": 47,
+      "preset": 3,
+      "resource": 46,
+      "testengine": 151,
+      "testhelper": 95,
+      "webcli": 2,
+      "presets": 42,
+      "scripts": 28,
+      "server-set.sample.yaml": 1,
+      "setup.sh": 1,
+      "tests": 417,
+      "uninstall.sh": 1,
+      "web": 49,
+      "workspace-config.sample.yaml": 1
+    },
+    "nodeKinds": {
+      "file": 2075,
+      "call": 100236,
+      "dynamic-program-input": 31,
+      "target": 20,
+      "function": 6503,
+      "import": 10115,
+      "binding": 11144,
+      "type": 1371,
+      "method": 1661,
+      "dsl-operation": 2798,
+      "template-parameter": 7,
+      "selector": 421,
+      "package": 82,
+      "dependency": 174
+    },
+    "exclusionReasons": {
+      "documentation or non-executable data": 221,
+      "generated proof metadata, not executable source": 157,
+      "test data, not executable source": 47
+    },
+    "auditNegativeControlsRejected": [
+      "omitted owned source",
+      "stale source digest",
+      "duplicate graph node",
+      "dangling edge",
+      "parser failure hidden by success count",
+      "zero parsed syntax",
+      "embedded identity absent",
+      "false summary count",
+      "nested input origin forged",
+      "unclassified exclusion",
+      "Docker capture program omitted",
+      "nested deletion call omitted"
+    ],
+    "a8": {
+      "nonMethodExportedSymbols": 1890,
+      "uses": {
+        "inside": 454,
+        "outside": 1171,
+        "test": 176,
+        "signature": 80,
+        "set": 9
+      },
+      "nowhere": 0,
+      "methodsNotMeasuredByThisReachabilityRule": true
+    },
+    "criticalRuntimeScript": {
+      "path": "internal/testengine/transaction_failure_native_test.go",
+      "language": "python",
+      "sha256": "1c64d0ce637f45c4100f15694cf494b6e59a2b8530e1346083671c7af85c8deb",
+      "reclaimCallObserved": true
+    },
+    "transportPrograms": {
+      "CAPTURE": "cfe0850187fa74fc08796ba810314bff58ae452ce8292ca5b85e0bf64d69ccb3",
+      "DELETE": "179f8a462a134802d62891712aace0bb63d2447b4e110ae06cb72fb0cc8317ee",
+      "NESTED_DELETE": "48033bd685a9cf1022e5800f81af65e7e1ca2b50692e3333b7a2a36719ec7bbe"
+    },
+    "transportProgramCount": 3,
+    "historicalGraphsPreserved": true,
+    "historicalSourceDigest": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "parserVersions": {
+      "go": "go version go1.26.8 darwin/arm64",
+      "python": "3.10.11",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter": "0.25.2",
+      "PyYAML": "6.0.3",
+      "shfmt": "v3.12.0",
+      "frontend": {
+        "node": "v24.17.0",
+        "acorn": "8.17.0",
+        "svelte": "5.56.8",
+        "postcss": "8.5.23"
+      }
+    },
+    "fullDynamicCoverageAccepted": false,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "specificAudit": {
+    "accepted": true,
+    "sourceDigest": "369a135548272f467ecb920c15c3a7a3c69187f485bf841c64c1c79a5b222963",
+    "requiredDeclarationCount": 54,
+    "newSweepRegressionMethods": 16,
+    "newParserRegressionMethods": 6,
+    "fixedSweepStdinPrograms": [
+      "1649298fb0c104016ff1bedca7d5b5b17bad87e3c9eec8763065262935fc4bc8",
+      "1b5c3b50ccf76d5f5b320d1c51ceeb83505b907e7e63880a7fcd087feae4b999",
+      "440798187b68259549697727dd599d6b9eb3615b5f6b87038e7302f4cb67e011",
+      "4bb1ff2684e7028f570f581eaa055d6cbc69dc1a7cd4c89d10b88a867e75e76f"
+    ],
+    "specificOmissionCount": 116,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "sshStdinAudit": {
+    "scope": "Additional read-only audit of two unchanged SSH fixture stdin bodies after fixed-source capture. Source programs were never executed.",
+    "accepted": true,
+    "sourceDigest": "369a135548272f467ecb920c15c3a7a3c69187f485bf841c64c1c79a5b222963",
+    "file": "tests/webui/fixtures/ssh_prepare.sh",
+    "expectedPrograms": {
+      "346240d50f37d1462613ca6e6c2c2b706d56b3ffb81221934e10c646a7422713": "authorized.write_text",
+      "7152c273ad0abce6e7b409ec315e57a1d782d4c37d1e3bfb65be85ac221e05ae": "json.dumps"
+    },
+    "omissionsRejected": [
+      "chainbench-ast-sweep-round-refresh-20261018-capture.json:346240d50f37d1462613ca6e6c2c2b706d56b3ffb81221934e10c646a7422713",
+      "chainbench-ast-sweep-round-refresh-20261018-capture.json:7152c273ad0abce6e7b409ec315e57a1d782d4c37d1e3bfb65be85ac221e05ae",
+      "chainbench-ast-sweep-round-refresh-20261018-independent.json:346240d50f37d1462613ca6e6c2c2b706d56b3ffb81221934e10c646a7422713",
+      "chainbench-ast-sweep-round-refresh-20261018-independent.json:7152c273ad0abce6e7b409ec315e57a1d782d4c37d1e3bfb65be85ac221e05ae"
+    ],
+    "oldScopedGraphDoesNotSatisfyNewCriterion": true,
+    "graphFilesUnchanged": true,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "changesFromPreviousGraph": {
+    "parsedCodeFiles": {
+      "before": 2074,
+      "after": 2075
+    },
+    "embeddedASTs": {
+      "before": 38,
+      "after": 44
+    },
+    "dynamicProgramInputs": {
+      "before": 37,
+      "after": 31
+    },
+    "newlyParsedConstantStdinPrograms": {
+      "scripts/tcsweep.sh": 4,
+      "tests/webui/fixtures/ssh_prepare.sh": 2
+    }
+  },
+  "historicalGraphsPreserved": 26,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-ast-stdin-argument-red-callable-20261018.log",
+      "sha256": "a833115976ebbac536b8be3f0616f7a622cfd651023046cfe4e7c24421d5a6c7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268052898250128
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-stdin-argument-green-20261018.log",
+      "sha256": "d6765208d492af68d56ea9cd790181f117d564f23e50ed6fb67e53fbdc0c384b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268079349790756
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-stdin-argument-check-20261018.log",
+      "sha256": "f1a1bbada2404ccc57862efe420f02fa06f8a547e334a18f74f812161d384805",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268221865382167
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-parser-contracts-20261018.log",
+      "sha256": "39821b010b79c2330b3df642ecabea931bad8ddfe6473d9cdaef1cae77ee38cf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267892378106645
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-summary.json",
+      "sha256": "5689c0f8229c7d2fce5cb5a786a2fd7af6b17958b83962922bd3c4ea745f37f9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268276846662611
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent-audit.json",
+      "sha256": "ec39dd39a3cdd0b1692f0bbf84328a71e491c758e20dd6c1ad36d07e021e4fea",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268315731130114
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-specific-audit.json",
+      "sha256": "683e7878d5f1cf9dcc5412faecc6e22c8394a431a280ef8e945db6edb1cc290e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268455156213624
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-ssh-stdin-audit.json",
+      "sha256": "db4c814afc7416142d7d44ef583fe74832ff30e8e9b24338416b81fc28c8481d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268581748067953
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-run-20261018.py",
+      "sha256": "88392e4138078e64d085e694723617be4cedd9b664c33963622f80e0172ed769",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268233235569030
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-independent-20261018.py",
+      "sha256": "df84fc2436171a4d09235e15e7aabce01d9e2cfd475f79cfe6799a5999b355c5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268233237179636
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-refresh-specific-20261018.py",
+      "sha256": "b1db1f787557593a887a8ec06972f09bdb343ffd055cbee912ea72d6dccaf8f6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268233310622564
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-sweep-round-ssh-stdin-audit-20261018.py",
+      "sha256": "e4f1bead915754c55ff356dc5b7ec5beaab6253270523cfc128f64775b1718d6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792268576815630725
+    }
+  ],
+  "fullDynamicCoverageAccepted": false,
+  "runtimeCoverageAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "documentationValidation": {
+    "command": "go test ./internal/arch -count=1",
+    "exitCode": 0,
+    "log": "/private/tmp/chainbench-ast-stdin-argument-doc-arch-20261018.log",
+    "sha256": "f0cc6f5b39aa1b9c47abf9866b7ada6303a29492bbf93c489717124ed252ecf0"
+  }
+}

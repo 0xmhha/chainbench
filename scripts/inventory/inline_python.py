@@ -120,8 +120,10 @@ def inline_program(arguments):
     for i, flag in enumerate(arguments[1:], 1):
         if not isinstance(flag, str):
             return language, None  # unknown flags may select an inline program
-        if flag == '--' or not flag.startswith('-'):
-            return None, None  # remaining operands belong to a script file
+        if flag in {'--', '-'} or not flag.startswith('-'):
+            # A stdin marker also ends interpreter options. Later dynamic or
+            # option-looking values are arguments to that program, not -c/-e.
+            return None, None
         evaluate = ((language == 'python' and flag == '-c') or
                     (language == 'javascript' and flag in {'-e', '--eval'}) or
                     (language == 'bash' and not flag.startswith('--') and 'c' in flag))
