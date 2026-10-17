@@ -359,3 +359,16 @@ and requires a separately reviewed rebuild. Ordinary Go checks run from the
 checkout, preserving Git-dependent tests. WEB-14 alone opens the mandatory live
 gates for its serial, uncached (`-count=1`) full race run with a three-hour
 per-package upper bound. E2E vet is not reported as E2E execution.
+
+All native fixture builders use the existing `WEBUI_SELECTED_BINARIES` manifest
+(default `.ouroboros/web-ui-analysis/selected-binaries/manifest.json`). It must
+contain exactly one StableNet, WBFT and WEMIX profile with `binary`, `repository`,
+`embeddedCommit`, `sha256` and, for WEB-01, `dialect`. Each binary's checksum,
+embedded commit, source family and host compatibility are verified before any
+fixture copies are made. Missing or stale selections fail instead of falling
+back to a developer's old local build. Recheck carries the same explicit selection.
+
+When a native binary omits the legacy `Git Commit` version line, selection must
+verify its exact Git revision and `vcs.modified=false` through `go version -m`.
+The observed identity method and build-info digest are retained. A conflicting
+version stamp or modified/missing Go VCS metadata is refused.

@@ -1,13 +1,11 @@
 """Fresh native binary surface evidence for preset composition; no node changes."""
 from runtime_storage import clone_file
-import glob
+from fixtures.native_selection import selected_binaries
 import hashlib
 import json
-import os
 from pathlib import Path
 import platform
 import re
-import shutil
 import subprocess
 
 
@@ -16,30 +14,17 @@ def digest(path):
 
 
 def prepare(runtime, output):
-    # The binary selection is external provenance, like the chain checkouts it
-    # names. A staged source copy excludes .ouroboros, so recheck passes the
-    # original selection through WEBUI_SELECTED_BINARIES.
-    selection = os.environ.get('WEBUI_SELECTED_BINARIES', '.ouroboros/web-ui-analysis/selected-binaries/manifest.json')
-    manifest = json.loads(Path(selection).read_text())
     binaries = []
-    for selected in manifest['binaries']:
+    for selected in selected_binaries():
         chain = selected['chain']
-        matches = glob.glob(selected['binary'])
-        if len(matches) != 1:
-            raise RuntimeError('missing selected native binary: ' + chain)
-        source = Path(matches[0])
+        source = Path(selected['binary'])
         destination = runtime / (chain + '-node')
         clone_file(source, destination)
-        version = subprocess.check_output([str(destination), 'version'], text=True)
-        commit = re.search(r'Git Commit: ([0-9a-f]{40})', version).group(1)
-        config = subprocess.check_output(['git', '-C', selected['repository'], 'show', commit + ':params/config.go'], text=True)
-        marker = {'stablenet': 'Anzeon', 'wbft': 'Croissant', 'wemix': 'Wemix'}[chain]
-        if marker not in config or commit != selected['embeddedCommit']:
-            raise RuntimeError('selected chain/source identity mismatch: ' + chain)
-        if 'Operating System: ' + platform.system().lower() not in version or 'Architecture: ' + platform.machine() not in version:
-            raise RuntimeError('selected binary incompatible with host: ' + chain)
+        version = selected['version']
+        commit = selected['embeddedCommit']
+        config = selected['sourceConfig']
         if digest(destination) != selected['sha256']:
-            raise RuntimeError('selected binary checksum stale: ' + chain)
+            raise RuntimeError('selected binary changed while copying: ' + chain)
         catalog = {'stablenet': 'gstable', 'wbft': 'gwbft', 'wemix': 'gwemix'}[chain]
         directory = output / (chain + '-surface')
         subprocess.check_call(['bash', 'scripts/chain-analysis/capture-cli.sh', selected['repository'], str(destination), str(directory)], stdout=subprocess.DEVNULL)
@@ -63,6 +48,7 @@ def prepare(runtime, output):
         if len(docs) != 4:
             raise RuntimeError('missing chain documentation source')
         report = {'chain': chain, 'dialect': selected['dialect'], 'binaryPath': str(destination), 'binarySha256': digest(destination), 'version': version, 'sourceCommit': commit,
+                  'identitySource': selected['identitySource'], 'buildInfoSHA256': hashlib.sha256(selected['buildInfo'].encode()).hexdigest() if selected['buildInfo'] else None,
                   'sourceConfigSha256': hashlib.sha256(config.encode()).hexdigest(), 'host': {'os': platform.system(), 'architecture': platform.machine()},
                   'documents': docs, 'mapping': mappings, 'excluded': excluded, 'capturedAt': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()}
         (directory / 'mapping.json').write_text(json.dumps(report, indent=2) + '\n')

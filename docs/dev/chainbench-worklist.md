@@ -186,6 +186,19 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — 고정 설치셸의 구문 누락1RED→3Go계약·4선택계약·전체 검사, 실제5SSH회귀/15대보존과 독립 검증을 통과했다. aadd 소스2,081파일/137,178노드/146,413간선·누락/끊어진간선0을 재현했다. Bash63·내장AST41/동적25·일반변조12/특정누락104거절·과거34그래프보존([현재 측정](all-code-graph-web-preflight-refresh-evidence.json)). 표준입력 뒤 인자 경계7RED→21계약·전체 검사와 스윕 보강 고정소스2,075파일/136,638노드/145,824간선·누락/끊어진 간선0을 확인했다. 내장AST44·동적입력31, 일반변조12·선언/스윕본문 누락116·SSH본문 누락4거절과 과거26그래프 보존을 확인했다([현재 측정](all-code-graph-sweep-round-refresh-evidence.json)). 그룹 배치 검사 뒤2,074파일·136,270노드/145,437간선·누락/끊어진 간선0,15계약·일반변조12/특정누락28거절과 과거22그래프 보존을 확인했다([이전 배치 측정](all-code-graph-placement-refresh-evidence.json)). 방화벽 보강 뒤2,073파일·136,230노드/145,394간선·누락/끊어진 간선0, 파서15계약·일반변조12/특정누락22거절과 과거18그래프 보존을 확인했다([이전 방화벽 측정](all-code-graph-firewall-refresh-evidence.json)). 중단 경계 뒤2,070파일·136,003노드/145,142간선·두 그래프 일치/누락0, 추가 함수1/호출2/회귀8과 특정누락3종·일반변조12거절·과거그래프14보존도 확인했다([이전 경계 측정](all-code-graph-sweep-refresh-evidence.json)). 비교/관측 보강 뒤 새 고정 소스의2,070파일·Go 테스트793파일·135,880노드/145,019간선, 두 그래프 일치·누락/끊어진 간선0과 변조12거절·과거 그래프10보존을 확인했다([이전 관측 측정](all-code-graph-probe-refresh-evidence.json)). 명시한 구문·재평가 범위 유지. 후속 표준입력 보강은15계약/7개 RED·전체 검사와2,069파일·14언어/형식·내장 AST38개·미해석36개, 두 capture의 해시 일치와독립 거절12개를 확인했다. Docker 캡처·삭제·중첩 삭제3프로그램 포함을 별도 확인했고 누락/끊어진 간선0이다([증거](all-code-graph-stdin-evidence.json)). 기존 N3/A7b 판단과 [이전 고정 소스](all-code-graph-evidence.json)를 보존했다. 2026-10-16 후속 고정 소스는 14언어/형식 2,060파일·Go 테스트790파일·내장 AST36개, 미해석 동적 입력33개를 명시하고 누락/끊어진 간선0을 확인했다. A8 비메서드 공개심볼1,890개/도달 불가0. 10계약·관련 race·전체 검사, 두 별도 capture의 해시 일치와 별도 감사10실패 대조 통과. 전체 실행 커버리지나 최종 Web 인수는 아님; [갱신 증거](all-code-graph-refresh-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-18 Web 실제 바이너리 선택 경로 일치·VCS 출처 확인:**
+Web04/공유 증명이선택manifest를 무시하던5RED와 유효한Go VCS 메타데이터의 미지원1RED를 확인했다.
+Web01과 같은선택경로로 묶고15계약·사전검사7/Web14의11회귀·전체make check를 통과했다.
+첫 실제시도의WEMIX 거절은 보존했다. 내장버전에는Git Commit 줄이 없지만Go 빌드 정보의4538a9f5와
+소스미변경·패밀리표시를 확인했으며 외부소스/바이너리를 수정하거나 다시빌드하지 않았다.
+새고정c087d6c6ee5f9f8da5c45caef8df6c4bba15107f2e3063f7dfd69f0942aa98bb에서
+세핀바이너리의 실제version/help·선택/복사와 복사전거절3건, 외부소스6,508항목 보존·독립변조14거절을 확인했다.
+관측 native 명령은version/help뿐이며 노드/DB생성0이다. 실제Web 자산업로드와ManifestBinary.Verify는
+아직이전Git Commit 줄만요구하는것으로 소스대조됐으므로 별도RED→GREEN·실제제품증명이 남는다.
+독립복사본의Git 부재로 tracked-tree검사가skip될수있는경로도 재현·보강해야 한다.
+이후수정의AST갱신·전체L1·Python최신receipt·전체race·Web14 인수는 남긴다.
+[첫실패·선택계약·외부원형·실제준비·잔여경계](native-fixture-selection-evidence.json).
+
 **2026-10-18 준비 코드 갱신·설치 본문의 독립 셸 AST 포함:**
 첫 구조 측정2,080파일은 재현됐지만Go wrapper의 고정 설치본문이 Bash로 파싱되지 않아 이번 전체 언어 기준을 닫지 않았다.
 독립 셸 입력 계약1RED를 확인하고 같은본문의`install.sh`를Go embed로 포함하도록 고쳤다.
@@ -2094,6 +2107,7 @@ WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에
 실행 전 검사만 보강했으며 전체Python의 기존 receipt 실패11건도 새 capture와 함께 재검증한다([범위](web-final-preflight-evidence.json)).
 Docker 준비 대상·기존 파일 보존을 보강했고([증거](docker-regression-preparation-evidence.json)), 후속 AST도 설치 셸을 포함해 갱신했다([갱신](all-code-graph-web-preflight-refresh-evidence.json)). 전체 실제 인수는 남긴다.
 사전SPA 빌드 격리·일반 검사 게이트 제거·필수race 캐시 금지도 보강했지만 실제 전체race 성공으로 세지 않는다([증거](web-prerequisite-isolation-evidence.json)).
+선택manifest의공유와Go VCS 기반준비검증도 보강했다. 제품자산검증의 같은출처 지원·독립복사본Git 경계와 후속AST는 별도잔여다([증거](native-fixture-selection-evidence.json)).
 외부 체인 W3와 같은 미해결 조건은 재현이나 인계만으로 구현 완료로 바꾸지 않는다.
 
 **9번 추가 진행:** [접속 이름 증거](attach-client-identity-evidence.json)는 논리 바이너리와
