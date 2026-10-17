@@ -372,3 +372,10 @@ When a native binary omits the legacy `Git Commit` version line, selection must
 verify its exact Git revision and `vcs.modified=false` through `go version -m`.
 The observed identity method and build-info digest are retained. A conflicting
 version stamp or modified/missing Go VCS metadata is refused.
+
+Independent recheck gives its source copy a private Git view: refs, configuration
+and index (including a split-index base) belong to that copy. Shared object
+alternates only read the original objects. The source working bytes and
+untracked inputs are preserved, inherited Git location overrides are removed,
+and hooks are disabled in the private view. Tracked-tree checks therefore run
+instead of skipping, while index refreshes cannot update the original index.
