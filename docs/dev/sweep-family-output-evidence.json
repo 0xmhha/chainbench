@@ -1,0 +1,424 @@
+{
+  "date": "2026-10-18",
+  "scope": "Fix sweep family selection and attach receipt/strict-verdict forwarding. Selected actual regression only: three explicit-family RPC016 executions plus one owned attach target, with one extra managed host setup invocation. Not full L1, R3/P4/R4/R5, all legacy/87, external defect resolution or final Web acceptance.",
+  "priorDiscovery": "linux-l1-round-boundary-evidence.json",
+  "implementation": [
+    "Every common round selects a verified same-shape preset, including StableNet. Missing/malformed/cyclic or wrong-family targets are blocked before the affected invocation. Inherited target families are resolved.",
+    "Attach host and external attach target calls forward artifact-root and no-skips, without machine-composition flags. Missing or empty artifact-root is refused before host startup.",
+    "The existing one-case/one-workspace lifecycle and stopped-data retention remain. Source cases are not rewritten. No new public CLI or MCP input was introduced."
+  ],
+  "red": {
+    "initialTests": 14,
+    "initialBehaviorFailures": 12,
+    "expandedTests": 16,
+    "expandedBehaviorFailures": 14,
+    "method": "Actual unchanged sweep script and captured fake CLI invocations in isolated unit fixtures. Wrong family, alias/missing/wrong/malformed/cyclic target and lost output/strict flags; not native blockchain acceptance."
+  },
+  "green": {
+    "roundOutputContracts": 16,
+    "existingRetentionContracts": 19,
+    "dslPackagesUnderRace": 3,
+    "makeCheckExitCode": 0,
+    "selectedPlanTamperControlsRejected": 8,
+    "selectedOutcomeTamperControlsRejected": 32,
+    "shellSyntaxCheckExitCode": 0
+  },
+  "readOnlyFullPlan": {
+    "files": 216,
+    "plannedRows": 358,
+    "commonRows": 213,
+    "resolvedFamilyMismatches": 0,
+    "nativeAcceptanceAwarded": false
+  },
+  "nativeProof": {
+    "sourceBefore": "34b94a01eb91e60184113ce05d1d12c7dd8b981b34456de66a4f43acb4d789aa",
+    "headAtProof": "013138f937ca7db48ef59bf72a931bd6e1500b71",
+    "runtime": "/private/tmp/cbui/l1i-lj81vn8o",
+    "plannedFiles": 2,
+    "plannedRuns": 4,
+    "scope": "Selected four-run regression: owned attach plus common RPC016 on three explicit families. Not full L1 or final Web acceptance.",
+    "selectedWalkCompleted": true,
+    "selectedExecutionCompleted": true,
+    "scopeAccepted": true,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "sweepExitCode": 0,
+    "reportedRows": 4,
+    "totals": {
+      "pass": 4,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "recordedWorkspaces": 4,
+    "retainedWorkspaces": 4,
+    "sourceAfter": "34b94a01eb91e60184113ce05d1d12c7dd8b981b34456de66a4f43acb4d789aa",
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "elapsedSeconds": 395.0637788330205
+  },
+  "independentPreservation": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "34b94a01eb91e60184113ce05d1d12c7dd8b981b34456de66a4f43acb4d789aa",
+    "runtime": "/private/tmp/cbui/l1i-lj81vn8o",
+    "selectedWalkCompleted": true,
+    "selectedExecutionCompleted": true,
+    "reportedRows": 4,
+    "totalsObserved": {
+      "pass": 4,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "sourceAndInputsUnchanged": true,
+    "retainedWorkspaces": 4,
+    "archiveCount": 20,
+    "archiveEntries": 1035,
+    "localFilesPreserved": 624,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 60,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "scopeAccepted": true,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "coverage": {
+      "selectedSourceFiles": 2,
+      "commonFiles": 1,
+      "singleChainFiles": 1,
+      "selectedRuns": 4,
+      "missingOrDuplicatedVariants": 0,
+      "resolvedCommonFamilyLabelsMatched": true,
+      "fullL1Accepted": false
+    },
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0
+  },
+  "independentOutcomes": {
+    "scopeAccepted": true,
+    "sourceDigest": "34b94a01eb91e60184113ce05d1d12c7dd8b981b34456de66a4f43acb4d789aa",
+    "selectedCases": 4,
+    "runCallsMatched": 5,
+    "outcomes": [
+      {
+        "index": 1,
+        "path": "tests/tc/basic/08-attached-chain-produces.json",
+        "chain": "stablenet",
+        "assertions": 2,
+        "actions": 2,
+        "session": "/private/tmp/cbui/l1i-lj81vn8o/reports/sessions/20261017-200037-90385/UTC-20261017-200037"
+      },
+      {
+        "index": 2,
+        "path": "tests/tc/common/rpc/CT-RPC-016-isolated-en-pending-queued.json",
+        "chain": "stablenet",
+        "assertions": 28,
+        "actions": 15,
+        "session": "/private/tmp/cbui/l1i-lj81vn8o/reports/sessions/20261017-200106-90717/UTC-20261017-200106"
+      },
+      {
+        "index": 3,
+        "path": "tests/tc/common/rpc/CT-RPC-016-isolated-en-pending-queued.json",
+        "chain": "wemix",
+        "assertions": 28,
+        "actions": 15,
+        "session": "/private/tmp/cbui/l1i-lj81vn8o/reports/sessions/20261017-200215-92439/UTC-20261017-200215"
+      },
+      {
+        "index": 4,
+        "path": "tests/tc/common/rpc/CT-RPC-016-isolated-en-pending-queued.json",
+        "chain": "wbft",
+        "assertions": 28,
+        "actions": 15,
+        "session": "/private/tmp/cbui/l1i-lj81vn8o/reports/sessions/20261017-200445-95768/UTC-20261017-200445"
+      }
+    ],
+    "commonFamilies": [
+      "stablenet",
+      "wbft",
+      "wemix"
+    ],
+    "assertions": 86,
+    "actions": 47,
+    "attachedSessionInsideOwnedRoot": true,
+    "strictNoSkipsForwarded": true,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "controls": {
+      "positiveContractFixtures": 1,
+      "tamperControlsRejected": [
+        "wrong round",
+        "wrong source path",
+        "stale source digest",
+        "failed CLI",
+        "CLI exception",
+        "source mutation",
+        "missing output root",
+        "outside output root",
+        "missing strict verdict",
+        "external session",
+        "wrong record family",
+        "wrong parsed family",
+        "wrong body ID",
+        "missing predicate",
+        "changed predicate",
+        "missing requirement",
+        "empty outcome",
+        "extra outcome",
+        "wrong outcome ID",
+        "failed outcome",
+        "failed status",
+        "wrong environment reference",
+        "missing assertion",
+        "false assertion",
+        "missing action",
+        "failed action",
+        "empty node set",
+        "wrong node family",
+        "wrong invocation family",
+        "wrong workspace",
+        "wrong actual CLI plan",
+        "wrong override"
+      ],
+      "nativeAcceptanceAwarded": false
+    }
+  },
+  "preparationFailuresPreserved": [
+    {
+      "runtime": "/private/tmp/cbui/l1i-zcwomxb1",
+      "cause": "Private runner used extended-regex alternation with the public scripts basic-regex grep selection, so no case matched. No node was launched.",
+      "reportedRows": 0,
+      "runCalls": 0,
+      "sourceAndHelpersUnchanged": true,
+      "localFilesPreserved": 41,
+      "freshProcessInventories": 30,
+      "firewallTablesChecked": 15,
+      "remainingDatabases": 0,
+      "scopeAccepted": false,
+      "featureRedClaimed": false,
+      "correction": "Fresh runtime/helper names, portable newline-separated grep patterns and exact source-file selection preflight before runtime preparation. Same source digest and CLI SHA verified."
+    },
+    {
+      "cause": "Private outcome-contract draft had a Python reserved-keyword syntax error. Preserved failed log, corrected before any source-frozen native invocation, then32 negative controls passed.",
+      "featureRedClaimed": false
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-sweep-round-red-20261018.log",
+      "sha256": "dcf0e7d2e2b14ef29281d701703b28732a4191c8c9cac5392472098d6eea9655",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266386661490625
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-red-targets-20261018.log",
+      "sha256": "02bf15b494e1617139c6f4ff6224c79588dac9ecbac6a511830d7d19244facb2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266455116724819
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-green-20261018.log",
+      "sha256": "ba38ed1f62843fd9366aa436bba58b6ff18a5f9a03f76670c0f5dcbc37a22e9d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266482087180466
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-final-contract-20261018.log",
+      "sha256": "77126a433035cee274486f9d6f1bb65fa40d029dce19066dbfa74ef27df7b7a7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266664898827973
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retention-20261018.log",
+      "sha256": "b817515fd2876c762283bcb9acc7611e1abb4b0c3a835849186e91a1a9f0943c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266498154948965
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-dsl-race-20261018.log",
+      "sha256": "66034ee7a51084e51d30e6ed35b98134cf62240729dec511c225a6d19523f645",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266526188100541
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-check-20261018.log",
+      "sha256": "bf1a4f8958f89efcadf53281cead48d15b18c9a30e9f359900d1a2f5023fa167",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266633080832262
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-full-plan-readonly-20261018.json",
+      "sha256": "caacc9e6075752ad45b680eb1e655be6f20cf97de80f2aa590bf097dc5922d82",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266955212287599
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-20261018-summary.json",
+      "sha256": "1f787751a0350fe000759e2a4883606092de15bac53b1a4dc611f1e434cd09a6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267553603241103
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-20261018-independent.json",
+      "sha256": "9ff22563e25442e0ca5da9a4d77ebc9dffdf0572b53e72a902f08a5fd8658719",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267652702346539
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-20261018-outcomes.json",
+      "sha256": "ce2ef31f934019e911a14a364160e4996a9434199538a981d3233d51caa6d554",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267689183994647
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-20261018-checkpoint.json",
+      "sha256": "10822f86b23599bb24ec10e880701ccff518f7229635e0d3d4bfa30af404d3bc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267128201084377
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-coverage-contract-20261018.log",
+      "sha256": "1b70c00675d38bbaae86757a9a3df96476566e1b915d049b84d237063d9da987",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267125277218042
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-outcomes-contract-20261018.log",
+      "sha256": "1ecda244de9b0e29d4aeb814de88cc79112d6a416906ce91af97bdf0733a2a95",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267125920673887
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-native-20261018-summary.json",
+      "sha256": "c418750f65d8664974bd785abff25e1ab89fb11fdba4c12b5f90bc51b2f32a1a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266993087325853
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-native-20261018-preflight-independent.json",
+      "sha256": "89d52eb2b5dd6b3871c7f0799290def7ababef8aa6b261741e2d82762377aba7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267082890270529
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-native-outcomes-contract-20261018.log",
+      "sha256": "42131c3233084eb263433b6b917380039c9a84872f74995bba0d700541ec94f5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266886272136537
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-prepare-20261018.py",
+      "sha256": "58147ce15f646a1d7b31d5b3e0a1566ef7d6065add2ef54de92d66c7d169e68d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071128593613
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-run-20261018.py",
+      "sha256": "fe9c8fe4bdd02f576f01765776c22eee3ff8d1eb83b6c271359454c76d82bc41",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071131600666
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-cli-20261018.py",
+      "sha256": "5aa747b3814638327fa9c3e63a5030523d798939941cce40529db4f64a4d258b",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071132815537
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-hook-20261018.py",
+      "sha256": "5c34b11b18edca6e9e740ef82fe11f8cb025468434737475bf24cb5b11c14bbb",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071134536930
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-retention-20261018.py",
+      "sha256": "2574b23a9f5c61134e3301fac88fed38c63a55a68a3fe96f3b930228d74abdee",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071137283534
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-independent-20261018.py",
+      "sha256": "05552e14e14b3d494bebb8cc449337cd6e90897a0cb2b79ffc325637167a6b84",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071141585413
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-coverage-20261018.py",
+      "sha256": "c9af11da1b9a36400d5ffa76c4b1116810a8a6b355b17a068936045a12397d6d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071142788826
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-round-retry-outcomes-20261018.py",
+      "sha256": "28e50c3bf01ab5e3bef20b86c59a35c2798b22b28eec9402c19c99d8bee957a6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792267071147202534
+    }
+  ],
+  "remaining": [
+    "Refresh all-code AST after this script/test change.",
+    "Run complete current-source L1 and other R3/P4/R4/R5 requirements; missing mixed build/testnet inputs remain explicit.",
+    "Finish original/legacy review and external W3/W4 dependencies without changing external source.",
+    "Historical receipt recovery and current-source WEB01-14 capture/independent reproduction remain separate."
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "documentationValidation": {
+    "command": "go test ./internal/arch -count=1",
+    "exitCode": 0,
+    "log": "/private/tmp/chainbench-sweep-round-doc-arch-20261018.log",
+    "sha256": "280561ac06359851973fbe8c33e5d8f7da68738742a43a6e4e360a9e893a0d9b"
+  }
+}

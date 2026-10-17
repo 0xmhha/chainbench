@@ -45,6 +45,7 @@ tc-review: ## validate original criterion coverage, source anchors and open cond
 sweep-test: ## verify sweep retention and failure lifecycle contracts
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_prune_go_cache.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_tcsweep_retention.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_tcsweep_rounds.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention_transport.py
 

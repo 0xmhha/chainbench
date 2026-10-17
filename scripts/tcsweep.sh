@@ -59,6 +59,29 @@ roundFlags() {
   if [ -n "$val" ]; then printf '%s' "$val"; else printf '%s' "${TCSWEEP_FLAGS:-}"; fi
 }
 
+# Attach runs reuse observation settings, never the host's composition flags.
+# In particular a caller's receipts must not escape to the default home store,
+# and no-skips must apply to the attached case as well as its managed host.
+attachedFlags() {
+  ATTACH_FLAGS=()
+  local index=0 arg value
+  while [ "$index" -lt "${#EXTRA[@]}" ]; do
+    arg=${EXTRA[$index]}
+    case "$arg" in
+      --artifact-root)
+        index=$((index + 1)); value=${EXTRA[$index]:-}
+        case "$value" in ''|--*) echo 'artifact-root requires a value before starting an attach host' >&2; return 2 ;; esac
+        ATTACH_FLAGS+=(--artifact-root "$value") ;;
+      --artifact-root=*)
+        value=${arg#--artifact-root=}
+        [ -n "$value" ] || { echo 'artifact-root requires a nonempty value' >&2; return 2; }
+        ATTACH_FLAGS+=(--artifact-root "$value") ;;
+      --no-skips|--no-skips=*) ATTACH_FLAGS+=("$arg") ;;
+    esac
+    index=$((index + 1))
+  done
+}
+
 [ -x "$BIN" ] || { echo "no $BIN — run make build" >&2; exit 2; }
 
 # chainOf reads the chain a case declares. The directory is not it: one case
@@ -96,15 +119,9 @@ PY
 
 # planGroups turns the selected cases into the invocations that will run them.
 #
-# One invocation per group, because `chainbench run` takes several definitions
-# and composes ONE network per distinct composition among them: measured
-# 2026-10-07, three rpc cases produced two networks, the two that share a
-# composition sharing one. Walking case by case paid for a bring-up every time.
-#
-# The trade is the one the header paragraph names: cases on a shared network
-# see each other's state, so one can decide another's verdict. That is why this
-# is a group of a FOLDER rather than of everything, and why the log says which
-# cases shared.
+# Groups organize folder headings and per-chain preset selection. Every case
+# still gets its own invocation and workspace: shared networks let an earlier
+# case change what the next one measures.
 #
 # tests/tc/common runs three times, one chain at a time, in the order
 # stablenet, wemix, wbft. A round overrides the chain-preset with the same
@@ -161,7 +178,24 @@ def sibling(preset, chain):
     for p in ("stablenet-", "wbft-", "wemix-"):
         if preset.startswith(p):
             cand = chain + "-" + preset[len(p):]
-            return cand if (root / "presets/chain" / (cand + ".json")).exists() else None
+            return cand if preset_chain(cand) == chain else None
+    return None
+
+
+def preset_chain(name):
+    """Verify the declaration, including inherited targets, not its filename."""
+    seen = set()
+    while isinstance(name, str) and name not in seen:
+        seen.add(name)
+        try:
+            value = json.loads((root / "presets/chain" / (name + ".json")).read_text())
+        except (OSError, ValueError):
+            return None
+        if not isinstance(value, dict):
+            return None
+        if "chain" in value:
+            return value["chain"]
+        name = value.get("extends")
     return None
 
 
@@ -178,11 +212,8 @@ def flush(key, specs):
         emit("-", "-", specs)
         return
     for chain in ROUNDS:
-        if chain == "stablenet":
-            # Already what every common case declares, so nothing to override:
-            # the engine composes one network per distinct composition.
-            emit(chain, "-", specs)
-            continue
+        # The default round needs an explicit sibling too: a common case may
+        # declare WBFT or WEMIX. A printed round label cannot choose its chain.
         by_preset = {}
         for s in specs:
             bp = base_preset(s)
@@ -354,7 +385,7 @@ runAttach() {
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
     return 2
   fi
-  GSTABLE_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" 2>&1
+  GSTABLE_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" ${ATTACH_FLAGS[@]+"${ATTACH_FLAGS[@]}"} 2>&1
   local code=$?
   "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
   return $code
@@ -523,6 +554,7 @@ for plan_line in "${PLAN[@]}"; do
     # today; nothing stops one from doing so tomorrow.
     label="$round"; [ "$label" = "-" ] && label="$(chainOf "$spec")"
     read -r -a EXTRA <<<"$(roundFlags "$label")"
+    attachedFlags || exit 2
     # Asked per case, never per group: a group is a folder and a folder may
     # hold both kinds. tests/tc/basic holds 07-basic-wbft-consensus, which
     # composes its own network, next to 08-attached-chain-produces, which
@@ -534,7 +566,7 @@ for plan_line in "${PLAN[@]}"; do
       if [ "${endpoint#*GSTABLE_RPC}" != "$endpoint" ]; then
         out=$(runAttach "$spec" "$ws")
       else
-        out=$("$BIN" run "$spec" 2>&1)
+        out=$("$BIN" run "$spec" ${ATTACH_FLAGS[@]+"${ATTACH_FLAGS[@]}"} 2>&1)
       fi
     else
       out=$("$BIN" run "$spec" --workspace-dir "$ws" \
