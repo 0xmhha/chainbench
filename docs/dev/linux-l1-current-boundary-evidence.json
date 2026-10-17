@@ -1,0 +1,1352 @@
+{
+  "scope": "Current source14 native StableNet cases, including an attach case and9-node firewall partition/recovery; intentionally stopped at a verified boundary before a newly identified firewall error-propagation repair. Not full358-run L1 acceptance.",
+  "sourceDigest": "797d5b256fbd35b83141a2b94b67a0891f9a044d473be3afdf8a7fa82b8175cd",
+  "headAtProof": "ae4c1c8d210006d53ef95370299068320526e2a6",
+  "cliSHA256": "9dae6c04492334ca255ddaee188a048019b0dc20aca1d717f86cacbf6f39565e",
+  "runtime": "/private/tmp/cbui/l1i-gbgj9gr1",
+  "plannedSourceFiles": 216,
+  "plannedRuns": 358,
+  "sweepExitCode": 130,
+  "totals": {
+    "pass": 14,
+    "fail": 0,
+    "blocked": 0,
+    "skip": 0,
+    "notrun": 344
+  },
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "sourceAndFrozenHelpersUnchanged": true,
+  "regression": {
+    "makeCheckBeforeProofPassed": true,
+    "preflightContracts": {
+      "sweep": 19,
+      "linuxRetention": 37,
+      "privateInputIsolation": 10
+    },
+    "newImplementationClaimed": false
+  },
+  "independent": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "797d5b256fbd35b83141a2b94b67a0891f9a044d473be3afdf8a7fa82b8175cd",
+    "runtime": "/private/tmp/cbui/l1i-gbgj9gr1",
+    "walkCompleted": false,
+    "executionCompleted": false,
+    "reportedRows": 14,
+    "totalsObserved": {
+      "pass": 14,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "sourceAndInputsUnchanged": true,
+    "retainedWorkspaces": 14,
+    "archiveCount": 63,
+    "archiveEntries": 3788,
+    "localFilesPreserved": 1950,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 210,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "archives": [
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c1/server1-metadata.tar.gz",
+      "sha256": "4fcefcd5c30c1c9bc7478e30c99a82cdbfb214df538f017585e442e9b915b202",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247015679264470
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c1/server2-metadata.tar.gz",
+      "sha256": "5ddf17b8990075ce5b2a350e68d4030f1de1336d0b88aec0d50dcf1bf2431863",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247016953914247
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c1/server3-metadata.tar.gz",
+      "sha256": "d57b8eb6b91399ba64916c689c9c52cf46b28961af07a783d423dd7e3852f54b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247018337634505
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c1/server4-metadata.tar.gz",
+      "sha256": "940e9b1d043268823d775a4574f00873a5912bd6c466335c4b1f61ab6ded902f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247019519300983
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c1/server5-metadata.tar.gz",
+      "sha256": "83a3190b480e6bc0c68f497c0e3b982a369873223002138370a4ebb96255d783",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247020771216269
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c10/server1-metadata.tar.gz",
+      "sha256": "796bf4b3ab9480bf73d26305910f8700e180ce55415d5033830b5d2aa3c8322d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247353171558783
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c10/server2-metadata.tar.gz",
+      "sha256": "9f08ed9edc35c0684e0b3dd7f73c6b422d1ed1c7c154da4842f1600ba02e40a2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247354251246190
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c10/server3-metadata.tar.gz",
+      "sha256": "df6720140402cd317a21a08a08a8acd449439ee15ff7748f403e9be09510f8b5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247355271877360
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c10/server4-metadata.tar.gz",
+      "sha256": "d141a0ea07278a1aae592397276a70a4e40707d083365b107bf442ac21430bbf",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247356189097585
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c11/server1-metadata.tar.gz",
+      "sha256": "2d0dd57007b4ed7fa4348e035b6911aee9ac95d1b524eb6fde7f6b0d22118395",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247403350281469
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c11/server2-metadata.tar.gz",
+      "sha256": "86960e4147ac95efe579baf8589eb9e330fdf59a2d6e98fb45c624cb6de26cf1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247404644401092
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c11/server3-metadata.tar.gz",
+      "sha256": "182512b83aecef23b7e5ee4ff6c7b8ded42b09d8652ea4bdf3a0f6220eac67b1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247406247277009
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c11/server4-metadata.tar.gz",
+      "sha256": "a94d0ca53f768cf7fc555b8e5c7e9e94d048b88ca7955a0d80c522d24f6b6ac0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247407965966693
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c12/server1-metadata.tar.gz",
+      "sha256": "78d0c4022e5d118ed797e3ffdd6c257648a0926f2d917f1bfd41cadca6c75750",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247455078608622
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c12/server2-metadata.tar.gz",
+      "sha256": "bd9c89db9830bbf1931b4ef88d6cc6c0e9efc2bd33c9d40b7caeca70e854a3dc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247457037848373
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c12/server3-metadata.tar.gz",
+      "sha256": "9c46962e951c10d40d6bb96d120a702ae0a7f3bc8a78dc932faa3478b56a5157",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247458276374547
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c12/server4-metadata.tar.gz",
+      "sha256": "0e64709616a88d145d65919216419111546759ac637bc36d10775d2f9b4fd033",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247459367670443
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c13/server1-metadata.tar.gz",
+      "sha256": "08344fa54973408f6bf9e95590ac136816f61392a40c633aaf2915cc8be8d981",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247535429951459
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c13/server2-metadata.tar.gz",
+      "sha256": "2cd4cb0d25401ae7fa067c580dc832ea4282d20889f1162ebe731c415aa37757",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247536902665207
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c13/server3-metadata.tar.gz",
+      "sha256": "d4a0963df30053c2bc3b9c457894ee7ec6ce78196f2afa4f294d7a393768c826",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247538427696489
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c13/server4-metadata.tar.gz",
+      "sha256": "49b6320de32e114f27a5dde756fceb7a9d32bddc1e4feba93d8b62719d695ed3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247539566031882
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server1-metadata.tar.gz",
+      "sha256": "350731d67da33e5bec4e52d45e6e084f5bf84d3f5933696992e17e0f94e05d91",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247779413512481
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server2-metadata.tar.gz",
+      "sha256": "5a1fe7b17ceeb586c067925868cc5598013b176a48d7bece8aeb1657d85e26b6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247782733290792
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server3-metadata.tar.gz",
+      "sha256": "788fbb1fb8780fd8e9193186e7c492edd9460566f1736f2d3d27899300cea691",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247785401387380
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server4-metadata.tar.gz",
+      "sha256": "68da5a052906ee467cc33ac8e1a59b0c3ea438c3bdbabe70a1f79a9765080d54",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247787369756372
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server5-metadata.tar.gz",
+      "sha256": "fedea452e190f940abf0602e962fef26a68c4e850de8595d7f5edb248f5ae025",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247790441040290
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server6-metadata.tar.gz",
+      "sha256": "2c71e77a8dcfd69acc18b83cca93e994d3a3e5735c2eb973d6a9de9985c16a15",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247793919999578
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server7-metadata.tar.gz",
+      "sha256": "a49525e20e0df1157a2e386a94a3eb304ca590e37fa22c0c21890202b469bd60",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247798785379277
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server8-metadata.tar.gz",
+      "sha256": "651f1d5821d2a2af9c7dcc7ad3155b7bcefda7ca342d0dc092ddbd68a886d0de",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247802133367395
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c14/server9-metadata.tar.gz",
+      "sha256": "d288aaec71d314fce79b74bd9b7ec44a7dbb071cdc5bba7607b933afeef8b060",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247807067764112
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c2/server1-metadata.tar.gz",
+      "sha256": "1c51c5af517ba2271cf4492d68e8c15e60ddb707fd57e7508e17829c2daf4381",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247072586686356
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c2/server2-metadata.tar.gz",
+      "sha256": "be43420781850d09f8479b4d6bf53ea590f81728a5721421869c2db43505ee28",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247073790664189
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c2/server3-metadata.tar.gz",
+      "sha256": "5bde5af38a7cbe02fc8b42dcb5b7a3bcd47ccd4cffaf1e87fd24eecb25d93c6d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247074885083791
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c2/server4-metadata.tar.gz",
+      "sha256": "26b17798f7056269b60933fefd3d16df67ae6d965ff920d10ab85380d26a001f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247075937507266
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c2/server5-metadata.tar.gz",
+      "sha256": "2191ee636915576969741b80d15643187227a0c846687fb415f065a317279cd1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247077017548383
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c3/server1-metadata.tar.gz",
+      "sha256": "76bbaf6245491fbfa5b895c7238881a30e88edfa123926c8b580b33d3b776dc2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247106088848954
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c3/server2-metadata.tar.gz",
+      "sha256": "7517349fb92e39308dfaa5744991023ad8a8c41f9514f7e9076850398bda6c75",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247107166510196
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c3/server3-metadata.tar.gz",
+      "sha256": "8ae822e23989aff512887e519707a98da5a9edf031828ff5c80e6fad658f1567",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247108074285389
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c3/server4-metadata.tar.gz",
+      "sha256": "5313acbf2f7b58596c0c3dce8ce662aed06dd7f3600fe7940b00e1ae1f254951",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247108991556114
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c4/server1-metadata.tar.gz",
+      "sha256": "a0d02cba4ce688a69c2cb263429160c82eef3d430d823db5daa74406a43c21d9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247139713484377
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c4/server2-metadata.tar.gz",
+      "sha256": "07564e7440cab0c219d8b3484386c452dce4156bc58f294f90c1cca11b63015b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247140826975252
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c4/server3-metadata.tar.gz",
+      "sha256": "4ec2ea5c80e2c73323c97d93f47d9620e5bb9d644794980c59986f4125f23767",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247142026194422
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c4/server4-metadata.tar.gz",
+      "sha256": "28da0e6f03735494e72d3e8ad4bb8708d8341e32e5a7ac858e104291ea7fe4ad",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247143255401897
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c5/server1-metadata.tar.gz",
+      "sha256": "60a8c2a4f2f2013973b047d0b0db68e02676016ec92a7b210c08e4f19d67beb3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247173801973656
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c5/server2-metadata.tar.gz",
+      "sha256": "4fffc6d223a837037277eafca1132db4c7acbe0ca075585d47db259db581e89b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247175333255557
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c5/server3-metadata.tar.gz",
+      "sha256": "526e35fae6534e7485c86ea2b4b9134056acf840d8ec44b18e2b6969b4f94334",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247176569224484
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c5/server4-metadata.tar.gz",
+      "sha256": "b07d19530f30919b76d5f67a8165f1f56539846e60d2078a2a623e4fef75f93a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247177579529372
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c6/server1-metadata.tar.gz",
+      "sha256": "9e2917f4530f8c6275fca5b70bd92efd6a0cb3fc788503922288529613f8fe42",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247210310156838
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c6/server2-metadata.tar.gz",
+      "sha256": "8fc610a044292bf10fd9c6617311f7a25669a6437d18bbeb183cbd108a236dc4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247211627060648
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c6/server3-metadata.tar.gz",
+      "sha256": "0ee31162f0d086ec0ee730ac895486ecd21b31a76eac9838179be576e5256b9a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247213479402207
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c6/server4-metadata.tar.gz",
+      "sha256": "3673fd6a4521502fcf37d7692b8cdb4452beb189c3791e687029b3d5da612e30",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247214596819912
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c7/server1-metadata.tar.gz",
+      "sha256": "0dd0a3bdf9e683944677decef82e680dc51554fae6e4de5595e0a58f87377da7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247243209996854
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c7/server2-metadata.tar.gz",
+      "sha256": "cde2708968e9443d02c4a805fb3502469d8aab34a17658cb463ec5c6dd93b6e2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247244242589763
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c7/server3-metadata.tar.gz",
+      "sha256": "7c1d86d6c4181c4f98b1a14f80328da37b0356da83c17ee43e5727912620e12c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247245184903090
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c7/server4-metadata.tar.gz",
+      "sha256": "0692990d8611977d22c5553c538cf411707c5ab754a9884e3c43f2e5e25e91b3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247246607317301
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c8/server1-metadata.tar.gz",
+      "sha256": "8fe76607fbcc711c7d51d8684e5a992c75dc6c54930ab2a95f159cf119088687",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247279821989689
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c8/server2-metadata.tar.gz",
+      "sha256": "15fa72bdb7f1f6fd1c93359497da0e7ac3c08859be1c57420644143cc72f503e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247281429356269
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c8/server3-metadata.tar.gz",
+      "sha256": "50c132ab32408bb4eb3b3d2dd003e02663c6ea3392bcd32ed5196efa14e2c75a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247282508713634
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c8/server4-metadata.tar.gz",
+      "sha256": "3fc6b28436d2032ea6f4bb369f5e4e9774f36a4d6aa47c7d12cf3fb3c45be3c3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247283527588139
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c9/server1-metadata.tar.gz",
+      "sha256": "765f6b4de6991ee143ae7545ca1d6c7dd0eb607bbb8992cdad57a384eb3ab105",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247316054120588
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c9/server2-metadata.tar.gz",
+      "sha256": "c23ec743e8b567e3515b2c3ec1c98713450a7ed1f480682aac1f258fb09b4f23",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247317035612878
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c9/server3-metadata.tar.gz",
+      "sha256": "8361615fd2ba279a8c4ed90ed16ab64fedb45bc6b4df0e666d007f12fc2244f9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247317983999074
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/retention-c9/server4-metadata.tar.gz",
+      "sha256": "689fa16eb085ec0e4f1471a97ff31781f5c2d3e3146dc72460739361c5e1ccd0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247318928293732
+    }
+  ],
+  "cases": [
+    {
+      "chainRound": "-",
+      "override": "-",
+      "path": "tests/tc/basic/07-basic-wbft-consensus.json",
+      "sha256": "403e0cda5d4514e754c3f9c95a0a9d1344da7519f4f7034d58ce9d86196eab3c"
+    },
+    {
+      "chainRound": "-",
+      "override": "-",
+      "path": "tests/tc/basic/08-attached-chain-produces.json",
+      "sha256": "b6d4aa8e91d035abd56d07b0af7fe856ff563e1ede963598bb5dea44f8ea0df9"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-001-deploy-and-call.json",
+      "sha256": "2676ed53286d92c6cec2d4259e9a5cf70f9be929d9f752117101959c74240ad0"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-002-storage-write-and-read.json",
+      "sha256": "6b98c32208aa70a3bd26a24f545e5e3234dd6d88c78ef622f1634ea3394732b8"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-003-view-call-leaves-state.json",
+      "sha256": "e110fc40f050fd9ca3c658ad4e07eff222117e3c36dae2bf0661d71215029089"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-004-estimate-gas.json",
+      "sha256": "330c0114bd60614c9895563b5a5b139fb9ad0528b9c7695630b9be643f206127"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-005-eth-call-revert-returns-error.json",
+      "sha256": "e5b370041c89cf15962f8c95926a799abc2d59676e5040978aaa8555b0766636"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json",
+      "sha256": "cf28d8a295b9ceaf187234c442198621689ce17f51b3c069f14a0db5d4a773fa"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-007-out-of-gas-consumes-all.json",
+      "sha256": "04975194e41be8b20ac8209882ea2262c23a92a731208084760d82ab6bc3e6e0"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/contract/CT-CONTRACT-008-finite-gas-boundary.json",
+      "sha256": "e04e7a994ed60451d6fbd1c2a9046b7e76067e75c58f79afc72416c448e7a1fc"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+      "sha256": "e6cb6f46df805e988308df194f27173fe4fa7b4a668d8f1ab98930d25d41e0e6"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+      "sha256": "58d91a8c404d85e6ce9a42aa80b242d8bd4931965fdc2a5830c67a2ed8b946dc"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/fault/CT-FAULT-003-two-producers-down.json",
+      "sha256": "1a1c893535b195d68d78463133340d95e4f46883a7cc7054b3cc0b6914b02de4"
+    },
+    {
+      "chainRound": "stablenet",
+      "override": "-",
+      "path": "tests/tc/common/fault/CT-FAULT-004-network-partition.json",
+      "sha256": "5af8a9fbbff3a3eddbc8f4a292cf5ba22c743e957bacbae6e445289aab7e987f"
+    }
+  ],
+  "observedBoundaryReason": "fwRun healing shell ends with true and breaks on failed deletion; non-absence check failures can also be hidden. Needs meaningful RED/GREEN before claiming a fix.",
+  "firewallPostcheck": {
+    "ownedServers": 15,
+    "remainingPartitionRules": 0,
+    "readOnly": true
+  },
+  "limitations": [
+    "344 unattempted rows remain NOTRUN; no aggregation with earlier different-source partial runs.",
+    "The14 passing cases do not prove the identified firewall error paths; no defect fix is claimed.",
+    "Upstream seal/panic/W3/W4 and missing mixed-build/testnet inputs remain unresolved.",
+    "Baseline binary hashes were checked on15 targets and at retention; full per-invocation kernel executable provenance sufficiency remains separate.",
+    "Historical missing receipts, full original87/legacy equivalence and final current-source Web14 acceptance remain open."
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-l1-current-20261016-checkpoint.json",
+      "sha256": "0a16f3089b8422dcf095dab1c55e6bac793f21acf17332b53c8f05013bd85def",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246882070629097
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-20261016-summary.json",
+      "sha256": "c2b1203a561dbdcda266966a7d80e2bbc107e2c6c4a65c5abaefae0f9d0f77f7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247815273925978
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-20261016-independent.json",
+      "sha256": "9858fe024de9ceb5a7a99aca2661c5e499e9a66cb17434625293f7529a128079",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247893138258425
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/start.json",
+      "sha256": "d18ed255d1078b6c30dc51b31ce6cc4c52cd6ccf025a28bec74644606ad18aa8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246891477994743
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/plan.json",
+      "sha256": "2f209a224c011a09984258af8eab5f23d5dee7600593451c863b8475c7664d17",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246882042366792
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/plan.tsv",
+      "sha256": "d4d32894dd8273e877b883aabab3992e0145e465c85f4b1f934820fd69faaabf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246882041293416
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/proof.json",
+      "sha256": "c2b1203a561dbdcda266966a7d80e2bbc107e2c6c4a65c5abaefae0f9d0f77f7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247815273069145
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/sweep.log",
+      "sha256": "3c83d116634b1fee63207b21496b71f99b0e99a42043677960d6b33a3f146d5c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247814846598711
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/reports/stop-request",
+      "sha256": "b3c3cd7d89cdef560581f34dff1cdd37a2df2e3bb80e488daa77cc9b43db00d1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247793697015787
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-firewall-20261017.json",
+      "sha256": "fd4dc312cb04315ba8778b46095d75361a5c91d03b2ad639cdc1c4345cb9df6c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247934254573664
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-precheck-20261017.log",
+      "sha256": "cb090ceff5b79eebef71da4c25a200ff0727e8db1c1aa20ec5ce196c4b980bb9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246855768375450
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-run-20261017.log",
+      "sha256": "dfbdd5f6b84cfa1069f826eaba016b5e8e7b311d9d4635d37ace833b9a6f7a71",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247815275674059
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-independent-20261017.log",
+      "sha256": "bf03a069ec880301a784f75d35397d51522c13d12adc242c547d1692891e453f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792247893141541463
+    }
+  ],
+  "frozenInputs": [
+    {
+      "path": "/private/tmp/chainbench-l1-current-run-20261016.py",
+      "sha256": "b98102091a7ae175f973a2f8fd754b1a4c5f8b2be2d49a72e06cdcccd57838d0",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792139505022704545
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-20261016-checkpoint.json",
+      "sha256": "0a16f3089b8422dcf095dab1c55e6bac793f21acf17332b53c8f05013bd85def",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246882070629097
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-20261016-sweep.sh",
+      "sha256": "02824e540788432ec41d81796433b91c2a1fa5580a4d65ecae254109a0d64706",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792246882042513701
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-cli-20261016.py",
+      "sha256": "422da735c96d50cceab307d2529484917017a19ba785fe2bae22bbba8d1cfae1",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792139505020644045
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-hook-20261016.py",
+      "sha256": "0ca1da6ed7918b2beb3e98b6d709a09b0754a2b91dbdcab04873a232c3f104ef",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792139505021438628
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-retention-20261016.py",
+      "sha256": "b943e7e6dcf0a1dcfdff4abc386e5ea35b1b1a2d10f05ad10ea6e54e49271943",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792139505019674378
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-independent-20261016.py",
+      "sha256": "f58dade9fe35d20c26f98dd39da7be1e94b9e7ecd1bd0b802ce273771d24239a",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792139505024213504
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-20261016.py",
+      "sha256": "d35eb33baeb94384f110ef9626a989e95a0d3602af185688518b3328cf5a698e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123313440015831
+    },
+    {
+      "path": "/private/tmp/test-chainbench-l1-isolation-20261016.py",
+      "sha256": "bc61afbc7aa545a214127b7c09fa704008aa7221e190011be56fe4448fedfa39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123319838610737
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim.py",
+      "sha256": "df42710eb09c5e26d7b4243c06161989274e179265609b059ad8561c417a2f2a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058683337025254
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.py",
+      "sha256": "22690981c761e3d26e8c4423ea3861d96933fd6400d4140649188675ad704196",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226767850317
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.sh",
+      "sha256": "3f5f8a801c95144c2afe6cbf4df70cc86eff5d4cb53acada4ece4e7490979e29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226765223461
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-gbgj9gr1/bin/chainbench",
+      "sha256": "9dae6c04492334ca255ddaee188a048019b0dc20aca1d717f86cacbf6f39565e",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246881983282292
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/fleet-refresh/preparation.json",
+      "sha256": "b59b3a0e801b4ed2ca9fc028c975d738a2e7162ea4d3b8885a68054ba1fa154f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096044334807671
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/linux-provenance.json",
+      "sha256": "bff5097c2cdb1a04fc19615828521e3d39e917850066e4710371a45114baba57",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095510251243350
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    },
+    {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/boho-v101/proof.json",
+      "sha256": "a40cff33b773503fae0ecdb281d3465f96a2418e55df2c8fb6a249dfbdaab176",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061542260694576
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-checkpoint2.json",
+      "sha256": "fe5f6eb49edbb5d7100c0bbd066193bc991e22ec8f12c962b40a81653109691d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062409736789349
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-checkpoint.json",
+      "sha256": "06de3c04c860dffff4aca8dd4ecffef4b17558fe379a33249b3d1087b0bc970f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061229795713721
+    },
+    {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/prefork/proof.json",
+      "sha256": "71071b816eca8aa919e7cb429042c67beb71e7e014dc984302113a5dd20be8ca",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061497507061800
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set.yaml",
+      "sha256": "323fec0873b2efc0a4edb5b93318d74191cefde45a66ba20cc9f4c2111df23c0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226888185789
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set-wemix.yaml",
+      "sha256": "c03392f7f3934a461b63fe3759ffa89b083aba9133fc313ec9eb2a97227221ba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226894737140
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/workspace-config.yaml",
+      "sha256": "1a5a5d33690766e03308057f3e338a9b6e10c804daf33af942c600670c6f6c8e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912806499
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/localmap.yaml",
+      "sha256": "546638d6af9dc51fb49c3b15b351b3fd00bb86d3e96a406936aab4588f75f318",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912378367
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/README.md",
+      "sha256": "fb46d4826017d6057b069fe0a72e2fe165e015524a95585c8856742cf551a302",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070112674605
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/dev1/address",
+      "sha256": "6ccc80caa10ed418ccef73371f830eb2915dd37a7768f2e663bb873b65250b35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792094234840938504
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/dev1/private",
+      "sha256": "8b56f62222f3befe4f954a95ff39218450ddf11fa2de2a6f578ee33e8f44377b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792094234840833591
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/metadata.json",
+      "sha256": "62dba855824591a1ed6e9e9cf57d625d58ff5326c0c4a7466586ada8919148d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070113019854
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/address",
+      "sha256": "d600b9752a16731fcce100f7286357b51e3efc0da9206fd7671df51729d49ed9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823238702480
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/bls",
+      "sha256": "af5015acf49da868d5c35827f9629bf86bfc1b670a51400c1ca557bfc2fa47aa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823238793105
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/bls_pubkey",
+      "sha256": "b2a24866779f8370658b27a85473dcb7bdf05b404839cbba238ec8b68548fd1e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070114263977
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/keystore/UTC--2024-12-05T07-01-38.707018000Z--c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "sha256": "0d50f048758bb314766b3a6a6fa6c41cedf2ce4b025e3369c20aac078fc34ed7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070114425602
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/nodekey",
+      "sha256": "1695105a413bd40cb4e2f0d4f9c0eec694e961a4bad6381ee1ada465f7ab1548",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070114576102
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/pop",
+      "sha256": "5e00a500d28707fc383aeec1de476e6ec9664e82eaf3f1e7b1d83709b47738b2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823238868646
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/private",
+      "sha256": "1046bc3dd9d2613d32a9182a6ff6a1ce96d944076c3e74132490ac425dae052f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823238576815
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/pubkey",
+      "sha256": "817a82a41972fd523b5c5538643aad775505182bcde8c5311dedb84626b1207e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070116300558
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/address",
+      "sha256": "4f989c67fd2e3ededa64c33c0244caf1ccf846cee396ef20e8c951b4dbc23b01",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823240176675
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/bls",
+      "sha256": "1470ccc2f868d870d033f7471a5e4b9d21e1f6b25ac5d92400eee66ae4f59d24",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823240255049
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/bls_pubkey",
+      "sha256": "6f58a4664c8b1a6a54fa04caab8646b637062e0486ff0cbefecd100a7f3738fb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070116897140
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/keystore/UTC--2024-12-05T07-02-19.293598000Z--2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "sha256": "ca2c0e05b696149218f1bd6c3040f2aaeb494b3534a892e6912b3fb535d999e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070117045848
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/nodekey",
+      "sha256": "627a03f6bc0e6dd962d792c5d282cdd518206d25d4d2ea4d2f3bd31a158e3c7d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070117110765
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/pop",
+      "sha256": "b901f05a33e2f73b846d7e60d277ff091e236fcd50b657fbee98cbf51fe76533",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823240325382
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/private",
+      "sha256": "4f456af044fd9fe195351ac6a9c920d14535002c25e2670cc0b92e13ab6e3079",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823240100176
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/pubkey",
+      "sha256": "b0d3cde1ed02841df68521b577031e9226bf085cfe3bc46b699512168a79bdff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070117726222
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/address",
+      "sha256": "4d1c0151913b490a9d96a28306bc830e4b31cd2339df6a165054b14b990fcf01",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823241610078
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/bls",
+      "sha256": "88d76f973d8b3cfc807c721f01ab1af0da12fe6c731aa85c116de1bb0a9739cc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823241681827
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/bls_pubkey",
+      "sha256": "f24614cb5fe530773210032e9ef5b5f07f8df4bd79786ccf0970e0e9c91846d1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070118415054
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/keystore/UTC--2024-12-05T07-02-39.798729000Z--8c4a10b9108d49b9d23f764464090831d9c17764",
+      "sha256": "0a8749a1fb6248b8cc2413ef796adb678e682b90ad1ff56480db8fe35ebccfe7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070118540721
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/nodekey",
+      "sha256": "71fc7ce972fa2851a93908faf4126f28a1b924bf5b6f85157475908b3db3cc9b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070118744137
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/pop",
+      "sha256": "9b00306b54e5556ceeeec3d9dff91779e7cf59aad80fbd0af3cc98190629c65e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823241752785
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/private",
+      "sha256": "089c362fa88a332235eb1ebb811e1c4407eaa2b141000beef1f39376ddca0dff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823241533620
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/pubkey",
+      "sha256": "d5de44216d3457fcee6216a82d744a0b2a3e66fb84c5a63ae47ed0fed9d796b3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119259512
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/address",
+      "sha256": "e3f737607bd00432e8960ab84d9203b9946d4b1a7ef3ae9403cf6173c4467bec",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823243025440
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/bls",
+      "sha256": "19db31f5299a3525474b81f93634670641fd5a8401d9ea21a6598e4a470dabe8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823243104564
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/bls_pubkey",
+      "sha256": "c374e0a7fe0f04c64b8fd285de424a973c7507067dcfe57493bc2649daa64399",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119750386
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/keystore/UTC--2024-12-05T07-02-58.253588000Z--8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "sha256": "223fbde77966c348b2b41427a3c3c005e864d9d724a71927eda5e33c642f239b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119858844
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/nodekey",
+      "sha256": "2b9890bd64618a661afc4e31c83f0f27e86923fb326b98677d55e2ff02c86db8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119930010
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/pop",
+      "sha256": "fd72d1a840b2501052cdf3d13b5e6e3cc748e3edabce84b3f718bbb207f970f7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823243185771
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/private",
+      "sha256": "6bf970f9d91fa9bb9eea4c39911b51d63d33a3d428dff78980e6d9e377b293d9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823242940315
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/pubkey",
+      "sha256": "d9ec431966d00b8238d00e2daadc06d7928d144cf8557657939b259e0ffbbc5b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070120361468
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/address",
+      "sha256": "bcb413bd943e67ffd3dc9ac96f4eaeea8547aafc807b286bda084eaa08cc56cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823244418468
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/bls",
+      "sha256": "e9bed293f0d8392718c2ca5de508db633a976ee1802a2600610a446648adddce",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823244486426
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/bls_pubkey",
+      "sha256": "d0a87887c2c9b313d711b43e09a524527a526bd2d3cecfa0ab7ba771ef982673",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070120840134
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/keystore/UTC--node5-keystore",
+      "sha256": "2d5e630633d20cd2236ce410ec9ef861a35d460d98fe4672d0817e67560d9d0f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070120944051
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/nodekey",
+      "sha256": "57b791572ce52959741a3b2a21b515ecb76d105794d55ecb2a62afff1fba6285",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070121017759
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/pop",
+      "sha256": "138cc1f3c7571ac8dd29ced23a0021cf689faff3fb27819d0c22bf2e70aba357",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823244557383
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/private",
+      "sha256": "57b791572ce52959741a3b2a21b515ecb76d105794d55ecb2a62afff1fba6285",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792246823244302469
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/pubkey",
+      "sha256": "7d07eae01573017ed28b371441347c6ea47c3a60070439d49d270941c0373406",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070121278883
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/password",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070121378717
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/tcsweep.sh",
+      "sha256": "db26a5a917e37dfafbfa0822daab1a677b407a9023e56329b02b8b75c4b8bcf7",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792137413103735706
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_tcsweep_retention.py",
+      "sha256": "9943a6b238ce85a7c86f3abd131d5fa18126003c9bdc3163b8189b00812725a5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792137457750684031
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/linux_retention_transport.py",
+      "sha256": "6ffba337e27dca300039d6f32e793580a20faa3d319aee96d0c378295dd42838",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792125845246182864
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-current-prepare-20261016.py",
+      "sha256": "4f30eac2cf19029c01baf23292119929f813e8330cd0bd1aa2b43a8457c5a001",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792139505018395920
+    }
+  ]
+}
