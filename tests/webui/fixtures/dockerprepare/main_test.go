@@ -2,7 +2,9 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -61,5 +63,22 @@ func TestStageFilesRefusesSymlinkInputs(t *testing.T) {
 	got, err := os.ReadFile("outside")
 	if err != nil || string(got) != "unrelated" {
 		t.Fatalf("unrelated input changed: %q %v", got, err)
+	}
+}
+
+// The native shell input must be independently parsed as an owned source file,
+// including when it is invoked through a Go command wrapper.
+func TestInstallerProgramHasOwnedShellSource(t *testing.T) {
+	source, err := os.ReadFile("install.sh")
+	if err != nil {
+		t.Fatalf("installer has no independently parseable owned shell source: %v", err)
+	}
+	if string(source) != installScript {
+		t.Fatal("runtime installer differs from its parsed shell input")
+	}
+	command := exec.Command("sh", "-n")
+	command.Stdin = strings.NewReader(installScript)
+	if out, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("installer shell syntax: %v: %s", err, out)
 	}
 }
