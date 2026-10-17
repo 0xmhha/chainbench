@@ -1,0 +1,431 @@
+{
+  "date": "2026-10-18",
+  "scope": "Validate every recorded host assignment across all groups before any firewall mutation; preserve same-host placement within one group. Not full L1 or the public nine-node quorum case.",
+  "sourceDigest": "bc0c59c39f26ad5aee76b3fe2c828612acc2f1ae6baca89085d6088fb88f1d64",
+  "headAtProof": "04d4ad71f02d1e8964ae2cc29d77486f6a7ef97f",
+  "unit": {
+    "meaningfulRedScenarios": 8,
+    "greenScenarios": 10,
+    "lateConflicts": "late peer, late self, third group, repeated node; cut and restore",
+    "positiveCases": "two nodes on the same host in one group, cut and restore",
+    "relatedFivePackageRace": "pass",
+    "makeCheck": "pass",
+    "redLog": "/private/tmp/chainbench-partition-placement-red-20261018.log"
+  },
+  "firstFixtureFailure": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "bc0c59c39f26ad5aee76b3fe2c828612acc2f1ae6baca89085d6088fb88f1d64",
+    "runtime": "/private/tmp/cbui/l1i-lcxj3ffi",
+    "nativePartitionAccepted": false,
+    "nativePartitionReached": false,
+    "failure": "Fixture server-set directory lacks localmap.yaml; setup failed at genesis and normal stop lookup refused before resolving targets.",
+    "freshProcessInventories": 30,
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0,
+    "remainingDatabasePaths": 0,
+    "archives": [
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server1.tar.gz",
+        "sha256": "8e6b7d491d0dbc39fa3d9b948801e0dbc23557a4b2d3706b8dcef59ec7b07592",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258779785221674
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server2.tar.gz",
+        "sha256": "dfc824ddfe48d40d996f9f62ecbb11e5d20b92963fef306856de555565e7fcb3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258782044122998
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server3.tar.gz",
+        "sha256": "19a29755936b2d795ac365393f0c9590991f1f02d98b5feee529dbac52c0fb4f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258785857214919
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server4.tar.gz",
+        "sha256": "e46266b23620f89fbd639dd3d2d744a96c45da79873fbdd681b8a7af7c2ac493",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258791107145508
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server5.tar.gz",
+        "sha256": "51617df2fe661632f5c11880805026539121354560c603d5adbc3131f7fed832",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258795028725418
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server6.tar.gz",
+        "sha256": "aee58809ecadcccfa8df1008fa07b98bc2a4ea515bc96c396ac51a19acf19b81",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258799643717555
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server7.tar.gz",
+        "sha256": "8f16c048e1aa744f5f31fa1ebbf1d7f16ab52fbe6e6bbacae20de4e34eaf8192",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258805563402627
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server8.tar.gz",
+        "sha256": "7407cfba2327193f5d5bdb417b7c987a1bac2f9a7a52011e055097b311e10423",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258808464727425
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server9.tar.gz",
+        "sha256": "4efc1abe304e915259acd096e3189a16bb8be17cefcd3517d84721081172ffbd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258812853552475
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server10.tar.gz",
+        "sha256": "6dc91993597a603f4eb65cf9e9841943d7901cdd75900bd79b8c713a8d408c38",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258818848666506
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server11.tar.gz",
+        "sha256": "3b560242dd6d1a01d786b48e9dea0571d8eb8eee4a41d88ceb98cc6c55efbb13",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258829703817992
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server12.tar.gz",
+        "sha256": "302cfe97d4886d60ceaba25e534765e91f98923f96152cfdad18213e3c2bf844",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258832195167091
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server13.tar.gz",
+        "sha256": "bb483e040efcef939eb98170ec2a605df9f25d6ce53eee5c45cc8c5286764614",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258836038086822
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server14.tar.gz",
+        "sha256": "2a9bd84fd0a86155a653ce91ce1ce7776d106796daf3d417b97220b04b9651c1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258837914679704
+      },
+      {
+        "path": "/private/tmp/chainbench-partition-placement-20261018-failed-audit/server15.tar.gz",
+        "sha256": "20d4ceeb96d65a22f9db9fc36fd89cb1b988bb7d66a47110e7e259734933e0f2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792258839956861431
+      }
+    ],
+    "archiveEntries": 195,
+    "localFilesPreserved": 115,
+    "sourceAndInputsUnchanged": true,
+    "sharedKeysAndPinnedBinariesUnchanged": true,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "producerClassificationFailure": {
+    "runtime": "/private/tmp/cbui/l1i-0n42n59g",
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "rawTotals": {
+      "pass": 3,
+      "fail": 3,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "originalScopeAccepted": false,
+    "reason": "Human CLI output contains the failed-case summary; detailed partition errors exist in immutable steps.json. Original text search caused false negative purpose flags.",
+    "preservationAccepted": true,
+    "archiveEntries": 1132,
+    "localFilesPreserved": 783,
+    "remainingDatabasePaths": 0,
+    "rawResultsAndFlagsOverwritten": false
+  },
+  "finalNative": {
+    "runtime": "/private/tmp/cbui/l1i-vddyemps",
+    "scenarioScopeAccepted": true,
+    "rawTotals": {
+      "pass": 3,
+      "fail": 3,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "purposeOutcomes": [
+      {
+        "index": 1,
+        "chain": "stablenet",
+        "purpose": "allowed",
+        "exitCode": 0,
+        "rawStatus": "PASS",
+        "acceptedPurpose": true,
+        "elapsedSeconds": 64.72242324997205
+      },
+      {
+        "index": 2,
+        "chain": "stablenet",
+        "purpose": "refused",
+        "exitCode": 1,
+        "rawStatus": "FAIL",
+        "acceptedPurpose": true,
+        "elapsedSeconds": 34.70739837491419
+      },
+      {
+        "index": 3,
+        "chain": "wbft",
+        "purpose": "allowed",
+        "exitCode": 0,
+        "rawStatus": "PASS",
+        "acceptedPurpose": true,
+        "elapsedSeconds": 60.471187916002236
+      },
+      {
+        "index": 4,
+        "chain": "wbft",
+        "purpose": "refused",
+        "exitCode": 1,
+        "rawStatus": "FAIL",
+        "acceptedPurpose": true,
+        "elapsedSeconds": 33.60060391703155
+      },
+      {
+        "index": 5,
+        "chain": "wemix",
+        "purpose": "allowed",
+        "exitCode": 0,
+        "rawStatus": "PASS",
+        "acceptedPurpose": true,
+        "elapsedSeconds": 189.71887175005395
+      },
+      {
+        "index": 6,
+        "chain": "wemix",
+        "purpose": "refused",
+        "exitCode": 1,
+        "rawStatus": "FAIL",
+        "acceptedPurpose": true,
+        "elapsedSeconds": 121.41561216604896
+      }
+    ],
+    "cases": [
+      {
+        "purpose": "allowed",
+        "rawCLIExit": 0,
+        "rawCaseStatus": "pass",
+        "nodes": 4,
+        "hosts": 3,
+        "assertions": 5,
+        "recordedActions": 12,
+        "chain": "stablenet"
+      },
+      {
+        "purpose": "refused",
+        "rawCLIExit": 1,
+        "rawCaseStatus": "fail",
+        "nodes": 4,
+        "hosts": 3,
+        "assertions": 2,
+        "recordedActions": 2,
+        "chain": "stablenet"
+      },
+      {
+        "purpose": "allowed",
+        "rawCLIExit": 0,
+        "rawCaseStatus": "pass",
+        "nodes": 4,
+        "hosts": 3,
+        "assertions": 5,
+        "recordedActions": 12,
+        "chain": "wbft"
+      },
+      {
+        "purpose": "refused",
+        "rawCLIExit": 1,
+        "rawCaseStatus": "fail",
+        "nodes": 4,
+        "hosts": 3,
+        "assertions": 2,
+        "recordedActions": 2,
+        "chain": "wbft"
+      },
+      {
+        "purpose": "allowed",
+        "rawCLIExit": 0,
+        "rawCaseStatus": "pass",
+        "nodes": 4,
+        "hosts": 3,
+        "assertions": 5,
+        "recordedActions": 12,
+        "chain": "wemix"
+      },
+      {
+        "purpose": "refused",
+        "rawCLIExit": 1,
+        "rawCaseStatus": "fail",
+        "nodes": 4,
+        "hosts": 3,
+        "assertions": 2,
+        "recordedActions": 2,
+        "chain": "wemix"
+      }
+    ],
+    "negativeControlsRejected": [
+      "1:host forged",
+      "1:native exit changed",
+      "1:assertion failed",
+      "1:observation omitted",
+      "2:host forged",
+      "2:native exit changed",
+      "2:assertion failed",
+      "2:observation omitted",
+      "3:host forged",
+      "3:native exit changed",
+      "3:assertion failed",
+      "3:observation omitted",
+      "4:host forged",
+      "4:native exit changed",
+      "4:assertion failed",
+      "4:observation omitted",
+      "5:host forged",
+      "5:native exit changed",
+      "5:assertion failed",
+      "5:observation omitted",
+      "6:host forged",
+      "6:native exit changed",
+      "6:assertion failed",
+      "6:observation omitted"
+    ],
+    "beforeStopAndAfterStopFirewallChecks": 180,
+    "preservation": {
+      "archiveCount": 18,
+      "archiveEntries": 1132,
+      "localFilesPreserved": 783,
+      "freshIndependentProcessInventories": 30,
+      "caseBoundaryScopeChecks": 90,
+      "remainingDatabasePaths": 0,
+      "firewallTablesChecked": 15,
+      "remainingPartitionRules": 0,
+      "sourceAndInputsUnchanged": true
+    }
+  },
+  "limits": [
+    "Three raw failed CLI cases are intentional invalid-placement rejection tests, not passing DSL cases.",
+    "Fixture preparation and human-output classification mistakes are not feature RED evidence. Their original diagnostics remain preserved.",
+    "Source, docs and frozen helper inputs were unchanged during native proofs and independent audits.",
+    "Further AST refresh, full L1, other backlog and final Web acceptance remain."
+  ],
+  "fullL1Accepted": false,
+  "publicNineNodeCaseAccepted": false,
+  "finalWebAccepted": false,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-partition-placement-verified-20261018-checkpoint.json",
+      "sha256": "288176b8fc603d27e6135fad96e31d0622a7d2828b666b091281f7c058e746e9"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-verified-20261018-summary.json",
+      "sha256": "7f2da674861e3ecf42b826f351782f9aee3121e08b22c150ce464c4b7259bc9b"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-verified-20261018-independent.json",
+      "sha256": "95cf99df8e5a3178c53550b39bf391e41c12ecf3324975d4d08cef423f2babeb"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-verified-20261018-specific.json",
+      "sha256": "cda93efbe0982e9e486390703568a33ae59de2ef62c69aeb49a6767eea260407"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-retry-20261018-summary.json",
+      "sha256": "b4bf212a90c31ec09e29fc9221cb83b06a6936e84e600bc333c1c2ad71fab413"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-retry-20261018-independent.json",
+      "sha256": "79d7487a7c54f771ce8dc7372eb4b55339722c16a87bff100c19a630cf30e3d9"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-20261018-failed-independent.json",
+      "sha256": "cc14214e5287d1fe757f27e3e7a264ac8fee52f6b2853c8787561ab596eda0b5"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-classifier-diagnosis-20261018.json",
+      "sha256": "90d44f8adc04d6553ec5b8b346bf466f4a3c6007c52cd588696c18eb216a83f3"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-placement-verified-20261018-call-binding.json",
+      "sha256": "604bdbc4cf176d990f756ed70f47cd0d2666137ad77ef31901dc250044dc4ce9"
+    }
+  ],
+  "callBindingAudit": {
+    "sourceDigest": "bc0c59c39f26ad5aee76b3fe2c828612acc2f1ae6baca89085d6088fb88f1d64",
+    "sixCallBindingsMatch": true,
+    "rows": [
+      {
+        "index": 1,
+        "chain": "stablenet",
+        "argsMatchFrozenPlan": true,
+        "caseDigestMatchesFrozenPlan": true
+      },
+      {
+        "index": 2,
+        "chain": "stablenet",
+        "argsMatchFrozenPlan": true,
+        "caseDigestMatchesFrozenPlan": true
+      },
+      {
+        "index": 3,
+        "chain": "wbft",
+        "argsMatchFrozenPlan": true,
+        "caseDigestMatchesFrozenPlan": true
+      },
+      {
+        "index": 4,
+        "chain": "wbft",
+        "argsMatchFrozenPlan": true,
+        "caseDigestMatchesFrozenPlan": true
+      },
+      {
+        "index": 5,
+        "chain": "wemix",
+        "argsMatchFrozenPlan": true,
+        "caseDigestMatchesFrozenPlan": true
+      },
+      {
+        "index": 6,
+        "chain": "wemix",
+        "argsMatchFrozenPlan": true,
+        "caseDigestMatchesFrozenPlan": true
+      }
+    ],
+    "fullL1Accepted": false
+  }
+}

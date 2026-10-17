@@ -120,6 +120,26 @@ func fwRules(self, peer node.Node, verb string) []string {
 // so a retried step does not leave a pile to unwind. Removal repeats until -C
 // reports the rule gone, which clears duplicates an earlier run may have left.
 func fwApply(ctx context.Context, cmd interp.HostCommander, groups [][]node.Node, insert bool) error {
+	// Validate the entire placement before changing any rule. A conflict late
+	// in a group must not leave earlier node pairs partially partitioned.
+	type hostGroup struct {
+		group, nodeIndex int
+	}
+	hosts := map[string]hostGroup{}
+	for i, group := range groups {
+		for _, n := range group {
+			if previous, ok := hosts[n.Host]; ok {
+				if previous.group != i {
+					return fmt.Errorf(
+						"dsl: partition method firewall puts node%d and node%d in different groups but on the same machine (%s) — "+
+							"a rule there would drop traffic for both; place one node per machine (--all-servers)",
+						previous.nodeIndex, n.Index, n.Host)
+				}
+			} else {
+				hosts[n.Host] = hostGroup{group: i, nodeIndex: n.Index}
+			}
+		}
+	}
 	for i, a := range groups {
 		for j, b := range groups {
 			if i == j {
@@ -127,12 +147,6 @@ func fwApply(ctx context.Context, cmd interp.HostCommander, groups [][]node.Node
 			}
 			for _, self := range a {
 				for _, peer := range b {
-					if self.Host == peer.Host {
-						return fmt.Errorf(
-							"dsl: partition method firewall puts node%d and node%d in different groups but on the same machine (%s) — "+
-								"a rule there would drop traffic for both; place one node per machine (--all-servers)",
-							self.Index, peer.Index, self.Host)
-					}
 					if err := fwRun(ctx, cmd, self, peer, insert); err != nil {
 						return err
 					}
