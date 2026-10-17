@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-18",
+  "scope": "Frozen-source SPA prerequisites and non-live check environment isolation. Mandatory whole-race command is uncached; whole race and final acceptance have not run in this stage.",
+  "implementation": [
+    "WEB01/03/04/05/10 and shared acceptance prerequisites rebuild SPA in a disposable copy and reject bytes different from reviewed embedded assets. They never repair source during acceptance.",
+    "Ordinary Go checks use their original checkout, including Git-dependent tests. Ten native/Docker/e2e test gates are removed only for prerequisite checks. Actual native proof children retain their configured settings.",
+    "WEB14 removes the same ten gates for non-race checks and uses -count=1 for its explicitly opened serial whole-race command, with the existing three-hour per-package bound.",
+    "No new product CLI/MCP input and no frontend behavior changes."
+  ],
+  "red": {
+    "initialBehaviorFailures": 3,
+    "expandedParentProductionTests": 13,
+    "expandedBehaviorFailures": 4,
+    "behaviors": [
+      "WEB01 rewrote frozen SPA even when bytes matched",
+      "WEB01 unit checks inherited native gates",
+      "WEB14 non-race checks retained extra diagnostic/e2e gates",
+      "Whole race command allowed cached success"
+    ]
+  },
+  "green": {
+    "prerequisiteContracts": 7,
+    "web14Contracts": 11,
+    "existingRuntimeContracts": 6,
+    "makeCheckExitCode": 0
+  },
+  "actual": {
+    "scope": "Real staged SPA rebuild, bounded Go local-map unit regression and real child environment isolation. No native network or full Web acceptance.",
+    "sourceBefore": "fb2d984fcdfb683e7f8b2fa50cb51712c37400722fa8b1f81b49626b56d6aef8",
+    "sourceAfter": "fb2d984fcdfb683e7f8b2fa50cb51712c37400722fa8b1f81b49626b56d6aef8",
+    "buildExit": 0,
+    "unitExit": 0,
+    "environmentExit": 0,
+    "unitTests": {
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    "liveGatesInChild": [],
+    "preservedChildSetting": "actual-check-kept",
+    "stagingBefore": [],
+    "stagingAfter": [],
+    "fullRaceExecuted": false,
+    "fullPythonRegressionAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "independent": {
+    "scopeAccepted": true,
+    "scope": "Real staged SPA rebuild, bounded Go local-map unit regression and real child environment isolation. No native network or full Web acceptance.",
+    "sourceDigest": "fb2d984fcdfb683e7f8b2fa50cb51712c37400722fa8b1f81b49626b56d6aef8",
+    "sourceFilesPreserved": 2458,
+    "spaFilesReproduced": 3,
+    "unitTests": {
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    "liveGatesRemoved": 10,
+    "stagingReclaimed": true,
+    "tamperControlsRejected": [
+      "sourceAfter",
+      "after",
+      "inputsAfter",
+      "buildExit",
+      "unitExit",
+      "environmentExit",
+      "spaAfter",
+      "stagingAfter",
+      "unitTests",
+      "liveGatesInChild",
+      "fullRaceExecuted",
+      "finalWebAccepted"
+    ],
+    "fullRaceExecuted": false,
+    "fullPythonRegressionAccepted": false,
+    "finalWebAccepted": false
+  },
+  "fullRaceExecuted": false,
+  "fullPythonRegressionAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "remaining": "Fresh actual criterion captures, whole Python receipt tests, full mandatory race/live/e2e checks, post-change AST and whole L1 remain separate. External W3/W4, missing mixed-chain and testnet inputs are not resolved by these prerequisite checks.",
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-summary.json",
+      "sha256": "66758e9ad4575c4952e3c4c3eb9be73e43754490290a1260c6b7135d5f434ee9"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-before.json",
+      "sha256": "c7839d3b9999c29b3f33e95189a2c13cc1362d58679a59c3b44e3f5d754cdf2e"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-after.json",
+      "sha256": "c7839d3b9999c29b3f33e95189a2c13cc1362d58679a59c3b44e3f5d754cdf2e"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-build.log",
+      "sha256": "8fc6319bb6217e592d81d0a48bd005fa0d61cc9d000bc8365758e8d95b75b935"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-unit.jsonl",
+      "sha256": "3fa9b2d55e8cdec225eac99b612213b4937ebcbb73a7559242d8cf26bbd95bef"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-environment.log",
+      "sha256": "a77be04353971f4eded41d7bb083d16be98adbc48db8342ff75e6889c7b191e3"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018-independent.json",
+      "sha256": "3bfaed3b694f44029948354ab35934a2d1cf113369495c9747b927c6b9e55e1d"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-red-20261018.log",
+      "sha256": "c7300eb216e16699129e25863d40098c11bfe3fe279d9d13253b1bc299fddabc"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-race-red-20261018.log",
+      "sha256": "f81dde7fc61b8cf5e845494641ef3784caba07e72f91b37c85fed3d672277d5c"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-parent-expanded-red-20261018.log",
+      "sha256": "edaf047d7f8e641c05bbf39fdd1a1ae1b55aabb5d420478fb32f92fcfe88be2b"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-green-20261018.log",
+      "sha256": "d1276a2d9d79b9ed0a61446aa751886a8b573a45c52c4fe838159bc8be061837"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-race-green-20261018.log",
+      "sha256": "1d83585b97486319bb9c2fff2996c7435fd78e26e63e611aae2ad6791d35db6b"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-expanded-green-20261018.log",
+      "sha256": "55c443882838af1a647fbd8c514e974fa1fc55b0f5546ea5d7e5f0d11fdd0998"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-race-expanded-green-20261018.log",
+      "sha256": "1d83585b97486319bb9c2fff2996c7435fd78e26e63e611aae2ad6791d35db6b"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-runtime-regression-20261018.log",
+      "sha256": "c1de396add63b60b7739446ae754c9af4d1c4c8af85083ffc8071726ef9e4e98"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-check-20261018.log",
+      "sha256": "7ffd46fdb8d61115dd4a0847647dba21bd50787119842a38ceb79731e5d3c846"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-run-20261018.log",
+      "sha256": "eaf052beb1736a5a29725907d13289fde8fe11150c5205c4bdbef8f443f25da6"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-audit-run-20261018.log",
+      "sha256": "b231ca555210b328c0f4cda6fd95f9897747dc13c60c4f7d7a1a076f39a0029c"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-proof-20261018.py",
+      "sha256": "f46c5fe29f96046b159f78a4bc0af28c34b91c870e2aca3421e6d5d64c4db1bf"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-audit-20261018.py",
+      "sha256": "3762f6fbaa14d786da3da50a3b6733f1b245ce46431fc90ef752e7cfc0324224"
+    },
+    {
+      "path": "/private/tmp/chainbench-prerequisite-go-cache-help-20261018.txt",
+      "sha256": "c50cc9c22559af57634ad1ce04f02fb0670237c1dd5abdefc0132e59b03d192b"
+    }
+  ]
+}

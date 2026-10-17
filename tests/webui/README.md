@@ -350,3 +350,12 @@ container ID, running state, bridge address and loopback SSH publication before
 writing. Existing fixture bytes, types, ownership and permissions must match;
 conflicts are refused and preserved. Only missing fixtures are installed, and
 private staging is removed. Run `make fixture-test` for the Docker-free contracts.
+
+Acceptance prerequisites run with native/Docker test gates removed; their actual
+native proof children keep the explicitly supplied settings. SPA prerequisite
+builds use disposable copies of `web/` and must reproduce the reviewed embedded
+assets byte for byte. They never update the checkout; a mismatch fails acceptance
+and requires a separately reviewed rebuild. Ordinary Go checks run from the
+checkout, preserving Git-dependent tests. WEB-14 alone opens the mandatory live
+gates for its serial, uncached (`-count=1`) full race run with a three-hour
+per-package upper bound. E2E vet is not reported as E2E execution.

@@ -15,7 +15,8 @@ REQUIRED = ['criteria', 'spa-build', 'routes', 'mandatory-checks', 'live-go-test
 CRITERIA = ['WEB-%02d' % i for i in range(1, 14)]
 # The expanded native package runs serially beyond Go's default ten minutes;
 # keep an explicit upper bound as well as each native test's own deadline.
-CHECKS = ['make check', 'go test -race -json -p 1 -timeout=3h ./...', 'go vet -tags e2e ./...', 'npm --prefix web run build',
+# Fresh acceptance must execute tests rather than replay cached native success.
+CHECKS = ['make check', 'go test -race -json -count=1 -p 1 -timeout=3h ./...', 'go vet -tags e2e ./...', 'npm --prefix web run build',
           'node --test tests/webui/*.test.mjs']
 RACE = CHECKS[1]
 # A gated Go test skips without these. A skipped test is not a passed one, so

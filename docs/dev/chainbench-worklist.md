@@ -185,6 +185,17 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — 표준입력 뒤 인자 경계7RED→21계약·전체 검사와 스윕 보강 고정소스2,075파일/136,638노드/145,824간선·누락/끊어진 간선0을 확인했다. 내장AST44·동적입력31, 일반변조12·선언/스윕본문 누락116·SSH본문 누락4거절과 과거26그래프 보존을 확인했다([현재 측정](all-code-graph-sweep-round-refresh-evidence.json)). 그룹 배치 검사 뒤2,074파일·136,270노드/145,437간선·누락/끊어진 간선0,15계약·일반변조12/특정누락28거절과 과거22그래프 보존을 확인했다([이전 배치 측정](all-code-graph-placement-refresh-evidence.json)). 방화벽 보강 뒤2,073파일·136,230노드/145,394간선·누락/끊어진 간선0, 파서15계약·일반변조12/특정누락22거절과 과거18그래프 보존을 확인했다([이전 방화벽 측정](all-code-graph-firewall-refresh-evidence.json)). 중단 경계 뒤2,070파일·136,003노드/145,142간선·두 그래프 일치/누락0, 추가 함수1/호출2/회귀8과 특정누락3종·일반변조12거절·과거그래프14보존도 확인했다([이전 경계 측정](all-code-graph-sweep-refresh-evidence.json)). 비교/관측 보강 뒤 새 고정 소스의2,070파일·Go 테스트793파일·135,880노드/145,019간선, 두 그래프 일치·누락/끊어진 간선0과 변조12거절·과거 그래프10보존을 확인했다([이전 관측 측정](all-code-graph-probe-refresh-evidence.json)). 명시한 구문·재평가 범위 유지. 후속 표준입력 보강은15계약/7개 RED·전체 검사와2,069파일·14언어/형식·내장 AST38개·미해석36개, 두 capture의 해시 일치와독립 거절12개를 확인했다. Docker 캡처·삭제·중첩 삭제3프로그램 포함을 별도 확인했고 누락/끊어진 간선0이다([증거](all-code-graph-stdin-evidence.json)). 기존 N3/A7b 판단과 [이전 고정 소스](all-code-graph-evidence.json)를 보존했다. 2026-10-16 후속 고정 소스는 14언어/형식 2,060파일·Go 테스트790파일·내장 AST36개, 미해석 동적 입력33개를 명시하고 누락/끊어진 간선0을 확인했다. A8 비메서드 공개심볼1,890개/도달 불가0. 10계약·관련 race·전체 검사, 두 별도 capture의 해시 일치와 별도 감사10실패 대조 통과. 전체 실행 커버리지나 최종 Web 인수는 아님; [갱신 증거](all-code-graph-refresh-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-18 Web 사전 빌드 소스 고정·일반 검사 환경 격리:**
+기존SPA 재작성·native 게이트 상속·전체race 캐시 재사용을 기존 실행 경로의 확장4RED로 확인했다.
+공유 사전 검사7계약·Web14의11계약·기존runtime6계약과 전체make check를 통과했다.
+WEB01/03/04/05/10과 공유 인수의SPA 빌드는 임시 복사본에서 검토된 embedded bytes를 재현해야 하며,
+다르면 저장소를 고치는 대신 거절한다. 일반Go 검사는Git 정보가 있는 원 checkout에서 실행하고,
+native/Docker/e2e 게이트10개를 제거한다. 실제 native 증명의 자식 환경은 이 경계 밖에서 유지한다.
+필수Web14 전체race는`-count=1`로 캐시 재사용을 금지하고 기존 직렬·3시간 상한을 유지한다.
+실제SPA3파일 재현·Go 로컬맵4검사·실제 자식 환경 격리와2,458소스 파일의 bytes/권한/소유자/mtime 보존,
+임시복사본0잔여를 독립 확인했고 변조12개를 거절했다. 전체race·전체Python·L1·Web14 인수는 아니다.
+[소스 고정·RED/GREEN·실제 검사·독립 증거](web-prerequisite-isolation-evidence.json).
+
 **2026-10-18 Docker 회귀 준비 대상·기존 자료 보존 보강:**
 고정 컨테이너·사용자를 무시하던10개 RED를 확인해4계약(10경우)·전체make check와 관련3패키지race를 통과했다.
 실제 서버 설정/주소 매핑 로더로server1을 해석하고 compose 출처·실행 ID·주소·SSH 포트를 변경 전에 대조한다.
@@ -2069,6 +2080,7 @@ N3 잔여는 §0a 7번에서 실제로 해소했고 b-5의 후속 공개 CLI 세
 WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에는 문서도 수정하지 않는다.
 실행 전 검사만 보강했으며 전체Python의 기존 receipt 실패11건도 새 capture와 함께 재검증한다([범위](web-final-preflight-evidence.json)).
 Docker 준비 대상·기존 파일 보존도 보강했지만 후속 고정 소스 전체 AST 갱신과 전체 실제 인수는 남긴다([증거](docker-regression-preparation-evidence.json)).
+사전SPA 빌드 격리·일반 검사 게이트 제거·필수race 캐시 금지도 보강했지만 실제 전체race 성공으로 세지 않는다([증거](web-prerequisite-isolation-evidence.json)).
 외부 체인 W3와 같은 미해결 조건은 재현이나 인계만으로 구현 완료로 바꾸지 않는다.
 
 **9번 추가 진행:** [접속 이름 증거](attach-client-identity-evidence.json)는 논리 바이너리와

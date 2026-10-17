@@ -17,6 +17,7 @@ import uuid
 from evidence import digest
 from runtime_contract import base_commit, runtime_root, source_digest
 from runtime_storage import reclaim_evidence
+from prerequisite import run_check
 
 
 def now():
@@ -41,7 +42,7 @@ def run(criterion, proofs, required, checks, scenarios, source_patterns, verify)
     failures = []
     try:
         for command in checks:
-            result = subprocess.run(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            result = run_check(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             log = output / f'check-{len(evidence["checks"])}.log'
             log.write_text(result.stdout)
             evidence['checks'].append({'command': command, 'exitCode': result.returncode, 'log': str(log), 'sha256': digest(log)})

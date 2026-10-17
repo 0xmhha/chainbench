@@ -51,6 +51,8 @@ sweep-test: ## verify sweep retention and failure lifecycle contracts
 
 fixture-test: ## verify owned Docker fixture selection without Docker
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_docker_regression_prepare.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_prerequisite.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_evidence_web14.py
 
 case-docs: ## verify every current public case has an up-to-date command entry
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_case_command_docs.py

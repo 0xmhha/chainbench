@@ -2,6 +2,7 @@
 source, a reproducible SPA build served by the real Go server, every route
 navigated and refreshed in a browser, and the mandatory regression checks with
 every gated live Go test opened."""
+from prerequisite import check_environment
 from runtime_storage import create_runtime
 from runtime_contract import runtime_root, base_commit, source_digest, stage_sources
 
@@ -72,7 +73,7 @@ def run_checks(out, checkout, staged, evidence):
     # Only the serial race run opens the live gates. Elsewhere packages test in
     # parallel, and a live network on default ports would collide with the
     # port checks of another package's unit tests.
-    plain = {k: v for k, v in os.environ.items() if k not in LIVE_ENV}
+    plain = check_environment()
     for command in CHECKS:
         # The web build writes the embedded SPA, so it runs in the staged copy.
         cwd = staged if command.startswith('npm') else checkout

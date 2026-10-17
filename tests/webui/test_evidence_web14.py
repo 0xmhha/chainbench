@@ -104,7 +104,7 @@ class WEB14ExecutionGateTests(unittest.TestCase):
                         command.assert_not_called()
 
     def invoke_enabled(self, directory, command):
-        with mock.patch.dict(os.environ, {**self.settings(), 'CHAINBENCH_W4_PROOF': '1', 'PRESERVE_SETTING': 'kept'}, clear=True):
+        with mock.patch.dict(os.environ, {**self.settings(), 'CHAINBENCH_W4_PROOF': '1', 'PRESERVE_SETTING': 'kept', 'CHAINBENCH_W3_PROOF': '1', 'CHAINBENCH_E2E_FROM_BIN': 'old'}, clear=True):
             with mock.patch.object(run_web14.subprocess, 'run', side_effect=command):
                 run_web14.run_checks(Path(directory), Path(directory), Path(directory), {'checks': [], 'scenarios': []})
 
@@ -120,6 +120,7 @@ class WEB14ExecutionGateTests(unittest.TestCase):
             self.invoke_enabled(directory, command)
         race = next(args[0] for args, _ in calls if args[0] == RACE)
         self.assertIn('-timeout=3h', shlex.split(race))
+        self.assertIn('-count=1', shlex.split(race))
         self.assertIn('-p 1', race)
 
     def test_only_serial_race_opens_the_diagnostic_and_native_gates(self):
@@ -142,6 +143,8 @@ class WEB14ExecutionGateTests(unittest.TestCase):
             else:
                 self.assertNotIn('CHAINBENCH_W4_PROOF', environment)
                 self.assertNotIn('GSTABLE_BIN', environment)
+                self.assertNotIn('CHAINBENCH_W3_PROOF', environment)
+                self.assertNotIn('CHAINBENCH_E2E_FROM_BIN', environment)
 
 
 if __name__ == '__main__':
