@@ -1,0 +1,197 @@
+{
+  "date": "2026-10-18",
+  "scope": "Current-source 79 successful native cases and verified boundary stop. Actual chains are72 StableNet/1WBFT/6WEMIX; one row labeled StableNet ran WBFT. Raw PASS is preserved but intended family coverage is rejected. Not full L1 acceptance or bug resolution.",
+  "proof": {
+    "sourceBefore": "4e0f3eb3572c742f306afef989463d9fb23265dae858f25c0b2da89d8f7a11fb",
+    "headAtProof": "66cade7d1323e789d4260a545c1649ac8c5525a4",
+    "runtime": "/private/tmp/cbui/l1i-iewddqhb",
+    "plannedFiles": 216,
+    "plannedRuns": 358,
+    "scope": "Current full plan of216 files/358 isolated serial native invocations; no success assumed, missing external inputs remain blocked.",
+    "walkCompleted": false,
+    "executionCompleted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "sweepExitCode": 130,
+    "reportedRows": 79,
+    "totals": {
+      "pass": 79,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 279
+    },
+    "recordedWorkspaces": 79,
+    "retainedWorkspaces": 79,
+    "sourceAfter": "4e0f3eb3572c742f306afef989463d9fb23265dae858f25c0b2da89d8f7a11fb",
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "elapsedSeconds": 4663.777322957991
+  },
+  "independentPreservationAudit": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "4e0f3eb3572c742f306afef989463d9fb23265dae858f25c0b2da89d8f7a11fb",
+    "runtime": "/private/tmp/cbui/l1i-iewddqhb",
+    "walkCompleted": false,
+    "executionCompleted": false,
+    "reportedRows": 79,
+    "totalsObserved": {
+      "pass": 79,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "sourceAndInputsUnchanged": true,
+    "retainedWorkspaces": 79,
+    "archiveCount": 353,
+    "archiveEntries": 20414,
+    "localFilesPreserved": 10736,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 1185,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "coverage": {
+      "sourceFiles": 216,
+      "commonFiles": 71,
+      "singleChainFiles": 145,
+      "plannedRuns": 358,
+      "omittedSourceFiles": 0,
+      "duplicateOrMissingVariants": 0
+    },
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0
+  },
+  "coverageLimitation": "The frozen plan guard counts files and chainRound labels, not actual resolved compositions. Its duplicateOrMissingVariants=0 does not prove actual three-family coverage. Additional audit rejects that coverage claim.",
+  "additionalOutcomeBinding": {
+    "scope": "Additional read-only outcome binding after the frozen preservation audit. Actual79 successful cases; one wrong round label and one external attach-session artifact root. No full L1 acceptance.",
+    "sourceDigest": "4e0f3eb3572c742f306afef989463d9fb23265dae858f25c0b2da89d8f7a11fb",
+    "nativePassRows": 79,
+    "runCallsChecked": 80,
+    "actualChains": {
+      "stablenet": 72,
+      "wbft": 1,
+      "wemix": 6
+    },
+    "variantCoverageAccepted": false,
+    "externalSessionPreservation": {
+      "path": "/private/tmp/chainbench-l1-round-binding-20261018/external-session-manifest.json",
+      "sha256": "6283183acc2732458351492eef85d2008de68e36d049d05aa1da3e4ca2661800",
+      "mode": 384,
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792266189202895904
+    },
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "initialReaderFailure": "Initial inline diagnostic assumed every environment node has a chain field and raised KeyError on old attach environment. No source/proof change or feature RED; corrected using recorded owned host and exact dial RPC."
+  },
+  "wrongRound": {
+    "index": 53,
+    "path": "tests/tc/common/rpc/CT-RPC-016-isolated-en-pending-queued.json",
+    "label": "stablenet",
+    "chain": "wbft",
+    "chainSource": "explicit runtime node chains, bound invocation and managed record",
+    "caseSHA256": "ed622f83b844c6429ec1ab319e6a14c3884c561946d8e48fdb5d1adf71690771",
+    "cliMetadata": {
+      "path": "/private/tmp/cbui/l1i-iewddqhb/reports/cli/1792264483914821000-52675.json",
+      "sha256": "932cbd9f8fa6a8885a035df1d2b8fb3b6c9bd2a1001805d80523756764d13b3b",
+      "mode": 384,
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792264535141872385
+    },
+    "cliOutput": {
+      "path": "/private/tmp/cbui/l1i-iewddqhb/reports/cli/1792264483914821000-52675.log",
+      "sha256": "2c100d28211844cd6e91ce93939ee958df64a6fc9560d8106fd385c19a3642a5",
+      "mode": 384,
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792264534560320446
+    },
+    "session": {
+      "path": "/private/tmp/cbui/l1i-iewddqhb/reports/sessions/20261017-191443-52677/UTC-20261017-191443/session.json",
+      "sha256": "e5d46cfea943a87dee87963c0a55fdc0a1d05707ce02f89ad7ba73c35f21b298",
+      "mode": 420,
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792264534275563895
+    },
+    "spec": {
+      "path": "/private/tmp/cbui/l1i-iewddqhb/reports/sessions/20261017-191443-52677/UTC-20261017-191443/tests/001_isolated-en-pending-queued/spec.json",
+      "sha256": "ce04832a174e0b133a2cdedd4813661da0b0781897fbbb699cf1f12ee0973890",
+      "mode": 420,
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792264513006033434
+    },
+    "record": {
+      "path": "/private/tmp/cbui/l1i-iewddqhb/work/c53/chain-record.json",
+      "sha256": "b627eb216cb0be789b2ed529b228b4418cfc5d7c537fde60445d03a9d8e9419d",
+      "mode": 420,
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792264537484758926
+    }
+  },
+  "findings": [
+    {
+      "id": "common-default-round",
+      "observation": "tcsweep assumes every common case already declares StableNet. RPC016 extends wbft-bp4-en1, so default no-override round actually ran WBFT. Case functionality passed; family coverage did not.",
+      "resolved": false
+    },
+    {
+      "id": "attach-artifact-root",
+      "observation": "runAttach forwards keys but not requested artifact-root/no-skips to target run. One attach session was written to default ~/.chainbench/sessions outside the owned proof runtime.",
+      "preservedFiles": 11,
+      "sourceFilesUnchanged": true,
+      "archiveContentPermissionsUidGidMtimeVerified": true,
+      "originalRemoved": false,
+      "resolved": false
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-l1-after-placement-20261018-summary.json",
+      "sha256": "ea167965e24bcae153b7bd84dd942677d3dfa87a7dad8ee752f0a8b283bce81b"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-after-placement-20261018-independent.json",
+      "sha256": "48e12b0c91080d3051fa148e76d78816832271f8e95d6d0985abe98ebebdc081"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-after-placement-20261018-checkpoint.json",
+      "sha256": "588ccd5ca3f7a44869f91eec4cff62dedcbc1466de92d71f8c5566e7cafacb72"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-round-binding-audit-20261018.py",
+      "sha256": "94fd99433f9c5d77afc3a906c8ce45ba7558451ae1946d2bd07cc1cbc84443f8"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-round-binding-audit-20261018.log",
+      "sha256": "aaf19fc454470f1194591b431a91915462c3a9933708645f545fdac17c9f5a78"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-round-binding-20261018/diagnosis.json",
+      "sha256": "46b47100c4ef5223df77d56ebda97eb2267a4196a8549e6c254b50e214cd9f58"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-round-binding-20261018/external-session-manifest.json",
+      "sha256": "6283183acc2732458351492eef85d2008de68e36d049d05aa1da3e4ca2661800"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-round-binding-20261018/external-attach-session.tar.gz",
+      "sha256": "74c03c512145c0cb650e70b8c42ccc11023894a63d205ab784f55afa21a45d7e"
+    }
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "documentationValidation": {
+    "command": "go test ./internal/arch -count=1",
+    "exitCode": 0,
+    "log": "/private/tmp/chainbench-l1-round-boundary-arch-20261018.log",
+    "sha256": "f26da6bce0381176f5044dcaa34b81ad400c9c7219e487a732ce3e8cf7636e03"
+  }
+}
