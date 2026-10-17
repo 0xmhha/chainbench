@@ -1,0 +1,1128 @@
+{
+  "scope": "Propagate firewall restoration command failures. Seven real-shell negative contracts and three actual native healing actions verified. Overall selected cases remain2PASS/1FAIL because WEMIX majority advancement contradicts the old symmetric-halt criterion before healing. No full L1 or upstream fix claim.",
+  "sourceDigest": "c0af3e18b12dad2b9998194fd6d226187c69d835e92d3a3debcd0d3fb0301974",
+  "headAtProof": "969e177830d8d1b3f5c2c06c7fa35c111b9b57c9",
+  "cliSHA256": "ddc4442e2a11290e1d82acd2165f8b7d5632e984b39ad58a48f72362c195329a",
+  "runtime": "/private/tmp/cbui/l1i-lujc_ber",
+  "tdd": {
+    "baselineProductionSHA256": "f7a2604e271ae36538fe77aaacde55565b8290f8eb99bf2ba5205c88fa322bf2",
+    "meaningfulRedFailedSubcases": 7,
+    "deletionFailureStatuses": [
+      1,
+      2,
+      7
+    ],
+    "checkFailureStatuses": [
+      2,
+      3,
+      4,
+      126
+    ],
+    "absentRuleAndDuplicateRemovalControlsPassed": true,
+    "focusedRegressionPassed": true,
+    "relatedRacePackages": [
+      "internal/testhelper",
+      "internal/testengine",
+      "internal/dsl",
+      "internal/dsl/assert",
+      "internal/dsl/interp"
+    ],
+    "relatedRacePassed": true,
+    "makeCheckPassed": true,
+    "firstRelatedSandboxHTTPBindDeniedPreserved": true,
+    "firstMakeCheckCommentAndPackageTreeFailuresPreserved": true
+  },
+  "nativeTotals": {
+    "pass": 2,
+    "fail": 1,
+    "blocked": 0,
+    "skip": 0,
+    "notrun": 0
+  },
+  "nativeHealingScope": {
+    "acceptedHealingScope": true,
+    "allSelectedCasesAccepted": false,
+    "fullL1Accepted": false,
+    "sourceDigest": "c0af3e18b12dad2b9998194fd6d226187c69d835e92d3a3debcd0d3fb0301974",
+    "cases": [
+      {
+        "preset": "stablenet-bp9",
+        "caseStatus": "pass",
+        "healActionSucceeded": true,
+        "allNineRestoredHashesAgree": true,
+        "passingAssertions": 7,
+        "assertions": 7,
+        "failures": [],
+        "session": "/private/tmp/cbui/l1i-lujc_ber/reports/sessions/20261017-145004-12923/UTC-20261017-145004/session.json"
+      },
+      {
+        "preset": "wemix-bp9",
+        "caseStatus": "fail",
+        "healActionSucceeded": true,
+        "allNineRestoredHashesAgree": true,
+        "passingAssertions": 6,
+        "assertions": 7,
+        "failures": [
+          {
+            "ID": "",
+            "Source": "head kept advancing on node9 — those did not halt",
+            "On": "",
+            "Assert": "blockHalt",
+            "Expected": "head advances <= 2 over 30s",
+            "Actual": "node9 196->222 (+26)",
+            "Pass": false,
+            "Provenance": {
+              "assert": "blockHalt",
+              "maxAdvance": 2,
+              "on": "node9",
+              "within": "30s"
+            }
+          }
+        ],
+        "session": "/private/tmp/cbui/l1i-lujc_ber/reports/sessions/20261017-145436-22407/UTC-20261017-145436/session.json"
+      },
+      {
+        "preset": "wbft-bp9",
+        "caseStatus": "pass",
+        "healActionSucceeded": true,
+        "allNineRestoredHashesAgree": true,
+        "passingAssertions": 7,
+        "assertions": 7,
+        "failures": [],
+        "session": "/private/tmp/cbui/l1i-lujc_ber/reports/sessions/20261017-150524-50213/UTC-20261017-150524/session.json"
+      }
+    ],
+    "caseFailurePrecedesChangedHealAction": true,
+    "remainingPartitionRules": 0,
+    "allFifteenServersCheckedForEachCase": true,
+    "userApprovedFollowup": "Keep4/5; WEMIX minority halts and majority advances; all nodes synchronize and agree after restoration."
+  },
+  "independent": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "c0af3e18b12dad2b9998194fd6d226187c69d835e92d3a3debcd0d3fb0301974",
+    "runtime": "/private/tmp/cbui/l1i-lujc_ber",
+    "walkCompleted": true,
+    "executionCompleted": true,
+    "reportedRows": 3,
+    "totalsObserved": {
+      "pass": 2,
+      "fail": 1,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "sourceAndInputsUnchanged": true,
+    "retainedWorkspaces": 3,
+    "archiveCount": 27,
+    "archiveEntries": 1323,
+    "localFilesPreserved": 666,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 45,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "selectedScopeAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0
+  },
+  "archives": [
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server1-metadata.tar.gz",
+      "sha256": "20378dccad82fedb6cc3eb9017f2a40462729de53638419243f0b2c9c6471211",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248855408171574
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server2-metadata.tar.gz",
+      "sha256": "96bde594221e10a1716b2817bc4fbc566c51d0041f9c90b076f81045e32c2c21",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248857099835033
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server3-metadata.tar.gz",
+      "sha256": "bf66923ed28a29b21b9f53f2808ee4ddfe2d682fe5d289dcf3e38a1ba19d9b50",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248859070455981
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server4-metadata.tar.gz",
+      "sha256": "233f57e18af064eb3944a868ad7c44c3bc3943b6b32fe58659376751fcb9d042",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248861665085804
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server5-metadata.tar.gz",
+      "sha256": "a81663dc1ca939497b6892b62e1a8aaaebbcaec766b9b6b5f8b276705500f8f6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248864028841177
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server6-metadata.tar.gz",
+      "sha256": "7c96a273d771d393b4a3e9a1a5dde7ed840277bb1b22ad581dc40fa1bfc398ee",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248866280016279
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server7-metadata.tar.gz",
+      "sha256": "6fbee8706bc89ff1945617d2da6e9cb3fc17672780786b8758281f0c1cc0d79b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248867948893260
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server8-metadata.tar.gz",
+      "sha256": "f91b4c790431e57f208458842772ef8a5c0aaa6dc2f06b46d2aa0ae23dce0943",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248869526457326
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c1/server9-metadata.tar.gz",
+      "sha256": "32413375400208e238cf5e60ed9c1367c17786d1020dc87b307fa8960b250df4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248871008719231
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server1-metadata.tar.gz",
+      "sha256": "c5aeff00407a4b566bcef9af96b3050d2a0f34616091317d7daa30a83107ee95",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249493398065349
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server2-metadata.tar.gz",
+      "sha256": "54f26fbfcd515020bb970e53663392a583341c553a6065521c2bf513ea107ff0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249495663731482
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server3-metadata.tar.gz",
+      "sha256": "f3238e654138bc5e5faabd11442bb1e5fbbb0fd169b6252e02ccdc55bdcb4116",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249498806665642
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server4-metadata.tar.gz",
+      "sha256": "d877441751e3ab10905ad2443a7c1a214c3b84916ab8cacf1268b84df9dec678",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249500890301076
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server5-metadata.tar.gz",
+      "sha256": "82fe72d88734094181a572468464a1a97d7bf32f8f4692e8a9b6491fadc8a573",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249505862305850
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server6-metadata.tar.gz",
+      "sha256": "9e9a577043eac99f5ebb093e6f83257a38e5b1eb5b803af9d86304725aa22d5d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249509402704395
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server7-metadata.tar.gz",
+      "sha256": "9ee8f602ba6f7aeea5456a112cd625054ddd86a1d582846fb572d9626222ee18",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249512918898484
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server8-metadata.tar.gz",
+      "sha256": "a7993ee31f7e53ba04eaa15e8346fc0e946da86a45d7bedfb1a7f65de9fa2218",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249515993244227
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c2/server9-metadata.tar.gz",
+      "sha256": "12afda34a4762fd6120ea7e037db7f8b2d52d5e34053c4210f87702a2244cded",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249518535863487
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server1-metadata.tar.gz",
+      "sha256": "9ee7577b2a17ed33efc36212123617a86163a8615abfdb9eec69094ee91a8978",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249809104655919
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server2-metadata.tar.gz",
+      "sha256": "ed9cdaa2a852fe431210cc0a11824ac3660b04cb205f1d931bb9b2b9423243a3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249810644250523
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server3-metadata.tar.gz",
+      "sha256": "2f11d45cd1648c93fa3440f08d5055dcfe63c0329d5ad1e0ef58364a5159b8b7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249812509553407
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server4-metadata.tar.gz",
+      "sha256": "a14a205887a3112b2651ded1463e5c87b7d8d72615586585c91e0fe9cac1b471",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249814141270615
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server5-metadata.tar.gz",
+      "sha256": "1e0a9ddf5deec560c8e2354af43b19e01aa847e06534dc231436e30332d2388b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249815723133209
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server6-metadata.tar.gz",
+      "sha256": "67d37fe2c87b904380c8125cb3905fdb1f063310104a9cc862d14e8ce47d5b56",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249818427053096
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server7-metadata.tar.gz",
+      "sha256": "bbfe7e638759abf1effbb7c09e56522779a35888cafe36f12e63e17147bb0021",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249820001193484
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server8-metadata.tar.gz",
+      "sha256": "f17998ece7bd085c825373185cc3e040deeae15cb28346b01cfd9db80f405758",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249821824774236
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/retention-c3/server9-metadata.tar.gz",
+      "sha256": "ffdf2818ab646b332b17e42a45833939f1b12b72e8f6b4fc3af22171c331af9f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249823471454079
+    }
+  ],
+  "sourceAndHelpersUnchanged": true,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "approvedFollowup": {
+    "criterionApprovalReceived": true,
+    "implemented": false,
+    "criterion": "Retain4/5 split. WEMIX minority halts while majority keeps producing. All nodes synchronize and share a block hash after restoration."
+  },
+  "limitations": [
+    "All three selected cases are not passing; preserve WEMIX failure and original artifacts.",
+    "WEMIX initial etcd failure text also occurs during healthy startup; it is not evidence that W2 recurred.",
+    "Partial partition application/cancellation recovery is outside this error-propagation repair.",
+    "Whole358 L1, R3/P4/R4/R5, original/legacy, upstream issues and current-source Web14 remain open.",
+    "All-code graph refresh is deferred until the approved case change is implemented."
+  ],
+  "sources": [
+    {
+      "path": "internal/testhelper/partition_firewall.go",
+      "sha256": "1c27ad48788b7f7f6003e0e925cce350f63042081c425a9d5443ea571b2c4dc2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248064700034143
+    },
+    {
+      "path": "internal/testhelper/partition_firewall_errors_test.go",
+      "sha256": "8e2200643a329660d72690258e872390c004869d26c71674efe70a61f31b512e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248378225574401
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-20261017-checkpoint.json",
+      "sha256": "23d40ac6dd8e1930a674b5cb35566f8dbcfc3af7f02a12ac20afa5fdc67c3737",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248521862829206
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-20261017-summary.json",
+      "sha256": "601490cad0b8783aa42ab96b2e0d969c2f976887fe956a48eb230d7f1b493a81",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249829511058349
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-20261017-independent.json",
+      "sha256": "6bde91b9435a2da4993126dbd7ab0448fbc6f9e9c6829497aba73f939daefa55",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249907715682232
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-20261017-healing-scope.json",
+      "sha256": "be1b0f9eb18d77cf8a387be80ebfa21c10a8d1da798ffa79e487c0e77e9a2e7b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249973480150535
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/start.json",
+      "sha256": "93e551ae6e206c1484f7f16a441b4f1d6c2d5e41bd1dd53a360c7807bf388bbf",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248534232175927
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/proof.json",
+      "sha256": "601490cad0b8783aa42ab96b2e0d969c2f976887fe956a48eb230d7f1b493a81",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249829508557847
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/plan.json",
+      "sha256": "5c195b408443a1506295c31fb9145c83fb55fbda1648a41254b6c1c4f8fdcedc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248521835449190
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/sweep.log",
+      "sha256": "9ebd28960997cda085d6dda06b78fcabb99979d0ce4797d98d94f542c5f9d512",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249828994419913
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-red-20261017.log",
+      "sha256": "025e6fa046d40e1d00c71882df2d278d1dcf8fe214251ec34d8e2825ba55826c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248045137572401
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-green-20261017.log",
+      "sha256": "b706a469831bd4b24ccb70b212c2d672e279dbbe75e1a561f6b9833df31773ff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248068510551203
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-green2-20261017.log",
+      "sha256": "2bfc29af0ef137f9a2635c141c191fdf192db942e673e4296e1005536b76e5d9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248109287424351
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-race-20261017.log",
+      "sha256": "1418d5e58120c4ddb4214cf8db05a1f19e5472918d1c41e40fe42935c019e576",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248189843866203
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-check-20261017.log",
+      "sha256": "716f9e03c49a90a6ab42f8e0d463a8950d4d62c33d95d9c92ca3828c62fe604b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248366630981539
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-check2-20261017.log",
+      "sha256": "35f6de92e6ba7e70c330550843e52c5f4aa655321e7fe970829e4985ba3558b3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248511617796998
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-run-20261017.log",
+      "sha256": "0837a6217d21ca6f6ac2b2cb19272231d846fbad60a158bd497cde8da5433fd7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249829511866905
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-independent-20261017.log",
+      "sha256": "2ca44d7a4d5f53309674ebd6fc220311d04af3043d2495f0c592355775e4c573",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249907717645375
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/firewall-c1.json",
+      "sha256": "79869f090838345e0cee0cd77cee08a4a1bd63ad8959f629b13244a160938c77",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248853004230573
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/firewall-c2.json",
+      "sha256": "79869f090838345e0cee0cd77cee08a4a1bd63ad8959f629b13244a160938c77",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249491178867152
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/reports/firewall-c3.json",
+      "sha256": "79869f090838345e0cee0cd77cee08a4a1bd63ad8959f629b13244a160938c77",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792249807648733155
+    }
+  ],
+  "frozenInputs": [
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-run-20261017.py",
+      "sha256": "55a1ba81eafcfc21a78f9472a9561149d1dfc9ad787771dcaff5754e15c75d6e",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248203935146938
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-20261017-checkpoint.json",
+      "sha256": "23d40ac6dd8e1930a674b5cb35566f8dbcfc3af7f02a12ac20afa5fdc67c3737",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248521862829206
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-20261017-sweep.sh",
+      "sha256": "02824e540788432ec41d81796433b91c2a1fa5580a4d65ecae254109a0d64706",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248521835622065
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-cli-20261017.py",
+      "sha256": "f78b1835ad62720a8b9b70dba455ea26e6a7491d06ec2aeb500ee84eada7d277",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248172252873117
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-hook-20261017.py",
+      "sha256": "31d3f2f13bd34d66e4eb9b49fac0ed0fb0d53a2bb1abc7d8165aee53c62a10db",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248172253799491
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-retention-20261017.py",
+      "sha256": "958a1bb459f641d185267d39fcac4a9f2515225521aebbe3a22e1dbf9743f3d0",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248172254923990
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-independent-20261017.py",
+      "sha256": "4314a9378bf5376a9920fc020f2c4a90306aff808c63c54a06cd0dc00b88b547",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248172256580780
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-isolation-20261016.py",
+      "sha256": "d35eb33baeb94384f110ef9626a989e95a0d3602af185688518b3328cf5a698e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123313440015831
+    },
+    {
+      "path": "/private/tmp/test-chainbench-l1-isolation-20261016.py",
+      "sha256": "bc61afbc7aa545a214127b7c09fa704008aa7221e190011be56fe4448fedfa39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123319838610737
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim.py",
+      "sha256": "df42710eb09c5e26d7b4243c06161989274e179265609b059ad8561c417a2f2a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058683337025254
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim-v3.py",
+      "sha256": "1ea5fb5a94cb3af1cd5b04cd0f1335cd2fe14f11e04ddd4983dca5093c14eeb4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095185118326620
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.py",
+      "sha256": "22690981c761e3d26e8c4423ea3861d96933fd6400d4140649188675ad704196",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226767850317
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-proc-probe.sh",
+      "sha256": "3f5f8a801c95144c2afe6cbf4df70cc86eff5d4cb53acada4ece4e7490979e29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792058226765223461
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-lujc_ber/bin/chainbench",
+      "sha256": "ddc4442e2a11290e1d82acd2165f8b7d5632e984b39ad58a48f72362c195329a",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248521805172426
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/fleet-refresh/preparation.json",
+      "sha256": "b59b3a0e801b4ed2ca9fc028c975d738a2e7162ea4d3b8885a68054ba1fa154f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792096044334807671
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/linux-provenance.json",
+      "sha256": "bff5097c2cdb1a04fc19615828521e3d39e917850066e4710371a45114baba57",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095510251243350
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    },
+    {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/boho-v101/proof.json",
+      "sha256": "a40cff33b773503fae0ecdb281d3465f96a2418e55df2c8fb6a249dfbdaab176",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061542260694576
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-cases-checkpoint2.json",
+      "sha256": "fe5f6eb49edbb5d7100c0bbd066193bc991e22ec8f12c962b40a81653109691d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792062409736789349
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-legacy-checkpoint.json",
+      "sha256": "06de3c04c860dffff4aca8dd4ecffef4b17558fe379a33249b3d1087b0bc970f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061229795713721
+    },
+    {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/reports/prefork/proof.json",
+      "sha256": "71071b816eca8aa919e7cb429042c67beb71e7e014dc984302113a5dd20be8ca",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792061497507061800
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set.yaml",
+      "sha256": "323fec0873b2efc0a4edb5b93318d74191cefde45a66ba20cc9f4c2111df23c0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226888185789
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/server-set-wemix.yaml",
+      "sha256": "c03392f7f3934a461b63fe3759ffa89b083aba9133fc313ec9eb2a97227221ba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226894737140
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/workspace-config.yaml",
+      "sha256": "1a5a5d33690766e03308057f3e338a9b6e10c804daf33af942c600670c6f6c8e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912806499
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/lf-xjdy6jeu/localmap.yaml",
+      "sha256": "546638d6af9dc51fb49c3b15b351b3fd00bb86d3e96a406936aab4588f75f318",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792056226912378367
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/README.md",
+      "sha256": "fb46d4826017d6057b069fe0a72e2fe165e015524a95585c8856742cf551a302",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070112674605
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/dev1/address",
+      "sha256": "6ccc80caa10ed418ccef73371f830eb2915dd37a7768f2e663bb873b65250b35",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792094234840938504
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/dev1/private",
+      "sha256": "8b56f62222f3befe4f954a95ff39218450ddf11fa2de2a6f578ee33e8f44377b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792094234840833591
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/metadata.json",
+      "sha256": "62dba855824591a1ed6e9e9cf57d625d58ff5326c0c4a7466586ada8919148d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070113019854
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/address",
+      "sha256": "d600b9752a16731fcce100f7286357b51e3efc0da9206fd7671df51729d49ed9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480946213105
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/bls",
+      "sha256": "af5015acf49da868d5c35827f9629bf86bfc1b670a51400c1ca557bfc2fa47aa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480946286522
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/bls_pubkey",
+      "sha256": "b2a24866779f8370658b27a85473dcb7bdf05b404839cbba238ec8b68548fd1e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070114263977
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/keystore/UTC--2024-12-05T07-01-38.707018000Z--c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "sha256": "0d50f048758bb314766b3a6a6fa6c41cedf2ce4b025e3369c20aac078fc34ed7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070114425602
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/nodekey",
+      "sha256": "1695105a413bd40cb4e2f0d4f9c0eec694e961a4bad6381ee1ada465f7ab1548",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070114576102
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/pop",
+      "sha256": "5e00a500d28707fc383aeec1de476e6ec9664e82eaf3f1e7b1d83709b47738b2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480946359730
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/private",
+      "sha256": "1046bc3dd9d2613d32a9182a6ff6a1ce96d944076c3e74132490ac425dae052f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480946101939
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/pubkey",
+      "sha256": "817a82a41972fd523b5c5538643aad775505182bcde8c5311dedb84626b1207e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070116300558
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/address",
+      "sha256": "4f989c67fd2e3ededa64c33c0244caf1ccf846cee396ef20e8c951b4dbc23b01",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480947405104
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/bls",
+      "sha256": "1470ccc2f868d870d033f7471a5e4b9d21e1f6b25ac5d92400eee66ae4f59d24",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480947461396
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/bls_pubkey",
+      "sha256": "6f58a4664c8b1a6a54fa04caab8646b637062e0486ff0cbefecd100a7f3738fb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070116897140
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/keystore/UTC--2024-12-05T07-02-19.293598000Z--2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "sha256": "ca2c0e05b696149218f1bd6c3040f2aaeb494b3534a892e6912b3fb535d999e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070117045848
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/nodekey",
+      "sha256": "627a03f6bc0e6dd962d792c5d282cdd518206d25d4d2ea4d2f3bd31a158e3c7d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070117110765
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/pop",
+      "sha256": "b901f05a33e2f73b846d7e60d277ff091e236fcd50b657fbee98cbf51fe76533",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480947521937
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/private",
+      "sha256": "4f456af044fd9fe195351ac6a9c920d14535002c25e2670cc0b92e13ab6e3079",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480947343479
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/pubkey",
+      "sha256": "b0d3cde1ed02841df68521b577031e9226bf085cfe3bc46b699512168a79bdff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070117726222
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/address",
+      "sha256": "4d1c0151913b490a9d96a28306bc830e4b31cd2339df6a165054b14b990fcf01",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480948585311
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/bls",
+      "sha256": "88d76f973d8b3cfc807c721f01ab1af0da12fe6c731aa85c116de1bb0a9739cc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480948649061
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/bls_pubkey",
+      "sha256": "f24614cb5fe530773210032e9ef5b5f07f8df4bd79786ccf0970e0e9c91846d1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070118415054
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/keystore/UTC--2024-12-05T07-02-39.798729000Z--8c4a10b9108d49b9d23f764464090831d9c17764",
+      "sha256": "0a8749a1fb6248b8cc2413ef796adb678e682b90ad1ff56480db8fe35ebccfe7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070118540721
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/nodekey",
+      "sha256": "71fc7ce972fa2851a93908faf4126f28a1b924bf5b6f85157475908b3db3cc9b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070118744137
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/pop",
+      "sha256": "9b00306b54e5556ceeeec3d9dff91779e7cf59aad80fbd0af3cc98190629c65e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480948710311
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/private",
+      "sha256": "089c362fa88a332235eb1ebb811e1c4407eaa2b141000beef1f39376ddca0dff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480948523561
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/pubkey",
+      "sha256": "d5de44216d3457fcee6216a82d744a0b2a3e66fb84c5a63ae47ed0fed9d796b3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119259512
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/address",
+      "sha256": "e3f737607bd00432e8960ab84d9203b9946d4b1a7ef3ae9403cf6173c4467bec",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480949735560
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/bls",
+      "sha256": "19db31f5299a3525474b81f93634670641fd5a8401d9ea21a6598e4a470dabe8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480949795685
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/bls_pubkey",
+      "sha256": "c374e0a7fe0f04c64b8fd285de424a973c7507067dcfe57493bc2649daa64399",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119750386
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/keystore/UTC--2024-12-05T07-02-58.253588000Z--8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "sha256": "223fbde77966c348b2b41427a3c3c005e864d9d724a71927eda5e33c642f239b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119858844
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/nodekey",
+      "sha256": "2b9890bd64618a661afc4e31c83f0f27e86923fb326b98677d55e2ff02c86db8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070119930010
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/pop",
+      "sha256": "fd72d1a840b2501052cdf3d13b5e6e3cc748e3edabce84b3f718bbb207f970f7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480949875643
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/private",
+      "sha256": "6bf970f9d91fa9bb9eea4c39911b51d63d33a3d428dff78980e6d9e377b293d9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480949673852
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/pubkey",
+      "sha256": "d9ec431966d00b8238d00e2daadc06d7928d144cf8557657939b259e0ffbbc5b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070120361468
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/address",
+      "sha256": "bcb413bd943e67ffd3dc9ac96f4eaeea8547aafc807b286bda084eaa08cc56cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480950900434
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/bls",
+      "sha256": "e9bed293f0d8392718c2ca5de508db633a976ee1802a2600610a446648adddce",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480950965392
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/bls_pubkey",
+      "sha256": "d0a87887c2c9b313d711b43e09a524527a526bd2d3cecfa0ab7ba771ef982673",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070120840134
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/keystore/UTC--node5-keystore",
+      "sha256": "2d5e630633d20cd2236ce410ec9ef861a35d460d98fe4672d0817e67560d9d0f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070120944051
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/nodekey",
+      "sha256": "57b791572ce52959741a3b2a21b515ecb76d105794d55ecb2a62afff1fba6285",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070121017759
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/pop",
+      "sha256": "138cc1f3c7571ac8dd29ced23a0021cf689faff3fb27819d0c22bf2e70aba357",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480951022184
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/private",
+      "sha256": "57b791572ce52959741a3b2a21b515ecb76d105794d55ecb2a62afff1fba6285",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792248480950838726
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/pubkey",
+      "sha256": "7d07eae01573017ed28b371441347c6ea47c3a60070439d49d270941c0373406",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070121278883
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/password",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070121378717
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/tcsweep.sh",
+      "sha256": "db26a5a917e37dfafbfa0822daab1a677b407a9023e56329b02b8b75c4b8bcf7",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792137413103735706
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_tcsweep_retention.py",
+      "sha256": "9943a6b238ce85a7c86f3abd131d5fa18126003c9bdc3163b8189b00812725a5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792137457750684031
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/linux_retention_transport.py",
+      "sha256": "6ffba337e27dca300039d6f32e793580a20faa3d319aee96d0c378295dd42838",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792125845246182864
+    },
+    {
+      "path": "/private/tmp/chainbench-firewall-heal-prepare-20261017.py",
+      "sha256": "e0e70f1c2afa206b541d7f152d449dcecfa6fd69c2e9f02b9386fe2227196f40",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792248203933745773
+    }
+  ]
+}

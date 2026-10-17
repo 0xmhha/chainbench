@@ -142,7 +142,11 @@ func fwRun(ctx context.Context, cmd interp.HostCommander, self, peer node.Node, 
 			script = check + " >/dev/null 2>&1 || " + add
 		} else {
 			del := strings.Replace(check, " -C ", " -D ", 1)
-			script = "while " + check + " >/dev/null 2>&1; do " + del + " || break; done; true"
+			// Only an absent rule ends the loop successfully. A failed delete
+			// or an unusable check must reach the caller instead of claiming
+			// connectivity was restored while the rule may still be present.
+			script = "while :; do if " + check + " >/dev/null 2>&1; then " + del +
+				" || exit $?; else chainbench_rule_status=$?; [ \"$chainbench_rule_status\" -eq 1 ] && break; exit \"$chainbench_rule_status\"; fi; done"
 		}
 		if _, err := cmd.RunOnHost(ctx, self, script); err != nil {
 			what := "cut"
