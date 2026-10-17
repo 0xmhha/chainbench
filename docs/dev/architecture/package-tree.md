@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 86,923 |
+| `internal/` | 54 | 86,934 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 1,104 |
 | `tests/` | 1 | 135 |
-| **합계** | **78** | **93,861** |
+| **합계** | **78** | **93,872** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 62,155줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 62,166줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -144,7 +144,7 @@ internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인
                       + Unresolved(오프라인 이름 검증) + caseTimeout. 계약이 여기 사는 것이 핵심 —
                       testhelper(L3)가 구현하므로 testengine(L4)으로 올릴 수 없다
 
-internal/testhelper 7,155 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
+internal/testhelper 7,166 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 

@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-18",
+  "scope": "Recorded etcd consensus-peer TCP endpoints join the P2P TCP/UDP firewall cut and restore. Client/management endpoints remain excluded.",
+  "sourceDigest": "6d6f0b984bb1615c2bbd70abaadacfa44c323be1d159d0043ecd0870962c99f3",
+  "headAtProof": "fc9921ff92f2a74a7fdf920b2c08c95e0b42d7d8",
+  "unit": {
+    "meaningfulRedScenarios": 4,
+    "redLog": "/private/tmp/chainbench-partition-etcd-red2-20261018.log",
+    "excludedFixture": "First draft used incorrect command token indexes; corrected before the meaningful RED.",
+    "newGreenScenarios": 5,
+    "relatedFivePackagesRace": "pass",
+    "makeCheck": "pass"
+  },
+  "firstAttempt": {
+    "runtime": "/private/tmp/cbui/l1i-j2xls_h3",
+    "totals": {
+      "pass": 2,
+      "fail": 0,
+      "blocked": 1,
+      "skip": 0,
+      "notrun": 0
+    },
+    "selectedScopeAccepted": false,
+    "failure": "WEMIX setup join-node8 did not observe node9 in governance membership before 2m timeout. Partition never ran; cause and relation to observation load unconfirmed.",
+    "preservationAccepted": true,
+    "archiveEntries": 1260,
+    "localFilesPreserved": 629,
+    "remainingDatabasePaths": 0
+  },
+  "retry": {
+    "runtime": "/private/tmp/cbui/l1i-ub9i243g",
+    "totals": {
+      "pass": 3,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "selectedScopeAccepted": true,
+    "observationChange": "Wait for persisted node start completion before issuing TCP probes. Source and CLI bytes are identical to first attempt.",
+    "cases": [
+      {
+        "chain": "stablenet",
+        "minorityHeads": [
+          [
+            "node1",
+            "38",
+            "38",
+            "0"
+          ],
+          [
+            "node2",
+            "38",
+            "38",
+            "0"
+          ],
+          [
+            "node3",
+            "38",
+            "38",
+            "0"
+          ],
+          [
+            "node4",
+            "38",
+            "38",
+            "0"
+          ]
+        ],
+        "majorityBefore": 38,
+        "majorityAfter": 38,
+        "majorityAdvance": 0,
+        "recoveredBlock": "0x40",
+        "assertions": 8,
+        "recordedActions": 25,
+        "recoveryWaits": 18
+      },
+      {
+        "chain": "wemix",
+        "minorityHeads": [
+          [
+            "node1",
+            "136",
+            "136",
+            "0"
+          ],
+          [
+            "node2",
+            "136",
+            "136",
+            "0"
+          ],
+          [
+            "node3",
+            "136",
+            "136",
+            "0"
+          ],
+          [
+            "node4",
+            "136",
+            "136",
+            "0"
+          ]
+        ],
+        "majorityBefore": 238,
+        "majorityAfter": 265,
+        "majorityAdvance": 27,
+        "recoveredBlock": "0x26b",
+        "assertions": 8,
+        "recordedActions": 25,
+        "recoveryWaits": 18
+      },
+      {
+        "chain": "wbft",
+        "minorityHeads": [
+          [
+            "node1",
+            "42",
+            "42",
+            "0"
+          ],
+          [
+            "node2",
+            "42",
+            "42",
+            "0"
+          ],
+          [
+            "node3",
+            "42",
+            "42",
+            "0"
+          ],
+          [
+            "node4",
+            "42",
+            "42",
+            "0"
+          ]
+        ],
+        "majorityBefore": 42,
+        "majorityAfter": 42,
+        "majorityAdvance": 0,
+        "recoveredBlock": "0x53",
+        "assertions": 8,
+        "recordedActions": 25,
+        "recoveryWaits": 18
+      }
+    ],
+    "negativeControlsRejected": [
+      "stablenet:minority omitted",
+      "stablenet:majority forged",
+      "stablenet:sync omitted",
+      "stablenet:hash omitted",
+      "stablenet:hash diverged",
+      "stablenet:heal failure",
+      "stablenet:case failed",
+      "stablenet:reference latest",
+      "wemix:minority omitted",
+      "wemix:majority forged",
+      "wemix:sync omitted",
+      "wemix:hash omitted",
+      "wemix:hash diverged",
+      "wemix:heal failure",
+      "wemix:case failed",
+      "wemix:reference latest",
+      "wbft:minority omitted",
+      "wbft:majority forged",
+      "wbft:sync omitted",
+      "wbft:hash omitted",
+      "wbft:hash diverged",
+      "wbft:heal failure",
+      "wbft:case failed",
+      "wbft:reference latest"
+    ],
+    "tcpObservation": {
+      "acceptedConsensusTCPScope": true,
+      "sourceDigest": "6d6f0b984bb1615c2bbd70abaadacfa44c323be1d159d0043ecd0870962c99f3",
+      "crossEdgesPerPhase": 80,
+      "withinControlsPerPhase": 8,
+      "phasesObserved": 3,
+      "sampleCount": 262,
+      "rawObservation": "/private/tmp/cbui/l1i-ub9i243g/reports/consensus-tcp.json",
+      "rawSHA256": "edaa450862501677fd06e81bdfc48f24beb73bf80c03321ca6ccbf243f55a325",
+      "fullL1Accepted": false,
+      "finalWebAccepted": false
+    },
+    "preservation": {
+      "archiveCount": 27,
+      "archiveEntries": 1323,
+      "localFilesPreserved": 656,
+      "freshIndependentProcessInventories": 30,
+      "caseBoundaryScopeChecks": 45,
+      "remainingDatabasePaths": 0,
+      "firewallTablesChecked": 15,
+      "remainingPartitionRules": 0,
+      "sourceAndInputsUnchanged": true
+    }
+  },
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "upstreamStartupDefectResolved": false,
+  "repositoryCacheException": {
+    "event": "Read-only status verification omitted PYTHONDONTWRITEBYTECODE and generated an ignored repository bytecode cache during the retry. No source or documentation was edited.",
+    "cache": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/__pycache__/runtime_contract.cpython-310.pyc",
+    "cacheSHA256": "018e99957485a5d343a91d6b4a96017284bd78483ace22d9b353bf7f0f6bd6bc",
+    "cacheMtimeNS": 1792255210407356325,
+    "source": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/runtime_contract.py",
+    "sourceSHA256": "b8a038f17827457ee4eba55166de3c9b8d19a5bf7ddcd43512ddb0aad23038ed",
+    "compiledCodeEqualsUnchangedSource": true,
+    "scope": "Fixed source and declared helper inputs remain unchanged; do not claim every ignored repository file was immutable. Further checks explicitly disable bytecode writes.",
+    "preservedCache": "/private/tmp/chainbench-partition-etcd-retry-cache-preserved-20261018.pyc",
+    "generatedRepositoryCacheRemovedAfterAllAudits": true,
+    "cacheMode": "0o644",
+    "cacheUID": 501,
+    "cacheGID": 20
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-partition-etcd-20261018-summary.json",
+      "sha256": "351a62f55f01e48ad545f6cb9a2d77418086cdbca0bde4ca3be94e5aa628f9a0",
+      "mode": "0o600"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-etcd-20261018-independent.json",
+      "sha256": "0bd17ec32b4999d08c88ba0dccc42e282a49401b054be3a4904a00f526331cd8",
+      "mode": "0o600"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-etcd-retry-20261018-summary.json",
+      "sha256": "9485307633412813aac359b3a3dba87ec41f42c95baa91fd781288ea4ed46116",
+      "mode": "0o600"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-etcd-retry-20261018-independent.json",
+      "sha256": "69b5fd8d9cf0761468a6dd2113acdc0fd9e64ede579bc7f59fbfb92b7d044d39",
+      "mode": "0o600"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-etcd-retry-20261018-specific.json",
+      "sha256": "353db5d3cc3b76818ffd59b51a67af1b544ea4ec53039504a77874bd431f1ddb",
+      "mode": "0o600"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-etcd-retry-20261018-tcp-audit.json",
+      "sha256": "2a43d9309ec6b4e15aac1c723bf04eb41acfc4f171d0caf59372a26134e9316d",
+      "mode": "0o600"
+    }
+  ]
+}

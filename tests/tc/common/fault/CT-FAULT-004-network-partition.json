@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-network-partition",
-  "description": "CT-FAULT-004 — 생산 노드9대를4/5로 방화벽 분리하고 복구한다. 2026-10-18 실제 실행과 사용자 승인에 따라 체인별 합의 정족수를 구분한다. 같은30초 구간에서 소수4대는 모두 최대2블록까지만 움직여야 한다. 과반 쪽 node9의 진행량은 감소를 거절하고, StableNet/WBFT는0~2블록, WEMIX3.0은3블록 이상이어야 한다. WEMIX3.0의 etcd 과반은5대라 분리된5대가 계속 생산하는 것이 정상이다. min(진행량,3)의 체인별 기대값으로 이 범위를 정확히 검사하며 원시 전후 높이도 남긴다. 방화벽은 각 기계의 교차 무리 p2p 양방향 TCP/UDP를 막아 클라이언트의 자동 재연결에도 분리가 유지되게 한다. target:remote와 노드별 기계 배치(--all-servers)가 필요하다. 규칙을 걷은 뒤 양쪽의 생산 재개,복구 기준 높이를 한 번 읽고9대 모두 그 높이 이상·eth_syncing=false가 된 뒤 그 고정 높이의 해시를 확인한다. 과거 양쪽 모두 정지·체인별 차이 없음 기대는 WEMIX의 실제 과반 합의와 충돌했다. 절차는 docs/tc/common/06-detailed-procedures/06-fault.md를 따른다.",
+  "description": "CT-FAULT-004 — 생산 노드9대를4/5로 방화벽 분리하고 복구한다. 2026-10-18 실제 실행과 사용자 승인에 따라 체인별 합의 정족수를 구분한다. 같은30초 구간에서 소수4대는 모두 최대2블록까지만 움직여야 한다. 과반 쪽 node9의 진행량은 감소를 거절하고, StableNet/WBFT는0~2블록, WEMIX3.0은3블록 이상이어야 한다. WEMIX3.0의 etcd 과반은5대라 분리된5대가 계속 생산하는 것이 정상이다. min(진행량,3)의 체인별 기대값으로 이 범위를 정확히 검사하며 원시 전후 높이도 남긴다. 방화벽은 각 기계의 교차 무리 p2p 양방향 TCP/UDP와 기록된 etcd peer 양방향 TCP를 막아 클라이언트의 자동 재연결에도 분리가 유지되게 한다. target:remote와 노드별 기계 배치(--all-servers)가 필요하다. 규칙을 걷은 뒤 양쪽의 생산 재개,복구 기준 높이를 한 번 읽고9대 모두 그 높이 이상·eth_syncing=false가 된 뒤 그 고정 높이의 해시를 확인한다. 과거 양쪽 모두 정지·체인별 차이 없음 기대는 WEMIX의 실제 과반 합의와 충돌했다. 절차는 docs/tc/common/06-detailed-procedures/06-fault.md를 따른다.",
   "requires": [
     "rpc",
     "consensus",

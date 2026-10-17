@@ -67,8 +67,8 @@ func fwPreflight(ctx context.Context, cmd interp.HostCommander, nodes []node.Nod
 		fwTool, strings.Join(missing, ", "), fwTool)
 }
 
-// fwRules is what one node's machine needs so that node cannot exchange p2p
-// traffic with one other node.
+// fwRules isolates P2P traffic and any recorded embedded consensus peer
+// endpoint between two nodes. Local client and management endpoints stay reachable.
 //
 // Four rules, because a connection is two flows and either end may have dialled
 // it. A dialler leaves from an ephemeral port toward the peer's p2p port; the
@@ -77,26 +77,37 @@ func fwPreflight(ctx context.Context, cmd interp.HostCommander, nodes []node.Nod
 // having made.
 //
 // Both protocols, because devp2p discovery is UDP on the same port number as
-// the TCP session.
+// the TCP session. The embedded etcd peer uses TCP only; its recorded port
+// can differ from P2P and must not be inferred for families without etcd.
 func fwRules(self, peer node.Node, verb string) []string {
 	var out []string
-	for _, proto := range []string{"tcp", "udp"} {
+	for _, endpoint := range []struct {
+		proto              string
+		selfPort, peerPort int
+	}{
+		{"tcp", self.Ports.P2P, peer.Ports.P2P},
+		{"udp", self.Ports.P2P, peer.Ports.P2P},
+		{"tcp", self.Ports.Etcd, peer.Ports.Etcd},
+	} {
 		for _, r := range []struct {
 			chain, dir, addr string
 			port             int
 		}{
-			{"INPUT", "--sport", peer.Host, peer.Ports.P2P},
-			{"INPUT", "--dport", peer.Host, self.Ports.P2P},
-			{"OUTPUT", "--dport", peer.Host, peer.Ports.P2P},
-			{"OUTPUT", "--sport", peer.Host, self.Ports.P2P},
+			{"INPUT", "--sport", peer.Host, endpoint.peerPort},
+			{"INPUT", "--dport", peer.Host, endpoint.selfPort},
+			{"OUTPUT", "--dport", peer.Host, endpoint.peerPort},
+			{"OUTPUT", "--sport", peer.Host, endpoint.selfPort},
 		} {
+			if r.port <= 0 {
+				continue
+			}
 			match := "-s"
 			if r.chain == "OUTPUT" {
 				match = "-d"
 			}
 			out = append(out, fmt.Sprintf(
 				"%s %s %s 1 %s %s -p %s %s %d -m comment --comment %s -j DROP",
-				fwTool, verb, r.chain, match, r.addr, proto, r.dir, r.port, fwMark))
+				fwTool, verb, r.chain, match, r.addr, endpoint.proto, r.dir, r.port, fwMark))
 		}
 	}
 	return out
