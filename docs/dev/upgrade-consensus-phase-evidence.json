@@ -1,0 +1,238 @@
+{
+  "date": "2026-10-18",
+  "scope": "Fix the pre-execution consensus gate for a declared concurrent cross-family handover. Not full WEB05, full L1, whole e2e/race or all14 acceptance.",
+  "headAtProof": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+  "workingTreeModifiedAtProof": true,
+  "implementation": [
+    "Use the declared from/to chains and a bounded observed head to select the active consensus reader for concurrent successor nodes. Preserve their recorded binary chain.",
+    "Require a successor-specific pre-fork query contract. WBFT Croissant reads PoA governance using eth_wemixInfo, retaining PoA member decoding.",
+    "No fallback after RPC failure; missing phase reader, unknown chain and unavailable/malformed heads remain blocked. Ordinary nodes, same-family and restart cases retain their existing lookup.",
+    "Record consensusChain, observed decimal height and declared forkBlock with the per-node observation. No new CLI/MCP inputs or external source changes."
+  ],
+  "red": {
+    "initialBoundaryFailures": 8,
+    "additionalDialectAndMissingContractFailures": 4,
+    "actualOldWeb05Failure": "Four concurrent successor endpoints returned RPC -32000 from istanbul_getValidators before Croissant120; predecessor PoA probe passed. Original failure retained in web-frozen-partial-evidence.json.",
+    "firstUnitModelGap": "Initial fake endpoint modeled the predecessor namespace; source inspection found WBFT uses eth_wemixInfo. This was corrected and produced four additional behavioral failures before implementation."
+  },
+  "green": {
+    "upgradePhaseScenarios": 14,
+    "existingConsensusRegressionPassed": true,
+    "makeCheckExitCode": 0,
+    "fullRelatedRacePackages": [
+      "internal/core/registry",
+      "internal/chains/wbft",
+      "internal/testengine",
+      "internal/app",
+      "internal/dashboard",
+      "internal/mcp",
+      "internal/arch"
+    ]
+  },
+  "earlierChecks": {
+    "firstLintFailure": "New test if/else style was changed to a switch.",
+    "firstFinalCheckFailure": "New exported method comment began with another symbol; corrected. Both failures retained."
+  },
+  "actualWebFork": {
+    "sourceBefore": "5dfa73def1839ec008c34744c135dcd19ff4cf9a21dab938b7a901b464949eb3",
+    "sourceAfter": "5dfa73def1839ec008c34744c135dcd19ff4cf9a21dab938b7a901b464949eb3",
+    "sourceUnchanged": true,
+    "sourceAndUserMetadataUnchanged": true,
+    "scope": "Real Web fork-only regression using the unchanged WEB05 fork browser section and public case; not WEB05 or all14 acceptance",
+    "elapsedSeconds": 177.46565079689026,
+    "error": null,
+    "browserInputs": {
+      "publicBrowserSource": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/browser_web05.mjs",
+      "publicBrowserSHA256": "423ca5221ba3310b95546112470cfd4e0f1fba4059fe0f3503ffe4f3038d7245",
+      "generatedBrowser": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/upgrade-consensus-browser-20261018.mjs",
+      "generatedSHA256": "4e468166734bdcd3b75453a9f3bd7a75d40609b51d0e12552e629eaddd5abe52",
+      "scope": "Unchanged WEB05 fork section with its original browser import/save/plan/run assertions; no initial vocabulary cases, corpus or attach acceptance awarded"
+    },
+    "all14Accepted": false,
+    "runtime": "/private/tmp/cbui/4b2ff065-71eb-4662-a8ae-c2dbe486fea5",
+    "jobState": "succeeded",
+    "remainingDatabases": [],
+    "receiptSHA256": "211466788665b8847e29eae977fdaed2d997fc5592d23aeacbcbf7c589309cd9"
+  },
+  "independentAudit": {
+    "acceptedScope": "Actual Web fork-only regression, not complete WEB05 or all14 acceptance",
+    "sourceDigest": "5dfa73def1839ec008c34744c135dcd19ff4cf9a21dab938b7a901b464949eb3",
+    "runtime": "/private/tmp/cbui/4b2ff065-71eb-4662-a8ae-c2dbe486fea5",
+    "casePassed": true,
+    "preForkSuccessorObservations": 4,
+    "preForkHeights": [
+      "23",
+      "23",
+      "23",
+      "23"
+    ],
+    "preForkTransferBlock": 27,
+    "postForkHeight": 122,
+    "postForkValidators": 4,
+    "assertions": 3,
+    "negativeControlsRejected": [
+      "changed-source",
+      "changed-protected-inputs",
+      "false-full-acceptance",
+      "changed-binary",
+      "missing-node",
+      "wrong-binary-chain",
+      "wrong-active-consensus",
+      "wrong-method",
+      "late-pre-fork-observation",
+      "wrong-fork",
+      "empty-validator-set",
+      "legacy-node-unknown",
+      "blocked-case",
+      "failed-assertion",
+      "no-post-fork-head",
+      "changed-balance",
+      "duplicate-validators",
+      "no-fork-action",
+      "late-transfer",
+      "failed-transfer",
+      "wrong-transaction",
+      "changed-public-case"
+    ],
+    "remainingDatabases": 0,
+    "activeRuntime": false,
+    "publicCaseComparison": "exact steps after the existing saveKey redaction at steps/0/saveKey",
+    "wholeWeb05Accepted": false,
+    "all14Accepted": false
+  },
+  "firstIndependentAudit": {
+    "accepted": false,
+    "reason": "Session saveKey is intentionally redacted. Literal comparison rejected it.",
+    "correction": "Compare every public step exactly after applying that one existing redaction path.",
+    "originalFailureReplayLog": "/private/tmp/chainbench-upgrade-consensus-independent-first-replayed-20261018.log"
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-phase-red-20261018.log",
+      "sha256": "3582c8614f7bb6c5f42152be51497aed0402fd785aa7492b2d2d6a9677d5ce69",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792277400295432100
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-phase-green-20261018.log",
+      "sha256": "afab822cd28777c2849df388513c79652bb1d7cdbbe3e9fa1de63b71ca641142",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792277439993245503
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-dialect-red-20261018.log",
+      "sha256": "59f9aefa825867a960d070d688d3d82505628e50e8121a5b47064115e3cd036d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792277716861973781
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-dialect-green-20261018.log",
+      "sha256": "2c7d8e2c4b01a8f28de13f1f8bfbf1f825ad7ae35d36b6a50bebe2f0a51ec0a7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792277759164911774
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-phase-check-20261018.log",
+      "sha256": "a194b64305d03f9261d81e8bec907921d458448c12895885826dfe5d868e7e42",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792277500106996575
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-dialect-check-20261018.log",
+      "sha256": "11aee6c73652707c2893866c4d4d14c6c890091b8ba418757c4ec1abd3f23775",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278028000861320
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-dialect-check-retry-20261018.log",
+      "sha256": "e4560de5277dbaaaf99e267708cf066b06bdfd22b0fddb67916154370064c5c6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278177661846402
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-related-race-20261018.log",
+      "sha256": "bd15ce948023e08617360f00e0cd2aa95e1120e18b831cb3bf5c05d9809d954f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278323183605491
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-native-20261018.py",
+      "sha256": "2b33c4167476da7ed49fb9239ab8f53ec888c36e85df702f7f1c584f7ddd032a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792277992043989339
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-native-20261018.json",
+      "sha256": "693679d9b4501c9eafd19fb2e03fa155cdb03d72b1a44ad2398a59a1cf2140ac",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278520451174679
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-native-20261018.log",
+      "sha256": "39ad87f1988b4e32199f609b2708e8e194b05d346389622a9ee463c263655b68",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278520524681833
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-independent-first-20261018.py",
+      "sha256": "d85f161194c7be0cbf546608753404022ef763155b1f20f83e58bffddf812fa8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278600464041956
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-independent-first-replayed-20261018.log",
+      "sha256": "586aca29d1d31e90b06fc7dfbb676d2db27ad597660067e01084eb1349c836ce",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278674285357639
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-independent-20261018.py",
+      "sha256": "216f42ad9ade18c61bcdffe26c89ce2c970ec6e5b1986b6d9a5a7ac63f7afe1d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278630696507048
+    },
+    {
+      "path": "/private/tmp/chainbench-upgrade-consensus-independent-20261018.json",
+      "sha256": "1e16edd1499930f478b552f78299da6a8071610643e53d44657168d4f29c66eb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278631203141023
+    }
+  ],
+  "remaining": [
+    "Refresh the owned all-language AST after this change.",
+    "Recapture and independently reproduce WEB01..14 on the final frozen source, including full WEB05 and WEB10/WEB14.",
+    "Whole L1, mandatory full race/e2e and other open backlog criteria remain.",
+    "Existing WEMIX EN observation uncertainty and external W3/W4 are not resolved by this fix."
+  ],
+  "all14Accepted": false
+}

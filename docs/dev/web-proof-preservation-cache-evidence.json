@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-18",
+  "scope": "Preserve completed original proof files before rerun and reclaim cold unreferenced task cache. Does not recover the 27 historically missing receipts or accept all14.",
+  "acceptancePreservation": {
+    "accepted": true,
+    "method": "same-volume rename of inactive originals; no metadata rewritten",
+    "preservedOriginal": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/original",
+    "entries": 504,
+    "allContentTypeModeUidGidMtimeXattrsACLMatch": true,
+    "archiveRestoreAccepted": false,
+    "archiveRestoreLimitation": "macOS adds provenance to ten restored directories even after xattr delete; restored copy not used as preservation proof",
+    "originalDeleted": false,
+    "sourceFilesModified": false
+  },
+  "developmentPreservation": {
+    "preserved": true,
+    "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/development-after-web02-capture",
+    "entries": 1290,
+    "method": "same-volume rename after inactive checks",
+    "contentAndAllMetadataUnchanged": true,
+    "historicalWeb02ReceiptsRetainedBeforeRerun": {
+      "web02-bundle": {
+        "historicalReceipt": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/original/WEB-02/web02-bundle-receipt.json",
+        "sha256": "8eb7475edf54f4f565a0ae1cef6509ff6a5b540859abeeeef75045bf39570109",
+        "newCaptureReceipt": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-receipt.json"
+      },
+      "preset-jobs": {
+        "historicalReceipt": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/original/WEB-02/preset-jobs-receipt.json",
+        "sha256": "7babecb1d717d2e4072d8bd7a6e7ca0aff98a3f1cd032d5da8851d4789b891bf",
+        "newCaptureReceipt": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-receipt.json"
+      },
+      "asset-jobs": {
+        "historicalReceipt": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/original/WEB-02/asset-jobs-receipt.json",
+        "sha256": "7d1e1848f228d9e2de9838b2e806bab91ee3f1c6afc555b0be031b7f4da8bd0e",
+        "newCaptureReceipt": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-02/asset-jobs-receipt.json"
+      }
+    },
+    "scope": "Development folder snapshot after WEB02 capture; does not assert unchanged pre-rerun auxiliary development files",
+    "originalsDeleted": false
+  },
+  "laterPartialCapturePreservation": {
+    "acceptedPreservation": true,
+    "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-e9e28713-web01-04-pass-web05-blocked",
+    "entries": 168,
+    "allContentAndMetadataMatch": true,
+    "web01To04CaptureAndRecheckPassed": true,
+    "web05Accepted": false,
+    "web05Reason": "consensus preflight on four successor WBFT binaries queries istanbul before Croissant height120; error -32000; predecessor PoA passes",
+    "runtime": "/private/tmp/cbui/fb2d6c55-fb19-4545-b3f7-535f67e9e993",
+    "runtimeRemainingDBs": [],
+    "all14Accepted": false
+  },
+  "firstArchiveAttempts": {
+    "accepted": false,
+    "initialMetadataFailure": "default extraction changed group staff20 to wheel0",
+    "explicitOwnerRetryFailure": "macOS added provenance attributes to ten restored directories; xattr removal did not remove them",
+    "originalsPreservedBy": "inactive same-volume rename; exact content/type/mode/uid/gid/mtime/xattr/ACL comparison",
+    "firstArchive": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275650193286000/web-ui-acceptance.pax.tar.gz",
+      "sha256": "b531b2500c40e2b76b5ac13a2ee3ff03b76582eeec6c11c20968508733493552",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792275654330724167
+    },
+    "ownerRetryArchive": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web-ui-acceptance.pax.tar.gz",
+      "sha256": "01c0e8d2c0d2dd0c64138786a20a1522f873c5219066a002142d1ee11e3d8cf4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792275682333685120
+    }
+  },
+  "cacheContracts": 24,
+  "cacheAudit": {
+    "exitCode": 0,
+    "applied": true,
+    "deletedCount": 15511,
+    "removedSetMatchesAudit": true,
+    "retainedFiles": 11019,
+    "retainedMetadataAndBytesChanged": [],
+    "newEntries": [],
+    "allocatedBytesReclaimed": 3939880960,
+    "freeBytesAfter": 26573172736,
+    "preservedOldEvidenceIncludedInReferences": true,
+    "sourceOrProofFilesDeleted": false
+  },
+  "cacheAuditMethod": "Within the maintenance execution, independently rehash every retained regular file and compare mode/uid/gid/mtime; not a claim that later legitimate cache accesses leave those times unchanged.",
+  "cacheEvidence": [
+    {
+      "path": "/private/tmp/chainbench-final-web-cache-unit-20261018.log",
+      "sha256": "74a48babb180116949edb1ed2656b5d15fa7cb4caad5089d858a33090986bc3c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792276196497226697
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-cache-maintenance-20261018.json",
+      "sha256": "c95ea7a02beae08af52ec83f8edf5b8b1fb7f19f894414d55d362dc5297852a4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792276255547823527
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-cache-maintenance-20261018-apply.json",
+      "sha256": "1e7d6f8c924b4bfce810f49cf18c9f011a62d8e0174796020a61bea796845c4e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792276252129479470
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-cache-maintenance-20261018.before.json",
+      "sha256": "7dc43452019ca4411b05cac66ee5d4215a0036571838c79206180133579148ea",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792276246307327464
+    }
+  ],
+  "historicalMissingReceiptsRemain": 27,
+  "sourceOrProofFilesDeleted": false
+}

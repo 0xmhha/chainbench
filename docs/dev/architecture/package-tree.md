@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 86,982 |
+| `internal/` | 54 | 87,097 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 1,104 |
 | `tests/` | 2 | 353 |
-| **합계** | **79** | **94,138** |
+| **합계** | **79** | **94,253** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,242줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,250줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -75,7 +75,7 @@ internal/core/
 │   ├── store    1,171  [L1] 키셋 저장·읽기 — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드 · 키 출처(KeySource)
 │   └── operation  682  [L1] 키셋에 가하는 동사 — new·add·list·show·export·import·세트 복제.
 │                            서버 접근은 자기가 선언한 Opener 로 주입받는다
-├── registry     1,127  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
+├── registry     1,135  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
 │                            capability 카탈로그·핸들러(LoadCatalog·RegisterHandler·GetByAddress)·검증자 조회(Validators)
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
 ├── preflight      311  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
@@ -97,7 +97,7 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 4,526줄
+## 2. 체인·합의 정의 — 11패키지 4,556줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
@@ -113,7 +113,7 @@ internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안�
 ├── stablenet       171  stablenet 특화 capability (거버넌스 시스템 컨트랙트)
 │   └── govbind     162  GovBase 바인딩 — propose→approve→execute calldata 빌더 · MintProof 인코더 ·
 │                        디코더 2개(ProposalCreated 로그의 proposalId, proposals() 의 status)
-├── wbft             52  go-wbft 플러그인 등록 — wbft 패밀리 + wbft accounts 프로토콜 + 매니페스트·croissant 템플릿(embed)
+├── wbft             82  go-wbft 플러그인 등록 — wbft 패밀리 + wbft accounts 프로토콜 + 매니페스트·croissant 템플릿(embed)
 └── wemix            68  wemix 특화 capability (poa/etcd 부트스트랩)
 
 internal/accounts  1,582  [L1] tx 서명 — 외부 accounts SDK 경계. EncodeABI·EncodeCall·EncodeCallArgs·Selector·
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 62,214줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 62,291줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -148,7 +148,7 @@ internal/testhelper 7,180 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 6,671 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 6,748 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약

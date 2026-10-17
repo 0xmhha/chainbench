@@ -27,6 +27,9 @@ type capabilityNodeProbe struct {
 	ValidatorCount int    `json:"validatorCount,omitempty"`
 	FailureKind    string `json:"failureKind,omitempty"`
 	RPCErrorCode   *int   `json:"rpcErrorCode,omitempty"`
+	ConsensusChain string `json:"consensusChain,omitempty"`
+	Height         string `json:"height,omitempty"`
+	ForkBlock      *int64 `json:"forkBlock,omitempty"`
 }
 
 // Consensus support is checked on every recorded endpoint before execution.
@@ -59,7 +62,7 @@ func consensusCapabilityGate(chain string, dial func(string) *rpc.Client) func(c
 				}
 				probe := capabilityNodeProbe{Node: n.Index, Role: string(n.Role), Chain: n.Chain, Status: "unknown", Reason: "recorded_chain_unavailable"}
 				if selectErr == nil {
-					probe = probeConsensusNode(ctx, selected, n, dial)
+					probe = probeConsensusForSpec(ctx, chain, selected, spec, n, dial)
 				}
 				result.Nodes = append(result.Nodes, probe)
 				if i == 0 {
@@ -100,6 +103,10 @@ func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node
 	bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	label, validators, err := registry.RunningValidators(bounded, plugin, dial(n.RPCURL))
+	return consensusProbeResult(result, label, validators, err)
+}
+
+func consensusProbeResult(result capabilityNodeProbe, label string, validators []string, err error) capabilityNodeProbe {
 	result.Source = label
 	switch {
 	case err == nil && validators != nil:

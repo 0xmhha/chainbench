@@ -204,6 +204,14 @@ type RuntimeValidatorReader interface {
 	RuntimeValidators(ctx context.Context, c Caller) ([]string, error)
 }
 
+// PreForkValidatorReader is an optional chain capability for a concurrent
+// successor that reads another consensus family before its declared fork.
+// The successor owns its RPC dialect; using the predecessor's binary dialect
+// on that endpoint is not a valid fallback when a validator query fails.
+type PreForkValidatorReader interface {
+	PreForkValidators(ctx context.Context, fork string, predecessor ChainPlugin, c Caller) (label string, validators []string, err error)
+}
+
 // ChainPlugin is one chain's registration. Most of a chain is data (Manifest)
 // plus a consensus-family selection plus its account protocol; only genuinely
 // chain-specific behavior needs code.
