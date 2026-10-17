@@ -13,12 +13,14 @@ import sys
 
 REQUIRED = ['criteria', 'spa-build', 'routes', 'mandatory-checks', 'live-go-tests', 'modes-transports']
 CRITERIA = ['WEB-%02d' % i for i in range(1, 14)]
-CHECKS = ['make check', 'go test -race -json -p 1 ./...', 'go vet -tags e2e ./...', 'npm --prefix web run build',
+# The expanded native package runs serially beyond Go's default ten minutes;
+# keep an explicit upper bound as well as each native test's own deadline.
+CHECKS = ['make check', 'go test -race -json -p 1 -timeout=3h ./...', 'go vet -tags e2e ./...', 'npm --prefix web run build',
           'node --test tests/webui/*.test.mjs']
 RACE = CHECKS[1]
 # A gated Go test skips without these. A skipped test is not a passed one, so
 # the regression run needs every gate opened.
-LIVE_ENV = ['GSTABLE_BIN', 'GWBFT_BIN', 'GWEMIX_BIN', 'CHAINBENCH_DOCKER_SERVERS']
+LIVE_ENV = ['GSTABLE_BIN', 'GWBFT_BIN', 'GWEMIX_BIN', 'CHAINBENCH_DOCKER_SERVERS', 'CHAINBENCH_W4_PROOF']
 VERIFIERS = {'WEB-01': 'evidence', **{'WEB-%02d' % i: 'evidence_web%02d' % i for i in range(2, 14)}}
 
 

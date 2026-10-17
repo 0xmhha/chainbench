@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-18",
+  "scope": "Web14 preflight refuses absent live gates and non-exact W4 opt-in before preparation; bounded serial race command. This is negative preflight evidence, not full race, Python regression or final Web acceptance.",
+  "implementation": [
+    "Require CHAINBENCH_W4_PROOF=1 as well as all existing native/Docker gates.",
+    "Use explicit go test -race -json -p 1 -timeout=3h ./... to cover the expanded serial package without the default ten-minute timeout.",
+    "Remove native/W4 gates from non-race checks; e2e vet remains distinct from e2e execution."
+  ],
+  "red": {
+    "correctedRecorderAgainstParentProduction": true,
+    "tests": 11,
+    "failingObservations": 6,
+    "initialGreenRecorderAliasingErrorPreserved": true
+  },
+  "green": {
+    "focusedContracts": 11,
+    "makeCheckExitCode": 0
+  },
+  "actualPreflight": {
+    "sourceBefore": "948fa9f6656b711d4f40758fd4bcb915408d2ef7ee8b2a035683bf3514a40f6b",
+    "sourceAfter": "948fa9f6656b711d4f40758fd4bcb915408d2ef7ee8b2a035683bf3514a40f6b",
+    "sourceUnchanged": true,
+    "runtime": "/private/tmp/cbui/w14gate-rkjx27r6",
+    "refusals": 8,
+    "childProcessEvents": 0,
+    "outputDirectoriesCreated": 0,
+    "scopeAccepted": true
+  },
+  "independent": {
+    "negativePreflightScopeAccepted": true,
+    "sourceDigest": "948fa9f6656b711d4f40758fd4bcb915408d2ef7ee8b2a035683bf3514a40f6b",
+    "refusalsMatched": 8,
+    "childProcessEvents": 0,
+    "outputDirectoriesCreated": 0,
+    "sourceInputsAndResultPreserved": true,
+    "tamperControlsRejected": [
+      "omitted refusal",
+      "duplicate refusal",
+      "accepted preflight",
+      "unexpected child",
+      "created output",
+      "mutated source",
+      "changed input bytes"
+    ],
+    "fullRaceExecuted": false,
+    "fullPythonRegressionAccepted": false,
+    "finalWebAccepted": false
+  },
+  "broaderRegression": {
+    "currentTests": 149,
+    "currentFailures": 9,
+    "currentErrors": 2,
+    "parentBaseline": {
+      "scope": "Parent production modules with unchanged pre-existing145 tests; excludes only the four new execution-gate tests. No source/evidence mutation.",
+      "testsRun": 145,
+      "failures": 9,
+      "errors": 2,
+      "sameHistoricalReceiptFailureIdentitiesAsCurrent149": true,
+      "failureIdentities": [
+        "test_evidence_web02.WEB02EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web04.ReceiptTests.test_absolute_output_keeps_workspace_relative_evidence",
+        "test_evidence_web04.ReceiptTests.test_latest_live_receipt_and_tampering",
+        "test_evidence_web06.WEB06EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web07.WEB07EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web08.WEB08EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web09.WEB09EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web10.WEB10EvidenceTest.test_live_receipt_and_rejected_mutations",
+        "test_evidence_web11.WEB11EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web12.WEB12EvidenceTest.test_latest_live_receipt_and_tampering",
+        "test_evidence_web13.WEB13EvidenceTest.test_latest_live_receipt_and_tampering"
+      ],
+      "baselineGreen": false,
+      "fullPythonRegressionAccepted": false,
+      "nativeAcceptanceAwarded": false
+    },
+    "interpretation": "Same eleven stale/missing actual receipt failures on parent modules; preserve strict validators and old evidence. Fresh captures and a green whole Python run remain required."
+  },
+  "fullRaceExecuted": false,
+  "fullPythonRegressionAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-web14-gates-proof-20261018-summary.json",
+      "sha256": "59c02a823f59d211bd460769f2e55bf718d463a55243494f0131fe6ae56a3690"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-proof-20261018-independent.json",
+      "sha256": "980fdb0bf806973fbc9bf5a0ef78dcd1cd1b7bc71a6275fdf883c8cda20edc36"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-baseline-comparison-20261018.json",
+      "sha256": "ab13a930cfbd0aaf148b33d951b7d4e14d26b0db5703a8f263c453118c3134f2"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-red-captured-20261018.log",
+      "sha256": "f39611bfe595e6e00214652476b55259c295c6a42806374ca287f00ffdc51836"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-green-captured-20261018.log",
+      "sha256": "1d83585b97486319bb9c2fff2996c7435fd78e26e63e611aae2ad6791d35db6b"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-check-20261018.log",
+      "sha256": "c7d6ce2830ef0e3788d35912c29967583b52bba5c034f949f9410bdb7e84b5fc"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-python-regression-20261018.log",
+      "sha256": "d5e7f42e0dc498e4526893a2033813312b953c11d30de4813312d117906746f0"
+    },
+    {
+      "path": "/private/tmp/chainbench-web14-gates-baseline-20261018.log",
+      "sha256": "4245abbeae1f3f5e863933a1c2acec1ad88b221d78543084d1f7af639abe2d30"
+    }
+  ]
+}

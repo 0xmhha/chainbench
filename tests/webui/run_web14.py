@@ -63,6 +63,8 @@ def run_checks(out, checkout, staged, evidence):
     missing = [name for name in LIVE_ENV if not os.environ.get(name)]
     if missing:
         raise RuntimeError('gated live Go tests would skip; set ' + ', '.join(missing))
+    if os.environ.get('CHAINBENCH_W4_PROOF') != '1':
+        raise RuntimeError('CHAINBENCH_W4_PROOF must be 1 so the diagnostic cannot skip')
     prepare = subprocess.run(['bash', 'tests/webui/fixtures/docker_regression_prepare.sh'], cwd=checkout, text=True, capture_output=True)
     (out / 'docker-prepare.log').write_text(prepare.stdout + prepare.stderr)
     if prepare.returncode:
