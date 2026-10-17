@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -78,14 +77,14 @@ func (s *ManifestStore) UploadAsset(ctx context.Context, a DeploymentActor, kind
 		if err != nil {
 			return WebAsset{}, errors.New("binary version inspection failed")
 		}
-		match := regexp.MustCompile(`(?m)^Git Commit: ([0-9a-f]{40})\s*$`).FindSubmatch(version)
-		if len(match) != 2 {
+		commit, identityErr := manifestSourceCommit(stage.Path, version)
+		if identityErr != nil {
 			return WebAsset{}, errors.New("binary lacks a valid source commit identity")
 		}
 		var compatible *ManifestBinary
 		var evidence ManifestBinaryEvidence
 		for _, chain := range registry.Names() {
-			asset := ManifestBinary{ID: id, Chain: chain, Path: stage.Path, SHA256: stage.Checksum, Commit: string(match[1])}
+			asset := ManifestBinary{ID: id, Chain: chain, Path: stage.Path, SHA256: stage.Checksum, Commit: commit}
 			observed, verifyErr := asset.Verify(probe, chain)
 			if verifyErr == nil {
 				if compatible != nil {

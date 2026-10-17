@@ -1,0 +1,379 @@
+{
+  "date": "2026-10-18",
+  "scope": "Native upload and manifest verification accept exact unmodified Go VCS identity when the optional legacy version stamp is absent. Refresh actual pinned CLI help provenance and preserve historical source-reference scope. Not full race/live/e2e, full L1 or final Web acceptance.",
+  "implementation": [
+    "Share source commit extraction across upload and ManifestBinary.Verify. Legacy valid stamps stay authoritative; missing stamps require Go build metadata vcs=git, exact40-hex revision and modified=false. Malformed/ambiguous stamps are refused.",
+    "Keep native header, architecture, checksum, bounded/minimal-environment probe, chain program and dialect validation. No new product CLI/MCP input or output contract.",
+    "Native surface tests independently read immutable Go metadata if necessary. Preserve deliberate stale/wrong/absent-option controls.",
+    "Re-capture current three CLI/help surfaces and check all hidden/not-accepted notes. Code/RPC line references remain clearly labelled historical; source analysis is not promoted merely by changing help provenance. Preserve raw captures; checked-in text normalizes only trailing whitespace."
+  ],
+  "red": {
+    "cleanGoVCSManifestAndUploadFailures": 2,
+    "method": "Actual native inspection-only unit program built from its own committed disposable Git source. It cannot run a node and is not a native blockchain acceptance proof."
+  },
+  "green": {
+    "nativeVCSContractTests": 3,
+    "positiveManifestAndUploadSubtests": 2,
+    "modifiedAndMissingMetadataRejectionSubtests": 2,
+    "legacyMalformedAmbiguousSubtests": 3,
+    "makeCheckExitCode": 0,
+    "relatedFullRacePackages": 4,
+    "docMetadataExpectationsUpdatedWithoutRelaxingStaleRefusal": true,
+    "initialDocSectionLineCountFailurePreservedAndCorrected": true
+  },
+  "earlierActualSurfaceAttempt": {
+    "scope": "Existing actual three-binary command/option surface test under race. No node network, whole race, full L1 or final Web acceptance.",
+    "sourceBefore": "fd9684efe1b0da6e33ec546d204192550581552130cbc3a0101421a5bac0e1a0",
+    "sourceAfter": "fd9684efe1b0da6e33ec546d204192550581552130cbc3a0101421a5bac0e1a0",
+    "exitCode": 1,
+    "tests": {
+      "pass": 0,
+      "fail": 1,
+      "skip": 0
+    },
+    "selectedBinaries": [
+      {
+        "chain": "stablenet",
+        "repository": "/private/tmp/chainbench-upstream-20261016/go-stablenet",
+        "binary": "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+        "embeddedCommit": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+        "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48",
+        "dialect": "geth114"
+      },
+      {
+        "chain": "wbft",
+        "repository": "/private/tmp/chainbench-upstream-20261016/go-wbft",
+        "binary": "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+        "embeddedCommit": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+        "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689",
+        "dialect": "geth114"
+      },
+      {
+        "chain": "wemix",
+        "repository": "/private/tmp/chainbench-w3-head-source",
+        "binary": "/private/tmp/chainbench-w3-head-native/gwemix",
+        "embeddedCommit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+        "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+        "dialect": "geth110-wemix"
+      }
+    ],
+    "wholeRaceAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "earlierSurfaceFailureInterpretation": "All three documentation pins were old; stale was correct. Preserve that failure and re-capture instead of accepting stale as verified.",
+  "captures": [
+    {
+      "chain": "stablenet",
+      "catalog": "gstable",
+      "commit": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+      "captureExit": 0,
+      "flagNotesVerificationExit": 0,
+      "flags": 179,
+      "surfaces": 80,
+      "binarySHA256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48"
+    },
+    {
+      "chain": "wbft",
+      "catalog": "gwbft",
+      "commit": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+      "captureExit": 0,
+      "flagNotesVerificationExit": 0,
+      "flags": 177,
+      "surfaces": 78,
+      "binarySHA256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689"
+    },
+    {
+      "chain": "wemix",
+      "catalog": "gwemix",
+      "commit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+      "captureExit": 0,
+      "flagNotesVerificationExit": 0,
+      "flags": 195,
+      "surfaces": 58,
+      "binarySHA256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c"
+    }
+  ],
+  "actualProduct": {
+    "scope": "Real product HTTP upload uses both source identity extraction and ManifestBinary.Verify; persistence across restart. No chain execution or final acceptance.",
+    "sourceBefore": "4e5de322903e576ed2f86c424821877d2d92df50a2e2048949715fe7d92bc6e4",
+    "sourceAfter": "4e5de322903e576ed2f86c424821877d2d92df50a2e2048949715fe7d92bc6e4",
+    "runtime": "/private/tmp/cbui/product-vcs-qx_g2g6e",
+    "serverPIDs": [
+      70094,
+      70140
+    ],
+    "serverStopped": [
+      true,
+      true
+    ],
+    "remainingDatabases": [],
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "actualUploadedProfiles": [
+    {
+      "chain": "stablenet",
+      "commit": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+      "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48"
+    },
+    {
+      "chain": "wbft",
+      "commit": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+      "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689"
+    },
+    {
+      "chain": "wemix",
+      "commit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+      "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c"
+    }
+  ],
+  "independentProduct": {
+    "scopeAccepted": true,
+    "sourceDigest": "4e5de322903e576ed2f86c424821877d2d92df50a2e2048949715fe7d92bc6e4",
+    "productUploadsVerified": 3,
+    "persistedAcrossRestart": true,
+    "payloadsMatchedPinnedSource": true,
+    "sourceVCSRevisionsIndependentlyRead": 3,
+    "tamperControlsRejected": [
+      "source mutation",
+      "input mutation",
+      "omitted upload",
+      "wrong chain",
+      "wrong commit",
+      "stale checksum",
+      "lost persistence",
+      "no restart",
+      "active server",
+      "database left",
+      "final claim"
+    ],
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "actualSurfaceRegression": {
+    "scope": "Existing actual three-binary command/option surface test under race. No node network, whole race, full L1 or final Web acceptance.",
+    "sourceBefore": "4e5de322903e576ed2f86c424821877d2d92df50a2e2048949715fe7d92bc6e4",
+    "sourceAfter": "4e5de322903e576ed2f86c424821877d2d92df50a2e2048949715fe7d92bc6e4",
+    "exitCode": 0,
+    "tests": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "selectedBinaries": [
+      {
+        "chain": "stablenet",
+        "repository": "/private/tmp/chainbench-upstream-20261016/go-stablenet",
+        "binary": "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+        "embeddedCommit": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+        "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48",
+        "dialect": "geth114"
+      },
+      {
+        "chain": "wbft",
+        "repository": "/private/tmp/chainbench-upstream-20261016/go-wbft",
+        "binary": "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+        "embeddedCommit": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+        "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689",
+        "dialect": "geth114"
+      },
+      {
+        "chain": "wemix",
+        "repository": "/private/tmp/chainbench-w3-head-source",
+        "binary": "/private/tmp/chainbench-w3-head-native/gwemix",
+        "embeddedCommit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+        "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+        "dialect": "geth110-wemix"
+      }
+    ],
+    "wholeRaceAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "independentDocuments": {
+    "scopeAccepted": true,
+    "scope": "Fresh pinned CLI provenance, raw preservation, trailing-whitespace-only document normalization and existing actual three-binary surface race. Code/RPC source-reference analyses remain historical.",
+    "sourceDigest": "4e5de322903e576ed2f86c424821877d2d92df50a2e2048949715fe7d92bc6e4",
+    "profiles": [
+      {
+        "chain": "stablenet",
+        "capturedCommit": "4d17eea",
+        "rawCaptureSHA256": "6311476251e312144857122c96acd092096ec4229015c8c7041b1d075e613b67",
+        "normalizedDocumentSHA256": "0eae48120c3664116a641db5f8d0fb74e0ee02bf62e34a73dd88e98e5ec1a500",
+        "flagIndexSHA256": "4b049ec91a112e1152caa3b59ddd09f4c19f19899e2aad5ee0ad6a55b1ec9a47"
+      },
+      {
+        "chain": "wbft",
+        "capturedCommit": "d535dd3",
+        "rawCaptureSHA256": "500de1c0a9de0152db90d3c70c4521b5895b3ebe511f63421a63fd2c8fcaff90",
+        "normalizedDocumentSHA256": "bd4a46da4f474b96832c307ecdd10c8fbdd8785d5c51cbf362f5ebd1b2e226f2",
+        "flagIndexSHA256": "692ce45dbbd1520b918a9caa9fb91d1398d742e99e0df80a049f5abe777f64f9"
+      },
+      {
+        "chain": "wemix",
+        "capturedCommit": "4538a9f",
+        "rawCaptureSHA256": "472a757b22a80bdea25c364080685ba0cf82610463db042a888edb65c027f1a2",
+        "normalizedDocumentSHA256": "ed56de72340b49205ab4093cf32e844e971e43e7d7827669f65e111ad478634b",
+        "flagIndexSHA256": "3c071741845b8a25bc128436f00e32b1558f33b15adac8f7a329bd49ddb3f4e3"
+      }
+    ],
+    "surfaceTests": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "rawCapturesPreserved": true,
+    "flagNotesVerified": true,
+    "codeAndRPCAnalysisPromoted": false,
+    "wholeRaceAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "remaining": "Independent runner Git metadata preservation, post-change AST refresh, fresh full Python receipt suite, whole race/live/e2e, full L1 and external/missing-input gates remain.",
+  "fullPythonRegressionAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-api-retry-20261018-summary.json",
+      "sha256": "be7792a197acfb44e16141d170e790b974e88102063fc276dcc192cee9bf95a2"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-api-retry-20261018-start.json",
+      "sha256": "ce74e618c07db2e9b8ae6a7245b00bfdf9066456236d85d84215593089019233"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-api-retry-20261018-independent.json",
+      "sha256": "0b535f7048ec1e9fbfd90b2ab44eba52fe6b9a5e294d9f54945bfa9588355f6f"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-red-20261018.log",
+      "sha256": "0cc83669010276471e9211fe99355755f1c45f743e48b63beea92c748dffcb0a"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-green-20261018.log",
+      "sha256": "8cc29cee620c91e1f1fb0e830e6221f445ca0ad624607c9e9bf7916dc8831012"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-race-green-20261018.log",
+      "sha256": "6d8b20e708deab975f4194b85d2005a832581a310fcbb069103c1ee90f49b595"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-check-20261018.log",
+      "sha256": "7a5842914b317111265c2fc2b81e8113ac6f3abdc9fd009908f6b77b6955e887"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-check-corrected-20261018.log",
+      "sha256": "ca0a1eca809e706d10451ae48e66d8ff4ff6a1c4f28c05521fc72a58de83af80"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-related-race-20261018.log",
+      "sha256": "fdf736c3c78b10e32f58a026b16137f112335ffc23a255e41bd10fcfb0d0be95"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-docs-check-20261018.log",
+      "sha256": "da88c9cb9b18747704c2b572198f7fcbd000bfcff2add1ee401f13db7058de76"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-docs-focused-green-20261018.log",
+      "sha256": "3e5494d51292668144f29a9e7b206989b521778107106be61cad9de73ad88198"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-final-check-20261018.log",
+      "sha256": "dcb23f93133fee676d8f85c1410a2fa0c9da9ef18fc6ea940a046dcbcd0857db"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-final-race-20261018.log",
+      "sha256": "98dea5f82e428c032c6505f92d9f1138c1eb7c4d4e9c23883864b1b1654b5bd0"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-proof-run-20261018.log",
+      "sha256": "946b3999a8cce7ea10b359f898974948306ecf766ea0f7208fb9e34d7f854446"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-audit-run-20261018.log",
+      "sha256": "bc8007f68410038d38f24a7677d42a400c81fde808b783a922f020fcc799a0ee"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-surface-run-20261018.log",
+      "sha256": "d3bacead927a50491e0b30bf2a213cffd6968c3000913b84a24690f9edbad167"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-surface-retry-run-20261018.log",
+      "sha256": "55e07a964a3388f4f1511be3c5524e8ba3765e7458c6b052397d7480426ae0e9"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-api-retry-run-20261018.log",
+      "sha256": "ac83cd9d739935cc6113e297e29db3ffe8826308cb5da4976a274bcd60643e32"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-api-retry-audit-run-20261018.log",
+      "sha256": "d48acec8ce690cd4ae5d3e905a53aa3c4710575ec6fd5d56a597fe9dfd03defe"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-docs-audit-run-20261018.log",
+      "sha256": "d1a247aea0558f9384e8151314c60cbde55b255ebe1e1e7a85578147611d95db"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-surface-20261018-summary.json",
+      "sha256": "12a25a1e1b1f352097f849a1fb5ce40fea34ad14da16e409bd82b15c3c6c8edd"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-surface-20261018.jsonl",
+      "sha256": "3ffc4c93681954409a3c651ca23a268da6279da2601237484551dcba916baa96"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-surface-retry-20261018-summary.json",
+      "sha256": "539713ecd0b983c68ad15edfd7642d2bcaf5be3eee50fb0f5f081b6dc1a36517"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-surface-retry-20261018.jsonl",
+      "sha256": "bb13ab61e5ccb34ed248b1e174874c02c2e18d84f2b9276cdb97ccc57cfa02e0"
+    },
+    {
+      "path": "/private/tmp/chainbench-product-native-vcs-docs-independent-20261018.json",
+      "sha256": "2d26cc6965e4a0962fe1bdae4429c84ff002ae5f3967726b43a3527767d7a3f5"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/summary.json",
+      "sha256": "c44ecd69c9e305b580dbb4ba1a23ce426c7bf11161d5e61cdf5c8d5b1e02240c"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gstable/cli-surface.txt",
+      "sha256": "6311476251e312144857122c96acd092096ec4229015c8c7041b1d075e613b67"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gstable/cli-flags.txt",
+      "sha256": "4b049ec91a112e1152caa3b59ddd09f4c19f19899e2aad5ee0ad6a55b1ec9a47"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gstable-verify.log",
+      "sha256": "c1a0a91c24d2902b07d444591bea9b1b7f59235ad4b70eb29e7d1299f4a61c4b"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gwbft/cli-surface.txt",
+      "sha256": "500de1c0a9de0152db90d3c70c4521b5895b3ebe511f63421a63fd2c8fcaff90"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gwbft/cli-flags.txt",
+      "sha256": "692ce45dbbd1520b918a9caa9fb91d1398d742e99e0df80a049f5abe777f64f9"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gwbft-verify.log",
+      "sha256": "34f8d5a994e16eda8cc095c73e2e2783a4ccbde929118f2da80ae8cc34185d7e"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gwemix/cli-surface.txt",
+      "sha256": "472a757b22a80bdea25c364080685ba0cf82610463db042a888edb65c027f1a2"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gwemix/cli-flags.txt",
+      "sha256": "3c071741845b8a25bc128436f00e32b1558f33b15adac8f7a329bd49ddb3f4e3"
+    },
+    {
+      "path": "/private/tmp/chainbench-chain-analysis-refresh-20261018/gwemix-verify.log",
+      "sha256": "c64efc36a3dba12b1eeb00ba18662cfaabbd57be7392635727dc10514f118c9d"
+    }
+  ]
+}

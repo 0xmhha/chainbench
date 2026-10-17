@@ -1,5 +1,7 @@
 # gwemix RPC API + Metrics Graph
 
+> Source-reference snapshot: `7af50e45db4a48a2a77e565c7ff7bde0e8f95505`. The separate CLI/help capture is pinned to `d535dd3d25110977ce19503d8fcbf7e9a5430562` (2026-10-18). This RPC/metrics source analysis has not been re-audited or promoted to the new source snapshot.
+
 Source-level extraction for verifying chain behavior from the `gwemix` node (go-ethereum fork). All `path:line` refs are relative to the `chain/go-wbft` repo root.
 
 ---

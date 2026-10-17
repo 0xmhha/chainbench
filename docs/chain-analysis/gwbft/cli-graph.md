@@ -1,5 +1,7 @@
 # gwemix CLI — Command + Flag Graph
 
+> Source-reference snapshot: `7af50e45db4a48a2a77e565c7ff7bde0e8f95505`. The live CLI/help capture is now pinned to `d535dd3d25110977ce19503d8fcbf7e9a5430562` (2026-10-18); documented visible, hidden and not-accepted flag names were rechecked against that binary. Source line references and code-level explanations below remain the earlier snapshot and require re-audit before citing them as current source behavior.
+
 Source-level extraction of the `gwemix` binary (a go-ethereum fork, urfave/cli/v2) for the chainbench test harness.
 
 - Repo root (read-only): `chain/go-wbft` (module `github.com/ethereum/go-ethereum`)

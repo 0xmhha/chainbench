@@ -1,5 +1,7 @@
 # gstable — RPC API + metrics graph
 
+> Source-reference snapshot: `0937ac5c93d4f56ded5b24899f381d3d1f208c02`. The separate CLI/help capture is pinned to `4d17eea018c8dd579409db30bfd27de79c4f4121` (2026-10-18). This RPC/metrics source analysis has not been re-audited or promoted to the new source snapshot.
+
 Code-level extraction of the JSON-RPC namespaces/methods and the metrics surface for the `gstable` node (go-ethereum fork, WBFT/Anzeon consensus). All `path:line` references are relative to the repo root `chain/go-stablenet/`.
 
 ---
