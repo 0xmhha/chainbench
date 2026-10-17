@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-18",
+  "scope": "Sixteen passing current-source L1 runs followed by an operator-requested safe boundary stop to fix verified late placement validation. Not a complete L1 execution.",
+  "headAtProof": "53eed8669451aacb983dfb9ee60a916249e03426",
+  "sourceDigest": "96cc59d069e3ede3c28dd380f07e5a1c2ca921164634978515d428f995a3d206",
+  "proof": {
+    "sourceBefore": "96cc59d069e3ede3c28dd380f07e5a1c2ca921164634978515d428f995a3d206",
+    "headAtProof": "53eed8669451aacb983dfb9ee60a916249e03426",
+    "runtime": "/private/tmp/cbui/l1i-bdzww9z5",
+    "plannedFiles": 216,
+    "plannedRuns": 358,
+    "scope": "Current full plan of216 files/358 isolated serial native invocations; no success assumed, missing external inputs remain blocked.",
+    "walkCompleted": false,
+    "executionCompleted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "sweepExitCode": 130,
+    "reportedRows": 16,
+    "totals": {
+      "pass": 16,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 342
+    },
+    "recordedWorkspaces": 16,
+    "retainedWorkspaces": 16,
+    "sourceAfter": "96cc59d069e3ede3c28dd380f07e5a1c2ca921164634978515d428f995a3d206",
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "elapsedSeconds": 1084.016160416999
+  },
+  "independentAudit": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "96cc59d069e3ede3c28dd380f07e5a1c2ca921164634978515d428f995a3d206",
+    "runtime": "/private/tmp/cbui/l1i-bdzww9z5",
+    "walkCompleted": false,
+    "executionCompleted": false,
+    "reportedRows": 16,
+    "totalsObserved": {
+      "pass": 16,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "sourceAndInputsUnchanged": true,
+    "retainedWorkspaces": 16,
+    "archiveCount": 74,
+    "archiveEntries": 4456,
+    "localFilesPreserved": 2274,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 240,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "coverage": {
+      "sourceFiles": 216,
+      "commonFiles": 71,
+      "singleChainFiles": 145,
+      "plannedRuns": 358,
+      "omittedSourceFiles": 0,
+      "duplicateOrMissingVariants": 0
+    },
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0
+  },
+  "latePlacementProbe": {
+    "method": "Private Go test overlay adds only a test; repository files and pinned native CLI are unchanged. Calls actual fwApply with fake host command capture.",
+    "result": "RED: eight firewall commands precede refusal of node1/node4 cross-group shared host.",
+    "nativeProofClaimed": false,
+    "resolved": false
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-l1-after-quorum-20261018-summary.json",
+      "sha256": "55eebfe6b69b3f888e4abea79bcd7f544b3d72a5b45de781cd1d93cb1aa06f08"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-after-quorum-20261018-independent.json",
+      "sha256": "1c7279877dc6a503c6b0866256ad96b42285412b60590cb86bf179ba1fdae2bb"
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-after-quorum-20261018-checkpoint.json",
+      "sha256": "c64b82faf0191351493bda8db00e449406a3f47e95d703e5529b1e3107b5edf1"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-late-host-probe-20261018.log",
+      "sha256": "9790464207e423eda8066c03bbab68b8729897822130bc70373486c1af4f77a7"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-late-host-overlay-20261018.json",
+      "sha256": "b7952048686a5650a9bb758664040ceb2918d71e8e06dcd6692262df534fc8e2"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-late-host-probe-20261018_test.go",
+      "sha256": "bdc7a6069fb6d30e91a95a15f93a5ba07faf3daee19d896fe1b56084f3e40772"
+    }
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}
