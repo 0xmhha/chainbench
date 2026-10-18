@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-18",
+  "scope": "Physical compression of recorded, old, unused structural graph outputs; no file deletion or code changes. Not full storage-growth, historical receipt recovery or final acceptance.",
+  "headAtProof": "4a71f122aac04b7505bff8198c7ec21e0e7fd632",
+  "sourceDigest": "88755947ccdc6b3050fc02dad5e5cc8f6cdb995f1c4136ef90b3a837467ced85",
+  "recordedGraphsPreserved": 78,
+  "compressedGraphs": 8,
+  "savedAllocatedBytes": 400748544,
+  "observedVolumeFreeChange": 400838656,
+  "independentNegativeControlsRejected": 13,
+  "bytesModeUIDGIDMtimeNonCompressionXattrsACLFlagsPreserved": true,
+  "inodeCtimeAndParentMtimeMayChange": true,
+  "sourcePublicationUnchanged": true,
+  "reports": [
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-graphs-current-1792299652541366000.json",
+      "sha256": "43d2c817af0c6519308d07426ad87a3221064d049f18946a3f316cfdcd29edc8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792299659346030256
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-graphs-current-1792299652541366000-independent.json",
+      "sha256": "c7e539c011432e56df947360ed6c09001e6a642b9fc3d1be0e5da75124ec7ef5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792299721699392596
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-graphs-current-1792299652541366000-before.json",
+      "sha256": "1eecc8c05610db48370a487bf3d2673f62b8cf0cf30a6835ee0e0487e8989182",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792299652563906085
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-graphs-current-1792299652541366000-audit.jsonl",
+      "sha256": "802969de1952cd18468715f310b84f4e291ff007ee027f2f4593e39adff56e51",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792299657218660633
+    }
+  ],
+  "helperRegression": {
+    "contracts": 22,
+    "log": {
+      "path": "/private/tmp/chainbench-graph-compress-v2-current-regression-20261018.log",
+      "sha256": "2d9d3a52eae60884ac50611a1a25de57c24995642fe4968f1d6ca7edcb856d32",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792299557310751152
+    }
+  },
+  "all14Accepted": false,
+  "fullRecurringStorageGrowthSolved": false,
+  "finalWebAccepted": false,
+  "trackedImplementationChangedAtProof": false,
+  "existingUserUntrackedInputsRetained": true
+}
