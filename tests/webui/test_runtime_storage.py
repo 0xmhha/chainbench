@@ -48,6 +48,51 @@ class RuntimeStorageTests(unittest.TestCase):
         self.reclaim(runtime, [str(db)])
         self.assertEqual(db.read_bytes(), b'disposable')
 
+    def test_completed_node_trie_cache_is_reclaimed_and_audited(self):
+        runtime = self.runtime()
+        cache = runtime / 'w/node1/geth/triecache/data.bin'
+        cache.parent.mkdir(parents=True); cache.write_bytes(b'generated clean trie cache')
+        proof = runtime / 'reports/proof.json'
+        proof.parent.mkdir(); proof.write_text('{"passed": true}'); proof.chmod(0o600)
+        original = (proof.read_bytes(), proof.stat().st_mode, proof.stat().st_mtime_ns)
+        records = self.reclaim(runtime)
+        self.assertFalse(cache.parent.exists())
+        self.assertEqual([row['path'] for row in records], [str(cache.parent)])
+        self.assertEqual((proof.read_bytes(), proof.stat().st_mode, proof.stat().st_mtime_ns), original)
+
+    def test_referenced_trie_cache_and_proof_purposes_are_preserved(self):
+        for reference in ('file', 'directory'):
+            with self.subTest(reference=reference):
+                runtime = self.runtime()
+                cache = runtime / 'w/node1/geth/triecache/data.bin'
+                cache.parent.mkdir(parents=True); cache.write_bytes(b'explicit proof input')
+                self.reclaim(runtime, [str(cache if reference == 'file' else cache.parent)])
+                self.assertEqual(cache.read_bytes(), b'explicit proof input')
+        for purpose in ('reports', 'diagnostics', 'inputs', 'proofs'):
+            with self.subTest(purpose=purpose):
+                runtime = self.runtime()
+                artifact = runtime / purpose / 'node1/geth/triecache/data.bin'
+                artifact.parent.mkdir(parents=True); artifact.write_bytes(b'preserved diagnostic')
+                self.reclaim(runtime)
+                self.assertEqual(artifact.read_bytes(), b'preserved diagnostic')
+
+    def test_trie_cache_symlink_is_refused(self):
+        runtime = self.runtime()
+        outside = self.root / 'user-cache'; outside.mkdir()
+        original = outside / 'data.bin'; original.write_bytes(b'user input')
+        cache = runtime / 'w/node1/geth/triecache'
+        cache.parent.mkdir(parents=True); cache.symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(storage.maintenance.UnsafeMaintenance):
+            self.reclaim(runtime)
+        self.assertEqual(original.read_bytes(), b'user input')
+
+    def test_unscoped_directory_named_triecache_is_not_disposable(self):
+        runtime = self.runtime()
+        cache = runtime / 'user-files/triecache/data.bin'
+        cache.parent.mkdir(parents=True); cache.write_bytes(b'user artifact')
+        self.reclaim(runtime)
+        self.assertEqual(cache.read_bytes(), b'user artifact')
+
     def test_exported_snapshots_and_source_fixtures_are_not_node_data(self):
         runtime = self.runtime()
         paths = [runtime / prefix / 'node1/etcd/member/wal/0.tmp'

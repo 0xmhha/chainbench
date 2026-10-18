@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "basic-consensus",
-  "description": "CT-NODE-009 — 운영 중인 모든 노드가 같은 최신 블록을 갖는다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 basic-sync 와 basic-consensus 두 파일을 합쳤다. 블록 3 에서 한 번, 블록 20 을 지나 블록이 계속 나오는 것을 본 뒤 한 번 더, 모든 노드의 최신 블록 해시를 모두가 가진 가장 낮은 높이에서 비교한다.",
+  "description": "CT-NODE-009 — 운영 중인 모든 노드가 같은 최신 블록을 갖는다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 basic-sync 와 basic-consensus 두 파일을 합쳤다. 블록 3 에서 한 번, 블록 20 을 지나 블록이 계속 나오는 것을 본 뒤 한 번 더, 모든 노드의 최신 블록 해시를 모두가 가진 가장 낮은 높이에서 비교한다. 원래 basic/sync가 보던 높이 차이도 두 시점에서 유지한다. BP 네 대와 EN 한 대의 높이를 각각 한 번 읽고 최소 높이를 구한 뒤, 저장한 다섯 높이가 모두 최소값보다 2블록을 넘어 앞서지 않는지 확인한다. 같은 과거 블록 해시가 일치해도 뒤처진 노드가 통과하지 못하도록, 현재 높이 차이와 공통 높이의 해시를 별도로 본다.",
   "requires": [
     "rpc",
     "consensus"
@@ -14,6 +14,99 @@
       "do": "waitBlock",
       "target": 3,
       "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "syncFirstHead1"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node2",
+      "save": "syncFirstHead2"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node3",
+      "save": "syncFirstHead3"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node4",
+      "save": "syncFirstHead4"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "en1",
+      "save": "syncFirstHead5"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "min",
+      "of": [
+        "$syncFirstHead1",
+        "$syncFirstHead2",
+        "$syncFirstHead3",
+        "$syncFirstHead4",
+        "$syncFirstHead5"
+      ],
+      "save": "syncFirstMinimum"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncFirstHead1",
+        "$syncFirstMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncFirstHead2",
+        "$syncFirstMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncFirstHead3",
+        "$syncFirstMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncFirstHead4",
+        "$syncFirstMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncFirstHead5",
+        "$syncFirstMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
     },
     {
       "expect": "sameBlockHash",
@@ -29,6 +122,99 @@
       "on": "node1",
       "timeout": "60s",
       "pollInterval": "2s"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "syncSecondHead1"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node2",
+      "save": "syncSecondHead2"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node3",
+      "save": "syncSecondHead3"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node4",
+      "save": "syncSecondHead4"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "en1",
+      "save": "syncSecondHead5"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "min",
+      "of": [
+        "$syncSecondHead1",
+        "$syncSecondHead2",
+        "$syncSecondHead3",
+        "$syncSecondHead4",
+        "$syncSecondHead5"
+      ],
+      "save": "syncSecondMinimum"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncSecondHead1",
+        "$syncSecondMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncSecondHead2",
+        "$syncSecondMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncSecondHead3",
+        "$syncSecondMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncSecondHead4",
+        "$syncSecondMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$syncSecondHead5",
+        "$syncSecondMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
     },
     {
       "expect": "sameBlockHash",
