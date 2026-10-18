@@ -24,11 +24,20 @@ class UnsafeMaintenance(RuntimeError):
     """An inventory or preservation check failed; no further changes are safe."""
 
 
+def maintenance_run(command, **kwargs):
+    """Bound process, metadata and compression commands before any replacement."""
+    kwargs.setdefault('timeout', 30)
+    try:
+        return subprocess.run(command, **kwargs)
+    except subprocess.TimeoutExpired as error:
+        raise UnsafeMaintenance('maintenance command timed out') from error
+
+
 def inventory():
-    commands = subprocess.run(['ps', '-axo', 'command='], capture_output=True, text=True)
+    commands = maintenance_run(['ps', '-axo', 'command='], capture_output=True, text=True)
     if commands.returncode != 0 or commands.stderr.strip():
         raise UnsafeMaintenance('cannot inventory processes')
-    opened = subprocess.run(['lsof', '-nP', '-F', 'n'], capture_output=True, text=True)
+    opened = maintenance_run(['lsof', '-nP', '-F', 'n'], capture_output=True, text=True)
     if opened.returncode not in (0, 1) or opened.stderr.strip():
         raise UnsafeMaintenance('cannot inventory open files')
     return commands.stdout, [line[1:] for line in opened.stdout.splitlines() if line.startswith('n')]
@@ -190,11 +199,24 @@ def wal_candidate(path, now=None):
 
 def metadata(path):
     s = path.stat()
-    names = subprocess.run(['/usr/bin/xattr', str(path)], capture_output=True, text=True, check=True).stdout.splitlines()
-    attrs = {name: subprocess.run(['/usr/bin/xattr', '-px', name, str(path)], capture_output=True, text=True, check=True).stdout.strip() for name in names if name != 'com.apple.decmpfs'}
-    acl = subprocess.run(['/bin/ls', '-lde', str(path)], capture_output=True, text=True, check=True).stdout.splitlines()[1:]
+    names = maintenance_run(['/usr/bin/xattr', str(path)], capture_output=True, text=True, check=True).stdout.splitlines()
+    attrs = {name: maintenance_run(['/usr/bin/xattr', '-px', name, str(path)], capture_output=True, text=True, check=True).stdout.strip() for name in names if name != 'com.apple.decmpfs'}
+    acl = maintenance_run(['/bin/ls', '-lde', str(path)], capture_output=True, text=True, check=True).stdout.splitlines()[1:]
     flags = getattr(s, 'st_flags', 0) & ~getattr(stat, 'UF_COMPRESSED', 0)
     return (stat.S_IMODE(s.st_mode), s.st_uid, s.st_gid, s.st_mtime_ns, attrs, acl, flags)
+
+
+def validate_wal_audit(path, audit):
+    """Keep the audit separate from the preserved input, including aliases."""
+    if audit.is_symlink():
+        raise UnsafeMaintenance('audit path is a symlink')
+    safe_tree(audit.parent)
+    if audit.resolve() == path.resolve() or (audit.exists() and os.path.samefile(path, audit)):
+        raise UnsafeMaintenance('audit aliases the WAL source')
+    if audit.exists():
+        status = audit.stat()
+        if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
+            raise UnsafeMaintenance('audit must be a separate regular single-link file')
 
 
 def compress_wal(root, audit, compress=False):
@@ -211,6 +233,7 @@ def compress_wal(root, audit, compress=False):
         if not compress:
             print(json.dumps({'path': str(path), 'action': 'would-compress'}))
             continue
+        validate_wal_audit(path, audit)
         before = path.stat()
         original = metadata(path)
         sha = digest(path)
@@ -218,7 +241,7 @@ def compress_wal(root, audit, compress=False):
         os.close(fd)
         copy = Path(temporary)
         try:
-            subprocess.run(['/usr/bin/ditto', '--hfsCompression', '--nocache', str(path), str(copy)], check=True, capture_output=True)
+            maintenance_run(['/usr/bin/ditto', '--hfsCompression', '--nocache', str(path), str(copy)], check=True, capture_output=True, timeout=60)
             os.utime(copy, ns=(before.st_atime_ns, before.st_mtime_ns))
             if digest(copy) != sha or metadata(copy) != original:
                 raise UnsafeMaintenance('compressed copy changed bytes or metadata')
@@ -227,11 +250,15 @@ def compress_wal(root, audit, compress=False):
             current = path.stat()
             if active(runtime, inventory()) or (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns, current.st_ctime_ns) != (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) or digest(path) != sha:
                 raise UnsafeMaintenance('WAL became active or changed before replacement')
-            if audit.is_symlink():
-                raise UnsafeMaintenance('audit path is a symlink')
-            safe_tree(audit.parent)
+            validate_wal_audit(path, audit)
             # Check that the audit can be opened before modifying a proof artifact.
             with audit.open('a') as output:
+                opened = os.fstat(output.fileno())
+                if (audit.is_symlink() or not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1
+                        or (opened.st_dev, opened.st_ino) in {(current.st_dev, current.st_ino),
+                                                            (copy.stat().st_dev, copy.stat().st_ino)}
+                        or not audit.exists() or not os.path.samestat(opened, audit.stat())):
+                    raise UnsafeMaintenance('opened audit aliases the WAL or changed identity')
                 os.replace(copy, path)
                 if digest(path) != sha or metadata(path) != original:
                     raise UnsafeMaintenance('replacement failed preservation checks')

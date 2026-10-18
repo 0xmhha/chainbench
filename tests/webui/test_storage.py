@@ -2,6 +2,7 @@
 import contextlib
 import io
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -181,6 +182,90 @@ class StorageTests(unittest.TestCase):
                 storage.compress_wal(self.root, self.base / 'audit', compress=True)
         self.assertEqual(path.read_bytes(), b'original')
         self.assertEqual(list(path.parent.iterdir()), [path])
+
+    def test_wal_audit_aliases_are_refused_before_copying(self):
+        for alias in ('same path', 'normalized path', 'hard link'):
+            with self.subTest(alias=alias):
+                runtime = self.fixture('audit-' + alias.replace(' ', '-'))
+                path = runtime / 'etcd/member/wal/0.tmp'
+                path.parent.mkdir(parents=True); path.write_bytes(b'original proof')
+                audit = path
+                if alias == 'normalized path':
+                    audit = path.parent / '../wal/0.tmp'
+                elif alias == 'hard link':
+                    audit = self.base / 'linked-audit'; os.link(path, audit)
+                before = (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
+                with patch.object(storage.sys, 'platform', 'darwin'), patch.object(storage, 'wal_candidate', side_effect=lambda p: p == path), patch.object(storage, 'inventory', return_value=('', [])), patch.object(storage, 'metadata', return_value=(0o600, os.getuid(), os.getgid(), 0, {}, [], 0)), patch.object(storage.subprocess, 'run', side_effect=lambda command, **kwargs: shutil.copy2(path, command[-1])) as run:
+                    with self.assertRaisesRegex(storage.UnsafeMaintenance, 'audit'):
+                        storage.compress_wal(self.root, audit, compress=True)
+                    run.assert_not_called()
+                self.assertEqual((path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns), before)
+                self.assertEqual(list(path.parent.glob('*.compress-*')), [])
+
+    def test_wal_audit_descriptor_alias_is_refused_before_replacement(self):
+        for alias in ('source', 'compressed copy', 'unrelated descriptor', 'late symlink'):
+            with self.subTest(alias=alias):
+                runtime = self.fixture('descriptor-' + alias.replace(' ', '-'))
+                path = runtime / 'etcd/member/wal/0.tmp'
+                path.parent.mkdir(parents=True); path.write_bytes(b'original proof' * 2048)
+                audit = self.base / ('audit-' + runtime.name); audit.write_text('previous audit\n')
+                unrelated = runtime / 'unrelated-proof'; unrelated.write_text('keep this proof\n')
+                before = (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
+                original_open, original_stat = Path.open, Path.stat
+                def switched_open(p, mode='r', *args, **kwargs):
+                    target = p
+                    if p == audit and mode == 'a':
+                        target = path if alias == 'source' else unrelated
+                        if alias == 'compressed copy':
+                            target = next(path.parent.glob('*.compress-*'))
+                        elif alias == 'late symlink':
+                            audit.unlink(); audit.symlink_to(unrelated); target = audit
+                    return original_open(target, mode, *args, **kwargs)
+                def sparse_stat(p, **kwargs):
+                    result = original_stat(p, **kwargs)
+                    if '.compress-' in p.name:
+                        from types import SimpleNamespace
+                        values = {name: getattr(result, name) for name in dir(result) if name.startswith('st_')}
+                        values['st_blocks'] = 0
+                        return SimpleNamespace(**values)
+                    return result
+                def copied(command, **kwargs):
+                    shutil.copy2(path, Path(command[-1]))
+                with patch.object(storage.sys, 'platform', 'darwin'), patch.object(storage, 'wal_candidate', side_effect=lambda p: p == path), patch.object(storage, 'inventory', return_value=('', [])), patch.object(storage, 'metadata', return_value=(0o600, os.getuid(), os.getgid(), 0, {}, [], 0)), patch.object(storage.subprocess, 'run', side_effect=copied), patch.object(Path, 'open', switched_open), patch.object(Path, 'stat', sparse_stat):
+                    with self.assertRaisesRegex(storage.UnsafeMaintenance, 'audit'):
+                        storage.compress_wal(self.root, audit, compress=True)
+                self.assertEqual((path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns), before)
+                self.assertEqual(audit.read_text(), 'keep this proof\n' if alias == 'late symlink' else 'previous audit\n')
+                self.assertEqual(unrelated.read_text(), 'keep this proof\n')
+                self.assertEqual(list(path.parent.glob('*.compress-*')), [])
+
+    def test_wal_compressor_timeout_preserves_source_and_audit(self):
+        runtime = self.fixture()
+        path = runtime / 'etcd/member/wal/0.tmp'
+        path.parent.mkdir(parents=True); path.write_bytes(b'original proof')
+        audit = self.base / 'audit'; audit.write_text('previous audit\n')
+        before = (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
+        def timed_out(command, **kwargs):
+            self.assertEqual(kwargs.get('timeout'), 60)
+            raise subprocess.TimeoutExpired(command, 60)
+        with patch.object(storage.sys, 'platform', 'darwin'), patch.object(storage, 'wal_candidate', side_effect=lambda p: p == path), patch.object(storage, 'inventory', return_value=('', [])), patch.object(storage, 'metadata', return_value=()), patch.object(storage.subprocess, 'run', side_effect=timed_out):
+            with self.assertRaisesRegex(storage.UnsafeMaintenance, 'timed out'):
+                storage.compress_wal(self.root, audit, compress=True)
+        self.assertEqual((path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns), before)
+        self.assertEqual(audit.read_text(), 'previous audit\n')
+        self.assertEqual(list(path.parent.glob('*.compress-*')), [])
+
+    def test_inventory_timeouts_refuse_maintenance(self):
+        for command in ('ps', 'lsof'):
+            with self.subTest(command=command):
+                def timed_out(args, **kwargs):
+                    self.assertEqual(kwargs.get('timeout'), 30)
+                    if args[0] == command:
+                        raise subprocess.TimeoutExpired(args, 30)
+                    return subprocess.CompletedProcess(args, 0, '', '')
+                with patch.object(storage.subprocess, 'run', side_effect=timed_out):
+                    with self.assertRaisesRegex(storage.UnsafeMaintenance, 'timed out'):
+                        storage.inventory()
 
     def test_unknown_recheck_never_deleted(self):
         path = self.fixture('recheck-unknown')
