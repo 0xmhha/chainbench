@@ -3,6 +3,8 @@ import ast
 import contextlib
 import json
 import os
+import shutil
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -187,6 +189,102 @@ class RuntimeStorageTests(unittest.TestCase):
         self.assertEqual(copy.stat().st_mtime_ns, source.stat().st_mtime_ns)
         copy.write_bytes(b'changed')
         self.assertEqual(source.read_bytes(), b'original')
+
+    def test_small_and_empty_files_attempt_shared_copy(self):
+        for size in (0, 17, 65536):
+            with self.subTest(size=size):
+                source = self.root / ('source-' + str(size)); source.write_bytes(b'x' * size)
+                target = self.root / ('target-' + str(size))
+                def cloned(src, temporary):
+                    self.assertFalse(temporary.exists())
+                    shutil.copy2(src, temporary)
+                    return True
+                with patch.object(storage, '_native_clone', side_effect=cloned, create=True) as native:
+                    result = storage.clone_file(source, target)
+                    native.assert_called_once()
+                self.assertEqual(Path(result), target); self.assertEqual(target.read_bytes(), source.read_bytes())
+                self.assertNotEqual(target.stat().st_ino, source.stat().st_ino)
+
+    def test_copy_failure_preserves_existing_destination(self):
+        source = self.root / 'source'; source.write_bytes(b'new data')
+        target = self.root / 'target'; target.write_bytes(b'previous good data'); target.chmod(0o640)
+        before = (target.read_bytes(), target.stat().st_ino, target.stat().st_mode, target.stat().st_mtime_ns)
+        def failed(src, destination):
+            Path(destination).write_bytes(b'incomplete')
+            raise OSError('copy failed')
+        with patch.object(storage, '_native_clone', return_value=False, create=True), patch.object(storage.shutil, 'copy2', side_effect=failed):
+            with self.assertRaises(OSError): storage.clone_file(source, target)
+        self.assertEqual((target.read_bytes(), target.stat().st_ino, target.stat().st_mode, target.stat().st_mtime_ns), before)
+        self.assertEqual(source.read_bytes(), b'new data'); self.assertEqual(list(self.root.glob('.clone-*')), [])
+
+    def test_partial_native_failure_falls_back_atomically(self):
+        source = self.root / 'source'; source.write_bytes(b'complete input')
+        target = self.root / 'target'; target.write_bytes(b'previous input')
+        def declined(src, temporary):
+            temporary.write_bytes(b'partial clone')
+            return False
+        with patch.object(storage, '_native_clone', side_effect=declined, create=True) as native:
+            storage.clone_file(source, target)
+            native.assert_called_once()
+        self.assertEqual(target.read_bytes(), b'complete input')
+        self.assertEqual(list(self.root.glob('.clone-*')), [])
+
+    def test_copy_refuses_source_aliases_without_replacing_input(self):
+        source = self.root / 'source'; source.write_bytes(b'x' * 1048576)
+        linked = self.root / 'linked'; os.link(source, linked)
+        before = (source.stat().st_ino, source.stat().st_nlink, source.stat().st_mtime_ns)
+        for destination in (source, linked):
+            with self.subTest(destination=destination):
+                with self.assertRaises(shutil.SameFileError): storage.clone_file(source, destination)
+                self.assertEqual((source.stat().st_ino, source.stat().st_nlink, source.stat().st_mtime_ns), before)
+        self.assertEqual(list(self.root.glob('.clone-*')), [])
+
+    def test_copy_refuses_destination_links_and_preserves_other_input(self):
+        for linked in (True, False):
+            with self.subTest(symlink=linked):
+                source = self.root / ('source-' + str(linked)); source.write_bytes(b'new input')
+                other = self.root / ('other-' + str(linked)); other.write_bytes(b'user data')
+                target = self.root / ('target-' + str(linked))
+                if linked: target.symlink_to(other)
+                else: os.link(other, target)
+                before = (other.read_bytes(), other.stat().st_ino, other.stat().st_nlink, other.stat().st_mtime_ns)
+                with self.assertRaises(storage.maintenance.UnsafeMaintenance): storage.clone_file(source, target)
+                self.assertEqual((other.read_bytes(), other.stat().st_ino, other.stat().st_nlink, other.stat().st_mtime_ns), before)
+
+    def test_concurrent_destination_change_is_not_overwritten(self):
+        for existed in (True, False):
+            with self.subTest(existed=existed):
+                source = self.root / ('source-' + str(existed)); source.write_bytes(b'our input')
+                target = self.root / ('target-' + str(existed))
+                if existed: target.write_bytes(b'old')
+                def cloned(src, temporary):
+                    shutil.copy2(src, temporary)
+                    target.write_bytes(b'newer user data')
+                    return True
+                with patch.object(storage, '_native_clone', side_effect=cloned):
+                    with self.assertRaises(storage.maintenance.UnsafeMaintenance): storage.clone_file(source, target)
+                self.assertEqual(target.read_bytes(), b'newer user data')
+                self.assertEqual(list(self.root.glob('.clone-*')), [])
+
+    def test_copy_to_directory_keeps_filename_and_independent_data(self):
+        source = self.root / 'source'; source.write_bytes(b'new input')
+        target = self.root / 'directory'; target.mkdir()
+        result = storage.clone_file(source, target)
+        self.assertEqual(Path(result), target / source.name)
+        self.assertEqual((target / source.name).read_bytes(), source.read_bytes())
+        (target / source.name).write_bytes(b'changed')
+        self.assertEqual(source.read_bytes(), b'new input')
+
+    def test_copy_preserves_owned_input_group_across_parent_groups(self):
+        source = self.root / 'group-source'; source.write_bytes(b'owned input')
+        os.chown(source, -1, os.getgid())
+        with tempfile.TemporaryDirectory(dir='/private/tmp' if sys.platform == 'darwin' else None) as name:
+            target = Path(name) / 'copy'
+            storage.clone_file(source, target)
+            self.assertEqual(target.stat().st_uid, source.stat().st_uid)
+            self.assertEqual(target.stat().st_gid, source.stat().st_gid)
+            self.assertEqual(target.read_bytes(), source.read_bytes())
+            self.assertNotEqual(target.stat().st_ino, source.stat().st_ino)
 
     def test_repeated_completion_does_not_accumulate_databases(self):
         for _ in range(3):

@@ -3,13 +3,15 @@
 Only runtimes created by this module are eligible for automatic reclamation.
 Historical unmarked runtimes require explicit conservative maintenance instead.
 """
+import ctypes
 import datetime
+import functools
 import json
 import os
 from pathlib import Path
 import re
 import shutil
-import subprocess
+import stat
 import sys
 import tempfile
 import time
@@ -46,23 +48,67 @@ def create_runtime(name=None, prefix=None):
     return runtime
 
 
+@functools.lru_cache(maxsize=1)
+def _native_clone_function():
+    try:
+        function = ctypes.CDLL(None, use_errno=True).clonefile
+    except (OSError, AttributeError):
+        return None
+    function.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32]
+    function.restype = ctypes.c_int
+    return function
+
+
+def _native_clone(source, destination):
+    if sys.platform != 'darwin':
+        return False
+    function = _native_clone_function()
+    # CLONE_ACL from sys/clonefile.h preserves the source access controls.
+    return function is not None and function(os.fsencode(source), os.fsencode(destination), 0x0004) == 0
+
+
+def _copy_destination_state(path):
+    try:
+        status = path.lstat()
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
+        raise maintenance.UnsafeMaintenance('copy destination is linked or not a regular file')
+    return (status.st_dev, status.st_ino, status.st_size, status.st_mtime_ns,
+            status.st_ctime_ns, status.st_mode, status.st_uid, status.st_gid)
+
+
 def clone_file(source, destination):
-    """APFS copy-on-write, with independent inode; never hard-link live inputs."""
+    """Share file data when supported; publish an independent complete copy."""
     source, destination = Path(source), Path(destination)
+    if destination.is_symlink():
+        raise maintenance.UnsafeMaintenance('copy destination is a symlink')
     if destination.is_dir():
         destination = destination / source.name
-    if sys.platform == 'darwin' and source.stat().st_size >= 1024**2:
-        fd, name = tempfile.mkstemp(prefix='.clone-', dir=destination.parent)
-        os.close(fd)
-        temporary = Path(name)
-        try:
-            clone = subprocess.run(['/bin/cp', '-c', '-p', str(source), str(temporary)], capture_output=True, text=True)
-            if clone.returncode == 0:
-                os.replace(temporary, destination)
-                return str(destination)
-        finally:
+    if source.resolve() == destination.resolve() or (destination.exists() and os.path.samefile(source, destination)):
+        raise shutil.SameFileError('copy source and destination refer to the same input')
+    previous = _copy_destination_state(destination)
+    fd, name = tempfile.mkstemp(prefix='.clone-', dir=destination.parent)
+    os.close(fd)
+    temporary = Path(name)
+    try:
+        temporary.unlink()
+        shared = _native_clone(source, temporary)
+        if not shared:
             temporary.unlink(missing_ok=True)
-    return shutil.copy2(source, destination)
+            shutil.copy2(source, temporary)
+        original, copied = source.stat(), temporary.stat()
+        ownership_changed = original.st_uid == os.getuid() and (copied.st_uid, copied.st_gid) != (original.st_uid, original.st_gid)
+        if ownership_changed:
+            os.chown(temporary, original.st_uid, original.st_gid)
+        if shared or ownership_changed:
+            shutil.copystat(source, temporary)
+        if _copy_destination_state(destination) != previous:
+            raise maintenance.UnsafeMaintenance('copy destination changed before publication')
+        os.replace(temporary, destination)
+        return str(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def validate_runtime(runtime):
