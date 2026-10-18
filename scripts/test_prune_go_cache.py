@@ -214,6 +214,7 @@ class CacheTests(unittest.TestCase):
     def test_ci_runs_cache_contracts(self):
         makefile = Path(__file__).resolve().parents[1] / 'Makefile'
         self.assertIn('scripts/test_prune_go_cache.py', makefile.read_text())
+        self.assertIn('scripts/test_proof_native_cow.py', makefile.read_text())
 
 
 class CompletedSourceCacheTests(unittest.TestCase):
