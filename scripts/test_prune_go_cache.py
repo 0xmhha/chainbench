@@ -216,5 +216,212 @@ class CacheTests(unittest.TestCase):
         self.assertIn('scripts/test_prune_go_cache.py', makefile.read_text())
 
 
+class CompletedSourceCacheTests(unittest.TestCase):
+    entry = CacheTests.entry
+    apply = CacheTests.apply
+
+    def setUp(self):
+        CacheTests.setUp(self)
+        self.now = time.time() + 1
+        self.runtimes = self.root.parent / 'runtimes'
+        self.runtimes.mkdir()
+        self.runtime = self.runtimes / 'recheck-owned'
+        self.runtime.mkdir()
+        self.source = self.runtime / 'source'
+        self.source.mkdir()
+        self.marker = self.runtime / '.webui-owned-runtime.json'
+        self.marker.write_text(json.dumps({'version': 1, 'path': str(self.runtime),
+                                          'policy': 'completed-disposable-data'}))
+        self.audit = self.runtime / 'storage-audit.jsonl'
+        self.audit.write_text(json.dumps({'event': 'reclaimed',
+            'path': str(self.source / 'web/node_modules'), 'allocatedBytes': 1,
+            'finishedAt': '2026-10-18T00:00:00+00:00'}) + '\n')
+
+    def associated(self, number=1):
+        path = self.entry(number)
+        path.write_bytes(b'go archive\x00' + str(self.source / 'internal/app/run.go').encode())
+        return path
+
+    def selection(self, references='', state=('', [])):
+        with patch.object(cache, 'inventory', return_value=state):
+            return cache.plan(self.root, references, now=self.now, free_bytes=0,
+                target_bytes=1 << 30, keep_bytes=0, completed_runtime_root=self.runtimes)
+
+    def test_recent_closed_source_entry_is_opt_in_and_reclaimed(self):
+        path = self.associated()
+        with patch.object(cache, 'inventory', return_value=('', [])):
+            cold = cache.plan(self.root, '', now=self.now, free_bytes=0, keep_bytes=0)
+        self.assertEqual(cold['entries'], [])
+        selected = self.selection()
+        self.assertEqual([r['path'] for r in selected['entries']], [str(path)])
+        self.assertIn(str(self.source), selected['entries'][0]['completedSources'])
+        self.apply(selected)
+        self.assertFalse(path.exists())
+        self.assertTrue(self.marker.exists())
+        self.assertTrue(self.audit.exists())
+        self.assertTrue(self.source.is_dir())
+
+    def test_recent_unrelated_entry_is_retained(self):
+        self.entry()
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_active_source_is_retained(self):
+        self.associated()
+        self.assertEqual(self.selection(state=(str(self.runtime), []))['entries'], [])
+        self.assertEqual(self.selection(state=('', [str(self.source / 'run.go')]))['entries'], [])
+
+    def test_ownership_without_cleanup_record_is_retained(self):
+        self.associated(); self.audit.unlink()
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_cleanup_start_without_completion_is_retained(self):
+        self.associated(); self.audit.write_text(json.dumps({'event': 'reclaim-start',
+            'path': str(self.source / 'web/node_modules')}) + '\n')
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_cleanup_of_another_tree_does_not_qualify_source(self):
+        self.associated(); self.audit.write_text(json.dumps({'event': 'reclaimed',
+            'path': str(self.runtime / 'unrelated'), 'finishedAt': 'now'}) + '\n')
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_unmarked_or_absent_source_is_retained(self):
+        self.associated(); self.marker.unlink()
+        self.assertEqual(self.selection()['entries'], [])
+        self.marker.write_text(json.dumps({'version': 1, 'path': str(self.runtime),
+            'policy': 'completed-disposable-data'})); self.source.rmdir()
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_unknown_association_alongside_closed_source_is_retained(self):
+        path = self.associated()
+        with path.open('ab') as output:
+            output.write(str(self.runtimes / 'unowned/source/run.go').encode())
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_reference_still_protects_recent_closed_source_entry(self):
+        path = self.associated()
+        self.assertEqual(self.selection(str(path))['entries'], [])
+
+    def test_future_timestamp_is_never_eligible(self):
+        path = self.associated(); os.utime(path, (self.now + 3600, self.now + 3600))
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_malformed_cleanup_record_refuses_plan(self):
+        self.associated(); self.audit.write_text('{')
+        with self.assertRaises(cache.UnsafeMaintenance): self.selection()
+
+    def test_wrong_ownership_refuses_plan(self):
+        self.associated(); self.marker.write_text(json.dumps({'path': '/elsewhere'}))
+        with self.assertRaises(cache.UnsafeMaintenance): self.selection()
+
+    def test_linked_or_symlink_cleanup_record_refuses_plan(self):
+        self.associated(); os.link(self.audit, self.runtime / 'linked-audit')
+        with self.assertRaises(cache.UnsafeMaintenance): self.selection()
+        (self.runtime / 'linked-audit').unlink()
+        self.audit.rename(self.runtime / 'original-audit')
+        self.audit.symlink_to(self.runtime / 'original-audit')
+        with self.assertRaises(cache.UnsafeMaintenance): self.selection()
+
+    def test_cleanup_record_changed_after_plan_refuses_all_deletion(self):
+        path = self.associated(); selected = self.selection()
+        with self.audit.open('a') as output: output.write('{}\n')
+        with self.assertRaises(cache.UnsafeMaintenance): self.apply(selected)
+        self.assertTrue(path.exists())
+
+    def test_source_became_active_after_plan_refuses_apply(self):
+        path = self.associated(); selected = self.selection()
+        with patch.object(cache, 'inventory', return_value=(str(self.runtime), [])):
+            with self.assertRaises(cache.UnsafeMaintenance):
+                cache.apply(self.root, selected, lambda: '', now=self.now)
+        self.assertTrue(path.exists())
+
+    def test_source_replaced_after_plan_refuses_apply(self):
+        path = self.associated(); selected = self.selection()
+        self.source.rename(self.runtime / 'old-source'); self.source.mkdir()
+        with self.assertRaises(cache.UnsafeMaintenance): self.apply(selected)
+        self.assertTrue(path.exists())
+
+    def test_new_reference_before_apply_preserves_recent_entry(self):
+        path = self.associated(); selected = self.selection()
+        with self.assertRaises(cache.UnsafeMaintenance): self.apply(selected, str(path))
+        self.assertTrue(path.exists())
+
+    def test_multiple_closed_sources_are_verified(self):
+        path = self.associated(); other = self.runtimes / 'other/source'
+        other.mkdir(parents=True)
+        (other.parent / '.webui-owned-runtime.json').write_text(json.dumps({
+            'version': 1, 'path': str(other.parent), 'policy': 'completed-disposable-data'}))
+        (other.parent / 'storage-audit.jsonl').write_text(json.dumps({
+            'event': 'reclaimed', 'path': str(other / 'web/node_modules'),
+            'allocatedBytes': 1, 'finishedAt': '2026-10-18T00:00:00+00:00'}) + '\n')
+        with path.open('ab') as output: output.write(str(other / 'run.go').encode())
+        selected = self.selection()
+        self.assertEqual(set(selected['entries'][0]['completedSources']),
+                         {str(self.source), str(other)})
+        self.apply(selected)
+        self.assertFalse(path.exists())
+        self.assertTrue(other.is_dir())
+
+
+    def test_symlink_source_refuses_plan(self):
+        self.associated(); self.source.rename(self.runtime / 'original-source')
+        self.source.symlink_to(self.runtime / 'original-source')
+        with self.assertRaises(cache.UnsafeMaintenance): self.selection()
+
+    def test_invalid_completion_timestamp_or_budget_refuses(self):
+        self.associated()
+        for change in [{'finishedAt': 'not-a-time'}, {'finishedAt': '2099-01-01T00:00:00+00:00'},
+                       {'finishedAt': '2026-10-18T00:00:00'}, {'allocatedBytes': -1},
+                       {'allocatedBytes': True}]:
+            row = {'event': 'reclaimed', 'path': str(self.source / 'web/node_modules'),
+                   'allocatedBytes': 1, 'finishedAt': '2026-10-18T00:00:00+00:00'}
+            row.update(change); self.audit.write_text(json.dumps(row) + '\n')
+            with self.subTest(change=change), self.assertRaises(cache.UnsafeMaintenance):
+                self.selection()
+
+    def test_completed_mode_does_not_weaken_minimum_cold_age(self):
+        self.associated()
+        with patch.object(cache, 'inventory', return_value=('', [])):
+            with self.assertRaises(cache.UnsafeMaintenance):
+                cache.plan(self.root, '', age_hours=1, completed_runtime_root=self.runtimes)
+
+    def test_source_activity_in_second_observation_refuses_apply(self):
+        path = self.associated(); selected = self.selection()
+        observations = [('', []), ('', []), (str(self.runtime), [])]
+        with patch.object(cache, 'inventory', side_effect=observations):
+            with self.assertRaises(cache.UnsafeMaintenance):
+                cache.apply(self.root, selected, lambda: '', now=self.now)
+        self.assertTrue(path.exists())
+
+    def test_partial_source_prefix_does_not_authorize_recent_entry(self):
+        path = self.entry()
+        path.write_bytes(str(self.runtime / 'source-backup/run.go').encode())
+        self.assertEqual(self.selection()['entries'], [])
+
+    def test_cli_explicit_completed_mode_uses_same_preservation_policy(self):
+        original_plan = cache.plan
+        def bounded(root, refs, **kwargs):
+            return original_plan(root, refs, now=self.now, free_bytes=0,
+                                 target_bytes=1 << 30, keep_bytes=0, **kwargs)
+        for delete in [False, True]:
+            path = self.associated(100 + delete)
+            report = self.root.parent / ('completed-report-' + str(delete) + '.json')
+            argv = ['prune_go_cache.py', '--completed-runtime-cache', '--report', str(report)]
+            if delete: argv.append('--delete')
+            with patch.object(cache, 'ROOT', self.root), \
+                 patch.object(cache, 'COMPLETED_ROOT', self.runtimes), \
+                 patch.object(cache, 'plan', side_effect=bounded), \
+                 patch.object(cache, 'inventory', return_value=('', [])), \
+                 patch.object(cache, 'evidence_text', return_value=''), \
+                 patch.object(cache.time, 'time', return_value=self.now), \
+                 patch.object(sys, 'argv', argv), contextlib.redirect_stdout(io.StringIO()):
+                cache.main()
+            result = json.loads(report.read_text())
+            self.assertEqual(result['applied'], delete)
+            self.assertEqual(result['plan']['completedRuntimeRoot'], str(self.runtimes))
+            self.assertEqual(path.exists(), not delete)
+            self.assertEqual(report.stat().st_mode & 0o777, 0o600)
+            if path.exists(): path.unlink()
+
+
 if __name__ == '__main__':
     unittest.main()

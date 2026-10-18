@@ -284,6 +284,8 @@ class RuntimeStorageTests(unittest.TestCase):
                 return source
             with patch.object(recheck, 'source_digest', return_value='frozen'), \
                  patch.object(recheck, 'base_commit', return_value='commit'), \
+                 patch.object(recheck, 'stage_git_metadata', return_value={'mode': 'unit-fixture'}), \
+                 patch.object(storage, 'preflight'), \
                  patch.object(recheck, 'verify_published'), patch.object(recheck, 'stage_sources', side_effect=stage), \
                  patch.object(recheck.subprocess, 'run', return_value=type('Result', (), {'returncode': 1})()), \
                  patch.object(storage.maintenance, 'inventory', return_value=('', [])):
@@ -292,6 +294,12 @@ class RuntimeStorageTests(unittest.TestCase):
             self.assertEqual(protected.read_bytes(), before)
             self.assertFalse(staged[0][0].exists())
             self.assertIn('native failure', staged[0][1].read_text())
+
+    def test_ci_runs_runtime_and_maintenance_preservation_contracts(self):
+        makefile = Path(__file__).resolve().parents[2] / 'Makefile'
+        fixture = makefile.read_text().split('fixture-test:', 1)[1].split('\ncase-docs:', 1)[0]
+        for filename in ('test_storage.py', 'test_runtime_storage.py'):
+            self.assertIn('python3 -B tests/webui/' + filename, fixture)
 
     def test_capture_collects_runtimes_and_artifact_paths_without_deleting_receipts(self):
         runtime = self.runtime(); db, _, _ = self.fixture(runtime)
