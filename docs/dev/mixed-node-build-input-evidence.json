@@ -1,0 +1,248 @@
+{
+  "date": "2026-10-18",
+  "scope": "Pinned mixed-node native and static Linux build inputs plus executable version/help on the fleet image. No blockchain started and none of the five mixed scenarios accepted.",
+  "sourceDigestAtAllActualRuns": "6a0a7e2963ee7541d1f2762b7d051e2e9b53e10855858e5e9139f738a4942fce",
+  "sourceCommits": [
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/source/wbft-stablenet",
+      "commit": "15275bb36628d29733ec91e125e5cae3744d2405",
+      "tree": "7ea46087976a42a98bc52fd440dbbe48d7808912"
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/source/wbft-sdk",
+      "commit": "19c3a6dbd5ccb86fb45e15983fdb79564c84f056",
+      "tree": "dcd88dce0d4266eec546d1478d28fe45fe111a7b"
+    }
+  ],
+  "native": {
+    "compiled": true,
+    "identityAudited": true,
+    "binary": {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/native/wbft-stablenet",
+      "sha256": "6b50ab1e7a000047aee0d62875e8223c016d7c5db512ba7081332993a83a51e1",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792304922392557798
+    },
+    "sourceFilesPreserved": 337,
+    "publicModuleCopyFilesChecked": 13754,
+    "negativeControls": 13,
+    "compilerElapsedSeconds": 71.2821881249547
+  },
+  "linux": {
+    "staticArm64CompileAccepted": true,
+    "binary": {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/linux/wbft-stablenet",
+      "sha256": "14fbb6e9dd2c832933cd5b5e821f97b54d26142a3babd4d5e764b8246d6c4959",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305353275823914
+    },
+    "compilerImage": "sha256:b6081f190ba294cf1ebfa59298a771e90825d04939203971b8c0f2477d9d3c45",
+    "fleetRuntimeImage": "sha256:9eaaff02044529cf1eae7c0253079c5ac67c5726dd0d08e275feae984874fa35",
+    "readOnlyOfflineBuild": true,
+    "runtimeVersionHelpAndFlagChecks": 3,
+    "moduleContentVerification": "pass for downloaded module ZIP/directory contents against cached hashes; untouched local SDK source checked separately",
+    "negativeControls": 15,
+    "compilerElapsedSeconds": 108.52464933297597
+  },
+  "etherbaseCompatibility": {
+    "acceptedButIgnored": true,
+    "sourceMeaning": "The coinbase is the node key address on Anzeon. No fee-recipient behavior accepted by this prerequisite proof.",
+    "warning": "warn: --miner.etherbase has no effect: the coinbase is the node key address on Anzeon",
+    "firstCheckerMistake": "Required this deliberately hidden compatibility flag to appear in --help. Preserved initial identity failure, then checked actual warning/ok behavior without editing product or upstream source.",
+    "missingBinaryPrerequisiteLog": {
+      "path": "/private/tmp/chainbench-mixed-native-readiness-before-build-20261018.log",
+      "sha256": "6bd75370dc03a1802643b05b9fe102ad16a70320e8633600b7186095a619b1e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304821281565395
+    },
+    "firstChecker": {
+      "path": "/private/tmp/chainbench-mixed-native-readiness-20261018.py",
+      "sha256": "d3f6afedb2e9a41ae1907d58cc7b5b063056f21dbae5b4e07b08e7dcb97cf260",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304821188438965
+    },
+    "correctedChecker": {
+      "path": "/private/tmp/chainbench-mixed-native-readiness-v2-20261018.py",
+      "sha256": "a4621cdd829d721f1e3b6b60f29227fd81865c32f643279c21a30f3f35baf4c3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304984599100290
+    },
+    "notAProductRedGreenClaim": true
+  },
+  "completedBuildCacheReclamation": {
+    "removedNativeCacheFiles": 3756,
+    "selectedAllocatedBytes": 443596800,
+    "observedVolumeFreeChange": 446599168,
+    "independentlyPreservedArtifacts": 33,
+    "negativeControls": 8,
+    "activeLinuxCacheRetained": true,
+    "activeOwner": "com.apple.Virtualization.Virtua",
+    "observedOpenFiles": 3905,
+    "initialGuardRefusalPreservedAsOperationalFailure": true,
+    "allCachesReclaimed": false
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/source-preparation.json",
+      "sha256": "e35f0f3a02d5328414f0287d822b0b710918b524225501b7cf16f4e7accbed05",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792288514681336146
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/module-fetch-1792304669515456000.json",
+      "sha256": "66014f491a39cd3fddc56b512aa6481066eb03ffad67139799dd803489fed423",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304687747301256
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/cache-prepare-1792304765972922000.json",
+      "sha256": "fae85fa8d457e81e7e56121bb8b05d083a6060be99e0ee3a794aad81ab4a5ae5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304783867521805
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/native-build-1792304853350142000.json",
+      "sha256": "aaf28567dbe06a61979dcea7908d76e29bad022f9006cb7d54a04429a3b482d8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304925347249686
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/native-build-1792304853350142000-readiness.log",
+      "sha256": "4d450994bfb5c7cacc19e4dada76973d06e9d8b8d9876a0cadfaa6b3884698ff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304925135703056
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/native-identity-v2-20261018.json",
+      "sha256": "3c58fa0ccc6e56747f0faf24e7cb0b134a03367fe2a9139e84694710c9e6f0c6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304984910148219
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/native-build-1792304853350142000-independent.json",
+      "sha256": "73406de3c820af7f852c792bf3ee9026c37c409f78470d406f52d5ec04adafee",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305089866492278
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/linux-compiler-ready-1792305137229923000.json",
+      "sha256": "f5e18fa36f88321f37d9e0cf61d3557cb14dd5909eaa601dd0994cbcbb44f9dd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305137231185562
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/linux-dependencies-1792305165198375000.json",
+      "sha256": "ce718677db4a40c535d46165d33078cdada0823468d32ee497323ea577a03fbf",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305165926396689
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/linux-build-1792305245880154000.json",
+      "sha256": "9f7639600c17bc12c6596d1cbd56642098036e352cc1a740a92fff1e671748ba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305355173945657
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/linux-runtime-1792305419426225000.json",
+      "sha256": "3bd760c834ec281a939acdd2462545f972196340d0356f3540e331b08daceb2d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305424076974852
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/linux-build-1792305245880154000-independent.json",
+      "sha256": "10f8bc7f87c339e57b36738dfe3861d81e4222cbcb0f2e097a199bc24ad62296",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305507497662509
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/cache-fd-owners-1792305683676808000.json",
+      "sha256": "8b63fac8cd5a84dfd5fa0ae18642be61d3e6f483802f0af8b6a3bc93e7edfec8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305683678864728
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/completed-build-cache-release-1792305701323799000.json",
+      "sha256": "b749f54f18b51322008626651c75be86d5bd98da40cad935d52f7a6f503f891b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305702360377375
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/completed-build-cache-release-1792305701323799000-before.json",
+      "sha256": "472ba04fa6ad663c4360fa33def51264735e0041eb542c03b1bc54056281f853",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305701344558665
+    },
+    {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/completed-build-cache-release-1792305701323799000-independent.json",
+      "sha256": "767332185391e590ed5fcfa21e382195ba2db2ee52f11b5c3a89489594c0cee6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305753430649202
+    }
+  ],
+  "remaining": [
+    "Run all five genuine mixed implementation scenarios on Linux and independently preserve their outcome and shutdown/DB reclamation.",
+    "Include the pinned genuine mixed ELF in the complete current-source L1 campaign.",
+    "Revisit Linux compiler cache only after fresh process/open-file inspection shows its virtualization references have ended."
+  ],
+  "fullLaunchCompatibilityAccepted": false,
+  "mixedInteropAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false,
+  "sourceCodeChanged": false,
+  "newPublicationMetadataExcludedFromExecutableAST": true,
+  "documentationGuard": {
+    "outcome": "pass",
+    "command": "go test ./internal/arch",
+    "log": {
+      "path": "/private/tmp/chainbench-mixed-input-docs-20261018.log",
+      "sha256": "f5e82ba2120431cb96ea58a30c8b83205148e8bc6fe406a362666d050d428eb9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792305916685502240
+    }
+  },
+  "publicationNote": "Evidence metadata and worklist prose were added only after every actual build, runtime check, preservation audit and cache-reclamation audit completed. Product code is unchanged from bcd0bc52."
+}
