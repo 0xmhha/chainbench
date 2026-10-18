@@ -1,0 +1,2996 @@
+{
+  "date": "2026-10-18",
+  "scope": "Full owned-source syntax inventory after WEB05 argument fixtures and preset-key-preserving unit setup. Syntax graph only; no type-resolved reachability, runtime coverage, full L1/race/e2e or final Web acceptance.",
+  "headAtProof": "89d93e150eb5d652eb002cc9c01c11d05b8a0936",
+  "red": "The preceding graph omitted current Go AST declarations, including the new Web contract guard and key-preservation regression. The same declaration gate passed on the new graph.",
+  "green": {
+    "parserContracts": 21,
+    "precedingImplementationMakeCheckPassed": true,
+    "precedingRelatedRacePackages": 5,
+    "currentDeclarationsGatePassed": true
+  },
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "0b8f9b1b48c37112a00d46e095afd09db4d074be8cd8d247180bec3930631cfc",
+    "sourceAfter": "0b8f9b1b48c37112a00d46e095afd09db4d074be8cd8d247180bec3930631cfc",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-web05-arguments-run-20261018.py": "ed5e24f5b9d6aa2f86ba19fd91b2b858d06fcb651eeaa0533ebfc6af47747208",
+      "/private/tmp/chainbench-ast-web05-arguments-specific-20261018.py": "3eda776dbfb99cac971ad55d4e5c76f2b000e5e90e452e95a9a71caf77d66c39",
+      "/private/tmp/chainbench-ast-web05-arguments-independent-20261018.py": "c2cc491eb52b991d1540c88dc6a1e440afafacd5e4aade01db1214d5d9dd8cc0",
+      "/private/tmp/chainbench-ast-web05-arguments-parser-contracts-20261018.log": "ea876950ab0e919e4e885d612b8fd1aed73277ac27460124fac2d61aa35a1513",
+      "/private/tmp/chainbench-final-web-05-capture-1792282252453489000.json": "27e847a5116e119352b4405045bfacdad8ede7c0f9d18eb6213433ff1ae3246a",
+      "/private/tmp/chainbench-web05-arguments-independent-20261018.json": "6292bef4470617462e41250f6fc8b32a52d3bf1b7c655bd26296d52e7f2d6d5e",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-web05-arguments-run-20261018.py": "ed5e24f5b9d6aa2f86ba19fd91b2b858d06fcb651eeaa0533ebfc6af47747208",
+      "/private/tmp/chainbench-ast-web05-arguments-specific-20261018.py": "3eda776dbfb99cac971ad55d4e5c76f2b000e5e90e452e95a9a71caf77d66c39",
+      "/private/tmp/chainbench-ast-web05-arguments-independent-20261018.py": "c2cc491eb52b991d1540c88dc6a1e440afafacd5e4aade01db1214d5d9dd8cc0",
+      "/private/tmp/chainbench-ast-web05-arguments-parser-contracts-20261018.log": "ea876950ab0e919e4e885d612b8fd1aed73277ac27460124fac2d61aa35a1513",
+      "/private/tmp/chainbench-final-web-05-capture-1792282252453489000.json": "27e847a5116e119352b4405045bfacdad8ede7c0f9d18eb6213433ff1ae3246a",
+      "/private/tmp/chainbench-web05-arguments-independent-20261018.json": "6292bef4470617462e41250f6fc8b32a52d3bf1b7c655bd26296d52e7f2d6d5e",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-capture.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283083411279582
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-independent.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283087752365160
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283088454993140
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283089050854117
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-capture.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138728191556278
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-independent.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138732584954949
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733279929901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733858826845
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-capture.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256047559989444
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-independent.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256052213855427
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256054193014048
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256055161286677
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-capture.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260738390205874
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-independent.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260742921095712
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260743646057877
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260744252072557
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-capture.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268269240845841
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274154302635
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274866457837
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268275462092118
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-capture.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271163296884178
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-independent.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271168224653793
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169184135951
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169870775257
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-capture.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271720905095693
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-independent.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271725960577399
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271727377214282
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271728103754763
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-capture.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275273257659028
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-independent.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275277868420622
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275278705057632
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275279415672506
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-capture.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278880780083910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885184994311
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885962118588
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278886574606998
+      }
+    ],
+    "elapsedSeconds": 12.1106547920499,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independentAudit": {
+    "accepted": true,
+    "sourceDigest": "0b8f9b1b48c37112a00d46e095afd09db4d074be8cd8d247180bec3930631cfc",
+    "graphReproduced": true,
+    "counts": {
+      "parsedFiles": 2091,
+      "languages": {
+        "toml": 1,
+        "yaml": 11,
+        "make": 1,
+        "go": 1410,
+        "json": 352,
+        "python": 131,
+        "gomod": 2,
+        "bash": 63,
+        "dockerfile": 1,
+        "gosum": 1,
+        "html": 3,
+        "css": 1,
+        "javascript": 89,
+        "svelte": 25
+      },
+      "nodes": 137906,
+      "edges": 147219,
+      "excluded": 439,
+      "missing": 0
+    },
+    "ownedPaths": 2530,
+    "goTestFilesParsed": 801,
+    "embeddedASTs": 41,
+    "dynamicProgramInputs": 25,
+    "areas": {
+      ".betterleaks.toml": 1,
+      ".github": 1,
+      ".golangci.yml": 1,
+      "Makefile": 1,
+      "cmd": 180,
+      "docs": 109,
+      "env": 5,
+      "examples": 23,
+      "go.mod": 1,
+      "go.sum": 1,
+      "install.sh": 1,
+      "accounts": 31,
+      "app": 197,
+      "internal": 41,
+      "chains": 24,
+      "chainsetup": 149,
+      "consensus": 29,
+      "core": 287,
+      "dashboard": 47,
+      "dsl": 48,
+      "feature": 18,
+      "mcp": 47,
+      "preset": 3,
+      "resource": 46,
+      "testengine": 153,
+      "testhelper": 95,
+      "webcli": 2,
+      "presets": 42,
+      "scripts": 28,
+      "server-set.sample.yaml": 1,
+      "setup.sh": 1,
+      "tests": 427,
+      "uninstall.sh": 1,
+      "web": 49,
+      "workspace-config.sample.yaml": 1
+    },
+    "nodeKinds": {
+      "file": 2091,
+      "call": 101203,
+      "dynamic-program-input": 25,
+      "target": 21,
+      "function": 6586,
+      "import": 10257,
+      "binding": 11154,
+      "type": 1382,
+      "method": 1663,
+      "dsl-operation": 2833,
+      "template-parameter": 7,
+      "selector": 421,
+      "package": 83,
+      "dependency": 180
+    },
+    "exclusionReasons": {
+      "documentation or non-executable data": 221,
+      "generated proof metadata, not executable source": 171,
+      "test data, not executable source": 47
+    },
+    "auditNegativeControlsRejected": [
+      "omitted owned source",
+      "stale source digest",
+      "duplicate graph node",
+      "dangling edge",
+      "parser failure hidden by success count",
+      "zero parsed syntax",
+      "embedded identity absent",
+      "false summary count",
+      "nested input origin forged",
+      "unclassified exclusion",
+      "Docker capture program omitted",
+      "nested deletion call omitted"
+    ],
+    "a8": {
+      "nonMethodExportedSymbols": 1891,
+      "uses": {
+        "inside": 451,
+        "outside": 1174,
+        "test": 177,
+        "signature": 80,
+        "set": 9
+      },
+      "nowhere": 0,
+      "methodsNotMeasuredByThisReachabilityRule": true
+    },
+    "criticalRuntimeScript": {
+      "path": "internal/testengine/transaction_failure_native_test.go",
+      "language": "python",
+      "sha256": "1c64d0ce637f45c4100f15694cf494b6e59a2b8530e1346083671c7af85c8deb",
+      "reclaimCallObserved": true
+    },
+    "transportPrograms": {
+      "CAPTURE": "cfe0850187fa74fc08796ba810314bff58ae452ce8292ca5b85e0bf64d69ccb3",
+      "DELETE": "179f8a462a134802d62891712aace0bb63d2447b4e110ae06cb72fb0cc8317ee",
+      "NESTED_DELETE": "48033bd685a9cf1022e5800f81af65e7e1ca2b50692e3333b7a2a36719ec7bbe"
+    },
+    "transportProgramCount": 3,
+    "historicalGraphsPreserved": true,
+    "historicalSourceDigest": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "parserVersions": {
+      "go": "go version go1.26.8 darwin/arm64",
+      "python": "3.10.11",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter": "0.25.2",
+      "PyYAML": "6.0.3",
+      "shfmt": "v3.12.0",
+      "frontend": {
+        "node": "v24.17.0",
+        "acorn": "8.17.0",
+        "svelte": "5.56.8",
+        "postcss": "8.5.23"
+      }
+    },
+    "fullDynamicCoverageAccepted": false,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "specificOmissionAudit": {
+    "accepted": true,
+    "sourceDigest": "0b8f9b1b48c37112a00d46e095afd09db4d074be8cd8d247180bec3930631cfc",
+    "targetCount": 72,
+    "specificOmissionCount": 144,
+    "targets": [
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "TestWeb05FixtureArgumentsMatchServedContract",
+        "kind": "function",
+        "line": 14,
+        "start": 250,
+        "end": 2782
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "DSLContract",
+        "kind": "call",
+        "line": 15,
+        "start": 346,
+        "end": 359
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 17,
+        "start": 379,
+        "end": 391
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "filepath.Glob",
+        "kind": "call",
+        "line": 20,
+        "start": 461,
+        "end": 540
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "len",
+        "kind": "call",
+        "line": 21,
+        "start": 559,
+        "end": 569
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 22,
+        "start": 579,
+        "end": 628
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "append",
+        "kind": "call",
+        "line": 24,
+        "start": 641,
+        "end": 740
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "os.ReadFile",
+        "kind": "call",
+        "line": 36,
+        "start": 1045,
+        "end": 1062
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 38,
+        "start": 1084,
+        "end": 1096
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "json.Unmarshal",
+        "kind": "call",
+        "line": 41,
+        "start": 1157,
+        "end": 1184
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 42,
+        "start": 1202,
+        "end": 1214
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "add",
+        "kind": "call",
+        "line": 46,
+        "start": 1305,
+        "end": 1332
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "add",
+        "kind": "call",
+        "line": 49,
+        "start": 1440,
+        "end": 1467
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "add",
+        "kind": "call",
+        "line": 56,
+        "start": 1606,
+        "end": 1639
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Fatalf",
+        "kind": "call",
+        "line": 58,
+        "start": 1656,
+        "end": 1744
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Run",
+        "kind": "call",
+        "line": 63,
+        "start": 1803,
+        "end": 2777
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "strings.TrimPrefix",
+        "kind": "call",
+        "line": 64,
+        "start": 1882,
+        "end": 1929
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "slices.Contains",
+        "kind": "call",
+        "line": 72,
+        "start": 2212,
+        "end": 2292
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "len",
+        "kind": "call",
+        "line": 85,
+        "start": 2549,
+        "end": 2561
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "append",
+        "kind": "call",
+        "line": 88,
+        "start": 2640,
+        "end": 2661
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "slices.Sort",
+        "kind": "call",
+        "line": 90,
+        "start": 2672,
+        "end": 2691
+      },
+      {
+        "file": "internal/app/web05_fixture_arguments_test.go",
+        "name": "t.Errorf",
+        "kind": "call",
+        "line": 91,
+        "start": 2696,
+        "end": 2767
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "TestCorpus_AddressesResolveToWhatTheyDidBefore",
+        "kind": "function",
+        "line": 56,
+        "start": 2115,
+        "end": 3685
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "TestPresetRingPreservesCommittedKeys",
+        "kind": "function",
+        "line": 111,
+        "start": 3687,
+        "end": 4736
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "filepath.WalkDir",
+        "kind": "call",
+        "line": 117,
+        "start": 3846,
+        "end": 4177
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "entry.Info",
+        "kind": "call",
+        "line": 121,
+        "start": 3985,
+        "end": 3997
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "entry.IsDir",
+        "kind": "call",
+        "line": 126,
+        "start": 4058,
+        "end": 4071
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "os.ReadFile",
+        "kind": "call",
+        "line": 127,
+        "start": 4089,
+        "end": 4106
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 133,
+        "start": 4197,
+        "end": 4209
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "presetRing",
+        "kind": "call",
+        "line": 135,
+        "start": 4214,
+        "end": 4227
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "os.Stat",
+        "kind": "call",
+        "line": 137,
+        "start": 4277,
+        "end": 4290
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 139,
+        "start": 4312,
+        "end": 4324
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "os.SameFile",
+        "kind": "call",
+        "line": 141,
+        "start": 4335,
+        "end": 4363
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "want.info.Mode",
+        "kind": "call",
+        "line": 141,
+        "start": 4367,
+        "end": 4383
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "info.Mode",
+        "kind": "call",
+        "line": 141,
+        "start": 4387,
+        "end": 4398
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "anonymous.Equal",
+        "kind": "call",
+        "line": 141,
+        "start": 4403,
+        "end": 4444
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "want.info.ModTime",
+        "kind": "call",
+        "line": 141,
+        "start": 4403,
+        "end": 4422
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "info.ModTime",
+        "kind": "call",
+        "line": 141,
+        "start": 4429,
+        "end": 4443
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Errorf",
+        "kind": "call",
+        "line": 142,
+        "start": 4450,
+        "end": 4513
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "info.IsDir",
+        "kind": "call",
+        "line": 144,
+        "start": 4523,
+        "end": 4535
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "os.ReadFile",
+        "kind": "call",
+        "line": 147,
+        "start": 4569,
+        "end": 4586
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Fatal",
+        "kind": "call",
+        "line": 149,
+        "start": 4608,
+        "end": 4620
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "bytes.Equal",
+        "kind": "call",
+        "line": 151,
+        "start": 4631,
+        "end": 4659
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Errorf",
+        "kind": "call",
+        "line": 152,
+        "start": 4665,
+        "end": 4727
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "presetRing",
+        "kind": "function",
+        "line": 159,
+        "start": 4896,
+        "end": 5254
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Helper",
+        "kind": "call",
+        "line": 160,
+        "start": 4943,
+        "end": 4953
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "preset.LoadKeyPresetWithKeys",
+        "kind": "call",
+        "line": 161,
+        "start": 4967,
+        "end": 5010
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Fatalf",
+        "kind": "call",
+        "line": 163,
+        "start": 5030,
+        "end": 5073
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "store.NewKeySet",
+        "kind": "call",
+        "line": 165,
+        "start": 5086,
+        "end": 5114
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.TempDir",
+        "kind": "call",
+        "line": 165,
+        "start": 5102,
+        "end": 5113
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "ring.Register",
+        "kind": "call",
+        "line": 166,
+        "start": 5126,
+        "end": 5182
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "context.Background",
+        "kind": "call",
+        "line": 166,
+        "start": 5140,
+        "end": 5160
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "len",
+        "kind": "call",
+        "line": 166,
+        "start": 5167,
+        "end": 5181
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "t.Fatalf",
+        "kind": "call",
+        "line": 167,
+        "start": 5199,
+        "end": 5236
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "contractsOf",
+        "kind": "function",
+        "line": 174,
+        "start": 5377,
+        "end": 5530
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "registry.Get",
+        "kind": "call",
+        "line": 175,
+        "start": 5439,
+        "end": 5458
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "p.Manifest",
+        "kind": "call",
+        "line": 179,
+        "start": 5500,
+        "end": 5512
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "addressesIn",
+        "kind": "function",
+        "line": 196,
+        "start": 6254,
+        "end": 7123
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "bindingRef",
+        "kind": "function",
+        "line": 235,
+        "start": 7355,
+        "end": 7422
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "declaredLabels",
+        "kind": "function",
+        "line": 240,
+        "start": 7608,
+        "end": 7780
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "deferred",
+        "kind": "function",
+        "line": 250,
+        "start": 7936,
+        "end": 8057
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "withoutBindings",
+        "kind": "function",
+        "line": 257,
+        "start": 8197,
+        "end": 8665
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "positionsOf",
+        "kind": "function",
+        "line": 282,
+        "start": 8804,
+        "end": 9474
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "addressesUnder",
+        "kind": "function",
+        "line": 309,
+        "start": 9747,
+        "end": 10541
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "normalizeAddr",
+        "kind": "function",
+        "line": 341,
+        "start": 10828,
+        "end": 10998
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "isStep",
+        "kind": "function",
+        "line": 352,
+        "start": 11000,
+        "end": 11129
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "contains",
+        "kind": "function",
+        "line": 361,
+        "start": 11131,
+        "end": 11254
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "sortedKeys",
+        "kind": "function",
+        "line": 370,
+        "start": 11256,
+        "end": 11413
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "firstDifference",
+        "kind": "function",
+        "line": 381,
+        "start": 11543,
+        "end": 11983
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "TestCorpus_ANamedContractIsNotWrittenAsAnAddress",
+        "kind": "function",
+        "line": 410,
+        "start": 12694,
+        "end": 13551
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "byAddress",
+        "kind": "function",
+        "line": 443,
+        "start": 13622,
+        "end": 13823
+      },
+      {
+        "file": "internal/testhelper/corpus_address_test.go",
+        "name": "writtenOutContracts",
+        "kind": "function",
+        "line": 453,
+        "start": 13933,
+        "end": 15058
+      }
+    ],
+    "controls": [
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "TestWeb05FixtureArgumentsMatchServedContract",
+          "kind": "function",
+          "line": 14,
+          "start": 250,
+          "end": 2782
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "DSLContract",
+          "kind": "call",
+          "line": 15,
+          "start": 346,
+          "end": 359
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 17,
+          "start": 379,
+          "end": 391
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "filepath.Glob",
+          "kind": "call",
+          "line": 20,
+          "start": 461,
+          "end": 540
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "len",
+          "kind": "call",
+          "line": 21,
+          "start": 559,
+          "end": 569
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 22,
+          "start": 579,
+          "end": 628
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "append",
+          "kind": "call",
+          "line": 24,
+          "start": 641,
+          "end": 740
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "os.ReadFile",
+          "kind": "call",
+          "line": 36,
+          "start": 1045,
+          "end": 1062
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 38,
+          "start": 1084,
+          "end": 1096
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "json.Unmarshal",
+          "kind": "call",
+          "line": 41,
+          "start": 1157,
+          "end": 1184
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 42,
+          "start": 1202,
+          "end": 1214
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "add",
+          "kind": "call",
+          "line": 46,
+          "start": 1305,
+          "end": 1332
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "add",
+          "kind": "call",
+          "line": 49,
+          "start": 1440,
+          "end": 1467
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "add",
+          "kind": "call",
+          "line": 56,
+          "start": 1606,
+          "end": 1639
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatalf",
+          "kind": "call",
+          "line": 58,
+          "start": 1656,
+          "end": 1744
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Run",
+          "kind": "call",
+          "line": 63,
+          "start": 1803,
+          "end": 2777
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "strings.TrimPrefix",
+          "kind": "call",
+          "line": 64,
+          "start": 1882,
+          "end": 1929
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "slices.Contains",
+          "kind": "call",
+          "line": 72,
+          "start": 2212,
+          "end": 2292
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "len",
+          "kind": "call",
+          "line": 85,
+          "start": 2549,
+          "end": 2561
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "append",
+          "kind": "call",
+          "line": 88,
+          "start": 2640,
+          "end": 2661
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "slices.Sort",
+          "kind": "call",
+          "line": 90,
+          "start": 2672,
+          "end": 2691
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Errorf",
+          "kind": "call",
+          "line": 91,
+          "start": 2696,
+          "end": 2767
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "TestCorpus_AddressesResolveToWhatTheyDidBefore",
+          "kind": "function",
+          "line": 56,
+          "start": 2115,
+          "end": 3685
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "TestPresetRingPreservesCommittedKeys",
+          "kind": "function",
+          "line": 111,
+          "start": 3687,
+          "end": 4736
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "filepath.WalkDir",
+          "kind": "call",
+          "line": 117,
+          "start": 3846,
+          "end": 4177
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "entry.Info",
+          "kind": "call",
+          "line": 121,
+          "start": 3985,
+          "end": 3997
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "entry.IsDir",
+          "kind": "call",
+          "line": 126,
+          "start": 4058,
+          "end": 4071
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.ReadFile",
+          "kind": "call",
+          "line": 127,
+          "start": 4089,
+          "end": 4106
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 133,
+          "start": 4197,
+          "end": 4209
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "presetRing",
+          "kind": "call",
+          "line": 135,
+          "start": 4214,
+          "end": 4227
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.Stat",
+          "kind": "call",
+          "line": 137,
+          "start": 4277,
+          "end": 4290
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 139,
+          "start": 4312,
+          "end": 4324
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.SameFile",
+          "kind": "call",
+          "line": 141,
+          "start": 4335,
+          "end": 4363
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "want.info.Mode",
+          "kind": "call",
+          "line": 141,
+          "start": 4367,
+          "end": 4383
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "info.Mode",
+          "kind": "call",
+          "line": 141,
+          "start": 4387,
+          "end": 4398
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "anonymous.Equal",
+          "kind": "call",
+          "line": 141,
+          "start": 4403,
+          "end": 4444
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "want.info.ModTime",
+          "kind": "call",
+          "line": 141,
+          "start": 4403,
+          "end": 4422
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "info.ModTime",
+          "kind": "call",
+          "line": 141,
+          "start": 4429,
+          "end": 4443
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Errorf",
+          "kind": "call",
+          "line": 142,
+          "start": 4450,
+          "end": 4513
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "info.IsDir",
+          "kind": "call",
+          "line": 144,
+          "start": 4523,
+          "end": 4535
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.ReadFile",
+          "kind": "call",
+          "line": 147,
+          "start": 4569,
+          "end": 4586
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 149,
+          "start": 4608,
+          "end": 4620
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "bytes.Equal",
+          "kind": "call",
+          "line": 151,
+          "start": 4631,
+          "end": 4659
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Errorf",
+          "kind": "call",
+          "line": 152,
+          "start": 4665,
+          "end": 4727
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "presetRing",
+          "kind": "function",
+          "line": 159,
+          "start": 4896,
+          "end": 5254
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Helper",
+          "kind": "call",
+          "line": 160,
+          "start": 4943,
+          "end": 4953
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "preset.LoadKeyPresetWithKeys",
+          "kind": "call",
+          "line": 161,
+          "start": 4967,
+          "end": 5010
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatalf",
+          "kind": "call",
+          "line": 163,
+          "start": 5030,
+          "end": 5073
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "store.NewKeySet",
+          "kind": "call",
+          "line": 165,
+          "start": 5086,
+          "end": 5114
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.TempDir",
+          "kind": "call",
+          "line": 165,
+          "start": 5102,
+          "end": 5113
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "ring.Register",
+          "kind": "call",
+          "line": 166,
+          "start": 5126,
+          "end": 5182
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "context.Background",
+          "kind": "call",
+          "line": 166,
+          "start": 5140,
+          "end": 5160
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "len",
+          "kind": "call",
+          "line": 166,
+          "start": 5167,
+          "end": 5181
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatalf",
+          "kind": "call",
+          "line": 167,
+          "start": 5199,
+          "end": 5236
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "contractsOf",
+          "kind": "function",
+          "line": 174,
+          "start": 5377,
+          "end": 5530
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "registry.Get",
+          "kind": "call",
+          "line": 175,
+          "start": 5439,
+          "end": 5458
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "p.Manifest",
+          "kind": "call",
+          "line": 179,
+          "start": 5500,
+          "end": 5512
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "addressesIn",
+          "kind": "function",
+          "line": 196,
+          "start": 6254,
+          "end": 7123
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "bindingRef",
+          "kind": "function",
+          "line": 235,
+          "start": 7355,
+          "end": 7422
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "declaredLabels",
+          "kind": "function",
+          "line": 240,
+          "start": 7608,
+          "end": 7780
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "deferred",
+          "kind": "function",
+          "line": 250,
+          "start": 7936,
+          "end": 8057
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "withoutBindings",
+          "kind": "function",
+          "line": 257,
+          "start": 8197,
+          "end": 8665
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "positionsOf",
+          "kind": "function",
+          "line": 282,
+          "start": 8804,
+          "end": 9474
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "addressesUnder",
+          "kind": "function",
+          "line": 309,
+          "start": 9747,
+          "end": 10541
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "normalizeAddr",
+          "kind": "function",
+          "line": 341,
+          "start": 10828,
+          "end": 10998
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "isStep",
+          "kind": "function",
+          "line": 352,
+          "start": 11000,
+          "end": 11129
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "contains",
+          "kind": "function",
+          "line": 361,
+          "start": 11131,
+          "end": 11254
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "sortedKeys",
+          "kind": "function",
+          "line": 370,
+          "start": 11256,
+          "end": 11413
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "firstDifference",
+          "kind": "function",
+          "line": 381,
+          "start": 11543,
+          "end": 11983
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "TestCorpus_ANamedContractIsNotWrittenAsAnAddress",
+          "kind": "function",
+          "line": 410,
+          "start": 12694,
+          "end": 13551
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "byAddress",
+          "kind": "function",
+          "line": 443,
+          "start": 13622,
+          "end": 13823
+        }
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "writtenOutContracts",
+          "kind": "function",
+          "line": 453,
+          "start": 13933,
+          "end": 15058
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "TestWeb05FixtureArgumentsMatchServedContract",
+          "kind": "function",
+          "line": 14,
+          "start": 250,
+          "end": 2782
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "DSLContract",
+          "kind": "call",
+          "line": 15,
+          "start": 346,
+          "end": 359
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 17,
+          "start": 379,
+          "end": 391
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "filepath.Glob",
+          "kind": "call",
+          "line": 20,
+          "start": 461,
+          "end": 540
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "len",
+          "kind": "call",
+          "line": 21,
+          "start": 559,
+          "end": 569
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 22,
+          "start": 579,
+          "end": 628
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "append",
+          "kind": "call",
+          "line": 24,
+          "start": 641,
+          "end": 740
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "os.ReadFile",
+          "kind": "call",
+          "line": 36,
+          "start": 1045,
+          "end": 1062
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 38,
+          "start": 1084,
+          "end": 1096
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "json.Unmarshal",
+          "kind": "call",
+          "line": 41,
+          "start": 1157,
+          "end": 1184
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 42,
+          "start": 1202,
+          "end": 1214
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "add",
+          "kind": "call",
+          "line": 46,
+          "start": 1305,
+          "end": 1332
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "add",
+          "kind": "call",
+          "line": 49,
+          "start": 1440,
+          "end": 1467
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "add",
+          "kind": "call",
+          "line": 56,
+          "start": 1606,
+          "end": 1639
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Fatalf",
+          "kind": "call",
+          "line": 58,
+          "start": 1656,
+          "end": 1744
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Run",
+          "kind": "call",
+          "line": 63,
+          "start": 1803,
+          "end": 2777
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "strings.TrimPrefix",
+          "kind": "call",
+          "line": 64,
+          "start": 1882,
+          "end": 1929
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "slices.Contains",
+          "kind": "call",
+          "line": 72,
+          "start": 2212,
+          "end": 2292
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "len",
+          "kind": "call",
+          "line": 85,
+          "start": 2549,
+          "end": 2561
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "append",
+          "kind": "call",
+          "line": 88,
+          "start": 2640,
+          "end": 2661
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "slices.Sort",
+          "kind": "call",
+          "line": 90,
+          "start": 2672,
+          "end": 2691
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/app/web05_fixture_arguments_test.go",
+          "name": "t.Errorf",
+          "kind": "call",
+          "line": 91,
+          "start": 2696,
+          "end": 2767
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "TestCorpus_AddressesResolveToWhatTheyDidBefore",
+          "kind": "function",
+          "line": 56,
+          "start": 2115,
+          "end": 3685
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "TestPresetRingPreservesCommittedKeys",
+          "kind": "function",
+          "line": 111,
+          "start": 3687,
+          "end": 4736
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "filepath.WalkDir",
+          "kind": "call",
+          "line": 117,
+          "start": 3846,
+          "end": 4177
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "entry.Info",
+          "kind": "call",
+          "line": 121,
+          "start": 3985,
+          "end": 3997
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "entry.IsDir",
+          "kind": "call",
+          "line": 126,
+          "start": 4058,
+          "end": 4071
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.ReadFile",
+          "kind": "call",
+          "line": 127,
+          "start": 4089,
+          "end": 4106
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 133,
+          "start": 4197,
+          "end": 4209
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "presetRing",
+          "kind": "call",
+          "line": 135,
+          "start": 4214,
+          "end": 4227
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.Stat",
+          "kind": "call",
+          "line": 137,
+          "start": 4277,
+          "end": 4290
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 139,
+          "start": 4312,
+          "end": 4324
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.SameFile",
+          "kind": "call",
+          "line": 141,
+          "start": 4335,
+          "end": 4363
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "want.info.Mode",
+          "kind": "call",
+          "line": 141,
+          "start": 4367,
+          "end": 4383
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "info.Mode",
+          "kind": "call",
+          "line": 141,
+          "start": 4387,
+          "end": 4398
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "anonymous.Equal",
+          "kind": "call",
+          "line": 141,
+          "start": 4403,
+          "end": 4444
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "want.info.ModTime",
+          "kind": "call",
+          "line": 141,
+          "start": 4403,
+          "end": 4422
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "info.ModTime",
+          "kind": "call",
+          "line": 141,
+          "start": 4429,
+          "end": 4443
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Errorf",
+          "kind": "call",
+          "line": 142,
+          "start": 4450,
+          "end": 4513
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "info.IsDir",
+          "kind": "call",
+          "line": 144,
+          "start": 4523,
+          "end": 4535
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "os.ReadFile",
+          "kind": "call",
+          "line": 147,
+          "start": 4569,
+          "end": 4586
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatal",
+          "kind": "call",
+          "line": 149,
+          "start": 4608,
+          "end": 4620
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "bytes.Equal",
+          "kind": "call",
+          "line": 151,
+          "start": 4631,
+          "end": 4659
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Errorf",
+          "kind": "call",
+          "line": 152,
+          "start": 4665,
+          "end": 4727
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "presetRing",
+          "kind": "function",
+          "line": 159,
+          "start": 4896,
+          "end": 5254
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Helper",
+          "kind": "call",
+          "line": 160,
+          "start": 4943,
+          "end": 4953
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "preset.LoadKeyPresetWithKeys",
+          "kind": "call",
+          "line": 161,
+          "start": 4967,
+          "end": 5010
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatalf",
+          "kind": "call",
+          "line": 163,
+          "start": 5030,
+          "end": 5073
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "store.NewKeySet",
+          "kind": "call",
+          "line": 165,
+          "start": 5086,
+          "end": 5114
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.TempDir",
+          "kind": "call",
+          "line": 165,
+          "start": 5102,
+          "end": 5113
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "ring.Register",
+          "kind": "call",
+          "line": 166,
+          "start": 5126,
+          "end": 5182
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "context.Background",
+          "kind": "call",
+          "line": 166,
+          "start": 5140,
+          "end": 5160
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "len",
+          "kind": "call",
+          "line": 166,
+          "start": 5167,
+          "end": 5181
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "t.Fatalf",
+          "kind": "call",
+          "line": 167,
+          "start": 5199,
+          "end": 5236
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "contractsOf",
+          "kind": "function",
+          "line": 174,
+          "start": 5377,
+          "end": 5530
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "registry.Get",
+          "kind": "call",
+          "line": 175,
+          "start": 5439,
+          "end": 5458
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "p.Manifest",
+          "kind": "call",
+          "line": 179,
+          "start": 5500,
+          "end": 5512
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "addressesIn",
+          "kind": "function",
+          "line": 196,
+          "start": 6254,
+          "end": 7123
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "bindingRef",
+          "kind": "function",
+          "line": 235,
+          "start": 7355,
+          "end": 7422
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "declaredLabels",
+          "kind": "function",
+          "line": 240,
+          "start": 7608,
+          "end": 7780
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "deferred",
+          "kind": "function",
+          "line": 250,
+          "start": 7936,
+          "end": 8057
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "withoutBindings",
+          "kind": "function",
+          "line": 257,
+          "start": 8197,
+          "end": 8665
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "positionsOf",
+          "kind": "function",
+          "line": 282,
+          "start": 8804,
+          "end": 9474
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "addressesUnder",
+          "kind": "function",
+          "line": 309,
+          "start": 9747,
+          "end": 10541
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "normalizeAddr",
+          "kind": "function",
+          "line": 341,
+          "start": 10828,
+          "end": 10998
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "isStep",
+          "kind": "function",
+          "line": 352,
+          "start": 11000,
+          "end": 11129
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "contains",
+          "kind": "function",
+          "line": 361,
+          "start": 11131,
+          "end": 11254
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "sortedKeys",
+          "kind": "function",
+          "line": 370,
+          "start": 11256,
+          "end": 11413
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "firstDifference",
+          "kind": "function",
+          "line": 381,
+          "start": 11543,
+          "end": 11983
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "TestCorpus_ANamedContractIsNotWrittenAsAnAddress",
+          "kind": "function",
+          "line": 410,
+          "start": 12694,
+          "end": 13551
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "byAddress",
+          "kind": "function",
+          "line": 443,
+          "start": 13622,
+          "end": 13823
+        }
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": {
+          "file": "internal/testhelper/corpus_address_test.go",
+          "name": "writtenOutContracts",
+          "kind": "function",
+          "line": 453,
+          "start": 13933,
+          "end": 15058
+        }
+      }
+    ],
+    "oldGraphRejected": true,
+    "graphsPreserved": {
+      "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-capture.json": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+      "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-independent.json": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4"
+    },
+    "runtimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "changedFixtureInclusion": {
+    "accepted": true,
+    "fixtures": [
+      {
+        "path": "tests/tc/go-stablenet/vocabulary/11-arguments-transfers.json",
+        "sha256": "cbfe687931e428a276548ba2dc77581e93763b7c1c24e4585ade55b5cc68c44f",
+        "astNodes": 279,
+        "recordedDslOperations": 38
+      },
+      {
+        "path": "tests/tc/go-stablenet/vocabulary/12-arguments-contracts.json",
+        "sha256": "fa30ccb05889bd2b8751b2f02790a5e0c85786160ea2e07a4b2cf73284f14689",
+        "astNodes": 760,
+        "recordedDslOperations": 102
+      },
+      {
+        "path": "tests/tc/go-stablenet/vocabulary/13-arguments-websocket.json",
+        "sha256": "d7db1dce9c9de58f4a29ec162bd5b3c4f26a8f122bf2bec8ce571030a25f34dd",
+        "astNodes": 85,
+        "recordedDslOperations": 9
+      },
+      {
+        "path": "tests/tc/go-stablenet/vocabulary/14-arguments-probes.json",
+        "sha256": "a80ee20339cbe88fd5784678b438876bd55761c8d3747d7747343bf3d6088505",
+        "astNodes": 418,
+        "recordedDslOperations": 62
+      },
+      {
+        "path": "tests/tc/go-stablenet/vocabulary/15-arguments-delegation.json",
+        "sha256": "075c55b57a0e80749dcb1d4745e041c84a35852f57cd7f218391d9a72cd1860d",
+        "astNodes": 309,
+        "recordedDslOperations": 39
+      },
+      {
+        "path": "tests/tc/go-stablenet/vocabulary/16-arguments-node-control.json",
+        "sha256": "d1ff88c9e1817c590f5fa3377437c66c6ec3df9e0b0ae73a88289df2b076a583",
+        "astNodes": 287,
+        "recordedDslOperations": 43
+      }
+    ],
+    "runtimeCoverageAccepted": false
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-run-20261018.py",
+      "sha256": "ed5e24f5b9d6aa2f86ba19fd91b2b858d06fcb651eeaa0533ebfc6af47747208",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283054041989766
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-run-20261018.log",
+      "sha256": "66acee5148dad7bfc74dcb1aa9d3d418e92aa6026f1ada7c03b1c12bdf510cd3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283091173285091
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-independent-20261018.py",
+      "sha256": "c2cc491eb52b991d1540c88dc6a1e440afafacd5e4aade01db1214d5d9dd8cc0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283054042269730
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-independent-20261018.log",
+      "sha256": "1b2f605c491d0940c14acc8ba5e3d07678d3bd405c7b96856ed6045130a6810b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283115151603854
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-specific-20261018.py",
+      "sha256": "3eda776dbfb99cac971ad55d4e5c76f2b000e5e90e452e95a9a71caf77d66c39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283054042497818
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-specific-20261018.log",
+      "sha256": "225fc5c60cf7c825c3a83257b57a56dc137f99634c7baa0b6da95b29bf1e2d3f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283161314058113
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-parser-contracts-20261018.log",
+      "sha256": "ea876950ab0e919e4e885d612b8fd1aed73277ac27460124fac2d61aa35a1513",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283060943890343
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-red-20261018.py",
+      "sha256": "8a22e17fd2f618e27b2b4b4c1aa774206e76a1d36f04467aa6513dc9d6f646e3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283068034563109
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-red-20261018.log",
+      "sha256": "5210145f896c5a749b1a32fec4b4af2d18932bee5bb817f9e86e4f34d00b2e7e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283068971005074
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-green-20261018.log",
+      "sha256": "080a5e08797f5eb8bc9a761add28c27e563074a5545e00f3e03a56541d04f84c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283186513996540
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-publish-20261018.py",
+      "sha256": "9734ca9688a780fb0abf54b45c2be0a7ab1c69aaebb92dcd6a15f94bc2359e5f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283218149952106
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-start.json",
+      "sha256": "cd1748f2671c0daa53f49a72cc6ec678f6cc35c3629b54d6a6d3da825ff09ca4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283079060999365
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-summary.json",
+      "sha256": "59684ce497e5d3450ea075e0d5d487574d1499801f53291095439d89dca458ac",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283091172675204
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-independent-audit.json",
+      "sha256": "ae49fbf7c162c395c117e136e5cb7571e064c7b846772fcc3538e1d4b23c8023",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283115150914008
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-specific-corrected-audit.json",
+      "sha256": "1ff6e28418343a11dce0af5da6fcb8369e18b3cae7f7c9b44d4af10fb2635679",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283161313927861
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-go-target-declarations-corrected.json",
+      "sha256": "fb136e2e638b9a0c5876816ef73ffc90e479cc9f693928f0a49c34782efb23b1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283143088806102
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-fixture-inclusion.json",
+      "sha256": "c4a934c3dbd83eaab3d92a214270459b7394399783c1153c2bd4f02755704b8d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283186919875680
+    }
+  ],
+  "limits": [
+    "Generated proof metadata and documentation are explicitly excluded from code classification. Publication changes those metadata files after this fixed source measurement.",
+    "All 25 dynamic program inputs remain explicitly unresolved; structural parsing does not prove their runtime behavior.",
+    "The A8 rule covers exported non-method symbols; it does not measure method reachability.",
+    "This measurement does not replace fresh final Web capture/reproduction or whole L1/race/e2e."
+  ],
+  "all14Accepted": false
+}
