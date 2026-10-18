@@ -31,7 +31,12 @@
     "capabilities": [
       "rpc",
       "ws"
-    ]
+    ],
+    "accounts": {
+      "webSponsor": {
+        "fund": "100000000000000000000"
+      }
+    }
   },
   "steps": [
     {

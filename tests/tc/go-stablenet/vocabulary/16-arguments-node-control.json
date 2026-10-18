@@ -31,7 +31,12 @@
     "capabilities": [
       "rpc",
       "ws"
-    ]
+    ],
+    "accounts": {
+      "webSponsor": {
+        "fund": "100000000000000000000"
+      }
+    }
   },
   "steps": [
     {
@@ -42,8 +47,9 @@
     {
       "do": "readNodeLog",
       "on": "bp1",
-      "maxBytes": 4096,
-      "save": "bp1Log"
+      "maxBytes": 1048576,
+      "save": "bp1Log",
+      "requireComplete": true
     },
     {
       "do": "readNodeLog",

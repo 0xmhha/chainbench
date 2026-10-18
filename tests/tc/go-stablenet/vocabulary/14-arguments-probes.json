@@ -31,7 +31,12 @@
     "capabilities": [
       "rpc",
       "ws"
-    ]
+    ],
+    "accounts": {
+      "webSponsor": {
+        "fund": "100000000000000000000"
+      }
+    }
   },
   "steps": [
     {
@@ -290,7 +295,10 @@
       "expect": "metric",
       "name": "chain_head_block",
       "compare": "GreaterOrEqual",
-      "is": 1
+      "is": 1,
+      "alternatives": [
+        "p2p_peers"
+      ]
     },
     {
       "expect": "metric",
@@ -460,6 +468,49 @@
       "is": "$head",
       "tol": "1000000",
       "timeout": "30s"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "regexpCount",
+      "of": [
+        "INFO before\nWARN unrelated\nINFO after\n"
+      ],
+      "pattern": "(?m)^INFO",
+      "since": "INFO before\n",
+      "save": "suffixMatches"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "INFO before\nWARN unrelated\nINFO after\n"
+      ],
+      "pattern": "(?m)^INFO",
+      "since": "INFO before\n",
+      "is": "1"
+    },
+    {
+      "do": "waitFor",
+      "source": "derive",
+      "op": "regexpCount",
+      "of": [
+        "INFO before\nWARN unrelated\nINFO after\n"
+      ],
+      "pattern": "(?m)^INFO",
+      "since": "INFO before\n",
+      "expected": "1",
+      "timeout": "1s",
+      "save": "suffixWait"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$suffixMatches",
+        "$suffixWait"
+      ],
+      "is": "0"
     }
   ]
 }

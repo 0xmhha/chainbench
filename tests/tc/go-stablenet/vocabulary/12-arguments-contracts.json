@@ -31,7 +31,12 @@
     "capabilities": [
       "rpc",
       "ws"
-    ]
+    ],
+    "accounts": {
+      "webSponsor": {
+        "fund": "100000000000000000000"
+      }
+    }
   },
   "steps": [
     {
@@ -814,6 +819,95 @@
       "hash": "$logTx",
       "on": "bp3",
       "is": "0x1"
+    },
+    {
+      "do": "newAccount",
+      "save": "creationSponsor",
+      "saveKey": "creationSponsorKey"
+    },
+    {
+      "do": "faucet",
+      "from": "faucet",
+      "to": "$creationSponsor",
+      "amount": "100000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$dave",
+      "save": "creationSenderBefore"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "webSponsor",
+      "save": "namedCreationPayerBefore"
+    },
+    {
+      "do": "deployContract",
+      "key": "$daveKey",
+      "feePayer": "webSponsor",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "accessList": [
+        {
+          "address": "$answer",
+          "storageKeys": [
+            "0x0000000000000000000000000000000000000000000000000000000000000000"
+          ]
+        }
+      ],
+      "gas": "150000",
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "save": "namedSponsoredAnswer"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$namedSponsoredAnswer",
+      "is": "0x602a60005260206000f3"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$dave",
+      "is": "$creationSenderBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "webSponsor",
+      "compare": "Less",
+      "is": "$namedCreationPayerBefore"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$creationSponsor",
+      "save": "keyCreationPayerBefore"
+    },
+    {
+      "do": "deployContract",
+      "key": "$daveKey",
+      "feePayerKey": "$creationSponsorKey",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "gas": "150000",
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "save": "keySponsoredAnswer"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$keySponsoredAnswer",
+      "is": "0x602a60005260206000f3"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$dave",
+      "is": "$creationSenderBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$creationSponsor",
+      "compare": "Less",
+      "is": "$keyCreationPayerBefore"
     }
   ]
 }

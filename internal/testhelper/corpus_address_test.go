@@ -1,6 +1,7 @@
 package testhelper
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -107,15 +108,61 @@ func TestCorpus_AddressesResolveToWhatTheyDidBefore(t *testing.T) {
 	}
 }
 
-// presetRing loads the committed key set, which is what a label resolves
-// against. It needs no network.
+func TestPresetRingPreservesCommittedKeys(t *testing.T) {
+	type snapshot struct {
+		info os.FileInfo
+		data []byte
+	}
+	before := map[string]snapshot{}
+	err := filepath.WalkDir(presetKeysDir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		var data []byte
+		if !entry.IsDir() {
+			data, err = os.ReadFile(path)
+		}
+		before[path] = snapshot{info: info, data: data}
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	presetRing(t)
+	for path, want := range before {
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !os.SameFile(want.info, info) || want.info.Mode() != info.Mode() || !want.info.ModTime().Equal(info.ModTime()) {
+			t.Errorf("presetRing changed committed key metadata: %s", path)
+		}
+		if info.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(want.data, data) {
+			t.Errorf("presetRing changed committed key content: %s", path)
+		}
+	}
+}
+
+// presetRing loads committed keys into a disposable store. Register persists
+// derived fields, so its destination must never be the committed input folder.
 func presetRing(t *testing.T) *store.KeySet {
 	t.Helper()
 	set, err := preset.LoadKeyPresetWithKeys(presetKeysDir)
 	if err != nil {
 		t.Fatalf("load %s: %v", presetKeysDir, err)
 	}
-	ring := store.NewKeySet(presetKeysDir)
+	ring := store.NewKeySet(t.TempDir())
 	if err := ring.Register(context.Background(), set, len(set.Nodes)); err != nil {
 		t.Fatalf("register key set: %v", err)
 	}
