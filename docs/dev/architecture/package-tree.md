@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 87,097 |
+| `internal/` | 54 | 87,100 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 1,104 |
 | `tests/` | 2 | 353 |
-| **합계** | **79** | **94,253** |
+| **합계** | **79** | **94,256** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,250줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,253줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -64,7 +64,7 @@ internal/core/
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
 ├── chainsurface 273  [L1] 체인 바이너리의 캡처된 명령 표면 읽기 — help·플래그 색인·AST 배선·RPC 문서에서
 │                            명령 경로·위치 인자·전역/명령 플래그·숨김·거절 플래그와 캡처 출처를 읽는다. 내부 import 0
-├── nodeconfig   1,848  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,851  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        884  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
