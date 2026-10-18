@@ -51,6 +51,7 @@ sweep-test: ## verify sweep retention and failure lifecycle contracts
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention_transport.py
 
 fixture-test: ## verify owned Docker fixture selection without Docker
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_after_proof_storage.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_docker_regression_prepare.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_prerequisite.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_native_selection.py

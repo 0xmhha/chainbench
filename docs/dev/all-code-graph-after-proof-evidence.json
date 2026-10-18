@@ -1,0 +1,1120 @@
+{
+  "date": "2026-10-18",
+  "scope": "Post-capture/recheck native-copy maintenance through the production runner; source/proof preservation and genuine binary fixture sharing. No full recurring storage-growth or all-14 acceptance.",
+  "status": "scoped_actual_and_ast_verified",
+  "implementationFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/Makefile",
+      "sha256": "83ad96b687df9fdb557b078e902efc80aade8eb9aeb2a2b3fe9958dfdcccfd19",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303442597126167
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/proof_native_cow.py",
+      "sha256": "ca0d2fc295cf5a2dc442a988b6f218bbea5335226d4fbb86d4f539867d3fc166",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303364420341139
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_proof_native_cow.py",
+      "sha256": "ebc04b2446691ce58db18a73cd2b70def8a256b1b7347d5587b52c9528d03242",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303364420931776
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_prune_go_cache.py",
+      "sha256": "1da7d4cb3f1871e9f22cd01e258913efa6c64a1e4051c3d262b2720be3205bc2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303441808745526
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/verify.sh",
+      "sha256": "683c0b339de45d44cad61a6f54d28a60c24eb0dd21cdea5d2d223b92bc178c23",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303364419018237
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/after_proof_storage.py",
+      "sha256": "ec81ca955198bfc2cf5edada18cd3b77dbbdba2c2854b0f12ecea134d9f222e8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303364369668995
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/test_after_proof_storage.py",
+      "sha256": "631f362a147b6f21f11c17d1afd0fb21d8a9d0d07c5010426ec2345621baaf19",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792303441807967885
+    }
+  ],
+  "unitContracts": {
+    "runnerRedSubcases": 8,
+    "activePlanRed": 1,
+    "ciRed": 1,
+    "hookTests": 11,
+    "nativeCopyTests": 20,
+    "cacheTests": 48,
+    "runtimeTests": 40,
+    "storageTests": 27,
+    "prerequisiteTests": 7,
+    "selectionTests": 15,
+    "gitSnapshotTests": 6,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-after-proof-runner-red-20261018.log",
+        "sha256": "7fec43d238b3a19a6ba43f256dad7ebfdf813f8db496550653e8fe81169cab8b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303166888868935
+      },
+      {
+        "path": "/private/tmp/chainbench-after-proof-active-plan-red-20261018.log",
+        "sha256": "173d663ac14a95f56f4554e4cc91cdf4513fcafb9a3631a7b58193d86ab02a0d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303279433193734
+      },
+      {
+        "path": "/private/tmp/chainbench-after-proof-ci-red-20261018.log",
+        "sha256": "45caf9a0487e6134f80796233857d04c77da5d8cd8042a0497d99cacbb818229",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303442033445084
+      },
+      {
+        "path": "/private/tmp/chainbench-after-proof-policy-green-20261018.log",
+        "sha256": "e28bb1de9e9e341dc65b93e7651fd0e0f8debbe27a05e31153e7bef28887ef28",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303443126049342
+      },
+      {
+        "path": "/private/tmp/chainbench-after-proof-ci-green-20261018.log",
+        "sha256": "55ac18efc79ed17bb89d477b0981fe6596ca56afd2d36937810e8e619e00971f",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303443317786655
+      },
+      {
+        "path": "/private/tmp/chainbench-after-proof-related-20261018.json",
+        "sha256": "2b3a0c188b2a6e84d65cc82d6b7f0d84a112b2e38c74dd4b61d713415681adbf",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303677753268542
+      },
+      {
+        "path": "/private/tmp/chainbench-after-proof-related-corrected-20261018.json",
+        "sha256": "017570fbba215b9a4b72ae1da1ef1c76af93db566607aaf8b5ce3af95f2e4c91",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303734739584507
+      }
+    ],
+    "excludedInvocationError": "The first related-check command named three nonexistent test files; the corrected existing paths all passed. Not a product RED."
+  },
+  "actual": {
+    "report": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000.json",
+      "sha256": "78a6be8a020df963bf3e09424306180462910f33a5f8a59f8080f13dc35dedf4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792303990352756157
+    },
+    "before": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000-before.json",
+      "sha256": "30605424d2fe79756759045e86ec8161d27e219c929c5ce6c2154f35bccbc8c1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792303750468350599
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000-independent.json",
+      "sha256": "6e9c85e1b24f13cf3dc03d2d2f3ed49748265de659d849cfa3d390ff69400740",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304043109638926
+    },
+    "sourceDigest": "1c824ae16d097dc4862b23a6f207f418fbbdb6fa713e67e854816911f1d3d409",
+    "head": "ea68d6f9e760d0823cd1941e0a699ebb880af0bc",
+    "captureAndFreshIndependentRecheck": "pass",
+    "nativeCopyFixtureTargets": 1,
+    "existingProofTargets": 0,
+    "privateBytesBefore": 62918656,
+    "privateBytesAfter": 0,
+    "protectedRepositoryUserAndInputs": 2552,
+    "publishedProofFiles": 33,
+    "tamperControlsRejected": 14,
+    "remainingDatabaseAndDependencyPaths": 0,
+    "firstAuditCorrection": {
+      "helper": {
+        "path": "/private/tmp/chainbench-after-proof-independent-20261018.py",
+        "sha256": "6575cccf49cbbe4b58d145bbf6d296a0e76c3ef976ace0ee7ad60ecf7032010a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792303810933686967
+      },
+      "error": {
+        "path": "/private/tmp/chainbench-after-proof-independent-v1-error-20261018.log",
+        "sha256": "e08c31ba9522e1552fc55e88be6071b4a470fd30fa24f8f655a7d3a791c66d20",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304033930008084
+      },
+      "reason": "Auditor resolved fresh relative artifact paths against protected checkout, then was corrected to use the staged source cwd. No proof data or product code was changed."
+    },
+    "acceptedAuditHelper": {
+      "path": "/private/tmp/chainbench-after-proof-independent-v2-20261018.py",
+      "sha256": "4dfebeca81f9255fdf54641bf776a0f85a659e89e3ca3fb31da2d4bc69d7adcd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304032517154429
+    }
+  },
+  "all14Accepted": false,
+  "fullRecurringStorageGrowthSolved": false,
+  "astRefreshPending": false,
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "0fbbce8f631383143b46e5e2afe84fcc1d2e0a0974c61687f7f97fb6e55e053b",
+    "sourceAfter": "0fbbce8f631383143b46e5e2afe84fcc1d2e0a0974c61687f7f97fb6e55e053b",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-after-proof-run-20261018.py": "1ecb2399c06b6a058645e3bb0c0e57d57cdade77bd9f744a66533898a91c9654",
+      "/private/tmp/chainbench-ast-after-proof-specific-20261018.py": "4c05560592a94eba9058e2aaf19e12da446bf3aaf68d7406b8c72e029d3ffc1d",
+      "/private/tmp/chainbench-ast-after-proof-independent-20261018.py": "ffaedcb207ee341956567f1ebedb5b96c0696d7896c8d1ce47f8f4b4f2f2a77a",
+      "/private/tmp/chainbench-ast-legacy-sync-parser-contracts-20261018.log": "1b8ac350948e79e16a8f6bf87220c1f9bdb7b1c7e361a77126655ff6b22c4cc2",
+      "/private/tmp/chainbench-legacy-sync-semantic-red-exit-20261018.log": "df1d09b9b6e77ee65bec7c70621e23f7f1e6f20b91ad2fc0efead2153720cb04",
+      "/private/tmp/chainbench-legacy-sync-green-20261018.log": "dac20155e44dc1c7e59f2d48aa66edcfabef19f33cd2da7cc712dbc68c865f62",
+      "/private/tmp/chainbench-legacy-sync-readiness-related-race-corrected-20261018.log": "e984bd49b811a850a5ee5c88e3e601096e828e24dbb7a37134859cd229cde241",
+      "/private/tmp/chainbench-legacy-sync-readiness-red-20261018.log": "0c45988c310fe5ebd7436dddacd79201f062e373fde398600c82a20f0425319c",
+      "/private/tmp/chainbench-wal-audit-semantic-red-20261018.log": "77279311df0d0234ee42fc323bd80ec1b5a3d1000d0553bf4643d6aa548ed820",
+      "/private/tmp/chainbench-wal-audit-descriptor-baseline-red-20261018.log": "dfc27a59c2066d9495645ecec11c42c60b7d3600a6f83559caba99644349d7f9",
+      "/private/tmp/chainbench-wal-audit-late-link-red-20261018.log": "011689b1b29910202f207044d3ce714d8de18b783731e3ed231a4140bf844643",
+      "/private/tmp/chainbench-wal-audit-final-green-20261018.log": "850d21b62c9a9e103c0622a68b095b9a78ff83afe3f98d2cbb048ae190fdac12",
+      "/private/tmp/chainbench-proof-native-cow-final2-green-20261018.log": "cf699f279ae9a8c900203028334cad8461791e37815eef39faa3ac8375d8f094",
+      "/private/tmp/chainbench-proof-native-cow-semantic-red-20261018.log": "1bd68a3949b8e1a91440a67633023dca4bd10f5fbed6617766887cd7af8346f4",
+      "/private/tmp/chainbench-proof-native-cow-audit-semantic-red-20261018.log": "e269422a16ebfc06c12d863b135c97f76c0096da5a14823c5416f36230b05e8a",
+      "/private/tmp/chainbench-proof-native-cow-ci-red-20261018.log": "7cc57a4e939aa2527754b4d8dfa176cd64e7393efc1dfe1da32483588fb6177e",
+      "/private/tmp/chainbench-source-copy-runtime-semantic-red-20261018.log": "41a74b009a37e61b0dbb722f4d0fb85a721b946d68c140dac90382d1cd023f42",
+      "/private/tmp/chainbench-source-copy-concurrent-red-20261018.log": "b43c211d6be3f089eb5b7a2c851d0cef6e001af717c403254545d7294aa4e187",
+      "/private/tmp/chainbench-source-copy-group-red-20261018.log": "0f5e4680ed6c9d7bbbe63a5c093e4b046ba3171f59b8154bcfc6718a1043785d",
+      "/private/tmp/chainbench-source-copy-group-green-20261018.log": "ab8a738ee1cb72f3fa5d3a1f3d0216abef0cbeb22781b6bf96abea0c2fab1368",
+      "/private/tmp/chainbench-source-copy-group-related-summary-20261018.json": "62170c24754dab36f4e8b005b5ff7b09ec57e930795589991ce67a466c952404",
+      "/private/tmp/chainbench-legacy-sync-readiness-green-20261018.log": "4e48d3f1a2d53868d07e67cc58d67b2ee35daac88447d1ada091baed89ba077b",
+      "/private/tmp/chainbench-triecache-runtime-red-20261018.log": "0f11a1218ad934c0a611d91b8a8390e6b1b89bbaf6ee9d62815453449620f821",
+      "/private/tmp/chainbench-triecache-runtime-regression-20261018.log": "7b2be9daf129744d5ed1b6ba5c522f9df6c73201d4fe4a66ee4c3ab2f09d954b",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/private/tmp/chainbench-after-proof-runner-red-20261018.log": "7fec43d238b3a19a6ba43f256dad7ebfdf813f8db496550653e8fe81169cab8b",
+      "/private/tmp/chainbench-after-proof-active-plan-red-20261018.log": "173d663ac14a95f56f4554e4cc91cdf4513fcafb9a3631a7b58193d86ab02a0d",
+      "/private/tmp/chainbench-after-proof-ci-red-20261018.log": "45caf9a0487e6134f80796233857d04c77da5d8cd8042a0497d99cacbb818229",
+      "/private/tmp/chainbench-after-proof-policy-green-20261018.log": "e28bb1de9e9e341dc65b93e7651fd0e0f8debbe27a05e31153e7bef28887ef28",
+      "/private/tmp/chainbench-after-proof-ci-green-20261018.log": "55ac18efc79ed17bb89d477b0981fe6596ca56afd2d36937810e8e619e00971f",
+      "/private/tmp/chainbench-after-proof-related-20261018.json": "2b3a0c188b2a6e84d65cc82d6b7f0d84a112b2e38c74dd4b61d713415681adbf",
+      "/private/tmp/chainbench-after-proof-related-corrected-20261018.json": "017570fbba215b9a4b72ae1da1ef1c76af93db566607aaf8b5ce3af95f2e4c91",
+      "/private/tmp/chainbench-after-proof-actual-20261018.py": "06fcd87e14bfd783c99c44baf2ec8377109b05abfa8d1ce55f5b8a4dfbe65352",
+      "/private/tmp/chainbench-after-proof-independent-v2-20261018.py": "4dfebeca81f9255fdf54641bf776a0f85a659e89e3ca3fb31da2d4bc69d7adcd",
+      "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000.json": "78a6be8a020df963bf3e09424306180462910f33a5f8a59f8080f13dc35dedf4",
+      "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000-independent.json": "6e9c85e1b24f13cf3dc03d2d2f3ed49748265de659d849cfa3d390ff69400740",
+      "/private/tmp/chainbench-after-proof-cache-maintenance-20261018.json": "d315b12fcac38bacf79221012d3c06ba4d46960db4ec23d28f2ad4625d2cc7b6",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-after-proof-run-20261018.py": "1ecb2399c06b6a058645e3bb0c0e57d57cdade77bd9f744a66533898a91c9654",
+      "/private/tmp/chainbench-ast-after-proof-specific-20261018.py": "4c05560592a94eba9058e2aaf19e12da446bf3aaf68d7406b8c72e029d3ffc1d",
+      "/private/tmp/chainbench-ast-after-proof-independent-20261018.py": "ffaedcb207ee341956567f1ebedb5b96c0696d7896c8d1ce47f8f4b4f2f2a77a",
+      "/private/tmp/chainbench-ast-legacy-sync-parser-contracts-20261018.log": "1b8ac350948e79e16a8f6bf87220c1f9bdb7b1c7e361a77126655ff6b22c4cc2",
+      "/private/tmp/chainbench-legacy-sync-semantic-red-exit-20261018.log": "df1d09b9b6e77ee65bec7c70621e23f7f1e6f20b91ad2fc0efead2153720cb04",
+      "/private/tmp/chainbench-legacy-sync-green-20261018.log": "dac20155e44dc1c7e59f2d48aa66edcfabef19f33cd2da7cc712dbc68c865f62",
+      "/private/tmp/chainbench-legacy-sync-readiness-related-race-corrected-20261018.log": "e984bd49b811a850a5ee5c88e3e601096e828e24dbb7a37134859cd229cde241",
+      "/private/tmp/chainbench-legacy-sync-readiness-red-20261018.log": "0c45988c310fe5ebd7436dddacd79201f062e373fde398600c82a20f0425319c",
+      "/private/tmp/chainbench-wal-audit-semantic-red-20261018.log": "77279311df0d0234ee42fc323bd80ec1b5a3d1000d0553bf4643d6aa548ed820",
+      "/private/tmp/chainbench-wal-audit-descriptor-baseline-red-20261018.log": "dfc27a59c2066d9495645ecec11c42c60b7d3600a6f83559caba99644349d7f9",
+      "/private/tmp/chainbench-wal-audit-late-link-red-20261018.log": "011689b1b29910202f207044d3ce714d8de18b783731e3ed231a4140bf844643",
+      "/private/tmp/chainbench-wal-audit-final-green-20261018.log": "850d21b62c9a9e103c0622a68b095b9a78ff83afe3f98d2cbb048ae190fdac12",
+      "/private/tmp/chainbench-proof-native-cow-final2-green-20261018.log": "cf699f279ae9a8c900203028334cad8461791e37815eef39faa3ac8375d8f094",
+      "/private/tmp/chainbench-proof-native-cow-semantic-red-20261018.log": "1bd68a3949b8e1a91440a67633023dca4bd10f5fbed6617766887cd7af8346f4",
+      "/private/tmp/chainbench-proof-native-cow-audit-semantic-red-20261018.log": "e269422a16ebfc06c12d863b135c97f76c0096da5a14823c5416f36230b05e8a",
+      "/private/tmp/chainbench-proof-native-cow-ci-red-20261018.log": "7cc57a4e939aa2527754b4d8dfa176cd64e7393efc1dfe1da32483588fb6177e",
+      "/private/tmp/chainbench-source-copy-runtime-semantic-red-20261018.log": "41a74b009a37e61b0dbb722f4d0fb85a721b946d68c140dac90382d1cd023f42",
+      "/private/tmp/chainbench-source-copy-concurrent-red-20261018.log": "b43c211d6be3f089eb5b7a2c851d0cef6e001af717c403254545d7294aa4e187",
+      "/private/tmp/chainbench-source-copy-group-red-20261018.log": "0f5e4680ed6c9d7bbbe63a5c093e4b046ba3171f59b8154bcfc6718a1043785d",
+      "/private/tmp/chainbench-source-copy-group-green-20261018.log": "ab8a738ee1cb72f3fa5d3a1f3d0216abef0cbeb22781b6bf96abea0c2fab1368",
+      "/private/tmp/chainbench-source-copy-group-related-summary-20261018.json": "62170c24754dab36f4e8b005b5ff7b09ec57e930795589991ce67a466c952404",
+      "/private/tmp/chainbench-legacy-sync-readiness-green-20261018.log": "4e48d3f1a2d53868d07e67cc58d67b2ee35daac88447d1ada091baed89ba077b",
+      "/private/tmp/chainbench-triecache-runtime-red-20261018.log": "0f11a1218ad934c0a611d91b8a8390e6b1b89bbaf6ee9d62815453449620f821",
+      "/private/tmp/chainbench-triecache-runtime-regression-20261018.log": "7b2be9daf129744d5ed1b6ba5c522f9df6c73201d4fe4a66ee4c3ab2f09d954b",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/private/tmp/chainbench-after-proof-runner-red-20261018.log": "7fec43d238b3a19a6ba43f256dad7ebfdf813f8db496550653e8fe81169cab8b",
+      "/private/tmp/chainbench-after-proof-active-plan-red-20261018.log": "173d663ac14a95f56f4554e4cc91cdf4513fcafb9a3631a7b58193d86ab02a0d",
+      "/private/tmp/chainbench-after-proof-ci-red-20261018.log": "45caf9a0487e6134f80796233857d04c77da5d8cd8042a0497d99cacbb818229",
+      "/private/tmp/chainbench-after-proof-policy-green-20261018.log": "e28bb1de9e9e341dc65b93e7651fd0e0f8debbe27a05e31153e7bef28887ef28",
+      "/private/tmp/chainbench-after-proof-ci-green-20261018.log": "55ac18efc79ed17bb89d477b0981fe6596ca56afd2d36937810e8e619e00971f",
+      "/private/tmp/chainbench-after-proof-related-20261018.json": "2b3a0c188b2a6e84d65cc82d6b7f0d84a112b2e38c74dd4b61d713415681adbf",
+      "/private/tmp/chainbench-after-proof-related-corrected-20261018.json": "017570fbba215b9a4b72ae1da1ef1c76af93db566607aaf8b5ce3af95f2e4c91",
+      "/private/tmp/chainbench-after-proof-actual-20261018.py": "06fcd87e14bfd783c99c44baf2ec8377109b05abfa8d1ce55f5b8a4dfbe65352",
+      "/private/tmp/chainbench-after-proof-independent-v2-20261018.py": "4dfebeca81f9255fdf54641bf776a0f85a659e89e3ca3fb31da2d4bc69d7adcd",
+      "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000.json": "78a6be8a020df963bf3e09424306180462910f33a5f8a59f8080f13dc35dedf4",
+      "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/after-proof-storage-1792303748652744000-independent.json": "6e9c85e1b24f13cf3dc03d2d2f3ed49748265de659d849cfa3d390ff69400740",
+      "/private/tmp/chainbench-after-proof-cache-maintenance-20261018.json": "d315b12fcac38bacf79221012d3c06ba4d46960db4ec23d28f2ad4625d2cc7b6",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-capture.json",
+        "sha256": "8eed0dbd9dace76be445df39d6e8989ff43292a21fe85b6dd3c55ef260ebab96",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304157533137213
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-independent.json",
+        "sha256": "8eed0dbd9dace76be445df39d6e8989ff43292a21fe85b6dd3c55ef260ebab96",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304162386651082
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304163315226709
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304164012078551
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-capture.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138728191556278
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-independent.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138732584954949
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733279929901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733858826845
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-capture.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256047559989444
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-independent.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256052213855427
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256054193014048
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256055161286677
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-capture.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260738390205874
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-independent.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260742921095712
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260743646057877
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260744252072557
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-capture.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268269240845841
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274154302635
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274866457837
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268275462092118
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-capture.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271163296884178
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-independent.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271168224653793
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169184135951
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169870775257
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-capture.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271720905095693
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-independent.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271725960577399
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271727377214282
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271728103754763
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-capture.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275273257659028
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-independent.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275277868420622
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275278705057632
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275279415672506
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-capture.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278880780083910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885184994311
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885962118588
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278886574606998
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-capture.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283083411279582
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-independent.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283087752365160
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283088454993140
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283089050854117
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-capture.json",
+        "sha256": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285785038865723
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-independent.json",
+        "sha256": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285789332377696
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285790037261032
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285790640429188
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-capture.json",
+        "sha256": "928b8684e3cd356f87cbc9f9ddcd71ff36d385584dfe179eef6320faa5f1cc36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293802336464665
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-independent.json",
+        "sha256": "928b8684e3cd356f87cbc9f9ddcd71ff36d385584dfe179eef6320faa5f1cc36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293806983665789
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293807716287910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293808323819571
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-capture.json",
+        "sha256": "0f4b3e915761267a3c8576d8d4a5f53a989b8f5244e5e20055bb67b9c922da58",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294023388288011
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-independent.json",
+        "sha256": "0f4b3e915761267a3c8576d8d4a5f53a989b8f5244e5e20055bb67b9c922da58",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294028439219540
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294029427479915
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294030064008630
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-capture.json",
+        "sha256": "280ea7442ddf1c9864f28b1202446ad1fab1fa89e307d9b9032ee8c532d016b1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294309357997123
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-independent.json",
+        "sha256": "280ea7442ddf1c9864f28b1202446ad1fab1fa89e307d9b9032ee8c532d016b1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294313889504851
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294314590553205
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294315198389026
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-capture.json",
+        "sha256": "18f1ca259ad58198175594e67b80cd1dfa514ecf3497f2cc6cce04aa56e11edb",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296637351984585
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-independent.json",
+        "sha256": "18f1ca259ad58198175594e67b80cd1dfa514ecf3497f2cc6cce04aa56e11edb",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296641953924519
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296642659676072
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296643272979603
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-capture.json",
+        "sha256": "db0139c4657fd546b1ce5933811b31b921bf27b97a3927451400eb7ab9d98f36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297422272678140
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-independent.json",
+        "sha256": "db0139c4657fd546b1ce5933811b31b921bf27b97a3927451400eb7ab9d98f36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297426902155352
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297427648792987
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297428267422391
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-capture.json",
+        "sha256": "747a6833d29ca15aaf1ab67ef6037db3e5bdaefec3d46df7dc8c44e32479edf3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298619621473068
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-independent.json",
+        "sha256": "747a6833d29ca15aaf1ab67ef6037db3e5bdaefec3d46df7dc8c44e32479edf3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298624226087659
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298624939797019
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298625561750293
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-capture.json",
+        "sha256": "b36c266229cf4460259958c3a6debd57370ee6ab063429ea90af4e12489f9c66",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302126554689000
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-independent.json",
+        "sha256": "b36c266229cf4460259958c3a6debd57370ee6ab063429ea90af4e12489f9c66",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302131150014500
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302131887343833
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302132513774304
+      }
+    ],
+    "elapsedSeconds": 14.273433165973984,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independentAudit": {
+    "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-independent-audit.json",
+    "sha256": "f684680ec72a93671039bfd5bc41748db4b624bd5ae15d95df58ead4270f31ea",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792304337112051201
+  },
+  "specificAudit": {
+    "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-specific-audit.json",
+    "sha256": "f4dc322d6c59ee8a8c0578b9c8924592cb43b3978129c3c69c2a0c569c58df75",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792304315950921020
+  },
+  "astCounts": {
+    "parsedFiles": 2097,
+    "languages": {
+      "toml": 1,
+      "yaml": 11,
+      "make": 1,
+      "go": 1412,
+      "json": 352,
+      "python": 135,
+      "gomod": 2,
+      "bash": 63,
+      "dockerfile": 1,
+      "gosum": 1,
+      "html": 3,
+      "css": 1,
+      "javascript": 89,
+      "svelte": 25
+    },
+    "nodes": 139632,
+    "edges": 149011,
+    "excluded": 450,
+    "missing": 0
+  },
+  "ownedPaths": 2547,
+  "goTestFilesParsed": 803,
+  "embeddedASTs": 41,
+  "dynamicProgramInputs": 26,
+  "a8": {
+    "nonMethodExportedSymbols": 1891,
+    "uses": {
+      "inside": 451,
+      "outside": 1174,
+      "test": 177,
+      "signature": 80,
+      "set": 9
+    },
+    "nowhere": 0,
+    "methodsNotMeasuredByThisReachabilityRule": true
+  },
+  "parserVersions": {
+    "go": "go version go1.26.8 darwin/arm64",
+    "python": "3.10.11",
+    "tree-sitter-language-pack": "0.13.0",
+    "tree-sitter": "0.25.2",
+    "PyYAML": "6.0.3",
+    "shfmt": "v3.12.0",
+    "frontend": {
+      "node": "v24.17.0",
+      "acorn": "8.17.0",
+      "svelte": "5.56.8",
+      "postcss": "8.5.23"
+    }
+  },
+  "parserContracts": {
+    "tests": 21,
+    "log": {
+      "path": "/private/tmp/chainbench-ast-after-proof-parser-contracts-20261018.log",
+      "sha256": "60012883439e9c2d226c7118158d1f656477562f5ec73873ffe3c6158d05116e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304139432739691
+    }
+  },
+  "specificSyntaxKeys": 1336,
+  "specificSyntaxOccurrences": 1416,
+  "specificOmissionsRejected": 2672,
+  "generalTamperControlsRejected": 12,
+  "historicalGraphsPreserved": 82,
+  "makeCheck": {
+    "outcome": "pass",
+    "scope": "Ordinary full repository checks with native gates unset; not whole live/race acceptance",
+    "log": {
+      "path": "/private/tmp/chainbench-after-proof-make-check-20261018.log",
+      "sha256": "ec9cad769b97dd4612e1649495aed1168de5413c9fcaa3d5a2fb9a96b72dbac6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792304491138212091
+    }
+  },
+  "publicationNote": "Prose and generated attestation metadata were published after all actual and AST runs. Executable file hashes were identical in the actual run and both graphs; no runtime acceptance is transferred to later changed source digests."
+}

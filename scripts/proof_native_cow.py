@@ -203,11 +203,15 @@ def load_pins(manifest, additions=()):
     return pins
 
 
-def plan(root, pins, measure=private_bytes, minimum=20*1024**2):
+def plan(root, pins, measure=private_bytes, minimum=20*1024**2, inventory=None):
     root = Path(root).absolute(); maintenance.safe_tree(root)
     groups, skipped = {}, []
+    state = (inventory or maintenance.inventory)()
     for runtime in sorted(root.iterdir()):
         if runtime.is_symlink() or not runtime.is_dir(): continue
+        if maintenance.active(runtime, state):
+            skipped.append({'runtime': str(runtime), 'reason': 'active runtime'})
+            continue
         try: closure(runtime)
         except (OSError, ValueError, KeyError, maintenance.UnsafeMaintenance) as error:
             skipped.append({'runtime': str(runtime), 'reason': str(error)}); continue

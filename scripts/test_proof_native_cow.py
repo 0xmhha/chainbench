@@ -165,9 +165,9 @@ class ProofNativeCopyTests(unittest.TestCase):
 
     def test_plan_selects_private_target_and_skips_shared_target(self):
         original = compactor.describe(self.b)
-        pairs, _ = compactor.plan(self.root, self.pins, measure=lambda p: 0 if p == self.a else 1048576, minimum=1)
+        pairs, _ = compactor.plan(self.root, self.pins, measure=lambda p: 0 if p == self.a else 1048576, minimum=1, inventory=lambda: ('', []))
         self.assertEqual(len(pairs), 1); self.assertEqual(pairs[0]['target'], self.rb)
-        self.assertEqual(compactor.plan(self.root, self.pins, measure=lambda p: 0, minimum=1)[0], [])
+        self.assertEqual(compactor.plan(self.root, self.pins, measure=lambda p: 0, minimum=1, inventory=lambda: ('', []))[0], [])
         self.assertEqual(compactor.describe(self.b), original)
 
     def test_cli_default_is_dry_and_apply_requires_audit(self):
@@ -194,6 +194,13 @@ class ProofNativeCopyTests(unittest.TestCase):
             with journal.open('a') as f: f.write(json.dumps({'event': 'reclaim-start', 'path': str(self.root / 'b/w/node1/etcd')}) + '\n')
         with patch.object(compactor, 'clone_command', side_effect=changed):
             with self.assertRaises(compactor.maintenance.UnsafeMaintenance): self.call()
+        self.unchanged()
+
+    def test_plan_excludes_active_runtime_instead_of_selecting_its_copy(self):
+        with patch.object(compactor.maintenance, 'inventory', return_value=(str(self.root / 'b'), [])):
+            pairs, skipped = compactor.plan(self.root, self.pins, measure=lambda p: 0 if p == self.a else 1048576, minimum=1)
+        self.assertEqual(pairs, [])
+        self.assertTrue(any('active' in row['reason'] for row in skipped))
         self.unchanged()
 
     def test_clone_timeout_keeps_original_and_parent(self):
