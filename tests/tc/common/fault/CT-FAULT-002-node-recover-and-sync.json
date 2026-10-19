@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-node-recover",
-  "description": "Stop a node, wait, restart, and measure sync time (원본 fault/node-recover.sh)",
+  "description": "node3를 중단한 뒤 중단 전 높이에서 새 블록 20개가 생성되어야 재시작한다. 복구 노드가 기준 높이에 도달한 뒤 새로 조회한 주 노드보다 2블록 넘게 뒤처지지 않는지 확인하고 공통 블록 해시를 비교한다. 원문 fault/node-recover.sh.",
   "requires": [
     "rpc",
     "consensus",
@@ -17,24 +17,97 @@
       "timeout": "120s"
     },
     {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "recoverStartHeight"
+    },
+    {
       "do": "stopNode",
       "on": "node3"
     },
     {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$recoverStartHeight",
+        "20"
+      ],
+      "save": "recoverProgressTarget"
+    },
+    {
       "do": "waitBlock",
       "on": "node1",
-      "target": 12,
+      "target": "$recoverProgressTarget",
       "timeout": "150s"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "recoverStoppedProgressHead"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$recoverStoppedProgressHead",
+        "$recoverStartHeight"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "20"
     },
     {
       "do": "restartNode",
       "on": "node3"
     },
     {
-      "do": "waitBlock",
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "recoverPrimaryTarget"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$recoverPrimaryTarget",
+        "2"
+      ],
+      "save": "recoverMinimumTarget"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
       "on": "node3",
-      "target": 12,
-      "timeout": "150s"
+      "compare": "GreaterOrEqual",
+      "expected": "$recoverMinimumTarget",
+      "timeout": "150s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "recoverPrimaryHead"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node3",
+      "save": "recoverNodeHead"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$recoverPrimaryHead",
+        "$recoverNodeHead"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
     },
     {
       "expect": "sameBlockHash",

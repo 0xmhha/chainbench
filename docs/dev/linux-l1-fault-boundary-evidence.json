@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-19",
+  "status": "partial_walk_closed_and_preserved",
+  "scope": "One frozen source cohort, original78 plus continuation21 real PASS rows; normal case-boundary drain before required legacy fault/burn/delayed-code predicate changes. Not a complete sweep or defect resolution.",
+  "sourceDigest": "d323c01bc356b2fcd70d0a511294bd80c571a349560a819dca0e0408e91832cb",
+  "runtime": "/private/tmp/cbui/l1i-873iia3q",
+  "observedPass": 99,
+  "unattempted": 259,
+  "plan": 358,
+  "continuationExitCode": 130,
+  "audit": {
+    "acceptedPreservationScope": true,
+    "sourceDigest": "d323c01bc356b2fcd70d0a511294bd80c571a349560a819dca0e0408e91832cb",
+    "runtime": "/private/tmp/cbui/l1i-873iia3q",
+    "walkCompleted": false,
+    "executionCompleted": false,
+    "reportedRows": 99,
+    "unattemptedRows": 259,
+    "totalsObserved": {
+      "pass": 99,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 259
+    },
+    "sourceAndInputsUnchanged": true,
+    "retainedWorkspaces": 99,
+    "archiveCount": 433,
+    "archiveEntries": 22584,
+    "localFilesPreserved": 13155,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 1485,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "resumed": true,
+    "rawSegmentCount": 2,
+    "sourceCohorts": 1,
+    "coverage": {
+      "sourceFiles": 216,
+      "commonFiles": 71,
+      "singleChainFiles": 145,
+      "plannedRuns": 358,
+      "omittedSourceFiles": 0,
+      "duplicateOrMissingVariants": 0
+    },
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-l1-native-reserve-20261019-resumed-independent-v2.json",
+      "sha256": "60756f838d4e96801917f5befa3ed5bf913c59c6dd1248541626ae17cc352fd2",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792414187829001819
+    },
+    {
+      "path": "/private/tmp/cbui/l1i-873iia3q/reports/full-plan-proof-resume-002.json",
+      "sha256": "fc9600934020a2a5b5e2f3960d12127c969b448b11f67149534b8ad126147127",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792413956405771346
+    }
+  ],
+  "frozenSourceBackup": {
+    "path": "/private/tmp/chainbench-l1-frozen-source-2683-20261019/manifest.json",
+    "sha256": "b571a9ad37654f7d2359f471e5a16bd7221025efd5a2f3a3d24e6b34e44c4906",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792414251216130329
+  },
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

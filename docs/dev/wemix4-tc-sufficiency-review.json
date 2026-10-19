@@ -354,12 +354,12 @@
       "targets": [
         {
           "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
-          "sha256": "e6cb6f46df805e988308df194f27173fe4fa7b4a668d8f1ab98930d25d41e0e6",
+          "sha256": "3f98c7ef695d3548407d4431dcabb8cd9c240e5bf678bfe9ca3125ec83c39859",
           "id": "fault-node-crash"
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
-          "sha256": "58d91a8c404d85e6ce9a42aa80b242d8bd4931965fdc2a5830c67a2ed8b946dc",
+          "sha256": "7c1ab7f01645323d2da59973c83befa28796face9fa977a4f981b2354a50a418",
           "id": "fault-node-recover"
         },
         {
@@ -376,11 +376,29 @@
           "path": "internal/testengine/restart_participation_native_test.go",
           "sha256": "c5c13e965590c6f5b89c0102defdd5252b393dcace90149b3181413bedf620d2",
           "function": "TestNativeValidatorRestartParticipation"
+        },
+        {
+          "path": "internal/testhelper/legacy_fault_checkpoint_semantics_test.go",
+          "sha256": "5e67975328ef025e89f4e9c95a5b7fbcbe7a2592c6910be4c91346594f9c0499",
+          "function": "TestPublicFaultRecoveryRetainsLegacyCatchup"
+        },
+        {
+          "path": "internal/testhelper/legacy_fault_checkpoint_semantics_test.go",
+          "sha256": "5e67975328ef025e89f4e9c95a5b7fbcbe7a2592c6910be4c91346594f9c0499",
+          "function": "TestPublicFaultRequiresRelativeProgressWhileNodeStopped"
+        },
+        {
+          "path": "internal/testengine/legacy_fault_native_test.go",
+          "sha256": "b98012014f185993fe850134b569955c3c4934dd4c5bde2274d8f0ceff4b3410",
+          "function": "TestNativeLegacyFaultRecovery"
         }
       ],
       "observations": [
         {
-          "analysis": "CT-FAULT-001: stop 전과 restart 후 sameBlockHash, surviving node의 head advance, restart한 node3가 읽어둔 실제head를 따라잡음, 같은 caught block의 stateRoot exact equality. CT-FAULT-002 및 4validator fault tolerance도 catch-up검사."
+          "analysis": "상대10/20블록과 현재 높이 조건을 새 세 체인6건 실제33단언/별도 RPC 및 독립 감사로 확인했다. 기존 WBFT 재시작 참여 회귀도 통과했다. 원문 시간 예산 전체 동등성은 미확인이다."
+        },
+        {
+          "analysis": "[이전 고정 소스의 실제 검증 범위] 실제WBFT Croissant0 BP4/BlockPeriod1. 공개CT-FAULT-001 원문steps그대로4단언/8동작통과(정지중진행·catchup·hash/stateRoot). 실제node3이같은binary/command/datadir에서PID42830→42924/revision증가·원래key주소로재시작. 고정높이resync hash/root·미래26~31header5개별timestamp1/Round0·APIheaderorigin/quorum·원래노드committer포함·재시작endpoint31hash확인. 첫후보6개가충족,후보전체보존."
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
@@ -392,17 +410,77 @@
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
-          "pointer": "/steps/3",
+          "pointer": "/steps/7",
           "statement": {
-            "expect": "blockAdvance",
-            "on": "node1",
-            "timeout": "180s",
-            "pollInterval": "3s"
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$crashStoppedProgressHead",
+              "$crashStartHeight"
+            ],
+            "compare": "GreaterOrEqual",
+            "is": "10"
           }
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
-          "pointer": "/steps/7",
+          "pointer": "/steps/17",
+          "statement": {
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$crashRecoveredHead1",
+              "$crashRecoveredMinimum"
+            ],
+            "compare": "LessOrEqual",
+            "is": "2"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+          "pointer": "/steps/18",
+          "statement": {
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$crashRecoveredHead2",
+              "$crashRecoveredMinimum"
+            ],
+            "compare": "LessOrEqual",
+            "is": "2"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+          "pointer": "/steps/19",
+          "statement": {
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$crashRecoveredHead3",
+              "$crashRecoveredMinimum"
+            ],
+            "compare": "LessOrEqual",
+            "is": "2"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+          "pointer": "/steps/20",
+          "statement": {
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$crashRecoveredHead4",
+              "$crashRecoveredMinimum"
+            ],
+            "compare": "LessOrEqual",
+            "is": "2"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+          "pointer": "/steps/21",
           "statement": {
             "expect": "sameBlockHash",
             "block": "latest"
@@ -410,7 +488,7 @@
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
-          "pointer": "/steps/10",
+          "pointer": "/steps/24",
           "statement": {
             "expect": "rpcCall",
             "on": "node3",
@@ -426,25 +504,56 @@
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
-          "pointer": "/steps/5",
+          "pointer": "/steps/6",
+          "statement": {
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$recoverStoppedProgressHead",
+              "$recoverStartHeight"
+            ],
+            "compare": "GreaterOrEqual",
+            "is": "20"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+          "pointer": "/steps/13",
+          "statement": {
+            "expect": "derive",
+            "op": "diff",
+            "of": [
+              "$recoverPrimaryHead",
+              "$recoverNodeHead"
+            ],
+            "compare": "LessOrEqual",
+            "is": "2"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+          "pointer": "/steps/14",
           "statement": {
             "expect": "sameBlockHash",
             "block": "latest"
           }
-        },
-        {
-          "analysis": "실제WBFT Croissant0 BP4/BlockPeriod1. 공개CT-FAULT-001 원문steps그대로4단언/8동작통과(정지중진행·catchup·hash/stateRoot). 실제node3이같은binary/command/datadir에서PID42830→42924/revision증가·원래key주소로재시작. 고정높이resync hash/root·미래26~31header5개별timestamp1/Round0·APIheaderorigin/quorum·원래노드committer포함·재시작endpoint31hash확인. 첫후보6개가충족,후보전체보존."
         }
       ],
-      "semanticAssessment": "confirmed_original_predicates_in_native_restart",
+      "semanticAssessment": "confirmed_recovery_checkpoint_and_native_participation_scope",
       "remainingConditions": [
-        "원문 재시작 회복 명제는 native범위 확인. 단계적이관·전체87·Linux·메인넷live·legacy·최종Web 전수인수는별도잔여."
+        "원문 crash 진행60초·recover 진행90초 및 복구90/120초의 전체 시간 동작 동등성은 미확인.",
+        "whole legacy254·원문87·Linux358·메인넷·최종 Web 인수는 별도 잔여."
       ],
-      "confirmedScope": "실제Croissant0 WBFT BP4의공개crash/restart동작·hash/stateRoot/catchup과같은노드PID교체/동일경로·원래키·다섯개별1초간격·실제commit참여결합검증.",
+      "confirmedScope": "공개 두 장애 케이스의 상대10/20블록·새 현재 높이 체크포인트를 세 체인6건/33단언으로 확인했다. 기존 WBFT 재시작의 건강한5개 1초 간격과 원 노드의 실제 commit 참여도 다시 확인했다. 원문 시간 예산·동적 복구 전체 동등성은 미확인이다.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/restart-participation-evidence.json",
           "sha256": "adde35e401c32d9fd66a4ea467ebb36ad70628689c43d8cead0cbc6508c7c0d9"
+        },
+        {
+          "path": "docs/dev/legacy-fault-checkpoint-evidence.json",
+          "sha256": "4208751e2d9c6bb65e00a15225224dd2cecd410bf3c330d7014035461b4b8de3",
+          "scope": "세 체인6개 복구 체크포인트와 WBFT 실제 재참여; fullCriterionAccepted=false"
         }
       ]
     },
