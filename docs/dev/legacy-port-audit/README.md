@@ -153,3 +153,12 @@ BP4/Boho0/축약 만료와 원문7노드/Boho100의 설정 차이는 유지한�
 종료DB72개를 회수해 잔여0을 확인했다. 원문 전체 fixture·legacy254·Linux358·최종Web은 남긴다.
 공유 계약이 제공하는 reference 노드 선택은 실제 서버 렌더와 별도 HTML 파서로 대조했으며,
 브라우저 hydration이나 WEB-05 전체 인수로 세지 않는다. [이번 범위와 감사 실패/보정 기록](../legacy-fault-timing-evidence.json).
+
+### 2026-10-20 후속: 접근 목록·API21 원문 대조
+
+복구 원문의 contractAddr/slot0 생성·signed 거래 명제를 현행 CT-TX-004와 대조하고,
+새 고정6f0b에서 세 체인3건39단언·독립 raw hash/서명자/상태·9변조 거절을 확인했다.
+465파일을 보존하고 종료DB32개 회수/잔여0을 확인했다. 원문 ABI SimpleStorage51bytes와
+현재7bytes SSTORE·EN/BP4 차이를 남긴다. 과거 원시 증명3개는 현재 경로에 없고 새 실행으로 복원했다고 세지 않는다.
+API21의 과거 personal 서명 설명은 eth RPC 등록 smoke로 정정했다. 전체254개 인수는 남는다.
+[원문·실제·보존·차이](../legacy-access-list-reconciliation-evidence.json).

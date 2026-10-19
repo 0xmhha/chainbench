@@ -261,3 +261,19 @@ wemix4 84개는 `docs/dev/wemix4-port-tracker.md` (2026-09-24 삭제) 가 대응
 | 168 | `remote` | `tx-send` | — | attach 모드 | 부분 |
 | 169 | `stress` | `block-time` | — | cases/stress-block-time | 동등 |
 | 170 | `stress` | `tx-flood` | — | cases/stress-tx-flood | 동등 |
+
+
+## 2026-10-20 원문 복구 후 정정 — API21·접근 목록
+
+위 표와 개수는 과거 감사 스냅숏이다. 복구13b5e12의 API21 본문은
+`eth_signRawFeeDelegateTransaction` 등록 여부를 잘못된 인자로 묻는 smoke 검사다.
+위의 `personal_signRawFeeDelegateTransaction` 실제 서명 설명은 원문과 맞지 않는다.
+현행 CT-TX-009의 methodPresent가 이 목적을 다루고, personal의 import/unlock·대납 서명은
+별도의01b–04b 공개 케이스와 실제 증거로 다룬다. API21을 personal 미검증 근거로 세지 않는다.
+
+접근 목록 원문은 배포된 SimpleStorage의 contractAddr/slot0을 생성한 뒤 signed 접근 목록 거래를 확인한다.
+현행 CT-TX-004는 BALANCE 회귀를 유지하면서 별도 SSTORE slot0 생성/서명/상태 판정을 수행한다.
+새 고정 소스의 세 체인3건39단언과 실제 wire 서명자·해시·포함 블록·상태를 독립 대조했다.
+원문 ABI51bytes와 현재7bytes runtime/토폴로지 차이는 남으며, 과거 원시 증명3개가 없다는 관측은
+새 증명으로 복구됐다고 표시하지 않는다. 과거 표의254개 전체 상태와 개수는 재인수하지 않았다.
+[원문·새 실제 증명·보존과 한계](../legacy-access-list-reconciliation-evidence.json).

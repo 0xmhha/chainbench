@@ -2165,6 +2165,9 @@
             ],
             "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
           }
+        },
+        {
+          "analysis": "2026-10-20 새 고정6f0b: 복구 legacy 원문 contractAddr/slot0 생성·signed 전송 명제와 현행 공개 케이스를 대조했다. 동일 공개 케이스를 세 체인3건39단언으로 재실행하고 실제 raw hash/서명자·영수증·포함 블록·storage42를 별도 core/types 디코더로 대조했다. 원문 ABI SimpleStorage51bytes와 현행7bytes SSTORE, EN/새BP4 fixture 차이를 유지한다. 과거 원시 증명3개는 현재 경로에 없어 복구로 세지 않는다."
         }
       ],
       "semanticAssessment": "specific_gap_or_narrower_fixture",
@@ -2176,6 +2179,11 @@
         {
           "path": "docs/dev/access-list-evidence.json",
           "sha256": "b7d802a12b42f2153b240f7aca496b2c806586e294caee125ae43239dad7a39d"
+        },
+        {
+          "path": "docs/dev/legacy-access-list-reconciliation-evidence.json",
+          "sha256": "b8c5e59d9da4b46f510d19bdb01ae913c47329ded64bb58b74e0c7290abeac27",
+          "scope": "새 고정6f0b 공개 세 체인 접근 목록3건/39단언·독립 서명/상태/보존. 과거 원시 자료 복구와 전체 인수는 아님."
         }
       ]
     },

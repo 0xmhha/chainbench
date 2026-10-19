@@ -1,0 +1,373 @@
+{
+  "date": "2026-10-20",
+  "status": "current_public_slot_access_list_independently_verified",
+  "scope": "Reconcile recovered legacy regression/ethereum/10 predicates with existing public slot-specific DSL, then rerun all three native families on one fixed source. Current proof is new, not reconstruction of lost historical raw proofs.",
+  "sourceAtProof": "6f0bec837ba85800e817f834c574f35970e0aefd7725fc094acb58ae2dac2eee",
+  "headAtProof": "6a46e3c8b73fd0b1847341bc5c455bfaa6f65746",
+  "original": {
+    "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/ethereum/tests/10-test-access-list-tx.sh",
+    "sha256": "41b96c967e406c90608090eda7c1f29d73d785307ff663b471e6d83138c4e258",
+    "bytes": 8138,
+    "mode": "0o755",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792088397296279808
+  },
+  "public": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/tx/CT-TX-004-access-list-tx.json",
+    "sha256": "6c82af79e2e2e9ab3e78aec39800abb4f9f5301ac2f6af2719162b60c0f5de47",
+    "bytes": 7461,
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792026456445324914
+  },
+  "nativeTest": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/access_list_native_test.go",
+    "sha256": "7dc4102d07b0bbc9f2d2155ee0de9b17f4b9df1f01b689fd2fba144e3749ccca",
+    "bytes": 5651,
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792025840987453133
+  },
+  "contracts": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/access_list_semantics_test.go",
+    "sha256": "c59e30ea2e82d1e803cb52313a50c60ba0686952be89eb7e824c07585002a580",
+    "bytes": 7047,
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792026399130600828
+  },
+  "priorSemanticRed": "Existing seven malformed slot-specific witnesses were accepted before original public slot assertions were added; see preserved historical evidence document. No new production behavior was changed this stage.",
+  "currentContractRegression": {
+    "path": "/private/tmp/chainbench-legacy-access-list-related-20261020.log",
+    "sha256": "76afdc631e82f34947e0ca1fd6f7f94693cf6876f14242c3a2f28257f6ad4cfd",
+    "bytes": 61,
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792429041500917018
+  },
+  "native": {
+    "exitCode": 0,
+    "actualProofPassed": true,
+    "sourceBefore": "6f0bec837ba85800e817f834c574f35970e0aefd7725fc094acb58ae2dac2eee",
+    "sourceAfter": "6f0bec837ba85800e817f834c574f35970e0aefd7725fc094acb58ae2dac2eee",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "runtimes": [
+      "/private/tmp/cbui/txfail-351t9rrf",
+      "/private/tmp/cbui/txfail-mz246xjo",
+      "/private/tmp/cbui/txfail-nnk5s3it"
+    ],
+    "runtimeCount": 3,
+    "testPasses": [
+      "TestNativeDeployedSlotAccessList/stablenet",
+      "TestNativeDeployedSlotAccessList/wbft",
+      "TestNativeDeployedSlotAccessList/wemix",
+      "TestNativeDeployedSlotAccessList"
+    ],
+    "testFailures": [],
+    "testSkips": [],
+    "eventLog": {
+      "path": "/private/tmp/chainbench-legacy-access-list-native-20261020-events.jsonl",
+      "sha256": "fe3fccdf05984a0d01c3f4cd7e546e439f834eff7aff89a1798e5ab714d1f82a",
+      "bytes": 4564,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429371095171048
+    },
+    "stderr": {
+      "path": "/private/tmp/chainbench-legacy-access-list-native-20261020-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429172241596050
+    },
+    "elapsedSeconds": 201.4534411430359,
+    "freeBytesAfter": 23697559552,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "acceptedPreservationScope": true,
+    "acceptedPublicSlotAccessListScope": true,
+    "sourceDigest": "6f0bec837ba85800e817f834c574f35970e0aefd7725fc094acb58ae2dac2eee",
+    "partial": false,
+    "outcomes": [
+      {
+        "chain": "stablenet",
+        "hash": "0x903428fb51089e6793bb2253732fa3d6f6a8442f87a7f2d0a014223bf01dd254",
+        "sender": "0x74d25c10c546b0d406d90f4fd5ea682939a2e5ee",
+        "contract": "0xb7a37d60487395cf8632e86054ecdf2ababa86f8",
+        "assertions": 13,
+        "rawHashAndRecoveredSenderVerified": true,
+        "storage": "0x000000000000000000000000000000000000000000000000000000000000002a"
+      },
+      {
+        "chain": "wbft",
+        "hash": "0x4e7e9b685ab9378240a79ae8ec98baf5f53dd34ca575aeea03fe07a227724892",
+        "sender": "0x08e0013631078470a0dd674504235005a1afd3f1",
+        "contract": "0x3fa0217e23544d8d0a3918317f3859585f249c3e",
+        "assertions": 13,
+        "rawHashAndRecoveredSenderVerified": true,
+        "storage": "0x000000000000000000000000000000000000000000000000000000000000002a"
+      },
+      {
+        "chain": "wemix",
+        "hash": "0x4ccfa93b957b527a4fbef63f25d2cbbd697f941b72ca64f6f6f35f03115310a5",
+        "sender": "0x2f9d3857ec61ae35984ca7a48d43c6e2f334ef2c",
+        "contract": "0xbe45886aae99071656b3bbe45a4073cb539c3d0c",
+        "assertions": 13,
+        "rawHashAndRecoveredSenderVerified": true,
+        "storage": "0x000000000000000000000000000000000000000000000000000000000000002a"
+      }
+    ],
+    "retainedFiles": 465,
+    "closedRuntimes": [
+      {
+        "runtime": "/private/tmp/cbui/txfail-mz246xjo",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-351t9rrf",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-nnk5s3it",
+        "reclaimedDatabases": 16,
+        "remainingDatabases": 0
+      }
+    ],
+    "freshInventories": [
+      {
+        "attempt": 1,
+        "processes": 463,
+        "openedNames": 10816,
+        "allInactive": true
+      },
+      {
+        "attempt": 2,
+        "processes": 463,
+        "openedNames": 10817,
+        "allInactive": true
+      },
+      {
+        "attempt": 3,
+        "processes": 463,
+        "openedNames": 10816,
+        "allInactive": true
+      }
+    ],
+    "independentControlsRejected": [
+      "unrelated transaction",
+      "wrong receipt block",
+      "unsigned sender substituted",
+      "wrong tuple contract",
+      "wrong tuple slot",
+      "wrong state value",
+      "raw wire replaced",
+      "wrong receipt type",
+      "failed mined transaction"
+    ],
+    "cryptoHelper": {
+      "path": "/private/tmp/chainbench-legacy-access-list-crypto-20261020.go",
+      "sha256": "205e4bc9128a41ef76ad7349a1b306a4c1acea3dc5cfb2199e7f2ae0abf077ed",
+      "bytes": 879,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429297381113525
+    },
+    "cryptoBinary": {
+      "path": "/private/tmp/chainbench-legacy-access-list-crypto-20261020",
+      "sha256": "45fd545073220fa60d5260bb75c424505bdd7523af9efd0be5682eb870785d17",
+      "bytes": 6312530,
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792429391832669280
+    },
+    "freeBytesAfterAudit": 23643549696,
+    "remainingDatabases": 0,
+    "historicMissingFilesRestored": false,
+    "fullLegacyAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-legacy-access-list-native-20261020-start.json",
+      "sha256": "97c8b179cd62b555e3738c24df3ac54a2c60ebed335a0a52734d6788b261d490",
+      "bytes": 49861,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429172241435216
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-access-list-native-20261020-summary.json",
+      "sha256": "de02c079fcaf685c6224c44e30b578693aba91b0b1c49a58d9db04b9b998f6d7",
+      "bytes": 1421,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429373695059816
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-access-list-native-20261020-independent.json",
+      "sha256": "a93b7581655ebcf6b1f2c77cd14873dd9a5316541368028a93bc0a2d212e5c1c",
+      "bytes": 144434,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429411719871605
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-access-list-native-build-20261020.json",
+      "sha256": "594867e3745a2e12988166b0f443f82aa87dd52b6847c3b76af4d302ae856d44",
+      "bytes": 385,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429151497551043
+    }
+  ],
+  "independentCryptoLibrary": "Pinned read-only go-stablenet4d17eea0 core/types decoding and sender recovery, separate from chainbench SDK signing. Library is a chain implementation; this is not independent cryptographic implementation verification.",
+  "cryptoPreparationFailures": [
+    {
+      "log": {
+        "path": "/private/tmp/chainbench-legacy-access-list-crypto-build-20261020.log",
+        "sha256": "9d850408b9e733f52e5a72fafd4b93373739daf7c820b121da8683430fc716e5",
+        "bytes": 210,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792429324175568968
+      },
+      "reason": "Root chainbench module intentionally does not depend on go-ethereum; no dependency was added."
+    },
+    {
+      "log": {
+        "path": "/private/tmp/chainbench-legacy-access-list-crypto-build-v2-20261020.log",
+        "sha256": "52dab7a162549e2a2b7abd088e57d46fb24b26eb83c7d22a198c36688e338f21",
+        "bytes": 2840,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792429347798639943
+      },
+      "reason": "External directory shell selected go1.25.2 while GOROOT was1.26.8; compilation stopped."
+    },
+    {
+      "log": {
+        "path": "/private/tmp/chainbench-legacy-access-list-crypto-build-v3-20261020.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792429374898268578
+      },
+      "reason": "Successful offline read-only compilation with explicit matching Go1.26.8 executable/GOROOT."
+    }
+  ],
+  "predicateMapping": [
+    "Deploy real storage contract and bind returned contract address.",
+    "Generate non-empty accessList for storage write and require contractAddr/slot0.",
+    "Consume generated tuple in signed transaction; actual decoded wire type1, recipient, input, tuple and recovered sender match mined transaction.",
+    "Require mined successful receipt, same transaction/block, and exact slot0 value42.",
+    "Retain separate BALANCE eth_createAccessList regression."
+  ],
+  "fixtureDifferences": [
+    "Recovered SimpleStorage uses ABI store/retrieve51-byte runtime and store selector; current finite7-byte SSTORE runtime consumes32-byte calldata directly.",
+    "Current private native BP4 and newly funded sender differ from original EN topology/key; no original fixture-byte equivalence claimed."
+  ],
+  "historicalEvidence": {
+    "document": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/access-list-evidence.json",
+      "sha256": "b7d802a12b42f2153b240f7aca496b2c806586e294caee125ae43239dad7a39d",
+      "bytes": 22049,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792026859335904043
+    },
+    "missingRawProofFiles": [
+      {
+        "recorded": {
+          "path": "/private/tmp/cbui/txfail-3a1u10r0/reports/access-list-proof.json",
+          "sha256": "42f7ab6f4fe535025e4f9b7e8e54c42a6a943854eeb5032da492dd11a3d5fd19",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792026666531675178
+        },
+        "existsAtRecheck": false
+      },
+      {
+        "recorded": {
+          "path": "/private/tmp/cbui/txfail-4cimoyfg/reports/access-list-proof.json",
+          "sha256": "e2121a52e3a087567f0fd58b718d30ff32cd6c871788f1e74e1e3492199d6dd0",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792026717593958365
+        },
+        "existsAtRecheck": false
+      },
+      {
+        "recorded": {
+          "path": "/private/tmp/cbui/txfail-80f0fvup/reports/access-list-proof.json",
+          "sha256": "799b65eba9f5c8b9dc4bb738b10d9752605417b9f2ff9dc6451d7e903f6bb6c9",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792026799363686901
+        },
+        "existsAtRecheck": false
+      }
+    ],
+    "restored": false,
+    "priorReceipt56CountsRecomputed": false
+  },
+  "api21Correction": {
+    "original": {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/regression/api/tests/21-test-sign-raw-fee-delegate.sh",
+      "sha256": "ade7e4d46a5eade56cc6f0fe3afd7d855390a6d58291808832e8680ba7105bd1",
+      "bytes": 1749,
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792088397286785047
+    },
+    "current": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/tx/CT-TX-009-fee-delegate-sign-rpc-present.json",
+      "sha256": "a439ad2db7865d50465e36d994ad5e8ce6f7f6f2dea6f876a3278c5fda0269e7",
+      "bytes": 593,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070132567033
+    },
+    "finding": "Recovered original is eth_signRawFeeDelegateTransaction registration/invalid-argument smoke, not personal signing. Current methodPresent also rejects malformed/transport/internal failures. Historical API21 description is corrected below without overwriting prior counts.",
+    "personalFlows": "Separate01b–04b evidence remains separate."
+  },
+  "retention": {
+    "files": 465,
+    "reclaimedDatabases": 32,
+    "remainingDatabases": 0
+  },
+  "all87Accepted": false,
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false
+}
