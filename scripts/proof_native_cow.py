@@ -53,7 +53,7 @@ def scope(path, root, expected, pins):
     allowed = (len(relative) == 1 and relative[0] in NAMES
                or len(relative) == 4 and relative[0] in {'d', 'fork', 'attach'}
                and relative[1] == 'binaries' and relative[2] == expected['sha256']
-               and relative[3] in {'gstable', 'gwbft', 'gwemix'}
+               and relative[3] in NAMES
                or len(relative) == 4 and relative[:2] == ('store', 'assets')
                and re.fullmatch('[0-9a-f]{28,64}', relative[2]) and relative[3] == 'payload')
     if not allowed or expected['sha256'] not in pins:

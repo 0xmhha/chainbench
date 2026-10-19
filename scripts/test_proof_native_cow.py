@@ -70,6 +70,22 @@ class ProofNativeCopyTests(unittest.TestCase):
         self.b.rename(p); self.b = p; self.rb = compactor.describe(p); self.call()
         self.assertEqual(compactor.identity(compactor.describe(p)), compactor.identity(self.rb))
 
+    def test_recorded_binary_alias_scope(self):
+        for name in ('stablenet-node', 'wbft-node', 'wemix-node'):
+            with self.subTest(alias=name):
+                path = self.b.with_name(name)
+                self.b.rename(path); self.b = path
+                self.rb = compactor.describe(path)
+                self.call()
+                self.assertEqual(compactor.identity(compactor.describe(path)), compactor.identity(self.rb))
+
+    def test_unknown_recorded_binary_alias_is_refused(self):
+        path = self.b.with_name('user-binary')
+        self.b.rename(path); self.b = path
+        self.rb = compactor.describe(path)
+        with self.assertRaises(compactor.maintenance.UnsafeMaintenance): self.call()
+        self.unchanged()
+
     def test_refuses_unpinned_source(self):
         self.pins.clear()
         with self.assertRaises(compactor.maintenance.UnsafeMaintenance): self.call()
