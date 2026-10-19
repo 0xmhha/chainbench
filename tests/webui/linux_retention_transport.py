@@ -42,7 +42,14 @@ while [ "$i" -lt "$n" ]; do
  fi
  i=$((i+1))
 done
-sha256sum -- "$@" > "$tmp/binary.hash"
+: > "$tmp/binary.hash"
+for binary do
+ sha256sum -- "$binary" >> "$tmp/binary.hash"
+ # The same large inputs are checked on every server and case. Release only
+ # each file's persisted read cache before loading the next binary. A failed
+ # advisory aborts capture, so no database is reclaimed on an unknown result.
+ dd if="$binary" iflag=nocache count=0 status=none
+done
 cat "$root/.chainbench-owned-runtime.json" > "$tmp/marker.json"
 set --
 while IFS= read -r p; do set -- "$@" "$p"; done < "$tmp/roots.txt"

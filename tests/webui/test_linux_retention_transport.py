@@ -208,5 +208,90 @@ class OwnedFixtureContract(unittest.TestCase):
                 batch.reclaim_stopped(container='candidate', data_root=self.root, record=self.record, nodes=nodes, expected_binaries=self.binary, marker=self.marker, proc=probe, fleet_runtime=self.fleet, reports=self.reports, server='server1')
         probe.probe.assert_not_called()
 
+class BinaryCacheContract(unittest.TestCase):
+    """Execute the production hash phase, including its shell error handling."""
+
+    def setUp(self):
+        import os
+        import tempfile
+        self.temporary = tempfile.TemporaryDirectory(prefix='cb-binary-cache-')
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name).resolve()
+        self.bin = self.root / 'bin'
+        self.bin.mkdir()
+        self.files = [self.root / name for name in ['first binary', '-second', 'last']]
+        for i, path in enumerate(self.files):
+            path.write_bytes(bytes([i]) * 53)
+            path.chmod(0o640)
+        self.before = [(p.read_bytes(), p.stat()) for p in self.files]
+        self.env = {**os.environ, 'PATH': str(self.bin) + os.pathsep + os.environ['PATH'],
+                    'CACHE_EVENTS': str(self.root / 'events'), 'CACHE_FAIL': '', 'HASH_FAIL': ''}
+        self.shim('sha256sum', '''import hashlib, os, sys
+for path in sys.argv[2:]:
+ with open(os.environ['CACHE_EVENTS'], 'a') as log: log.write('hash ' + path + '\\n')
+ if path == os.environ['HASH_FAIL']: sys.exit(41)
+ print(hashlib.sha256(open(path, 'rb').read()).hexdigest() + '  ' + path)
+''')
+        self.shim('dd', '''import os, sys
+assert len(sys.argv) == 5 and sys.argv[2:] == ['iflag=nocache', 'count=0', 'status=none']
+assert sys.argv[1].startswith('if=')
+path = sys.argv[1][3:]
+with open(os.environ['CACHE_EVENTS'], 'a') as log: log.write('discard ' + path + '\\n')
+if path == os.environ['CACHE_FAIL']: sys.exit(42)
+''')
+
+    def shim(self, name, body):
+        path = self.bin / name
+        path.write_text('#!/usr/bin/env python3\n' + body)
+        path.chmod(0o700)
+
+    def capture(self):
+        import subprocess
+        # Start immediately after the node-root loop; run the actual binary
+        # phase rather than an independently rewritten hashing implementation.
+        anchor = batch.CAPTURE.index('n=$1; shift; i=0; : > "$tmp/node-roots.txt"')
+        start = batch.CAPTURE.index('done\n', anchor) + len('done\n')
+        end = batch.CAPTURE.index('cat "$root/.chainbench-owned-runtime.json"', start)
+        result = subprocess.run(['/bin/sh', '-c', 'set -eu\ntmp=$1; shift\n' + batch.CAPTURE[start:end],
+                                 '--', str(self.root), *map(str, self.files)],
+                                env=self.env, capture_output=True)
+        for path, (content, old) in zip(self.files, self.before):
+            current = path.stat()
+            self.assertEqual(path.read_bytes(), content)
+            self.assertEqual((current.st_ino, current.st_mode, current.st_uid, current.st_gid,
+                              current.st_size, current.st_mtime_ns, current.st_ctime_ns),
+                             (old.st_ino, old.st_mode, old.st_uid, old.st_gid,
+                              old.st_size, old.st_mtime_ns, old.st_ctime_ns))
+        return result, (self.root / 'events').read_text().splitlines()
+
+    def test_each_file_releases_cache_before_next_hash_and_preserves_checksums(self):
+        result, events = self.capture()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(events, [event + ' ' + str(path) for path in self.files
+                                  for event in ['hash', 'discard']])
+        self.assertEqual((self.root / 'binary.hash').read_text(), ''.join(
+            hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + str(path) + '\n' for path in self.files))
+
+    def test_cache_failure_stops_before_reading_next_binary(self):
+        self.env['CACHE_FAIL'] = str(self.files[1])
+        result, events = self.capture()
+        self.assertEqual(result.returncode, 42)
+        self.assertEqual(events, [event + ' ' + str(path) for path in self.files[:2]
+                                  for event in ['hash', 'discard']])
+
+    def test_hash_failure_stops_without_discarding_or_reading_later_binary(self):
+        self.env['HASH_FAIL'] = str(self.files[1])
+        result, events = self.capture()
+        self.assertEqual(result.returncode, 41)
+        self.assertEqual(events, ['hash ' + str(self.files[0]), 'discard ' + str(self.files[0]),
+                                  'hash ' + str(self.files[1])])
+
+    def test_missing_cache_tool_fails_closed(self):
+        self.shim('dd', 'import sys\nsys.exit(127)\n')
+        result, events = self.capture()
+        self.assertEqual(result.returncode, 127)
+        self.assertEqual(events, ['hash ' + str(self.files[0])])
+
+
 if __name__ == '__main__':
     unittest.main()
