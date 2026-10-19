@@ -12,11 +12,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
-var postforkPublicIDs = []string{"fee-delegated-transfer", "secp256r1-precompile-valid", "insufficient-funds-rejected", "fd-feepayer-sig-invalid-rejected", "secp256r1-precompile-short-input"}
+var postforkPublicIDs = []string{"fee-delegated-transfer", "secp256r1-precompile-valid", "insufficient-funds-rejected", "fd-feepayer-sig-invalid-rejected", "secp256r1-precompile-short-input", "secp256r1-precompile-invalid"}
 
 func verifyPostforkPublicSummary(s testengine.Summary) error {
 	if len(s.Tests) != len(postforkPublicIDs) || s.Summary.Pass != len(postforkPublicIDs) || s.Summary.Fail != 0 || s.Summary.Blocked != 0 || s.Summary.Skip != 0 {
-		return fmt.Errorf("not five successful cases")
+		return fmt.Errorf("not all six successful cases")
 	}
 	for i, row := range s.Tests {
 		if row.Seq != i+1 || row.ID != postforkPublicIDs[i] || row.PresetID != "wbft-bp4" || row.Status != "pass" {
@@ -30,7 +30,7 @@ func TestPostforkPublicSummaryRejectsAggregateOnly(t *testing.T) {
 	for _, name := range []string{"valid", "missing", "wrong id", "duplicate", "wrong sequence", "wrong preset", "hidden skip", "hidden failure", "blocked count", "extra case"} {
 		t.Run(name, func(t *testing.T) {
 			s := testengine.Summary{}
-			s.Summary.Pass = 5
+			s.Summary.Pass = len(postforkPublicIDs)
 			for i, id := range postforkPublicIDs {
 				s.Tests = append(s.Tests, testengine.TestOutcome{Seq: i + 1, ID: id, PresetID: "wbft-bp4", Status: "pass"})
 			}
@@ -122,5 +122,24 @@ func TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs(t *testin
 				t.Fatal("changed public input or stored action accepted")
 			}
 		})
+	}
+}
+
+// A complete post-fork report must include the approved invalid-signature
+// result, alongside the genuine valid-signature control, not just old totals.
+func TestPostforkPublicSummaryRequiresApprovedInvalidSignatureWitness(t *testing.T) {
+	s := testengine.Summary{}
+	ids := []string{"fee-delegated-transfer", "secp256r1-precompile-valid", "insufficient-funds-rejected", "fd-feepayer-sig-invalid-rejected", "secp256r1-precompile-short-input"}
+	for i, id := range ids {
+		s.Tests = append(s.Tests, testengine.TestOutcome{Seq: i + 1, ID: id, PresetID: "wbft-bp4", Status: "pass"})
+	}
+	s.Summary.Pass = 5
+	if verifyPostforkPublicSummary(s) == nil {
+		t.Error("old five-case report omits approved TX019 witness")
+	}
+	s.Tests = append(s.Tests, testengine.TestOutcome{Seq: 6, ID: "secp256r1-precompile-invalid", PresetID: "wbft-bp4", Status: "pass"})
+	s.Summary.Pass = 6
+	if err := verifyPostforkPublicSummary(s); err != nil {
+		t.Fatal("complete six-case report rejected", err)
 	}
 }

@@ -42,24 +42,44 @@
       "save": "govMinterPreBoho"
     },
     {
-      "expect": "rpc",
-      "method": "eth_getCode",
-      "params": [
-        "0x0000000000000000000000000000000000001003",
-        "0x1"
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$govMinterPreBoho"
       ],
-      "compare": "NotEqual",
-      "is": "0x"
+      "pattern": "^0x([0-9a-fA-F]{2})+$",
+      "compare": "Equal",
+      "is": "1"
     },
     {
-      "expect": "rpc",
+      "do": "read",
+      "source": "rpcCall",
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "latest"
       ],
-      "compare": "NotEqual",
-      "is": "$govMinterPreBoho"
+      "save": "govMinterPostBoho"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$govMinterPostBoho"
+      ],
+      "pattern": "^0x([0-9a-fA-F]{2}){50,}$",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$govMinterPostBoho"
+      ],
+      "pattern": "^${govMinterPreBoho}$",
+      "compare": "Equal",
+      "is": "0"
     },
     {
       "expect": "rpc",
@@ -107,5 +127,6 @@
       "compare": "Equal",
       "is": "$preallocPreBoho"
     }
-  ]
+  ],
+  "description": "원문 delayed injection의 v1 코드 존재·v2 코드 길이>100문자·전후 차이를 형식 검증한 동일 capture로 확인한다. fixture는 Boho3/대기6·이전조회1이며 원문의 Boho100/조회101·이전조회0과 구분한다. 기존 P256 활성화·prealloc 보존도 유지한다."
 }

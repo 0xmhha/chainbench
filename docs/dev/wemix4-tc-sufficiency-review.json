@@ -8,8 +8,7 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "confirmed_scope": 85,
-    "conflict": 1,
+    "confirmed_scope": 86,
     "merged": 1
   },
   "records": [
@@ -1400,17 +1399,17 @@
         },
         {
           "path": "cmd/chainbench/postfork_public_native_test.go",
-          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
           "function": "TestWemixPostforkPublicCasesE2E"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
@@ -1496,6 +1495,9 @@
             "compare": "Equal",
             "is": "$fee"
           }
+        },
+        {
+          "analysis": "현행 이관 테스트의 기존 다섯 공개 입력·검증을 유지하고 승인 TX-019를 여섯째로 추가했다. 새 6건 모두 실제 이관 후 통과했고497보존파일·DB0을 독립 확인했다. 과거5건 증거는 당시 소스로 구분한다."
         }
       ],
       "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
@@ -1507,6 +1509,11 @@
         {
           "path": "docs/dev/postfork-public-evidence.json",
           "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        },
+        {
+          "path": "docs/dev/approved-p256-delayed-code-evidence.json",
+          "sha256": "7c74d156cd0cc806717a78d2a8ff404aa694b47183cfd898168803bd7d970f99",
+          "scope": "Six public cases after actual handoff plus separate delayed-code native; approved exact invalid0x and valid-word1 only, not full original acceptance."
         }
       ]
     },
@@ -2285,17 +2292,17 @@
         },
         {
           "path": "cmd/chainbench/postfork_public_native_test.go",
-          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
           "function": "TestWemixPostforkPublicCasesE2E"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
@@ -2313,6 +2320,9 @@
             "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
             "to": "0x0000000000000000000000000000000000000100"
           }
+        },
+        {
+          "analysis": "현행 이관 테스트의 기존 다섯 공개 입력·검증을 유지하고 승인 TX-019를 여섯째로 추가했다. 새 6건 모두 실제 이관 후 통과했고497보존파일·DB0을 독립 확인했다. 과거5건 증거는 당시 소스로 구분한다."
         }
       ],
       "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
@@ -2324,6 +2334,11 @@
         {
           "path": "docs/dev/postfork-public-evidence.json",
           "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        },
+        {
+          "path": "docs/dev/approved-p256-delayed-code-evidence.json",
+          "sha256": "7c74d156cd0cc806717a78d2a8ff404aa694b47183cfd898168803bd7d970f99",
+          "scope": "Six public cases after actual handoff plus separate delayed-code native; approved exact invalid0x and valid-word1 only, not full original acceptance."
         }
       ]
     },
@@ -2583,17 +2598,17 @@
         },
         {
           "path": "cmd/chainbench/postfork_public_native_test.go",
-          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
           "function": "TestWemixPostforkPublicCasesE2E"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
@@ -2654,6 +2669,9 @@
             "timeout": "30s",
             "pollInterval": "1s"
           }
+        },
+        {
+          "analysis": "현행 이관 테스트의 기존 다섯 공개 입력·검증을 유지하고 승인 TX-019를 여섯째로 추가했다. 새 6건 모두 실제 이관 후 통과했고497보존파일·DB0을 독립 확인했다. 과거5건 증거는 당시 소스로 구분한다."
         }
       ],
       "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
@@ -2665,6 +2683,11 @@
         {
           "path": "docs/dev/postfork-public-evidence.json",
           "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        },
+        {
+          "path": "docs/dev/approved-p256-delayed-code-evidence.json",
+          "sha256": "7c74d156cd0cc806717a78d2a8ff404aa694b47183cfd898168803bd7d970f99",
+          "scope": "Six public cases after actual handoff plus separate delayed-code native; approved exact invalid0x and valid-word1 only, not full original acceptance."
         }
       ]
     },
@@ -3029,17 +3052,17 @@
         },
         {
           "path": "cmd/chainbench/postfork_public_native_test.go",
-          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
           "function": "TestWemixPostforkPublicCasesE2E"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
@@ -3055,6 +3078,9 @@
             "timeout": "30s",
             "pollInterval": "1s"
           }
+        },
+        {
+          "analysis": "현행 이관 테스트의 기존 다섯 공개 입력·검증을 유지하고 승인 TX-019를 여섯째로 추가했다. 새 6건 모두 실제 이관 후 통과했고497보존파일·DB0을 독립 확인했다. 과거5건 증거는 당시 소스로 구분한다."
         }
       ],
       "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
@@ -3066,6 +3092,11 @@
         {
           "path": "docs/dev/postfork-public-evidence.json",
           "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        },
+        {
+          "path": "docs/dev/approved-p256-delayed-code-evidence.json",
+          "sha256": "7c74d156cd0cc806717a78d2a8ff404aa694b47183cfd898168803bd7d970f99",
+          "scope": "Six public cases after actual handoff plus separate delayed-code native; approved exact invalid0x and valid-word1 only, not full original acceptance."
         }
       ]
     },
@@ -3649,37 +3680,56 @@
       "id": "TX-019",
       "title": "secp256r1 프리컴파일 무효 서명 검증",
       "criterionSha256": "84a428bb389ab4c6a841b876cbb4a00f1a86bd8e7ad60dbf24306f6614ed9e67",
-      "status": "conflict",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-wbft/accounts/02-secp256r1-precompile-invalid.json",
-          "sha256": "e67b105fda9c653a0e5b7450bb93ee447fc889e8519ae8d9bbaab692e0cdc224",
+          "sha256": "bd6af17ba46f27cf7688b579248d85a471ab4b7d36bd5a7019c242de2a346dd9",
           "id": "secp256r1-precompile-invalid"
+        },
+        {
+          "path": "internal/testhelper/code_p256_checkpoint_semantics_test.go",
+          "sha256": "7b360658999d1daeccb382e1c5e5fe14e20b6d21fe31bb0157a000d7044a367d",
+          "function": "TestPublicInvalidP256RequiresExactEmptyResult"
+        },
+        {
+          "path": "cmd/chainbench/postfork_public_native_test.go",
+          "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
+          "function": "TestWemixPostforkPublicCasesE2E"
         }
       ],
       "observations": [
         {
-          "analysis": "무효 r/s 입력이 word1이 아니라는 NotEqual만 검사"
+          "analysis": "사용자 승인 기준의 정확한 빈 반환값0x. 이전 NotEqual은 zero word·garbage·malformed·null을 잘못 허용했다."
+        },
+        {
+          "analysis": "실제 이관 후 원문 무효입력의 정확한0x와 별도 유효입력의word1을 확인했다. zero word·garbage·malformed·null 거짓통과4건은 공개케이스 반례로 거절했다."
         },
         {
           "path": "tests/tc/go-wbft/accounts/02-secp256r1-precompile-invalid.json",
           "pointer": "/steps/0",
           "statement": {
-            "compare": "NotEqual",
+            "compare": "Equal",
             "data": "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f56db78ca460b055c500064824bed999a25aaf48ebb519ef40f49be5a3fb1549ee6e408c2e9e2b85b02b48a2f4f63f1a53ad77ce3de7b8d7a1d4aac39d82",
             "expect": "call",
-            "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "is": "0x",
             "to": "0x0000000000000000000000000000000000000100"
           }
         }
       ],
-      "semanticAssessment": "conflict",
+      "semanticAssessment": "approved_exact_invalid_empty_plus_valid_success_after_actual_handoff",
       "remainingConditions": [
-        "원문 word0 exact와 현행 empty0x 차이 결정 대기; NotEqual은 임의 garbage도 허용"
+        "승인한 반환값 범위의 실제 검증만 완료했다. 전체원문87·legacy254·Linux358·메인넷 live·최종 Web은 별도 잔여."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "사용자가2026-10-19 승인한 현행 의미: 실제 WEMIX→WBFT Croissant20 이관 후 무효 공개 서명이 정확히0x, 유효 공개 서명이 정확히word1을 반환했다. 네 WBFT successor의 유효/무효 서명 관문도 통과했다. 원문word0 기대와 차이를 명시하며 fullCriterionAccepted=false를 유지한다.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/approved-p256-delayed-code-evidence.json",
+          "sha256": "7c74d156cd0cc806717a78d2a8ff404aa694b47183cfd898168803bd7d970f99",
+          "scope": "Six public cases after actual handoff plus separate delayed-code native; approved exact invalid0x and valid-word1 only, not full original acceptance."
+        }
+      ]
     },
     {
       "id": "TX-020",
@@ -3695,17 +3745,17 @@
         },
         {
           "path": "cmd/chainbench/postfork_public_native_test.go",
-          "sha256": "6dc1a528d970e12aa3dff20a1e349ab98e8b33c9898259df48a9bc8052d98bf4",
+          "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
           "function": "TestWemixPostforkPublicCasesE2E"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkPublicSummaryRejectsAggregateOnly"
         },
         {
           "path": "cmd/chainbench/postfork_public_e2e_test.go",
-          "sha256": "1f192b0bc86c4389944f5006f57da8ccef9e1268aad2746afba93d24375e29f9",
+          "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
           "function": "TestPostforkRecordedSpecPreservesScrubbingAndRejectsChangedInputs"
         }
       ],
@@ -3734,6 +3784,9 @@
             "is": "0x",
             "to": "0x0000000000000000000000000000000000000100"
           }
+        },
+        {
+          "analysis": "현행 이관 테스트의 기존 다섯 공개 입력·검증을 유지하고 승인 TX-019를 여섯째로 추가했다. 새 6건 모두 실제 이관 후 통과했고497보존파일·DB0을 독립 확인했다. 과거5건 증거는 당시 소스로 구분한다."
         }
       ],
       "semanticAssessment": "confirmed_unmodified_public_case_after_actual_handoff",
@@ -3745,6 +3798,11 @@
         {
           "path": "docs/dev/postfork-public-evidence.json",
           "sha256": "813c182383cd38de0fc5032b379ba4f7417c0ed498a4b81164f89b49ebbecf9f"
+        },
+        {
+          "path": "docs/dev/approved-p256-delayed-code-evidence.json",
+          "sha256": "7c74d156cd0cc806717a78d2a8ff404aa694b47183cfd898168803bd7d970f99",
+          "scope": "Six public cases after actual handoff plus separate delayed-code native; approved exact invalid0x and valid-word1 only, not full original acceptance."
         }
       ]
     },
@@ -8848,9 +8906,7 @@
     "W3": "unresolved; latest source reproduction does not prove resolution",
     "W4": "unresolved; original metric requirement retained"
   },
-  "pendingDecisions": [
-    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output."
-  ],
+  "pendingDecisions": [],
   "limitations": [
     "Relevant sources were read, not all 87 freshly executed. Partial records intentionally remain open.",
     "All37 freshly compiled TestWemix functions passed serial native race on source d716e13b8061ef0d19a0f1a78a1ec6b61ed2a95ab26348da656236d8efff2122. Independent outcome identities, GOV004/011 ledgers,37 inactive runtimes and8937 retained files checked. This is not all87/public DSL/Linux/mainnet/legacy/final Web acceptance; W3 remains unresolved.",
@@ -8861,5 +8917,12 @@
   "latestNativeRegressionEvidence": {
     "path": "docs/dev/wemix37-regression-evidence.json",
     "sha256": "ca7aa3a3311e3fca9f92721abe72ccb20dd1317c286d3756b78d8ca2d4c484b3"
-  }
+  },
+  "approvedDecisions": [
+    {
+      "id": "TX-019",
+      "date": "2026-10-19",
+      "decision": "Exact invalid P2560x plus valid-signature word1; original word0 discrepancy preserved. Explicit user approval followed by actual six-case handoff and independent audit."
+    }
+  ]
 }

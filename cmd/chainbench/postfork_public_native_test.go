@@ -61,6 +61,7 @@ func TestWemixPostforkPublicCasesE2E(t *testing.T) {
 		"common/tx/CT-TX-015-insufficient-funds-rejected.json",
 		"common/tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json",
 		"go-wbft/accounts/03-secp256r1-precompile-short-input.json",
+		"go-wbft/accounts/02-secp256r1-precompile-invalid.json",
 	}
 	raws := [][]byte{}
 	originals := []map[string]any{}
@@ -92,7 +93,7 @@ func TestWemixPostforkPublicCasesE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof := map[string]any{"workspace": workspace, "allNodes": state.Nodes, "successors": successors, "declaredCapabilities": caps, "sources": paths, "scope": "Five unmodified public cases on four recorded WBFT successors after WEMIX-to-WBFT Croissant20. Retired WEMIX producer excluded. Not mixed-network capability support, invalid-signature TX019, full87, mainnet, Linux, legacy or final Web."}
+	proof := map[string]any{"workspace": workspace, "allNodes": state.Nodes, "successors": successors, "declaredCapabilities": caps, "sources": paths, "scope": "Six unmodified public cases on four recorded WBFT successors after WEMIX-to-WBFT Croissant20. Retired WEMIX producer excluded. Includes approved TX019 exact empty0x plus valid-signature success; original zero-word discrepancy retained. Not mixed-network capability support, full87, mainnet, Linux, legacy or final Web."}
 	defer func() {
 		b, e := json.MarshalIndent(proof, "", "  ")
 		if e != nil {

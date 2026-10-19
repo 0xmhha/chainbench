@@ -296,12 +296,11 @@ go-stablenet/mixed/02-transfer-across-implementations.json	.steps[8]	from	0xc17d
 go-stablenet/mixed/02-transfer-across-implementations.json	.steps[8]	to	$sender
 go-stablenet/mixed/02-transfer-across-implementations.json	.steps[9]	address	$sender
 go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[1]	params[0]	0x0000000000000000000000000000000000001003
-go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[2]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[3]	params[0]	0x0000000000000000000000000000000000001003
-go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[4]	params[0].to	0x0000000000000000000000000000000000000100
-go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[5]	params[0].to	0x0000000000000000000000000000000000000100
-go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[6]	params[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
-go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[7]	params[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[6]	params[0].to	0x0000000000000000000000000000000000000100
+go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[7]	params[0].to	0x0000000000000000000000000000000000000100
+go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[8]	params[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[9]	params[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 go-stablenet/post-v1.0.0-change/common-all/02-govminter-v2-code.json	.steps[1]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/02-govminter-v2-code.json	.steps[2]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/02-govminter-v2-code.json	.steps[3]	address	0x0000000000000000000000000000000000001003

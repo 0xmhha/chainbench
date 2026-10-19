@@ -1,0 +1,334 @@
+{
+  "date": "2026-10-19",
+  "scope": "Approved TX019 exact empty0x on invalid P256 plus genuine valid-signature word1 after actual WEMIX-to-WBFT handoff; public delayed-fork valid nonempty/minimum-sized/different runtime code, P256 activation and prealloc preservation. Not whole original87/legacy254/Linux358/mainnet/final Web acceptance.",
+  "headAtProof": "104f828cb315fa6cf87551227e688f267c222330",
+  "workingTreeModifiedAtProof": true,
+  "sourceAtNativeProof": "3cf2d55910cd67ce0887b2eb0177320b1af2863301f2f647e1ac047611547ac9",
+  "implementationFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/code_p256_checkpoint_semantics_test.go",
+      "sha256": "7b360658999d1daeccb382e1c5e5fe14e20b6d21fe31bb0157a000d7044a367d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418097827082735
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/delayed_code_native_test.go",
+      "sha256": "cef14f9df085275f6f1cae100b4affa5b4e2c11df381573d56f95f05813f6209",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418342615801483
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/postfork_public_e2e_test.go",
+      "sha256": "913e3b43ae887936a6744ef615b0860a060ad9dedee7409bf3d82e3e8d1b8fda",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418168984722154
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/postfork_public_native_test.go",
+      "sha256": "c712157e3a637e3e240cb680fa1a5ad710dd599a88f6d072aa8610242ab7c711",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418168985028033
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json",
+      "sha256": "21b0d5def7d233814986f33a6eb0e2eab7f02cfedae8f6cc4728d5d4df8f8b29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418168984349858
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-wbft/accounts/02-secp256r1-precompile-invalid.json",
+      "sha256": "bd6af17ba46f27cf7688b579248d85a471ab4b7d36bd5a7019c242de2a346dd9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418168983840809
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "cfff167f7eb8414d4b67b9240393dd5c45460c217af80ddb08f330b959337598",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792418499777185574
+    }
+  ],
+  "semanticRed": {
+    "falsePasses": 13,
+    "tests": {
+      "p256": 4,
+      "delayedCode": 9
+    },
+    "firstDelayedFixturePreparationFailurePreserved": true,
+    "postforkOmittedWitnessRed": true,
+    "totalSemanticFixtures": 17
+  },
+  "unitAndFullCheckLogs": [
+    {
+      "path": "/private/tmp/chainbench-code-p256-semantic-red-20261019.log",
+      "sha256": "9c392014a5707736b0eeb69b471ac4d7834a34d69c9b742df7625397387b65c7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418081139188170
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-semantic-red-v2-20261019.log",
+      "sha256": "b9487629c128ebd6832c8f53d708cc1677e22ba1889a238afff15d868e4769c5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418101285194347
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-green-20261019.log",
+      "sha256": "f8a2dacb493328fb199cb91a9a316a696a7d806fb218330778b4aff18e62693a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418171261443938
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-related-race-20261019.log",
+      "sha256": "7981236b9b126a6b8c92e1f1007bcf5ac61b2d19e8499a2042d01be2f2ef3a5e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418252775207820
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-six-red-20261019.log",
+      "sha256": "34de96431f51ae91e29843e504496159214daa8660288f62dfd32e8ac23002a8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418143294653289
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-six-green-20261019.log",
+      "sha256": "ef346bcb255d50ef69b87a44c4e7c1ebf61dbe5648a3130d8140a50fb8ce5890",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418201038821725
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-make-check-20261019.log",
+      "sha256": "e1ce4f01b4a18944800982ad118a1ffd05763af3396a1a5874be2fc37e715ea9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418470767951770
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-corpus-update-20261019.log",
+      "sha256": "56a6543b752ad270c06b9bc6eccd74c907938da54ba5966520be01aef1e0436e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418499779484231
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-make-check-v2-20261019.log",
+      "sha256": "d53cfe123242bd2dffae73cdc33d11c0a41fca2743bbbce09f24d37e412f9116",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418650875319075
+    }
+  ],
+  "originalDifferences": {
+    "TX-019": {
+      "approvedByUser": "2026-10-19",
+      "original": "invalid signature expects32-byte zero word",
+      "accepted": "exact invalid0x plus valid-signature exact word1 and explicit discrepancy"
+    },
+    "delayedFork": {
+      "original": "Boho100/post101/history0; nonempty pre, post string length>100 and changed",
+      "fixture": "Boho3/wait6/history1; valid hex pre, at least50-byte post and capture-bound difference; existing P256/prealloc preserved",
+      "originalTimingConfigurationAccepted": false
+    }
+  },
+  "native": {
+    "actualProofPassed": true,
+    "sourceBefore": "3cf2d55910cd67ce0887b2eb0177320b1af2863301f2f647e1ac047611547ac9",
+    "sourceAfter": "3cf2d55910cd67ce0887b2eb0177320b1af2863301f2f647e1ac047611547ac9",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "results": [
+      {
+        "name": "delayed",
+        "test": "TestNativeDelayedForkCodeCheckpoint",
+        "exitCode": 0,
+        "passed": true,
+        "runtimes": [
+          "/private/tmp/cbui/txfail-5lxpge4p"
+        ],
+        "eventLog": {
+          "path": "/private/tmp/chainbench-code-p256-native-20261019-delayed-events.jsonl",
+          "sha256": "15ba2c553e34d3b1cefd55159db84b122378507e411f05852ff3f82ae566ed0f",
+          "bytes": 1263,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792418854159586509
+        },
+        "stderr": {
+          "path": "/private/tmp/chainbench-code-p256-native-20261019-delayed-stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792418800652077101
+        }
+      },
+      {
+        "name": "postfork",
+        "test": "TestWemixPostforkPublicCasesE2E",
+        "exitCode": 0,
+        "passed": true,
+        "runtimes": [
+          "/private/tmp/cbui/hf-w4yc3ijz"
+        ],
+        "eventLog": {
+          "path": "/private/tmp/chainbench-code-p256-native-20261019-postfork-events.jsonl",
+          "sha256": "06f44137a9e8efba60d3ca078e845a691a850127782f3dc67a532a28d10e25ec",
+          "bytes": 1183,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792418934070970613
+        },
+        "stderr": {
+          "path": "/private/tmp/chainbench-code-p256-native-20261019-postfork-stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792418854804423739
+        }
+      }
+    ],
+    "elapsedSeconds": 136.128968000412,
+    "freeBytesAfter": 21976178688,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "accepted": true,
+    "sourceDigest": "3cf2d55910cd67ce0887b2eb0177320b1af2863301f2f647e1ac047611547ac9",
+    "actualRuntimes": [
+      "/private/tmp/cbui/txfail-5lxpge4p",
+      "/private/tmp/cbui/hf-w4yc3ijz"
+    ],
+    "delayedPublicCases": 1,
+    "delayedAssertions": 6,
+    "postforkPublicCases": 6,
+    "postforkIds": [
+      "fee-delegated-transfer",
+      "secp256r1-precompile-valid",
+      "insufficient-funds-rejected",
+      "fd-feepayer-sig-invalid-rejected",
+      "secp256r1-precompile-short-input",
+      "secp256r1-precompile-invalid"
+    ],
+    "codeSamplesIndependentlyHashed": 8,
+    "nativeInputAndSharedKeysUnchanged": true,
+    "sourceUnchanged": true,
+    "retainedFiles": 497,
+    "closedRuntimes": [
+      {
+        "runtime": "/private/tmp/cbui/txfail-5lxpge4p",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/hf-w4yc3ijz",
+        "reclaimedDatabases": 12,
+        "remainingDatabases": 0
+      }
+    ],
+    "freshInventories": [
+      {
+        "index": 1,
+        "processes": 495,
+        "openNames": 11608,
+        "allInactive": true
+      },
+      {
+        "index": 2,
+        "processes": 495,
+        "openNames": 11608,
+        "allInactive": true
+      },
+      {
+        "index": 3,
+        "processes": 495,
+        "openNames": 11608,
+        "allInactive": true
+      }
+    ],
+    "independentControlsRejected": [
+      "empty post code",
+      "forged code bytes",
+      "P256 activation missing",
+      "prealloc changed",
+      "TX019 omitted",
+      "hidden skip",
+      "wrong identity"
+    ],
+    "originalTX019Difference": "User approved exact invalid0x instead of original word0; valid-signature counterpart word1 confirmed.",
+    "originalDelayedFixtureDifference": "Boho3/wait6/history1 instead of original100/101/history0; behavior predicate scope only.",
+    "fullLegacyAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-code-p256-native-20261019-start.json",
+      "sha256": "5df952b149eb59cb3fe317c1324081439a22c442d3a0962302ab674be430ce0f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418800344606188
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-native-20261019-summary.json",
+      "sha256": "a33b7dbfc5f8c8f763f6fdf444a4bca5cfab38c0b4b54893e2a76942c7253c89",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418936473660477
+    },
+    {
+      "path": "/private/tmp/chainbench-code-p256-native-20261019-independent.json",
+      "sha256": "782968e2ac90650453a91f14479a18e74e8136b13f9b87992c89a9e119718d05",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792418946846610502
+    }
+  ],
+  "actualPublicCases": 7,
+  "publicAssertions": 21,
+  "preparationHandoffCaseSeparate": true,
+  "remainingConditions": [
+    "Whole original87/legacy254 sufficiency, full358 Linux L1, mainnet RPC/WS inputs and final Web14 remain open.",
+    "W3/W4 and earlier StableNet faults are unresolved. This diagnostic does not alter external chain source."
+  ],
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false
+}
