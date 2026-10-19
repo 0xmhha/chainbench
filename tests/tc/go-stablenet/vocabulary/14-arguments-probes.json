@@ -40,6 +40,50 @@
   },
   "steps": [
     {
+      "expect": "remoteBalance",
+      "address": "node1",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "rpcHealth",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "chainInfo",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "remoteBalance",
+      "address": "node1",
+      "on": "en2"
+    },
+    {
+      "expect": "rpcHealth",
+      "on": "en2"
+    },
+    {
+      "expect": "chainInfo",
+      "on": "en2"
+    },
+    {
       "do": "read",
       "source": "gasPrice",
       "on": "bp1",

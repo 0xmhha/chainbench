@@ -190,7 +190,7 @@ var editorRequired = map[string][]string{
 	"sendRawTampered": {"which"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
 	"partition": {"groups"},
 	"faucet":    {"to", "amount"}, "registerContract": {"to", "data"}, "metric": {"name"},
-	"balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},
+	"remoteBalance": {"address"}, "balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},
 	"txStatus": {"hash"}, "receiptLog": {"hash"}, "txMined": {"hash"}, "rpcCall": {"method"}, "rpcError": {"method", "reason"}, "methodPresent": {"method"}, "derive": {"op"}, "wsCollected": {"sub"},
 }
 

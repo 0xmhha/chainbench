@@ -109,6 +109,9 @@ func Register(r interp.Registry) {
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	r.RegisterAssertion(assertCallError, callErrorAssertion{})
 	r.RegisterAssertion(assertMethodPresent, methodPresentAssertion{})
+	r.RegisterAssertion("rpcHealth", rpcHealthAssertion{})
+	r.RegisterAssertion("remoteBalance", remoteBalanceAssertion{})
+	r.RegisterAssertion("chainInfo", chainInfoAssertion{})
 	r.RegisterAssertion(assertRPCError, rpcErrorAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)

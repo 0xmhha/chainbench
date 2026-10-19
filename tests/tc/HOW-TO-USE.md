@@ -252,7 +252,7 @@ python3 scripts/gen-case-commands.py --write
 
 <!-- BEGIN generated: scripts/gen-case-commands.py -->
 
-케이스 **216건**이다. 각 케이스에 두 갈래를 적는다 — `bin/chainbench` 로 한 건만 돌리는 것과, `scripts/tcsweep.sh` 로 같은 한 건을 돌리는 것이다. 스크립트 쪽은 망을 세우고 내리고 지우는 것까지 하고 판정 한 줄을 남긴다.
+케이스 **220건**이다. 각 케이스에 두 갈래를 적는다 — `bin/chainbench` 로 한 건만 돌리는 것과, `scripts/tcsweep.sh` 로 같은 한 건을 돌리는 것이다. 스크립트 쪽은 망을 세우고 내리고 지우는 것까지 하고 판정 한 줄을 남긴다.
 
 ### `basic` — 2건
 
@@ -1789,7 +1789,7 @@ bin/chainbench run tests/tc/go-stablenet/regression/wbft/14-stablenet-gastip-fie
 scripts/tcsweep.sh ~/cbw/one.log '14-stablenet-gastip-field'
 ```
 
-### `go-stablenet/testnet` — 5건
+### `go-stablenet/testnet` — 9건
 
 **01-chain-identity.json** · `testnet-chain-identity`
 ```sh
@@ -1818,6 +1818,30 @@ GSTABLE_TESTNET_RPC=<값> bin/chainbench run tests/tc/go-stablenet/testnet/04-bl
 **05-value-transfer.json** · `testnet-value-transfer`
 ```sh
 GSTABLE_TESTNET_KEY_FILE=<값> GSTABLE_TESTNET_RPC=<값> bin/chainbench run tests/tc/go-stablenet/testnet/05-value-transfer.json
+```
+> 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
+
+**06-remote-balance-query.json** · `remote-balance-query`
+```sh
+GSTABLE_TESTNET_RPC=<값> bin/chainbench run tests/tc/go-stablenet/testnet/06-remote-balance-query.json
+```
+> 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
+
+**07-remote-chain-info.json** · `remote-chain-info`
+```sh
+GSTABLE_TESTNET_RPC=<값> bin/chainbench run tests/tc/go-stablenet/testnet/07-remote-chain-info.json
+```
+> 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
+
+**08-remote-rpc-health.json** · `remote-rpc-health`
+```sh
+GSTABLE_TESTNET_RPC=<값> bin/chainbench run tests/tc/go-stablenet/testnet/08-remote-rpc-health.json
+```
+> 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
+
+**09-remote-unlocked-transfer.json** · `remote-unlocked-transfer`
+```sh
+GSTABLE_TESTNET_RPC=<값> bin/chainbench run tests/tc/go-stablenet/testnet/09-remote-unlocked-transfer.json
 ```
 > 이미 떠 있는 망에 붙는다. 망을 세우지 않으므로 `--workspace-dir` 도 `--binary` 도 주지 않는다. `tcsweep.sh` 는 이 갈래를 자기가 세운 망에 붙여 돌린다.
 

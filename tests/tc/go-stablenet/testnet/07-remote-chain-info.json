@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "remote-chain-info",
+  "description": "Legacy remote/chain-info: positive chain ID, false or valid sync progress, positive initial height and nondecreasing height after five seconds. This permits an unchanged head; existing advancing-block case remains separate.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-testnet",
+  "steps": [
+    {
+      "expect": "chainInfo"
+    }
+  ]
+}

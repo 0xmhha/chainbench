@@ -277,3 +277,12 @@ wemix4 84개는 `docs/dev/wemix4-port-tracker.md` (2026-09-24 삭제) 가 대응
 원문 ABI51bytes와 현재7bytes runtime/토폴로지 차이는 남으며, 과거 원시 증명3개가 없다는 관측은
 새 증명으로 복구됐다고 표시하지 않는다. 과거 표의254개 전체 상태와 개수는 재인수하지 않았다.
 [원문·새 실제 증명·보존과 한계](../legacy-access-list-reconciliation-evidence.json).
+
+
+## 2026-10-20 후속 — remote 네 행의 현행 소비자
+
+위 역사 표의 네 remote 행은 attach 기능의 존재만 연결했다. 현재는 공개 testnet06–09가
+잔액·5초 체인 정보·선택 RPC 분류·eth_sendTransaction1wei의 서로 다른 명제를 수행한다.
+생성한 로컬 망에서 공개4건11단언과 별도 서명/영수증/블록/nonce 대조를 통과했다.
+공용 실제 망·계정 준비와 전체254개 동등성 인수는 별도 잔여다.
+[실제 범위·원문 차이](../legacy-remote-predicates-evidence.json).

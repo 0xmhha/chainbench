@@ -1,0 +1,373 @@
+{
+  "date": "2026-10-20",
+  "status": "public_remote_predicates_verified_on_owned_attach_fixture",
+  "scope": "Four recovered remote scripts now have four public attach cases. Three shared assertions retain strict arbitrary-address balance, valid sync/positive ID/five-second non-regression, and explicit optional RPC method support. Actual node-managed1wei transaction uses eth_sendTransaction; existing local-signer05 and blockAdvance02 remain separate. Owned fixture only, not actual external testnet acceptance.",
+  "sourceAtNativeProof": "3544bb2ec85e67408c5c501454f5c70c89c0e8f67bb857b5d9e45e47480b92b0",
+  "headAtProof": "bfeb20f5d0321c6fdafb2bdfc99beabd570096a4",
+  "workingTreeModifiedAtProof": true,
+  "implementationFiles": [
+    "docs/dev/architecture/package-tree.md",
+    "internal/testhelper/arguments.go",
+    "internal/testhelper/builtins.go",
+    "internal/testhelper/editor_contract.go",
+    "internal/testhelper/testdata/corpus-addresses.golden",
+    "tests/tc/HOW-TO-USE.md",
+    "tests/tc/go-stablenet/testnet/README.md",
+    "tests/tc/go-stablenet/vocabulary/14-arguments-probes.json",
+    "internal/testengine/legacy_remote_native_test.go",
+    "internal/testhelper/remote_observation.go",
+    "internal/testhelper/remote_observation_test.go",
+    "tests/tc/go-stablenet/testnet/06-remote-balance-query.json",
+    "tests/tc/go-stablenet/testnet/07-remote-chain-info.json",
+    "tests/tc/go-stablenet/testnet/08-remote-rpc-health.json",
+    "tests/tc/go-stablenet/testnet/09-remote-unlocked-transfer.json"
+  ],
+  "originalInputs": [
+    {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/remote/balance-check.sh",
+      "sha256": "9852650abebe56d2649d8c1b13ae08f9b03fba5a03d3b81653298f5f09d5a2ee",
+      "bytes": 2153,
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792088397247946031
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/remote/chain-info.sh",
+      "sha256": "0fe956b7b93c85fdf73d63fda7210045f77c464eec5189c4133cfa8f357bcc64",
+      "bytes": 1816,
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792088397248098193
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/remote/rpc-health.sh",
+      "sha256": "bb0c5c98fd1d4de01be01673b815e6c623132680a3358bc869554d83ce224bbf",
+      "bytes": 2502,
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792088397248472680
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/remote/tx-send.sh",
+      "sha256": "8c13db2b54e4243dde5a418bd59d37d27fc53cd8f69005014f1e5868c09acc48",
+      "bytes": 2627,
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792088397248653257
+    }
+  ],
+  "testLogs": [
+    {
+      "path": "/private/tmp/chainbench-remote-observation-red-20261020.log",
+      "sha256": "eda6635172b787909c309041e7f339800c4b8cfe2d4cc5e84f6018c513e0a5ab",
+      "bytes": 3440,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429713925185442
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-observation-green-20261020.log",
+      "sha256": "83e8973ca6695b0385819cb00c172b2e593745c8fd32ad097e445949e7ab6586",
+      "bytes": 62,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429776688302122
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-balance-red-20261020.log",
+      "sha256": "55de3e185691d42b7113b37547e950c8e29215c08c2cbdc1e44bd914c45be062",
+      "bytes": 1016,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430084014499418
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-balance-green-20261020.log",
+      "sha256": "adebe4a9cf3e9b2c802779ab3960f40ed98d1eac0cb41ce8047671c784a4866b",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430126321015953
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-public-contract-20261020.log",
+      "sha256": "e8789bedb6cd8e4d9f63a7a8f920ec4efee4e332a5a1cbb402c9b972dec84068",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792429879335274102
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-related-race-20261020.log",
+      "sha256": "63ad052e4b0d63b8e38ec8d133dc4cbe021cb4689aa2f4220c937a220ef0e0d1",
+      "bytes": 1730,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430146451776937
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-related-race-v2-20261020.log",
+      "sha256": "1c72d69f4973b39bcc5f04b804d4cfc2d8a58623a43dac78a971aa48c69d8bfe",
+      "bytes": 1107,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430298832207141
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-related-race-v3-20261020.log",
+      "sha256": "a6feca66788498b379c26ac150ee9611d06b1d5c0c6bbefd1d61721ee810af7e",
+      "bytes": 475,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430450874423736
+    },
+    {
+      "path": "/private/tmp/chainbench-remote-make-check-20261020.log",
+      "sha256": "ebdf1e6b1e6c0bdf62e508fe4acd33c64840c633fad46265b5359929f2fbea84",
+      "bytes": 8595,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430722764280566
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-independent-20261020.log",
+      "sha256": "3c52ae0233514f8e26b5972260377029cab4b1f6e998c911080b10f48f287b54",
+      "bytes": 450,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430803119337409
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-independent-v2-20261020.log",
+      "sha256": "b4a53e26d6e87ab2b96ed7166cc57222d56c9f40ddf64a198226d8a71bb5f3cc",
+      "bytes": 1836,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430834526081729
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-crypto-build-20261020.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430535074978134
+    }
+  ],
+  "native": {
+    "exitCode": 0,
+    "actualProofPassed": true,
+    "sourceBefore": "3544bb2ec85e67408c5c501454f5c70c89c0e8f67bb857b5d9e45e47480b92b0",
+    "sourceAfter": "3544bb2ec85e67408c5c501454f5c70c89c0e8f67bb857b5d9e45e47480b92b0",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "runtimes": [
+      "/private/tmp/cbui/txfail-z60moalf"
+    ],
+    "runtimeCount": 1,
+    "testPasses": [
+      "TestNativeLegacyRemotePredicates"
+    ],
+    "testFailures": [],
+    "testSkips": [],
+    "eventLog": {
+      "path": "/private/tmp/chainbench-legacy-remote-native-20261020-events.jsonl",
+      "sha256": "8f5dee46dc22d3deb912ec48be47f9f1debd1bc04995030b43f13263e5f66cd7",
+      "bytes": 1474,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430786383027168
+    },
+    "stderr": {
+      "path": "/private/tmp/chainbench-legacy-remote-native-20261020-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430756058263594
+    },
+    "elapsedSeconds": 31.775599002838135,
+    "freeBytesAfter": 23088209920,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "acceptedPreservationScope": true,
+    "acceptedOwnedRemotePredicates": true,
+    "sourceDigest": "3544bb2ec85e67408c5c501454f5c70c89c0e8f67bb857b5d9e45e47480b92b0",
+    "partial": false,
+    "outcomes": [
+      {
+        "hash": "0xac4fbd61181ae9b059a3b2511c8d87907556deda5cb880ca837419cf06983f6d",
+        "sender": "0x68ef52d2dac534ebc0dd0608bbca0014a4facda9",
+        "recipient": "0xc49e8de8d37a6502d57f96e58b1aaa988714a25b",
+        "assertions": 11,
+        "observationMillis": 5002,
+        "heightBefore": "0x10",
+        "heightAfter": "0x15",
+        "actualNodeManagedSigningVerified": true
+      }
+    ],
+    "retainedFiles": 259,
+    "closedRuntimes": [
+      {
+        "runtime": "/private/tmp/cbui/txfail-z60moalf",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      }
+    ],
+    "freshInventories": [
+      {
+        "attempt": 1,
+        "processes": 468,
+        "openedNames": 10612,
+        "allInactive": true
+      },
+      {
+        "attempt": 2,
+        "processes": 467,
+        "openedNames": 10612,
+        "allInactive": true
+      },
+      {
+        "attempt": 3,
+        "processes": 467,
+        "openedNames": 10612,
+        "allInactive": true
+      }
+    ],
+    "independentControlsRejected": [
+      "short observation",
+      "height regression",
+      "bad sync response",
+      "wrong query address",
+      "internal error disguised as unsupported",
+      "wrong signed sender",
+      "wrong value",
+      "different receipt block",
+      "forged nonce",
+      "testnet overclaim"
+    ],
+    "cryptoInputs": [
+      {
+        "path": "/private/tmp/chainbench-legacy-remote-crypto-20261020.go",
+        "sha256": "5e221a0c10491ee6498023621ab20e238da392910f339076c7be01dc9ba5b88a",
+        "bytes": 885,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792430535071949877
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-remote-crypto-20261020",
+        "sha256": "38ae667d5e172457cfa562f0b8155085df1f2daaca0c35e8e46ef0be6598f82e",
+        "bytes": 6331602,
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1792430537132773359
+      }
+    ],
+    "freeBytesAfterAudit": 23084998656,
+    "remainingDatabases": 0,
+    "actualTestnetAccepted": false,
+    "fullLegacyAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-native-20261020-start.json",
+      "sha256": "d2696bc97bb5de7a31dfb514950697da0fbff651516a8e95f9e7abcdcb259c9b",
+      "bytes": 49831,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430756058112886
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-native-20261020-summary.json",
+      "sha256": "04527a184130e347735752a4a7d6d87eb6a4b7cc88e8e3bedabbcfa52b7bb727",
+      "bytes": 1189,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430787833623517
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-native-20261020-independent.json",
+      "sha256": "d5b4f3917e6444930bd4c4c0f6f08d35ebb501131cfec8e3f51395ebd0982095",
+      "bytes": 82997,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430834525805604
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-remote-native-build-20261020.json",
+      "sha256": "b90d1c0bb75de6c8ebb69b5421ecd352f668631d9707752f241766f4f78897c2",
+      "bytes": 380,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792430586805231053
+    }
+  ],
+  "baselineReview": {
+    "existingPositions": 1164,
+    "oldStatementPrefixShift": 6,
+    "oldStatementsAndResolvedAddressesUnchanged": true,
+    "newPositions": [
+      "go-stablenet/testnet/06-remote-balance-query.json\t.steps[0]\taddress\t$queryAddress",
+      "go-stablenet/testnet/09-remote-unlocked-transfer.json\t.steps[0]\taddress\t$remoteSender",
+      "go-stablenet/testnet/09-remote-unlocked-transfer.json\t.steps[10]\taddress\t$remoteSender",
+      "go-stablenet/testnet/09-remote-unlocked-transfer.json\t.steps[1]\taddress\t$remoteRecipient",
+      "go-stablenet/testnet/09-remote-unlocked-transfer.json\t.steps[2]\taddress\t$remoteSender",
+      "go-stablenet/vocabulary/14-arguments-probes.json\t.steps[0]\taddress\t0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "go-stablenet/vocabulary/14-arguments-probes.json\t.steps[3]\taddress\t0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+    ],
+    "baselineSha256": "bbba9c11a445553324fc216f5b7bc877df55b69e58f6715a00a2288113e38ca5"
+  },
+  "preparationAndAuditFailures": {
+    "firstRelated": "Address corpus changed and source was being completed during the first check; it is not accepted as a fixed-source regression.",
+    "secondRelated": "Web field-coverage guard correctly rejected missing single-target on examples. Added on examples alongside onEach and reran all related packages on fixed3544.",
+    "firstFlatBaselineAudit": "Rejected shifted statement indices; separately proved all original statements and1164 address meanings unchanged after the six-statement prefix and reviewed seven additions.",
+    "firstAST": "Missing durable parser metadata on PYTHONPATH; failed output preserved, no parser/source was replaced. Correct pinned durable path and21 parser contracts passed.",
+    "firstIndependent": "Assumed nonceAt single-target result was a node-keyed object; documented existing scalar contract in read.go is used by v2, with forged-nonce negative control. No producer rerun or witness edits."
+  },
+  "retention": {
+    "files": 259,
+    "reclaimedDatabases": 8,
+    "remainingDatabases": 0
+  },
+  "behaviorDifferences": [
+    "Generic balanceAt remains node-authoritative; separate remoteBalance validates the resolved20-byte address before RPC.",
+    "Optional RPC absence is only typed-32601; permission/internal/transport/malformed responses fail rather than being skipped.",
+    "Missing sender/recipient configuration fails instead of counting an unexecuted transaction as a passed skip.",
+    "Owned generated BP4/EOAs and explicit import/unlock differ from original external endpoint. External endpoint/key inputs remain pending.",
+    "New Web vocabulary examples are unit/contract verified; fresh native browser WEB-05 remains part of final fourteen acceptance."
+  ],
+  "actualTestnetAccepted": false,
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false
+}
