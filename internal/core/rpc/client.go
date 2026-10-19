@@ -48,8 +48,9 @@ type rpcRequest struct {
 }
 
 type rpcError struct {
-	Code    *int    `json:"code"`
-	Message *string `json:"message"`
+	Code    *int            `json:"code"`
+	Message *string         `json:"message"`
+	Data    json.RawMessage `json:"data"`
 }
 
 // ServerError is a JSON-RPC error the node answered with, as opposed to a
@@ -59,6 +60,8 @@ type ServerError struct {
 	Method  string
 	Code    int
 	Message string
+	// Data preserves the optional JSON-RPC error payload without flattening its type.
+	Data json.RawMessage `json:",omitempty"`
 }
 
 // Error keeps the text callers matched on before the type existed.
@@ -115,7 +118,7 @@ func (c *Client) Call(ctx context.Context, method string, out any, params ...any
 		if rr.Error.Code == nil || rr.Error.Message == nil {
 			return fmt.Errorf("rpc: %s: response error requires code and message", method)
 		}
-		return &ServerError{Method: method, Code: *rr.Error.Code, Message: *rr.Error.Message}
+		return &ServerError{Method: method, Code: *rr.Error.Code, Message: *rr.Error.Message, Data: rr.Error.Data}
 	}
 	if len(rr.Result) == 0 {
 		return fmt.Errorf("rpc: %s: response contains neither result nor error", method)

@@ -60,8 +60,9 @@ func SubscribeWithHeaders(ctx context.Context, wsURL string, headers http.Header
 		ID      int    `json:"id"`
 		Result  string `json:"result"`
 		Error   *struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
+			Code    int             `json:"code"`
+			Message string          `json:"message"`
+			Data    json.RawMessage `json:"data"`
 		} `json:"error"`
 	}
 	if err := conn.ReadJSON(&resp); err != nil {
@@ -74,7 +75,7 @@ func SubscribeWithHeaders(ctx context.Context, wsURL string, headers http.Header
 	}
 	if resp.Error != nil {
 		_ = sub.Close()
-		return nil, fmt.Errorf("rpc: eth_subscribe rejected: %w", &ServerError{Method: "eth_subscribe", Code: resp.Error.Code, Message: resp.Error.Message})
+		return nil, fmt.Errorf("rpc: eth_subscribe rejected: %w", &ServerError{Method: "eth_subscribe", Code: resp.Error.Code, Message: resp.Error.Message, Data: resp.Error.Data})
 	}
 	if resp.Result == "" {
 		_ = sub.Close()

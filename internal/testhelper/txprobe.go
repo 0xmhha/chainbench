@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -390,6 +391,7 @@ func (callErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 // rpcErrorAssertion passes when the node answers a JSON-RPC call with an error
 // that contains reason (case-insensitive). Args: method, reason (both
 // required), params (optional array; node labels resolve to addresses), on.
+// Optional errorData requires an exact 0x-hex error payload as well as the reason.
 //
 // A value, another reason, or a method the node lacks fails it. A request that
 // never got an answer is returned as an error: it says nothing about what the
@@ -409,6 +411,20 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 		return res, err
 	}
 	res.Expected = method + " fails with an error containing " + strconvQuote(reason)
+	var expectedData string
+	_, exactData := ac.Spec["errorData"]
+	if exactData {
+		var ok bool
+		expectedData, ok = ac.Spec["errorData"].(string)
+		_, decodeErr := hex.DecodeString(strings.TrimPrefix(expectedData, "0x"))
+		if !ok || !strings.HasPrefix(expectedData, "0x") || decodeErr != nil {
+			err := fmt.Errorf("dsl: %s errorData must be 0x-prefixed whole hex bytes", assertRPCError)
+			res.Actual = err.Error()
+			return res, err
+		}
+		res.Expected = fmt.Sprint(res.Expected) + " and exact error data " + expectedData
+	}
+
 	spec, err := resolveNamedArgs(ac.Deps, ac.Spec)
 	if err != nil {
 		res.Actual = err.Error()
@@ -445,6 +461,14 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 	if isMethodNotFound(se) {
 		res.Source = method + " is not a registered method"
 		return res, nil
+	}
+	if exactData {
+		res.Actual = map[string]any{"code": se.Code, "message": se.Message, "data": se.Data}
+		var actualData string
+		if err := json.Unmarshal(se.Data, &actualData); err != nil || !strings.EqualFold(actualData, expectedData) {
+			res.Source = method + " returned different, missing or non-string error data"
+			return res, nil
+		}
 	}
 	if method == "eth_sendTransaction" || method == "eth_sendRawTransaction" {
 		if err := checkSubmitRejected("", callErr, &interp.ActionCtx{Args: map[string]any{"reason": reason}}); err != nil {

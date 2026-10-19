@@ -67,7 +67,7 @@ var builtinArguments = map[string]string{
 	"assertion:peerCount":                "compare delta expected on onEach tol",
 	"assertion:receiptLog":               "address compare delta expected hash index on onEach select tol topic topic0",
 	"assertion:rpcCall":                  "compare delta expected method on onEach params select tol",
-	"assertion:rpcError":                 "method on params reason",
+	"assertion:rpcError":                 "errorData method on params reason",
 	"assertion:sameBlockHash":            "block on onEach",
 	"assertion:txMined":                  "expected hash on",
 	"assertion:txStatus":                 "compare delta expected hash on onEach tol",

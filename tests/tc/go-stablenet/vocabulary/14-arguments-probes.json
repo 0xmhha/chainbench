@@ -511,6 +511,20 @@
         "$suffixWait"
       ],
       "is": "0"
+    },
+    {
+      "expect": "rpcError",
+      "on": "node1",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "$reverter",
+          "data": "0x"
+        },
+        "latest"
+      ],
+      "reason": "execution reverted",
+      "errorData": "0x"
     }
   ]
 }

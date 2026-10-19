@@ -189,7 +189,7 @@ var editorRequired = map[string][]string{
 	"partition": {"groups"},
 	"faucet":    {"to", "amount"}, "registerContract": {"to", "data"}, "metric": {"name"},
 	"balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},
-	"txStatus": {"hash"}, "receiptLog": {"hash"}, "txMined": {"hash"}, "rpcCall": {"method"}, "rpcError": {"method"}, "methodPresent": {"method"}, "derive": {"op"}, "wsCollected": {"sub"},
+	"txStatus": {"hash"}, "receiptLog": {"hash"}, "txMined": {"hash"}, "rpcCall": {"method"}, "rpcError": {"method", "reason"}, "methodPresent": {"method"}, "derive": {"op"}, "wsCollected": {"sub"},
 }
 
 func editorParameter(field string) map[string]any {
@@ -198,6 +198,8 @@ func editorParameter(field string) map[string]any {
 		s["format"] = "duration"
 	}
 	switch field {
+	case "errorData":
+		return map[string]any{"type": "string", "pattern": `^(?:0x(?:[0-9a-fA-F]{2})*|\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\}))$`, "description": "Exact JSON-RPC error data bytes, or a saved binding. Missing or structured data does not match a byte string."}
 	case "feePayer":
 		return map[string]any{"type": "string", "minLength": 1, "description": "Declared local account that signs and pays transaction fees."}
 	case "key", "feePayerKey", "senderKey", "authorityKey":
