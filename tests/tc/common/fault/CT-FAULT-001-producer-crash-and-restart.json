@@ -44,7 +44,7 @@
       "do": "waitBlock",
       "on": "node1",
       "target": "$crashProgressTarget",
-      "timeout": "180s"
+      "timeout": "60s"
     },
     {
       "do": "read",
@@ -83,13 +83,16 @@
       "save": "caughtMinimum"
     },
     {
-      "do": "waitFor",
-      "source": "blockNumber",
-      "on": "node3",
-      "compare": "GreaterOrEqual",
-      "expected": "$caughtMinimum",
-      "timeout": "300s",
-      "pollInterval": "2s"
+      "expect": "blockLag",
+      "maxLag": "2",
+      "timeout": "90s",
+      "pollInterval": "2s",
+      "onEach": [
+        "node1",
+        "node2",
+        "node3",
+        "node4"
+      ]
     },
     {
       "do": "read",

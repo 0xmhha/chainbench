@@ -42,6 +42,7 @@ const (
 	assertTxStatus         = "txStatus"
 	assertReceiptLog       = "receiptLog"
 	assertBlockAdvance     = "blockAdvance"
+	assertBlockLag         = "blockLag"
 	assertBlockStalled     = "blockStalled"
 	assertSameBlockHash    = "sameBlockHash"
 	assertBaseFee          = "baseFee"
@@ -100,6 +101,7 @@ func Register(r interp.Registry) {
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
+	r.RegisterAssertion(assertBlockLag, blockLagAssertion{})
 	r.RegisterAssertion(assertBlockStalled, blockStalledAssertion{})
 	r.RegisterAssertion(assertBlockHalt, blockHaltAssertion{})
 	r.RegisterAssertion(assertBlockInterval, blockIntervalAssertion{})

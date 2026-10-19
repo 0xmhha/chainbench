@@ -113,6 +113,7 @@ func TestUnsignedControlsRejectExplicitInvalidValuesBeforeBuiltinIO(t *testing.T
 		{"action", "load", "blocks", true},
 		{"action", "load", "fillPercent", true},
 		{"action", "readNodeLog", "maxBytes", true},
+		{"assertion", "blockLag", "maxLag", false},
 		{"assertion", "blockHalt", "maxAdvance", false},
 		{"assertion", "blockInterval", "blocks", true},
 		{"assertion", "blockInterval", "maxSeconds", false},

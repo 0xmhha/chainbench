@@ -145,6 +145,8 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 			parameterSchema["anyOf"] = []any{rawOnly, map[string]any{"title": "Build with keys", "required": []string{"senderKey", "feePayerKey", "to"}, "not": map[string]any{"required": []string{"raw"}}}}
 		case actionDeployContract:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data")
+		case assertBlockLag:
+			props["reference"] = map[string]any{"type": "string", "minLength": 1, "x-suggestions": "nodes", "description": "Node selector read again on every poll. Targets may be ahead of it; omit to compare all selected heads by spread."}
 		case assertContractChecksum:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data", "address")
 		case assertCreateAddress:
@@ -255,7 +257,7 @@ func editorDefaults(name string) map[string]any {
 		return map[string]any{"timeout": defaultWaitBlockTimeout.String(), "pollInterval": defaultWaitBlockPoll.String()}
 	case actionWaitFor:
 		return map[string]any{"timeout": defaultWaitForTimeout.String(), "pollInterval": defaultWaitForPoll.String(), "compare": "Equal"}
-	case assertBlockAdvance, assertBlockStalled:
+	case assertBlockAdvance, assertBlockStalled, assertBlockLag:
 		return map[string]any{"timeout": defaultBlockAdvanceTimeout.String(), "pollInterval": defaultBlockAdvancePoll.String()}
 	case assertBlockHalt:
 		return map[string]any{"within": defaultBlockHaltWindow.String()}

@@ -49,6 +49,8 @@ func unsignedControlRules(kind, name string) map[string]unsignedControlRule {
 	}
 	if kind == "assertion" {
 		switch name {
+		case assertBlockLag:
+			return map[string]unsignedControlRule{"maxLag": unsignedRule(0, math.MaxUint64, defaultBlockLagMax)}
 		case assertBlockHalt:
 			return map[string]unsignedControlRule{"maxAdvance": unsignedRule(0, math.MaxUint64, defaultBlockHaltMaxAdv)}
 		case assertBlockInterval:

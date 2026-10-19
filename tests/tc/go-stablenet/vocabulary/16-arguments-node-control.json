@@ -347,6 +347,27 @@
       "timeout": "90s"
     },
     {
+      "expect": "blockLag",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ],
+      "maxLag": "2",
+      "timeout": "90s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockLag",
+      "on": "en2",
+      "reference": "bp1",
+      "maxLag": "2",
+      "timeout": "90s",
+      "pollInterval": "2s"
+    },
+    {
       "do": "resetNode",
       "on": "en1"
     },

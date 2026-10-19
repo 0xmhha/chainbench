@@ -45,6 +45,7 @@ var builtinArguments = map[string]string{
 	"action:wsOpen":                      "address event on onEach params save topics",
 	"assertion:balanceAt":                "address compare delta expected on onEach tol",
 	"assertion:baseFee":                  "compare delta expected on onEach tol",
+	"assertion:blockLag":                 "maxLag on onEach pollInterval reference timeout",
 	"assertion:blockAdvance":             "on onEach pollInterval timeout",
 	"assertion:blockHalt":                "maxAdvance on onEach within",
 	"assertion:blockInterval":            "blocks maxMillis maxSeconds minMillis minSeconds on",

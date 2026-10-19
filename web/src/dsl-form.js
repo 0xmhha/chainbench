@@ -227,3 +227,12 @@ export function propertySchema(schema, name) {
  if(rules.length)return rules.length===1?rules[0]:{...rules[0],allOf:[...(rules[0].allOf??[]),...rules.slice(1)]}
  return typeof schema.additionalProperties==='object'?schema.additionalProperties:{}
 }
+
+// Node references are annotated by the engine's parameter schema, so new
+// node-valued fields do not require the editor to know a builtin's name.
+export function fieldSuggestions(schema,label,path,nodes,refs) {
+ if(schema?.['x-suggestions']==='nodes')return [...new Set([...nodes,...refs])]
+ if(label==='on')return nodes
+ if(path.includes('/onEach/'))return ['all',...nodes]
+ return refs
+}

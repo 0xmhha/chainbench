@@ -35,7 +35,29 @@ func TestEditorDurationControlsRejectInvalidValuesAndPreserveGoLiterals(t *testi
 			}
 		}
 	}
-	if fields != 22 {
+	// blockLag adds timeout/pollInterval, covered by the runtime duration audit.
+	if fields != 24 {
 		t.Fatalf("duration fields changed without updating the runtime consumer audit: %d", fields)
 	}
+}
+
+func TestEditorBlockLagPublishesNodeReferenceHint(t *testing.T) {
+	_, contract, e := DSLContract()
+	if e != nil {
+		t.Fatal(e)
+	}
+	definition, ok := contract["$defs"].(map[string]any)["assertion-blockLag"].(map[string]any)
+	if !ok {
+		t.Fatal("missing shared blockLag contract")
+	}
+	properties := definition["properties"].(map[string]any)
+	reference := properties["reference"].(map[string]any)
+	if reference["type"] != "string" || reference["x-suggestions"] != "nodes" {
+		t.Fatal("node-valued reference hint lost", reference)
+	}
+	encoded, e := json.Marshal(reference)
+	if e != nil {
+		t.Fatal(e)
+	}
+	t.Logf("BLOCK_LAG_REFERENCE_SCHEMA=%s", encoded)
 }

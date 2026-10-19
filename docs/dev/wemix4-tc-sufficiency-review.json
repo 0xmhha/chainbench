@@ -353,12 +353,12 @@
       "targets": [
         {
           "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
-          "sha256": "3f98c7ef695d3548407d4431dcabb8cd9c240e5bf678bfe9ca3125ec83c39859",
+          "sha256": "9e8a986acf631de5e8e9eee87795d967eb831aee835bbee1be0e90074a914077",
           "id": "fault-node-crash"
         },
         {
           "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
-          "sha256": "7c1ab7f01645323d2da59973c83befa28796face9fa977a4f981b2354a50a418",
+          "sha256": "3299edee064d59ab8f591957fa45f40a59e4ed9100412f5eaf048b9cd2c38e0b",
           "id": "fault-node-recover"
         },
         {
@@ -388,8 +388,28 @@
         },
         {
           "path": "internal/testengine/legacy_fault_native_test.go",
-          "sha256": "b98012014f185993fe850134b569955c3c4934dd4c5bde2274d8f0ceff4b3410",
+          "sha256": "9185b67f1707f4cc2c658b05182394988664b4d21b1675c34c206a0e92de0d71",
           "function": "TestNativeLegacyFaultRecovery"
+        },
+        {
+          "path": "internal/testhelper/blocklag.go",
+          "sha256": "e87ac00d95afd9bdb618b03401559ef65c1dbcc81b79d4da95910adc63cd4d97",
+          "function": "blockLagAssertion.Check"
+        },
+        {
+          "path": "internal/testhelper/block_lag_test.go",
+          "sha256": "03e3efc3853862794d51356829f90488f7e3fd79e66d3542871a889760d430c0",
+          "function": "TestBlockLagFreshHeadsAndDirectionalReference"
+        },
+        {
+          "path": "internal/testhelper/block_lag_test.go",
+          "sha256": "03e3efc3853862794d51356829f90488f7e3fd79e66d3542871a889760d430c0",
+          "function": "TestPublicFaultProgressUsesOriginalDeadline"
+        },
+        {
+          "path": "internal/testhelper/block_lag_test.go",
+          "sha256": "03e3efc3853862794d51356829f90488f7e3fd79e66d3542871a889760d430c0",
+          "function": "TestPublicFaultRecoveryUsesOriginalDeadline"
         }
       ],
       "observations": [
@@ -536,14 +556,65 @@
             "expect": "sameBlockHash",
             "block": "latest"
           }
+        },
+        {
+          "analysis": "2026-10-20 고정ebd3 실제 재평가: 원문 진행60/90초·복구90/120초와 매 poll의 현재 높이를 세 체인6건39단언으로 확인했다. 각 복구7회 약12초의 전체 표본을 독립 대조했고, 같은 소스의 WBFT 재시작 PID/revision·건강한5개1초간격·원래 노드 commit 참여 회귀도 통과했다. 이전33단언은 역사 자료로 보존한다. 원문 환경 전체와 전체87/legacy/Linux/Web 인수는 별도 잔여다."
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+          "pointer": "/steps/5",
+          "statement": {
+            "do": "waitBlock",
+            "on": "node1",
+            "target": "$crashProgressTarget",
+            "timeout": "60s"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+          "pointer": "/steps/11",
+          "statement": {
+            "expect": "blockLag",
+            "maxLag": "2",
+            "timeout": "90s",
+            "pollInterval": "2s",
+            "onEach": [
+              "node1",
+              "node2",
+              "node3",
+              "node4"
+            ]
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+          "pointer": "/steps/4",
+          "statement": {
+            "do": "waitBlock",
+            "on": "node1",
+            "target": "$recoverProgressTarget",
+            "timeout": "90s"
+          }
+        },
+        {
+          "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+          "pointer": "/steps/10",
+          "statement": {
+            "expect": "blockLag",
+            "maxLag": "2",
+            "timeout": "120s",
+            "pollInterval": "2s",
+            "on": "node3",
+            "reference": "node1"
+          }
         }
       ],
-      "semanticAssessment": "confirmed_recovery_checkpoint_and_native_participation_scope",
+      "semanticAssessment": "scoped_original_budgets_and_dynamic_current_head_native_independently_verified",
       "remainingConditions": [
-        "원문 crash 진행60초·recover 진행90초 및 복구90/120초의 전체 시간 동작 동등성은 미확인.",
+        "원문 전체 환경/시간 행위 동등성은 명시된 예산·높이 조건의 이번 검증만으로 인정하지 않는다.",
         "whole legacy254·원문87·Linux358·메인넷·최종 Web 인수는 별도 잔여."
       ],
-      "confirmedScope": "공개 두 장애 케이스의 상대10/20블록·새 현재 높이 체크포인트를 세 체인6건/33단언으로 확인했다. 기존 WBFT 재시작의 건강한5개 1초 간격과 원 노드의 실제 commit 참여도 다시 확인했다. 원문 시간 예산·동적 복구 전체 동등성은 미확인이다.",
+      "confirmedScope": "공개 두 장애 케이스의 상대10/20블록·원문 진행60/90초·복구90/120초·동적 현재 높이차이2를 세 체인6건39단언과 독립 감사로 확인했다. 같은 고정 소스의 WBFT 재시작5개1초간격과 원 노드 commit 참여도 통과했다. 원문 전체 환경과 전체 인수는 미확인.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/restart-participation-evidence.json",
@@ -553,6 +624,11 @@
           "path": "docs/dev/legacy-fault-checkpoint-evidence.json",
           "sha256": "4208751e2d9c6bb65e00a15225224dd2cecd410bf3c330d7014035461b4b8de3",
           "scope": "세 체인6개 복구 체크포인트와 WBFT 실제 재참여; fullCriterionAccepted=false"
+        },
+        {
+          "path": "docs/dev/legacy-fault-timing-evidence.json",
+          "sha256": "2216c4608edc6957f8b42b159c2fc7d98df41f3e2a87493a5e99bc463f7e1d44",
+          "scope": "새 고정ebd3 세 체인6건39단언과 별도 WBFT 실제 재시작 참여; fullCriterionAccepted=false"
         }
       ]
     },

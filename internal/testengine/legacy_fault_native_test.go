@@ -33,8 +33,8 @@ func TestNativeLegacyFaultRecovery(t *testing.T) {
 		file, id             string
 		progress, assertions int
 	}{
-		{"CT-FAULT-001-producer-crash-and-restart.json", "fault-node-crash", 10, 8},
-		{"CT-FAULT-002-node-recover-and-sync.json", "fault-node-recover", 20, 3},
+		{"CT-FAULT-001-producer-crash-and-restart.json", "fault-node-crash", 10, 9},
+		{"CT-FAULT-002-node-recover-and-sync.json", "fault-node-recover", 20, 4},
 	}
 	for _, family := range families {
 		for _, testcase := range cases {
@@ -60,7 +60,7 @@ func TestNativeLegacyFaultRecovery(t *testing.T) {
 					t.Fatal("refuse identities outside owned workspace", plan.Keys, err)
 				}
 				out, runErr := testengine.RunSuite(ctx, chainsetup.Deps{}, input)
-				proof := map[string]any{"chain": family.chain, "case": testcase.file, "binary": input.Binary, "session": out.SessionRoot, "summary": out.Summary, "scope": "Two public recovery cases per family, relative10/20-block progress, current recovery checkpoint, common block/stateRoot and generated private keys. Not full temporal recovery equivalence, whole legacy/L1, W3/W4 resolution or final Web acceptance.", "fullL1Accepted": false, "all14Accepted": false}
+				proof := map[string]any{"chain": family.chain, "case": testcase.file, "binary": input.Binary, "session": out.SessionRoot, "summary": out.Summary, "scope": "Two public recovery cases per family, relative10/20-block progress, current recovery checkpoint, common block/stateRoot and generated private keys. Original progress60/90s and recovery90/120s budgets with repeated current-head sampling. Not whole legacy/L1, W3/W4 resolution or final Web acceptance.", "fullL1Accepted": false, "all14Accepted": false}
 				defer func() {
 					b, e := json.MarshalIndent(proof, "", "  ")
 					if e != nil {
@@ -93,10 +93,29 @@ func TestNativeLegacyFaultRecovery(t *testing.T) {
 					t.Fatal("missing public checkpoint assertion", len(assertions), testcase.assertions)
 				}
 				var progressedTo uint64
-				progressChecks, lagChecks := 0, 0
+				progressChecks, lagChecks, liveLagChecks := 0, 0, 0
 				for _, assertion := range assertions {
 					if !assertion.Pass {
 						t.Fatal("failed public assertion", assertion)
+					}
+					if assertion.Assert == "blockLag" {
+						liveLagChecks++
+						wantTimeout := "120s"
+						if testcase.progress == 10 {
+							wantTimeout = "90s"
+						}
+						if assertion.Provenance["timeout"] != wantTimeout || assertion.Provenance["pollInterval"] != "2s" {
+							t.Fatal("wrong public recovery timing", assertion)
+						}
+						actual, ok := assertion.Actual.(map[string]any)
+						if !ok {
+							t.Fatal("missing recovery samples", assertion)
+						}
+						samples, ok := actual["samples"].([]any)
+						if !ok || len(samples) == 0 || fmt.Sprint(actual["droppedSamples"]) != "0" {
+							t.Fatal("incomplete original recovery trajectory", assertion)
+						}
+						proof["currentHeadRecovery"] = assertion
 					}
 					if assertion.Assert != "derive" || assertion.Provenance["op"] != "diff" {
 						continue
@@ -130,7 +149,7 @@ func TestNativeLegacyFaultRecovery(t *testing.T) {
 				if testcase.progress == 10 {
 					wantLags = 4
 				}
-				if progressChecks != 1 || lagChecks != wantLags || progressedTo < uint64(testcase.progress) {
+				if progressChecks != 1 || lagChecks != wantLags || liveLagChecks != 1 || progressedTo < uint64(testcase.progress) {
 					t.Fatal("incomplete public progress/lag predicates", progressChecks, lagChecks, progressedTo)
 				}
 				state, err := verb.NetworkStatus(ctx, chainsetup.Deps{}, verb.NetworkStatusIn{DataDir: input.DataDir})

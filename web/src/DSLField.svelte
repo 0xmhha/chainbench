@@ -1,6 +1,6 @@
 <script>
  import Field from './DSLField.svelte'
- import {variants, selectedVariant, variantLabel, initial, valueProblem, forbiddenFields, propertySchema} from './dsl-form.js'
+ import {variants, selectedVariant, variantLabel, initial, valueProblem, forbiddenFields, propertySchema, fieldSuggestions} from './dsl-form.js'
  // errors maps a field path to the engine's message about it; that field is
  // marked invalid and described by the message.
  let {schema,root,value,path='/content',label='문서',onchange,suggestions={nodes:[],before:new Map()},errors={}}=$props()
@@ -87,7 +87,7 @@
   {@const problem=valueProblem(current,value)}
   <label>{label} <input aria-label={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)} /></label>
   {#if problem}<p id={`${path}-problem`} role="alert">{problem}</p>{/if}
-  <datalist id={`${path}-suggestions`}>{#each label==='on'?suggestions.nodes:path.includes('/onEach/')?['all',...suggestions.nodes]:refs as option}<option value={option}></option>{/each}</datalist>
+  <datalist id={`${path}-suggestions`}>{#each fieldSuggestions(current,label,path,suggestions.nodes,refs) as option}<option value={option}></option>{/each}</datalist>
  {/if}
  {#if !current.type&&!current.properties&&!current.enum&&current.const===undefined&&choices.length===1}
   <label>{label} 값 종류 <select aria-label={`${path} 값 종류`} value={type} onchange={e=>onchange(({string:'',number:0,boolean:false,object:{},array:[],null:null})[e.target.value])}>{#each ['string','number','boolean','object','array','null'] as kind}<option value={kind}>{kind}</option>{/each}</select></label>

@@ -38,6 +38,7 @@ func TestDurationControlsRejectInvalidExplicitValuesBeforeBuiltinIO(t *testing.T
 		{"action", "registerContract", "timeout"}, {"action", "registerContract", "pollInterval"},
 		{"assertion", "blockHalt", "within"},
 		{"assertion", "blockStalled", "timeout"}, {"assertion", "blockStalled", "pollInterval"},
+		{"assertion", "blockLag", "timeout"}, {"assertion", "blockLag", "pollInterval"},
 		{"assertion", "blockAdvance", "timeout"}, {"assertion", "blockAdvance", "pollInterval"},
 		{"assertion", "wsSubscribe", "timeout"}, {"assertion", "wsCollected", "timeout"},
 	} {

@@ -1,0 +1,1496 @@
+{
+  "date": "2026-10-20",
+  "status": "syntax_inventory_independently_verified",
+  "scope": "Owned-source AST classification before evidence/Markdown publication. Block-lag polling, public fault DSL, shared contracts and node selector UI; not full runtime or original87 acceptance.",
+  "implementationFiles": [
+    "docs/dev/architecture/package-tree.md",
+    "docs/dev/wemix4-tc-sufficiency-review.json",
+    "internal/app/duration_controls_schema_test.go",
+    "internal/dashboard/spa/assets/index-xrsxK8gl.js",
+    "internal/dashboard/spa/assets/index-CTu-hxE6.js",
+    "internal/dashboard/spa/index.html",
+    "internal/testengine/legacy_fault_native_test.go",
+    "internal/testhelper/arguments.go",
+    "internal/testhelper/builtins.go",
+    "internal/testhelper/duration_controls_test.go",
+    "internal/testhelper/editor_contract.go",
+    "internal/testhelper/unsigned_controls.go",
+    "internal/testhelper/unsigned_controls_test.go",
+    "internal/testhelper/blocklag.go",
+    "internal/testhelper/block_lag_test.go",
+    "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+    "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+    "tests/tc/go-stablenet/vocabulary/16-arguments-node-control.json",
+    "tests/webui/dsl-form.test.mjs",
+    "web/src/DSLField.svelte",
+    "web/src/dsl-form.js"
+  ],
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "sourceAfter": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-fault-lag-v2-run-20261020.py": "076dbb2cfd794f4ba7c9034c21c53d815be880d062b572c99c654204d74382f0",
+      "/private/tmp/chainbench-ast-fault-lag-v2-specific-20261020.py": "50d00f8294f792f12cae816e5c19d9d0d0cfd621e48c6ac2e1e7b05c8f941c08",
+      "/private/tmp/chainbench-ast-fault-lag-v2-independent-20261020.py": "fdf0bdbc0b3405879f3c4aeb2d6ab85b85d6321fe5ca99978cc1d68fb2816f42",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/private/tmp/chainbench-fault-original-timing-red-20261020.log": "5f0de2005ce096562d560f4e62b4558c1b8c54b27026a8415574f4482be35be6",
+      "/private/tmp/chainbench-fault-lag-reference-alias-red-20261020.log": "d176cf9cb8e7b8ecbc7e5c3809d5b82c133bf3c05f401985aef9b8ad1fef61e3",
+      "/private/tmp/chainbench-fault-lag-ui-selector-red-20261020.log": "63425739528859ec855973d10239aab74a249596b1e03bb588bd1d9cb64b7276",
+      "/private/tmp/chainbench-fault-lag-diagnostic-red-20261020.log": "4397f8dd60c95764068774fd1166110572c935446f5ed56f12f6206a117f5ae8",
+      "/private/tmp/chainbench-fault-lag-web05-fixture-red-20261020.log": "bd2968e84878d78ed3f9ac9fbd73d834ea1178264353dc6df9dddf78540e779c",
+      "/private/tmp/chainbench-fault-lag-focused-green-v2-20261020.log": "0d45c9bd19d554d13ecc689dafa80aa5a2a0dd29be75b67c342176c5a04b0f5c",
+      "/private/tmp/chainbench-fault-lag-contracts-green-v2-20261020.log": "34fa6b64b1d1bd911ac5127d13d425d1a91fb9dcba5887272684269d4ae632ec",
+      "/private/tmp/chainbench-fault-lag-related-race-20261020.log": "fdd25f6355affa1f86883bcbc0c9cead93af5e1673a0d8a653111c4d7b85d174",
+      "/private/tmp/chainbench-fault-lag-ui-selector-green-20261020.log": "963b8138de6264cf107828e4759ec903d813051e128666e111c39e6f308b5a61",
+      "/private/tmp/chainbench-fault-lag-render-independent-20261020.json": "b632de7ae12a33a11802f7d5caeceef1ca60f2f82df0363384153de2208acb5a",
+      "/private/tmp/chainbench-fault-lag-spa-rebuild-20261020.json": "f49775a48bfdc72a14edb6f81133ca24aab40c339238bdb1f7806fcf6947a6a3",
+      "/private/tmp/chainbench-ast-fault-lag-parser-contracts-20261020.log": "499fd8b9e1bc48df641f7064684f8a8ea09efb294deca74ca33010e6f3c2e9ac",
+      "/private/tmp/chainbench-fault-original-timing-native-run-20261020.py": "d497fa5f11fddf0f54db5ac3ff3887d2cd8706a08a399b047a28eb3142cd40bd",
+      "/private/tmp/chainbench-fault-original-timing-native-independent-20261020.py": "8e591a8b739e0c6988ab063e4e900d211c0426491365daf12ed1e2cd7d492cc5",
+      "/private/tmp/chainbench-ast-fault-lag-refresh-20261020-start.json": "6df734ec24900d31094ee4be211ca9cc6d7ee983af978830428b84097ce18968",
+      "/private/tmp/chainbench-ast-fault-lag-refresh-20261020-capture.json": "3e7fb14212a004c30aee0b65fb83f32adf02dd7ed03a9cbb83f79d65d79b937b",
+      "/private/tmp/chainbench-ast-fault-lag-capture-20261020.log": "5415d1a9b46f97a8912d3740f05dadb0c8e3439560ccccb97193d3bbd7aefe1d",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/__init__.py": "423e913581f8c0e6e3d25417df891e8796f2bfa12d0f4c4efc6aae0a569126be",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/__init__.pyi": "2d062b7ddf33e40927a161e409a0a3bc6fc4e7065fdeb19ddc49ec4bfdb5f013",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/METADATA": "d0dfca5594927e1d7e12b677376a06e6b0332485ea299000dedc314b6cce836a",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/RECORD": "26c0826f4cbcb96419bc89ebced8c2082127883df5619fd357d0d158e33f1b21",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/WHEEL": "d7590c744f60cdbb1a406df47d172c018c412c4551b2a268d3df18e622fad17a",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/licenses/LICENSE": "1af0790543fffac99dd3bd290bf83ca963f4f8029065eb6f35638f4df863ae8e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/top_level.txt": "a0d28314078b8ba8b7f447134d6ef90cbd12139b0c064817d1344ca497b72ebb",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/__init__.py": "d1ee78cd57aa257786b22a555f1ee227180fe6a07fbd4e684c852255d77b06b9",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/__init__.pyi": "fceb2c08289d035296c8ce9df63df8df2e40cd2bcf72d7d9f601394ce7ff577c",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/METADATA": "21dd1effb4cc052bd8550623e536ecb176ffe1a8cd0bb51074c35c7c7d312e79",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/RECORD": "914a069fa5652e07c542bee9584b82719d418ee6017dddc5a95d2c581b814be7",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/WHEEL": "68791f6b4c4c3ad7b2d9fc6f9ee2b775025138466583d38a277ab9631e157f00",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/licenses/LICENSE": "778fb7d63b8c1844da315648c02f325c4713a6f4a5d19644fd413421422776d3",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/top_level.txt": "921dfbf0cd48b23fbf25aa13df0c1310a8951ccea1230f4c7d07a5821a4e36e5",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/__init__.py": "86d45db2efb3bf7c629fbcc5a4571daf4daee0ad14e9510b777f7d894e6f1bf7",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/__init__.pyi": "fafc5a6bc30ac8bf655df6e0a72b1a33d160ce4943670a99d7a877ddacf943b5",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/METADATA": "9451984760d49928f6a97a2eb733cbe8448141ec2f8b55cf69daacd37464ea15",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/RECORD": "4bedb43b0ce6415e03056379462be40d778c1aa777d00265d1442bc05da9a62f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/WHEEL": "9059f4160d60c95f4f934dbe1ebe026ea6e102f60fca8b01a45e69c19074ee35",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/licenses/LICENSE": "c5cfb43042b6b72045f4ba997834d0a7786d2793d91680868b5815b39f14fc78",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/top_level.txt": "a918a47cd57f5f6cd0e3ca8621744947d8c0d2aca4fd3087549c803aea9326d7",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/__init__.py": "7c714805f81f27c75c6e506d5e1e38396a056f1019ee94b89360e5edc05c2b8b",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/METADATA": "6b27c93b981c77f8673bd2d4d13588dcc62f66bc8867853f7b20c9cbc6e7e31f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/RECORD": "1c8daa0aba64ae9d79738b850630dfe3a31f5b272a05a85d98acd040d0d55fac",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/WHEEL": "cbb2401f6e78f4966c4295bf51527b060cdfcefbfd62759e171e579e40c03472",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/licenses/LICENSE": "33075c290734963157c46d9ed31e74b5983c2812b3399a967150859cf3e04c3c",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/top_level.txt": "7a13de526fa77dfe489b6beb17f78983daad2ae59ca384ec33359092c218c60b",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/__init__.py": "1bc14c540055a3a6e6378b2c7ace9e2e964651808cc791e23ac4a961bfc6134c",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/__init__.pyi": "06350d1a3d120ef457882b18b9938a8415b29eba08f00848ab97e7b326369bea",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/METADATA": "716d1d594a839a17395462df1deb0e30d3d3a918751ea362624da1fe29975e67",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/RECORD": "8d1a7e417fe2aaf349a9a2a2d0e9cc89881483fdbd2741f746749e331a1a9a18",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/WHEEL": "9059f4160d60c95f4f934dbe1ebe026ea6e102f60fca8b01a45e69c19074ee35",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/licenses/LICENSE": "2d181298822a124f6d106118dcc69c8d4d26ac668559be29682c452e712b0947",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/top_level.txt": "5763bfa36a1f3cd3e9a750a55b3d10657e8a41e8618e84848afd49f96b00b507",
+      "/private/tmp/chainbench-ast-parser-repair-20261019.json": "5905599a381754296fcc01aa8eff9f5053942a6260cc930a9f46ccff2a466311",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-fault-lag-v2-run-20261020.py": "076dbb2cfd794f4ba7c9034c21c53d815be880d062b572c99c654204d74382f0",
+      "/private/tmp/chainbench-ast-fault-lag-v2-specific-20261020.py": "50d00f8294f792f12cae816e5c19d9d0d0cfd621e48c6ac2e1e7b05c8f941c08",
+      "/private/tmp/chainbench-ast-fault-lag-v2-independent-20261020.py": "fdf0bdbc0b3405879f3c4aeb2d6ab85b85d6321fe5ca99978cc1d68fb2816f42",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/private/tmp/chainbench-fault-original-timing-red-20261020.log": "5f0de2005ce096562d560f4e62b4558c1b8c54b27026a8415574f4482be35be6",
+      "/private/tmp/chainbench-fault-lag-reference-alias-red-20261020.log": "d176cf9cb8e7b8ecbc7e5c3809d5b82c133bf3c05f401985aef9b8ad1fef61e3",
+      "/private/tmp/chainbench-fault-lag-ui-selector-red-20261020.log": "63425739528859ec855973d10239aab74a249596b1e03bb588bd1d9cb64b7276",
+      "/private/tmp/chainbench-fault-lag-diagnostic-red-20261020.log": "4397f8dd60c95764068774fd1166110572c935446f5ed56f12f6206a117f5ae8",
+      "/private/tmp/chainbench-fault-lag-web05-fixture-red-20261020.log": "bd2968e84878d78ed3f9ac9fbd73d834ea1178264353dc6df9dddf78540e779c",
+      "/private/tmp/chainbench-fault-lag-focused-green-v2-20261020.log": "0d45c9bd19d554d13ecc689dafa80aa5a2a0dd29be75b67c342176c5a04b0f5c",
+      "/private/tmp/chainbench-fault-lag-contracts-green-v2-20261020.log": "34fa6b64b1d1bd911ac5127d13d425d1a91fb9dcba5887272684269d4ae632ec",
+      "/private/tmp/chainbench-fault-lag-related-race-20261020.log": "fdd25f6355affa1f86883bcbc0c9cead93af5e1673a0d8a653111c4d7b85d174",
+      "/private/tmp/chainbench-fault-lag-ui-selector-green-20261020.log": "963b8138de6264cf107828e4759ec903d813051e128666e111c39e6f308b5a61",
+      "/private/tmp/chainbench-fault-lag-render-independent-20261020.json": "b632de7ae12a33a11802f7d5caeceef1ca60f2f82df0363384153de2208acb5a",
+      "/private/tmp/chainbench-fault-lag-spa-rebuild-20261020.json": "f49775a48bfdc72a14edb6f81133ca24aab40c339238bdb1f7806fcf6947a6a3",
+      "/private/tmp/chainbench-ast-fault-lag-parser-contracts-20261020.log": "499fd8b9e1bc48df641f7064684f8a8ea09efb294deca74ca33010e6f3c2e9ac",
+      "/private/tmp/chainbench-fault-original-timing-native-run-20261020.py": "d497fa5f11fddf0f54db5ac3ff3887d2cd8706a08a399b047a28eb3142cd40bd",
+      "/private/tmp/chainbench-fault-original-timing-native-independent-20261020.py": "8e591a8b739e0c6988ab063e4e900d211c0426491365daf12ed1e2cd7d492cc5",
+      "/private/tmp/chainbench-ast-fault-lag-refresh-20261020-start.json": "6df734ec24900d31094ee4be211ca9cc6d7ee983af978830428b84097ce18968",
+      "/private/tmp/chainbench-ast-fault-lag-refresh-20261020-capture.json": "3e7fb14212a004c30aee0b65fb83f32adf02dd7ed03a9cbb83f79d65d79b937b",
+      "/private/tmp/chainbench-ast-fault-lag-capture-20261020.log": "5415d1a9b46f97a8912d3740f05dadb0c8e3439560ccccb97193d3bbd7aefe1d",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/__init__.py": "423e913581f8c0e6e3d25417df891e8796f2bfa12d0f4c4efc6aae0a569126be",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/__init__.pyi": "2d062b7ddf33e40927a161e409a0a3bc6fc4e7065fdeb19ddc49ec4bfdb5f013",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/METADATA": "d0dfca5594927e1d7e12b677376a06e6b0332485ea299000dedc314b6cce836a",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/RECORD": "26c0826f4cbcb96419bc89ebced8c2082127883df5619fd357d0d158e33f1b21",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/WHEEL": "d7590c744f60cdbb1a406df47d172c018c412c4551b2a268d3df18e622fad17a",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/licenses/LICENSE": "1af0790543fffac99dd3bd290bf83ca963f4f8029065eb6f35638f4df863ae8e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter-0.25.2.dist-info/top_level.txt": "a0d28314078b8ba8b7f447134d6ef90cbd12139b0c064817d1344ca497b72ebb",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/__init__.py": "d1ee78cd57aa257786b22a555f1ee227180fe6a07fbd4e684c852255d77b06b9",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/__init__.pyi": "fceb2c08289d035296c8ce9df63df8df2e40cd2bcf72d7d9f601394ce7ff577c",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/METADATA": "21dd1effb4cc052bd8550623e536ecb176ffe1a8cd0bb51074c35c7c7d312e79",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/RECORD": "914a069fa5652e07c542bee9584b82719d418ee6017dddc5a95d2c581b814be7",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/WHEEL": "68791f6b4c4c3ad7b2d9fc6f9ee2b775025138466583d38a277ab9631e157f00",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/licenses/LICENSE": "778fb7d63b8c1844da315648c02f325c4713a6f4a5d19644fd413421422776d3",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_c_sharp-0.23.5.dist-info/top_level.txt": "921dfbf0cd48b23fbf25aa13df0c1310a8951ccea1230f4c7d07a5821a4e36e5",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/__init__.py": "86d45db2efb3bf7c629fbcc5a4571daf4daee0ad14e9510b777f7d894e6f1bf7",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/__init__.pyi": "fafc5a6bc30ac8bf655df6e0a72b1a33d160ce4943670a99d7a877ddacf943b5",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/METADATA": "9451984760d49928f6a97a2eb733cbe8448141ec2f8b55cf69daacd37464ea15",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/RECORD": "4bedb43b0ce6415e03056379462be40d778c1aa777d00265d1442bc05da9a62f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/WHEEL": "9059f4160d60c95f4f934dbe1ebe026ea6e102f60fca8b01a45e69c19074ee35",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/licenses/LICENSE": "c5cfb43042b6b72045f4ba997834d0a7786d2793d91680868b5815b39f14fc78",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_embedded_template-0.25.0.dist-info/top_level.txt": "a918a47cd57f5f6cd0e3ca8621744947d8c0d2aca4fd3087549c803aea9326d7",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/__init__.py": "7c714805f81f27c75c6e506d5e1e38396a056f1019ee94b89360e5edc05c2b8b",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/METADATA": "6b27c93b981c77f8673bd2d4d13588dcc62f66bc8867853f7b20c9cbc6e7e31f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/RECORD": "1c8daa0aba64ae9d79738b850630dfe3a31f5b272a05a85d98acd040d0d55fac",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/WHEEL": "cbb2401f6e78f4966c4295bf51527b060cdfcefbfd62759e171e579e40c03472",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/licenses/LICENSE": "33075c290734963157c46d9ed31e74b5983c2812b3399a967150859cf3e04c3c",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_language_pack-0.13.0.dist-info/top_level.txt": "7a13de526fa77dfe489b6beb17f78983daad2ae59ca384ec33359092c218c60b",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/__init__.py": "1bc14c540055a3a6e6378b2c7ace9e2e964651808cc791e23ac4a961bfc6134c",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/__init__.pyi": "06350d1a3d120ef457882b18b9938a8415b29eba08f00848ab97e7b326369bea",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/METADATA": "716d1d594a839a17395462df1deb0e30d3d3a918751ea362624da1fe29975e67",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/RECORD": "8d1a7e417fe2aaf349a9a2a2d0e9cc89881483fdbd2741f746749e331a1a9a18",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/WHEEL": "9059f4160d60c95f4f934dbe1ebe026ea6e102f60fca8b01a45e69c19074ee35",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/licenses/LICENSE": "2d181298822a124f6d106118dcc69c8d4d26ac668559be29682c452e712b0947",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/bin/chainbench-ast-tools/tree_sitter_yaml-0.7.2.dist-info/top_level.txt": "5763bfa36a1f3cd3e9a750a55b3d10657e8a41e8618e84848afd49f96b00b507",
+      "/private/tmp/chainbench-ast-parser-repair-20261019.json": "5905599a381754296fcc01aa8eff9f5053942a6260cc930a9f46ccff2a466311",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-capture.json",
+        "sha256": "9b278120d95bf6e9eb3130f3a3a3d048f40e5bbd507a919e6d946a274eb1d648",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792427395056651601
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-independent.json",
+        "sha256": "9b278120d95bf6e9eb3130f3a3a3d048f40e5bbd507a919e6d946a274eb1d648",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792427399854329147
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792427400954369825
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792427401698131005
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-capture.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138728191556278
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-independent.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138732584954949
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733279929901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733858826845
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-capture.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256047559989444
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-independent.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256052213855427
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256054193014048
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256055161286677
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-capture.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260738390205874
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-independent.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260742921095712
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260743646057877
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260744252072557
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-capture.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268269240845841
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274154302635
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274866457837
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268275462092118
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-capture.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271163296884178
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-independent.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271168224653793
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169184135951
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169870775257
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-capture.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271720905095693
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-independent.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271725960577399
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271727377214282
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271728103754763
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-capture.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275273257659028
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-independent.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275277868420622
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275278705057632
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275279415672506
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-capture.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278880780083910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885184994311
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885962118588
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278886574606998
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-capture.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283083411279582
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-independent.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283087752365160
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283088454993140
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283089050854117
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-capture.json",
+        "sha256": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285785038865723
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-independent.json",
+        "sha256": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285789332377696
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285790037261032
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285790640429188
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-capture.json",
+        "sha256": "928b8684e3cd356f87cbc9f9ddcd71ff36d385584dfe179eef6320faa5f1cc36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293802336464665
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-independent.json",
+        "sha256": "928b8684e3cd356f87cbc9f9ddcd71ff36d385584dfe179eef6320faa5f1cc36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293806983665789
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293807716287910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293808323819571
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-capture.json",
+        "sha256": "0f4b3e915761267a3c8576d8d4a5f53a989b8f5244e5e20055bb67b9c922da58",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294023388288011
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-independent.json",
+        "sha256": "0f4b3e915761267a3c8576d8d4a5f53a989b8f5244e5e20055bb67b9c922da58",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294028439219540
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294029427479915
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v2-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294030064008630
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-capture.json",
+        "sha256": "280ea7442ddf1c9864f28b1202446ad1fab1fa89e307d9b9032ee8c532d016b1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294309357997123
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-independent.json",
+        "sha256": "280ea7442ddf1c9864f28b1202446ad1fab1fa89e307d9b9032ee8c532d016b1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294313889504851
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294314590553205
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v3-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792294315198389026
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-capture.json",
+        "sha256": "18f1ca259ad58198175594e67b80cd1dfa514ecf3497f2cc6cce04aa56e11edb",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296637351984585
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-independent.json",
+        "sha256": "18f1ca259ad58198175594e67b80cd1dfa514ecf3497f2cc6cce04aa56e11edb",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296641953924519
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296642659676072
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-sync-v4-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296643272979603
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-capture.json",
+        "sha256": "db0139c4657fd546b1ce5933811b31b921bf27b97a3927451400eb7ab9d98f36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297422272678140
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-independent.json",
+        "sha256": "db0139c4657fd546b1ce5933811b31b921bf27b97a3927451400eb7ab9d98f36",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297426902155352
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297427648792987
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-wal-audit-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792297428267422391
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-capture.json",
+        "sha256": "747a6833d29ca15aaf1ab67ef6037db3e5bdaefec3d46df7dc8c44e32479edf3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298619621473068
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-independent.json",
+        "sha256": "747a6833d29ca15aaf1ab67ef6037db3e5bdaefec3d46df7dc8c44e32479edf3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298624226087659
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298624939797019
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-cow-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792298625561750293
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-capture.json",
+        "sha256": "b36c266229cf4460259958c3a6debd57370ee6ab063429ea90af4e12489f9c66",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302126554689000
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-independent.json",
+        "sha256": "b36c266229cf4460259958c3a6debd57370ee6ab063429ea90af4e12489f9c66",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302131150014500
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302131887343833
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-source-copy-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792302132513774304
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-capture.json",
+        "sha256": "8eed0dbd9dace76be445df39d6e8989ff43292a21fe85b6dd3c55ef260ebab96",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304157533137213
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-independent.json",
+        "sha256": "8eed0dbd9dace76be445df39d6e8989ff43292a21fe85b6dd3c55ef260ebab96",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304162386651082
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304163315226709
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-after-proof-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792304164012078551
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-rpc-binding-refresh-20261018-capture.json",
+        "sha256": "93d16028efebb9d222123c524a3a3a1d3e06d9a09c02e3483be0c39a605a6dab",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792311152990679610
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-rpc-binding-refresh-20261018-independent.json",
+        "sha256": "93d16028efebb9d222123c524a3a3a1d3e06d9a09c02e3483be0c39a605a6dab",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792311158669396341
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-rpc-binding-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792311159805213320
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-rpc-binding-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792311160443563044
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-alias-v2-refresh-20261019-capture.json",
+        "sha256": "df8c4407afbee1a31126e69c7e2a22ec794cd5551aee20fe0421d22e03e1e32d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792398601736873828
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-alias-v2-refresh-20261019-independent.json",
+        "sha256": "df8c4407afbee1a31126e69c7e2a22ec794cd5551aee20fe0421d22e03e1e32d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792398606928341428
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-alias-v2-refresh-20261019-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792398608014935172
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-native-alias-v2-refresh-20261019-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792398608759271047
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-capture.json",
+        "sha256": "f59f7585cf0f0b63fd5e68a1af2c3cc90400845df80eda0c0f82391cd1f6cab1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792416913027201742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-independent.json",
+        "sha256": "f59f7585cf0f0b63fd5e68a1af2c3cc90400845df80eda0c0f82391cd1f6cab1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792416917940007869
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792416918969817581
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792416919633667747
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-capture.json",
+        "sha256": "7c370e7230c83b136fe42b94ee2b209bda18a48f3fe90586300f908d486785bc",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792418688640516219
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-independent.json",
+        "sha256": "7c370e7230c83b136fe42b94ee2b209bda18a48f3fe90586300f908d486785bc",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792418693348192416
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792418694175808788
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792418694841876389
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-capture.json",
+        "sha256": "0d48baba9b6248168ccf3b762c5a9557cc5ad076b7dc2d84b485686194983773",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792421548823969326
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-independent.json",
+        "sha256": "0d48baba9b6248168ccf3b762c5a9557cc5ad076b7dc2d84b485686194983773",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792421560805531626
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792421562211702879
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792421562902104716
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-capture.json",
+        "sha256": "e612d5eb5b0467a2602b9c4b8b931823bbbb14adb9db5dc6a41d76a20c1c6c45",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423095427454484
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-independent.json",
+        "sha256": "e612d5eb5b0467a2602b9c4b8b931823bbbb14adb9db5dc6a41d76a20c1c6c45",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423100445669627
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423101356421009
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423102231921788
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-capture.json",
+        "sha256": "6e9de2f5b53ed5ad134e9034dd27fe5616362bfea5802b89c07767daf9da03fd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423473126999732
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-independent.json",
+        "sha256": "6e9de2f5b53ed5ad134e9034dd27fe5616362bfea5802b89c07767daf9da03fd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423486320542889
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423488743376014
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423490397219165
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-capture.json",
+        "sha256": "4335ab0156779b94672a2acb0685d1fadc2a1f90e0b617535650f8153e4b960b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423904092131941
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-independent.json",
+        "sha256": "4335ab0156779b94672a2acb0685d1fadc2a1f90e0b617535650f8153e4b960b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423909113346136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423910377013001
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792423911106220826
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-capture.json",
+        "sha256": "6819ea17c524afbd95c701ae0731f56743f6969628d6bd0bf391fe37c9e44e7a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424455910946314
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-independent.json",
+        "sha256": "6819ea17c524afbd95c701ae0731f56743f6969628d6bd0bf391fe37c9e44e7a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424460930207648
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424462071873733
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424462906989371
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-capture.json",
+        "sha256": "8b67f67de2ce13d17371e6c8670bfa7482ccacb12796072c5b442b71c3c50a99",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424616654728079
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-independent.json",
+        "sha256": "8b67f67de2ce13d17371e6c8670bfa7482ccacb12796072c5b442b71c3c50a99",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424621973762056
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424623174509999
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792424624171957820
+      }
+    ],
+    "elapsedSeconds": 15.296039290959015,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independent": {
+    "accepted": true,
+    "sourceDigest": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "graphReproduced": true,
+    "counts": {
+      "parsedFiles": 2112,
+      "languages": {
+        "toml": 1,
+        "yaml": 11,
+        "make": 1,
+        "go": 1426,
+        "json": 353,
+        "python": 135,
+        "gomod": 2,
+        "bash": 63,
+        "dockerfile": 1,
+        "gosum": 1,
+        "html": 3,
+        "css": 1,
+        "javascript": 89,
+        "svelte": 25
+      },
+      "nodes": 141192,
+      "edges": 150724,
+      "excluded": 464,
+      "missing": 0
+    },
+    "ownedPaths": 2576,
+    "goTestFilesParsed": 816,
+    "embeddedASTs": 41,
+    "dynamicProgramInputs": 26,
+    "areas": {
+      ".betterleaks.toml": 1,
+      ".github": 1,
+      ".golangci.yml": 1,
+      "Makefile": 1,
+      "cmd": 180,
+      "docs": 109,
+      "env": 5,
+      "examples": 23,
+      "go.mod": 1,
+      "go.sum": 1,
+      "install.sh": 1,
+      "accounts": 31,
+      "app": 197,
+      "internal": 41,
+      "chains": 24,
+      "chainsetup": 149,
+      "consensus": 29,
+      "core": 289,
+      "dashboard": 47,
+      "dsl": 48,
+      "feature": 18,
+      "mcp": 47,
+      "preset": 3,
+      "resource": 46,
+      "testengine": 159,
+      "testhelper": 104,
+      "webcli": 2,
+      "presets": 42,
+      "scripts": 30,
+      "server-set.sample.yaml": 1,
+      "setup.sh": 1,
+      "tests": 429,
+      "uninstall.sh": 1,
+      "web": 49,
+      "workspace-config.sample.yaml": 1
+    },
+    "nodeKinds": {
+      "file": 2112,
+      "call": 103732,
+      "dynamic-program-input": 26,
+      "target": 21,
+      "function": 6753,
+      "import": 10485,
+      "binding": 11232,
+      "type": 1393,
+      "method": 1667,
+      "dsl-operation": 3076,
+      "template-parameter": 7,
+      "selector": 421,
+      "package": 83,
+      "dependency": 184
+    },
+    "exclusionReasons": {
+      "documentation or non-executable data": 222,
+      "generated proof metadata, not executable source": 195,
+      "test data, not executable source": 47
+    },
+    "auditNegativeControlsRejected": [
+      "omitted owned source",
+      "stale source digest",
+      "duplicate graph node",
+      "dangling edge",
+      "parser failure hidden by success count",
+      "zero parsed syntax",
+      "embedded identity absent",
+      "false summary count",
+      "nested input origin forged",
+      "unclassified exclusion",
+      "Docker capture program omitted",
+      "nested deletion call omitted"
+    ],
+    "a8": {
+      "nonMethodExportedSymbols": 1891,
+      "uses": {
+        "inside": 451,
+        "outside": 1174,
+        "test": 177,
+        "signature": 80,
+        "set": 9
+      },
+      "nowhere": 0,
+      "methodsNotMeasuredByThisReachabilityRule": true
+    },
+    "criticalRuntimeScript": {
+      "path": "internal/testengine/transaction_failure_native_test.go",
+      "language": "python",
+      "sha256": "1c64d0ce637f45c4100f15694cf494b6e59a2b8530e1346083671c7af85c8deb",
+      "reclaimCallObserved": true
+    },
+    "transportPrograms": {
+      "CAPTURE": "cfe0850187fa74fc08796ba810314bff58ae452ce8292ca5b85e0bf64d69ccb3",
+      "DELETE": "179f8a462a134802d62891712aace0bb63d2447b4e110ae06cb72fb0cc8317ee",
+      "NESTED_DELETE": "48033bd685a9cf1022e5800f81af65e7e1ca2b50692e3333b7a2a36719ec7bbe"
+    },
+    "transportProgramCount": 3,
+    "historicalGraphsPreserved": true,
+    "historicalSourceDigest": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "parserVersions": {
+      "go": "go version go1.26.8 darwin/arm64",
+      "python": "3.10.11",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter": "0.25.2",
+      "PyYAML": "6.0.3",
+      "shfmt": "v3.12.0",
+      "frontend": {
+        "node": "v24.17.0",
+        "acorn": "8.17.0",
+        "svelte": "5.56.8",
+        "postcss": "8.5.23"
+      }
+    },
+    "fullDynamicCoverageAccepted": false,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "specific": {
+    "accepted": true,
+    "sourceDigest": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "targetKeys": 1625,
+    "targetOccurrences": 1712,
+    "specificOmissionsRejected": 3250,
+    "graphsPreserved": {
+      "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-capture.json": "9b278120d95bf6e9eb3130f3a3a3d048f40e5bbd507a919e6d946a274eb1d648",
+      "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-independent.json": "9b278120d95bf6e9eb3130f3a3a3d048f40e5bbd507a919e6d946a274eb1d648"
+    },
+    "oldGraphRejected": true,
+    "goASTInputs": [
+      "internal/testhelper/blocklag.go",
+      "internal/testhelper/block_lag_test.go",
+      "internal/testhelper/builtins.go",
+      "internal/testhelper/arguments.go",
+      "internal/testhelper/editor_contract.go",
+      "internal/testhelper/unsigned_controls.go",
+      "internal/testhelper/duration_controls_test.go",
+      "internal/testhelper/unsigned_controls_test.go",
+      "internal/app/duration_controls_schema_test.go",
+      "internal/testengine/legacy_fault_native_test.go"
+    ],
+    "frontendASTInputs": [
+      "web/src/dsl-form.js",
+      "web/src/DSLField.svelte",
+      "tests/webui/dsl-form.test.mjs"
+    ],
+    "pythonASTInputs": [],
+    "publicCaseOperations": 84,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-summary.json",
+      "sha256": "d29447918b1a47e5e7d29923761a007c838f4ad878a94a28b7230c79d931a56c",
+      "bytes": 68368,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427405920062550
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-independent-audit.json",
+      "sha256": "7a432760fbf5531796f5be881ae0493da2fb7139d9a8cf3e3a10d9e9a35a0214",
+      "bytes": 3708,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427478287064308
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-specific-audit.json",
+      "sha256": "6d07e943f1bbc90c95a7b50a9e0669609223c87f21d259603cbb913618418528",
+      "bytes": 916848,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427639696693241
+    }
+  ],
+  "parserContracts": {
+    "count": 21,
+    "log": {
+      "path": "/private/tmp/chainbench-ast-fault-lag-parser-contracts-20261020.log",
+      "sha256": "499fd8b9e1bc48df641f7064684f8a8ea09efb294deca74ca33010e6f3c2e9ac",
+      "bytes": 120,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427202555134178
+    }
+  },
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

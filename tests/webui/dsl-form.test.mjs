@@ -215,3 +215,13 @@ test('prepared aliases that resemble object prototype properties remain ordinary
  assert.deepEqual(choices.preparedNames.__proto__,['public'])
  assert.equal(Object.getPrototypeOf(choices.preparedNames),Object.prototype)
 })
+
+test('catalog-tagged node references offer declared nodes and prior bindings',async()=>{
+ const {fieldSuggestions}=await import('../../web/src/dsl-form.js')
+ assert.equal(typeof fieldSuggestions,'function','schema-driven node references are missing')
+ const nodes=['node1','node2'],refs=['$previous','node1']
+ assert.deepEqual(fieldSuggestions({'x-suggestions':'nodes'},'reference','/content/steps/1/reference',nodes,refs),['node1','node2','$previous'])
+ assert.deepEqual(fieldSuggestions({},'on','/content/steps/1/on',nodes,refs),nodes)
+ assert.deepEqual(fieldSuggestions({},'onEach 1','/content/steps/1/onEach/0',nodes,refs),['all',...nodes])
+ assert.deepEqual(fieldSuggestions({},'value','/content/steps/1/value',nodes,refs),refs)
+})

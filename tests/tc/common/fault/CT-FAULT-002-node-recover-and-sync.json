@@ -40,7 +40,7 @@
       "do": "waitBlock",
       "on": "node1",
       "target": "$recoverProgressTarget",
-      "timeout": "150s"
+      "timeout": "90s"
     },
     {
       "do": "read",
@@ -79,13 +79,12 @@
       "save": "recoverMinimumTarget"
     },
     {
-      "do": "waitFor",
-      "source": "blockNumber",
+      "expect": "blockLag",
+      "maxLag": "2",
+      "timeout": "120s",
+      "pollInterval": "2s",
       "on": "node3",
-      "compare": "GreaterOrEqual",
-      "expected": "$recoverMinimumTarget",
-      "timeout": "150s",
-      "pollInterval": "2s"
+      "reference": "node1"
     },
     {
       "do": "read",
