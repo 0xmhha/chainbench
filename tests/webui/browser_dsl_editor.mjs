@@ -86,11 +86,394 @@ try{
  assert.ok(observed.importDiff.length>0)
  await page.screenshot({path:out+'/dsl-editor.png',fullPage:true})
 
+ // The structured external profile has its own form, role selectors, and
+ // conditional auth fields. No RPC request is sent during editor validation.
+ const endpointCase={schemaVersion:'2',kind:'case',id:'endpoint-browser',chainPreset:{schemaVersion:'2',kind:'chain-preset',id:'external',chain:'wbft',attach:{endpoints:[{rpc:'http://example.invalid/bp',role:'bp'},{rpc:'http://example.invalid/en',role:'en',auth:{type:'jwt',env:'TEST_TOKEN'}}]}},steps:[{expect:'blockNumber',on:'en1',is:0}]}
+ await upload.setInputFiles(file('endpoints.json',endpointCase))
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.locator('[data-tree-path=""]').click()
+ const attachPath='/content/chainPreset/attach'
+ const selector=page.getByLabel(attachPath+' 형식',{exact:true})
+ assert.equal(await selector.inputValue(),'1','profile was rendered as RPC list')
+ const add=page.getByLabel(attachPath+' 필드 추가',{exact:true})
+ assert.ok(!(await add.locator('option').allTextContents()).some(text=>text.trim()==='rpc'),'conflicting rpc field is addable')
+ const authAdd=page.getByLabel(attachPath+'/endpoints/1/auth 필드 추가',{exact:true})
+ if(await authAdd.count())assert.ok(!(await authAdd.locator('option').allTextContents()).some(text=>text.trim()==='header'),'jwt offers ignored header')
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ const on=page.getByLabel('/content/steps/0/on',{exact:true})
+ const names=await page.locator('[id="/content/steps/0/on-suggestions"] option').evaluateAll(options=>options.map(option=>option.value))
+ assert.ok(names.includes('en1')&&names.includes('bp1')&&names.includes('node2'),JSON.stringify(names))
+ await on.fill('en1')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ const exportedPromise=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ const exported=await exportedPromise
+ const filePath=out+'/endpoint-case-export.json'
+ await exported.saveAs(filePath)
+ assert.deepEqual(JSON.parse(fs.readFileSync(filePath,'utf8')),endpointCase,'editor changed the imported endpoint declaration')
+ observed.endpointProfile={roleSelectors:names,importExportPreserved:true,exclusiveForms:true,jwtOmitsHeader:true}
+
+ // Receive-path alternatives are authored through the engine's array contract.
+ const metricCase={schemaVersion:'2',kind:'case',id:'metric-path-browser',chainPreset:{chain:'wbft',topology:{bp:4,en:1},launch:{all:{metrics:true}}},steps:[{expect:'metric',on:'en1',name:'eth_fetcher_block_broadcasts_in',compare:'GreaterOrEqual',is:1}]}
+ await upload.setInputFiles(file('metric-path.json',metricCase))
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ await page.getByLabel('/content/steps/0 필드 추가',{exact:true}).selectOption('alternatives')
+ const metricPath='/content/steps/0/alternatives'
+ await page.getByLabel(metricPath+' 항목 추가',{exact:true}).click()
+ await page.getByLabel(metricPath+'/0',{exact:true}).fill('eth_fetcher_block_announces_in')
+ await page.getByLabel(metricPath+' 항목 추가',{exact:true}).click()
+ await page.getByLabel(metricPath+'/1',{exact:true}).fill('eth_fetcher_block_announces_in')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await summary.filter({hasText:'alternatives'}).waitFor({timeout:15000})
+ await page.getByLabel(metricPath+'/1 삭제',{exact:true}).click()
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const metricDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await metricDownload).saveAs(out+'/metric-path-export.json')
+ metricCase.steps[0].alternatives=['eth_fetcher_block_announces_in']
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/metric-path-export.json','utf8')),metricCase)
+ await page.screenshot({path:out+'/metric-path-editor.png',fullPage:true})
+ observed.metricPaths={structuredList:true,duplicateRejected:true,saveExportPreserved:true}
+
+ // Add a typed access tuple through the shared engine schema, retaining a
+ // saved address reference rather than replacing it with a literal address.
+ const listCase={...endpointCase,id:'list-browser',steps:[
+  {do:'newAccount',save:'created',saveKey:'key'},
+  {do:'sendTx',on:'en1',key:'$key',to:'0x000000000000000000000000000000000000dead',value:'1',gas:'70000',maxFeePerGas:'3',maxPriorityFeePerGas:'1',accessList:[]},
+  {expect:'blockNumber',on:'en1',is:0},
+ ]}
+ await upload.setInputFiles(file('list.json',listCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const listPath='/content/steps/1/accessList'
+ await page.getByLabel(listPath+' 항목 추가',{exact:true}).click()
+ await page.getByLabel(listPath+'/0/address',{exact:true}).fill('$created')
+ await page.getByLabel(listPath+'/0/storageKeys 항목 추가',{exact:true}).click()
+ const slot='0x'+'0'.repeat(63)+'1'
+ await page.getByLabel(listPath+'/0/storageKeys/0',{exact:true}).fill(slot)
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/access-list-editor.png',fullPage:true})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const listDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await listDownload).saveAs(out+'/access-list-export.json')
+ listCase.steps[1].accessList=[{address:'$created',storageKeys:[slot]}]
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/access-list-export.json','utf8')),listCase,'access-list authoring/import/export changed a reference or key')
+ observed.accessList={structuredFields:true,savedAddressReference:true,storageKey:slot,importExportPreserved:true}
+
+ // Transaction quantities reject lossy JSON numbers and retain exact strings.
+ const numericCase=structuredClone(listCase)
+ numericCase.id='number-browser'
+ await upload.setInputFiles(file('number.json',numericCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const gasPath='/content/steps/1/gas'
+ await page.getByLabel(gasPath+' 형식',{exact:true}).selectOption('0')
+ const gasInput=page.getByLabel(gasPath,{exact:true})
+ assert.equal(await gasInput.getAttribute('step'),'1')
+ assert.equal(await gasInput.getAttribute('max'),'9007199254740991')
+ for(const bad of ['1.5','9007199254740992']){
+  await gasInput.fill(bad)
+  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+  await page.locator(`[aria-label="${gasPath}"][aria-invalid="true"]`).waitFor({timeout:15000})
+ }
+ await page.screenshot({path:out+'/numeric-validation.png',fullPage:true})
+ await page.getByLabel(gasPath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(gasPath,{exact:true}).fill('18446744073709551615')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const numberDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await numberDownload).saveAs(out+'/numeric-export.json')
+ numericCase.steps[1].gas='18446744073709551615'
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/numeric-export.json','utf8')),numericCase,'integer-string precision changed during save/export')
+ observed.transactionNumbers={fractionRejected:true,unsafeNumberRejected:true,safeIntegerControl:true,uint64StringExportPreserved:true}
+
+ // Explicit load controls use the same bounded integer contract in the form and validator.
+ const loadCase=structuredClone(numericCase)
+ loadCase.id='load-control-browser'
+ loadCase.steps[1]={do:'load',on:'node1',from:'dev1',fillPercent:50,blocks:2}
+ await upload.setInputFiles(file('load-control.json',loadCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ for(const [field,bads] of [['blocks',['0','1.5']],['fillPercent',['0','1.5','101']]]){
+  const path='/content/steps/1/'+field
+  await page.getByLabel(path+' 형식',{exact:true}).selectOption('0')
+  const input=page.getByLabel(path,{exact:true})
+  assert.equal(await input.getAttribute('step'),'1')
+  assert.equal(await input.getAttribute('min'),'1')
+  if(field==='fillPercent')assert.equal(await input.getAttribute('max'),'100')
+  for(const bad of bads){
+   await input.fill(bad)
+   await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+   await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  }
+  await input.fill(field==='blocks'?'2':'50')
+ }
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const loadDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await loadDownload).saveAs(out+'/load-control-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/load-control-export.json','utf8')),loadCase)
+ await page.screenshot({path:out+'/load-controls.png',fullPage:true})
+ observed.loadControls={fractionRejected:true,zeroRejected:true,percentRangeEnforced:true,integerControls:true,saveExportPreserved:true}
+
+ // All unsigned controls share integer ranges and preserve explicit zero.
+ const controlCase=structuredClone(loadCase)
+ controlCase.id='unsigned-controls-browser'
+ controlCase.steps=[
+  {do:'read',source:'derive',op:'word',of:['0x'+'0'.repeat(64)+'1'.repeat(64)],index:0,save:'word'},
+  {expect:'blockHalt',on:'node1',maxAdvance:0,within:'1s'},
+  {expect:'blockInterval',on:'node1',blocks:2,minMillis:0,maxMillis:3000},
+  {expect:'wsSubscribe',on:'node1',count:1,timeout:'3s'},
+ ]
+ await upload.setInputFiles(file('unsigned-controls.json',controlCase))
+ for(const [step,field,zeroAllowed,good] of [[0,'index',true,'0'],[1,'maxAdvance',true,'0'],[2,'maxMillis',true,'3000'],[3,'count',false,'1']]){
+  await page.locator(`[data-tree-path="/content/steps/${step}"]`).click()
+  const path=`/content/steps/${step}/${field}`
+  await page.getByLabel(path+' 형식',{exact:true}).selectOption('0')
+  const input=page.getByLabel(path,{exact:true})
+  assert.equal(await input.getAttribute('step'),'1')
+  assert.equal(await input.getAttribute('min'),zeroAllowed?'0':'1')
+  assert.equal(await input.getAttribute('max'),'9007199254740991')
+  await input.fill('1.5')
+  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+  await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  if(!zeroAllowed){await input.fill('0');await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click();await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})}
+  await input.fill(good)
+ }
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ const indexPath='/content/steps/0/index'
+ await page.getByLabel(indexPath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(indexPath,{exact:true}).fill('18446744073709551615')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await summary.filter({hasText:'index'}).waitFor({timeout:15000})
+ await page.getByLabel(indexPath,{exact:true}).fill('0X01')
+ controlCase.steps[0].index='0X01'
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const advancePath='/content/steps/1/maxAdvance'
+ await page.getByLabel(advancePath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(advancePath,{exact:true}).fill('18446744073709551615')
+ controlCase.steps[1].maxAdvance='18446744073709551615'
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/unsigned-controls.png',fullPage:true})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const controlDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await controlDownload).saveAs(out+'/unsigned-controls-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/unsigned-controls-export.json','utf8')),controlCase)
+ observed.unsignedControls={integerControls:true,fractionRejected:true,zeroCountRejected:true,indexOverflowRejected:true,zeroBoundPreserved:true,hexIndexPreserved:true,uint64BoundPreserved:true,saveExportPreserved:true}
+
+ const durationCase=structuredClone(controlCase)
+ durationCase.id='duration-controls-browser'
+ durationCase.steps=[
+  {do:'waitBlock',on:'node1',target:0,timeout:'1s',pollInterval:'1ms'},
+  {expect:'blockHalt',on:'node1',maxAdvance:0,within:'1s'},
+  {expect:'wsSubscribe',on:'node1',count:1,timeout:'3s'},
+ ]
+ await upload.setInputFiles(file('duration-controls.json',durationCase))
+ for(const [step,field,good] of [[0,'timeout','1m0.5s'],[0,'pollInterval','1.5ms'],[1,'within','+2s'],[2,'timeout','250µs']]){
+  await page.locator(`[data-tree-path="/content/steps/${step}"]`).click()
+  const path=`/content/steps/${step}/${field}`
+  const input=page.getByLabel(path,{exact:true})
+  for(const bad of ['0s','-1ms','invalid','9223372036854775808ns']){
+   await input.fill(bad)
+   await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+   await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  }
+  await input.fill(good)
+  durationCase.steps[step][field]=good
+ }
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/duration-controls.png',fullPage:true})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const durationDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await durationDownload).saveAs(out+'/duration-controls-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/duration-controls-export.json','utf8')),durationCase)
+ observed.durationControls={zeroRejected:true,negativeRejected:true,malformedRejected:true,overflowRejected:true,fractionalUnitsPreserved:true,compoundDurationPreserved:true,microsecondsPreserved:true,saveExportPreserved:true}
+
+ // Create the fee payer through the declared account selector, retaining
+ // key bindings and preserving an invalid imported pair until corrected.
+ const feeCase=structuredClone(endpointCase)
+ feeCase.id='fee-browser'
+ feeCase.chainPreset.accounts={sponsor:{keyFile:'${CHAINBENCH_BROWSER_SPONSOR_KEY}'}}
+ feeCase.steps=[
+  {do:'newAccount',saveKey:'key'},
+  {do:'deployContract',on:'en1',key:'$key',bytecode:'0x600a600c600039600a6000f3602a60005260206000f3',value:'5',gas:'200000',accessList:[]},
+  {expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'0'},
+ ]
+ await upload.setInputFiles(file('fee.json',feeCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const feePath='/content/steps/1/feePayer'
+ const feeFields=page.getByLabel('/content/steps/1 필드 추가',{exact:true})
+ await feeFields.selectOption('feePayer')
+ const payer=page.getByLabel(feePath,{exact:true})
+ assert.equal(await payer.evaluate(e=>e.tagName),'SELECT')
+ assert.deepEqual(await payer.locator('option').evaluateAll(options=>options.filter(o=>o.value).map(o=>o.value)),['sponsor'])
+ await payer.selectOption('sponsor')
+ const remaining=await feeFields.locator('option').evaluateAll(options=>options.map(o=>o.value))
+ assert.ok(!remaining.includes('feePayerKey')&&!remaining.includes('gasPrice'),'ignored fee model fields can still be added')
+ feeCase.steps[1].feePayer='sponsor'
+ const conflicting=structuredClone(feeCase)
+ conflicting.steps[1].feePayerKey='$key'
+ await upload.setInputFiles(file('conflicting-fee.json',conflicting))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ assert.equal(await page.getByLabel('/content/steps/1/feePayerKey',{exact:true}).inputValue(),'$key','invalid imported key was discarded')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByTestId('dsl-error-summary').filter({hasText:/feePayer.*feePayerKey/}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/delegation-conflict.png',fullPage:true})
+ const partial=structuredClone(feeCase)
+ partial.steps[1].maxFeePerGas='3'
+ await upload.setInputFiles(file('partial-fee.json',partial))
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByTestId('dsl-error-summary').filter({hasText:'maxPriorityFeePerGas'}).waitFor({timeout:15000})
+
+ await upload.setInputFiles(file('fee.json',feeCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const feeDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await feeDownload).saveAs(out+'/delegation-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/delegation-export.json','utf8')),feeCase)
+ await page.screenshot({path:out+'/delegation-editor.png',fullPage:true})
+ observed.feeDelegation={declaredAccountSelector:true,conflictingFieldsUnavailable:true,conflictingImportPreserved:true,conflictRejected:true,incompleteFeePairRejected:true,keyBindingAndExportPreserved:true}
+
+ // Preset initial values are typed data and available before the first step.
+ const valueCase=structuredClone(endpointCase)
+ valueCase.id='values-browser'
+ valueCase.chainPreset.values={limit:2,recipient:'0x000000000000000000000000000000000000dead',payload:{items:[1,true,null]}}
+ valueCase.steps=[{do:'waitBlock',on:'en1',target:'$limit'},{expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'$limit'}]
+ const valuesPath='/content/chainPreset/values'
+ // An import response must not overwrite edits made while it is in flight.
+ // Hold that response explicitly; a timing-dependent retry would hide the bug.
+ let releaseImport,importContinued
+ const importResume=new Promise(resolve=>{releaseImport=resolve})
+ const importDone=new Promise(resolve=>{importContinued=resolve})
+ const importRequest=page.waitForRequest(r=>r.url().endsWith('/api/v1/test-cases/import')&&r.postDataJSON()?.content?.id===valueCase.id)
+ const delayImport=async route=>{const held=route.request().postDataJSON()?.content?.id===valueCase.id;if(held)await importResume;await route.continue();if(held)importContinued()}
+ await page.route('**/api/v1/test-cases/import',delayImport)
+ try{
+  await upload.setInputFiles(file('values.json',valueCase))
+  await importRequest
+  assert.equal(await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).isDisabled(),true,'import response can overwrite edits made during verification')
+  assert.equal(await page.getByRole('button',{name:'새 테스트 시나리오',exact:true}).isDisabled(),true,'a new case can be overwritten by the pending import')
+  observed.pendingImport={editingDisabled:true,newCaseDisabled:true}
+ }finally{
+  releaseImport()
+  await importDone
+  await page.unroute('**/api/v1/test-cases/import',delayImport)
+ }
+ await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('enabled')
+ await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
+ await page.getByLabel(valuesPath+'/enabled 형식',{exact:true}).selectOption('2')
+ await page.getByLabel(valuesPath+'/enabled',{exact:true}).check()
+ assert.equal(await page.getByLabel(valuesPath+'/payload/items/2 형식',{exact:true}).inputValue(),'3','null rendered as a string')
+ await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('chainId')
+ await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
+ const chainPath=valuesPath+'/chainId'
+ assert.equal(await page.getByLabel(chainPath+' 형식',{exact:true}).inputValue(),'0')
+ const expectedID=page.getByLabel(chainPath,{exact:true})
+ assert.equal(await expectedID.getAttribute('step'),'1')
+ assert.equal(await expectedID.getAttribute('max'),'9007199254740991')
+ await expectedID.fill('1.5')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByTestId('dsl-error-summary').filter({hasText:'chainId'}).waitFor({timeout:15000})
+ await page.getByLabel(chainPath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(chainPath,{exact:true}).fill('8283')
+
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ const initialNames=await page.locator('[id="/content/steps/0/target-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))
+ for(const name of ['$limit','$recipient','$payload','$enabled'])assert.ok(initialNames.includes(name),name)
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const valueDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await valueDownload).saveAs(out+'/preset-values-export.json')
+ valueCase.chainPreset.values.enabled=true
+ valueCase.chainPreset.values.chainId='8283'
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/preset-values-export.json','utf8')),valueCase)
+ await page.screenshot({path:out+'/preset-values-editor.png',fullPage:true})
+ observed.presetValues={typedBooleanAuthoring:true,nestedNullPreserved:true,initialReferencesOffered:true,declaredIdentityControl:true,fractionalIdentityRejected:true,validationAndExportPreserved:true}
+
+ // Shared results are declared through the schema and selected from saved
+ // producers. A consumer never gains an implicit binding from another case.
+ const preparedProducer=structuredClone(endpointCase)
+ preparedProducer.id='prepared-producer'
+ preparedProducer.steps=[{do:'read',source:'blockNumber',on:'en1',save:'head'},{expect:'blockNumber',on:'en1',is:0}]
+ await upload.setInputFiles(file('prepared-producer.json',preparedProducer))
+ await page.getByLabel('/content 필드 추가',{exact:true}).selectOption('prepared')
+ await page.getByLabel('/content/prepared 필드 추가',{exact:true}).selectOption('exports')
+ await page.getByLabel('/content/prepared/exports 항목 이름',{exact:true}).fill('head')
+ await page.locator('[data-field-path="/content/prepared/exports"] > fieldset > button').click()
+ assert.ok((await page.locator('[id="/content/prepared/exports/head-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))).includes('$head'))
+ await page.getByLabel('/content/prepared/exports/head',{exact:true}).fill('$head')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const preparedConsumer=structuredClone(endpointCase)
+ preparedConsumer.id='prepared-consumer'
+ preparedConsumer.steps=[{expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'$head'}]
+ await upload.setInputFiles(file('prepared-consumer.json',preparedConsumer))
+ await page.getByLabel('/content 필드 추가',{exact:true}).selectOption('prepared')
+ await page.getByLabel('/content/prepared 필드 추가',{exact:true}).selectOption('imports')
+ await page.getByLabel('/content/prepared/imports 항목 이름',{exact:true}).fill('head')
+ await page.locator('[data-field-path="/content/prepared/imports"] > fieldset > button').click()
+ const producerSelect=page.getByLabel('/content/prepared/imports/head/case',{exact:true})
+ assert.deepEqual(await producerSelect.locator('option').evaluateAll(options=>options.filter(o=>o.value).map(o=>o.value)),['prepared-producer'])
+ await producerSelect.selectOption('prepared-producer')
+ await page.getByLabel('/content/prepared/imports/head/name',{exact:true}).selectOption('head')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const preparedDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await preparedDownload).saveAs(out+'/prepared-consumer-export.json')
+ preparedConsumer.prepared={imports:{head:{case:'prepared-producer',name:'head'}}}
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/prepared-consumer-export.json','utf8')),preparedConsumer)
+ await page.screenshot({path:out+'/prepared-editor.png',fullPage:true})
+ observed.preparedEditor={producerExportAuthored:true,onlySavedProducerChoices:true,declaredExportSelected:true,typedReferenceAndExportPreserved:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)
  const config=await api('documents','POST',{kind:'workspace-config',name:'dsl paths',contractVersion:'2',assetRefs:[],content:paths},undefined,201)
  const w=await api('workspaces','POST',{name:'dsl chain',documents:[{id:set.id,revision:set.revision},{id:config.id,revision:config.revision}]},undefined,201)
+ const preparedPreset={chain:'wbft',binaries:{default:'gwemix'},topology:{bp:4},launch:{all:{ipcdisable:true}}}
+ const prepareLive=await api('documents','POST',{kind:'case',name:'prepare live contract',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'case',id:'web-prepare',chainPreset:preparedPreset,prepared:{exports:{contract:'$contract'}},steps:[{do:'deployContract',on:'node1',from:'node1',bytecode:'0x600a600c600039600a6000f3602a60005260206000f3',save:'contract'},{expect:'codeAt',on:'bp1',address:'$contract',is:'0x602a60005260206000f3'}]}},undefined,201)
+ const consumeLive=await api('documents','POST',{kind:'case',name:'consume live contract',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'case',id:'web-consume',chainPreset:preparedPreset,prepared:{imports:{contract:{case:'web-prepare',name:'contract'}}},steps:[{expect:'codeAt',on:'bp1',address:'$contract',is:'0x602a60005260206000f3'},{expect:'call',on:'bp1',to:'$contract',data:'0x',is:'0x'+('2a').padStart(64,'0')}]}},undefined,201)
+ const sharedPlan=await api('plans','POST',{workspaceId:w.id,documentRefs:w.documents,assetRefs:['wbft'],retention:'cleanup',operation:'test.run',arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',caseRefs:[prepareLive,consumeLive].map(c=>({id:c.id,revision:c.revision}))}},undefined,201)
+ const sharedJob=await settle(api,(await api('jobs','POST',{planId:sharedPlan.id},sharedPlan.id,202)).id)
+ assert.equal(sharedJob.state,'succeeded',JSON.stringify(sharedJob))
+ assert.equal(sharedJob.runIds.length,1,'prepared cases did not share an engine session')
+ const sharedHistory=(await api('history?caseId=web-consume')).items.filter(r=>r.jobId===sharedJob.id&&r.summary.kind==='engine-session')
+ assert.equal(sharedHistory.length,1)
+ const sharedDetail=await api('history/'+sharedHistory[0].id)
+ assert.equal(sharedDetail.summary.counts.pass,2,JSON.stringify(sharedDetail.summary))
+ const sharedExport=await api('history/'+sharedHistory[0].id+'/export')
+ const creationSteps=JSON.parse(sharedExport.files['tests/001_web-prepare/steps.json'])
+ assert.equal(creationSteps.filter(s=>s.Type==='deployContract').length,1,'preparation was repeated')
+ observed.preparedExecution={job:sharedJob.id,history:sharedHistory[0].id,producer:'web-prepare',consumer:'web-consume',passes:2,ownedContractDeployedOnce:true}
  const long=await api('documents','POST',{kind:'case',name:'dsl long case',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'case',id:'dsl-long',chainPreset:{chain:'wbft',binaries:{default:'gwemix'},topology:{bp:4},launch:{all:{ipcdisable:true}}},steps:[{do:'waitBlock',on:'node1',target:1000000000,timeout:'5m'},{expect:'blockNumber',on:'node1',compare:'GreaterOrEqual',is:0}]}},undefined,201)
  const plan=await api('plans','POST',{workspaceId:w.id,documentRefs:w.documents,assetRefs:['wbft'],retention:'cleanup',operation:'test.run',arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',caseRefs:[{id:long.id,revision:long.revision}]}},undefined,201)
  const jobId=(await api('jobs','POST',{planId:plan.id},plan.id,202)).id

@@ -1,0 +1,165 @@
+{
+  "scope": "GOV014 nonzero-fee delegator claim after actual managed WEMIX\u2192WBFT handoff and ten-block accrual. Actual transactionIndex0 parent-state preview bound to gross/fee, exact Claimed/FeePaid, transaction rewardee/caller/feeRecipient balances and gas/nonce. Not full87/Linux/mainnet/legacy/public DSL/final Web acceptance.",
+  "originalAll87Complete": false,
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "65016892622acd06dccfad84a2b7ddf083d4dc1169be18b39511c41a65480382",
+    "sourceAfter": "65016892622acd06dccfad84a2b7ddf083d4dc1169be18b39511c41a65480382",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceDelegatorClaimE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-99d65wep"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-99d65wep": []
+    },
+    "elapsedSeconds": 89.377,
+    "summary": {
+      "path": "/private/tmp/chainbench-claim-ledger-native-summary.json",
+      "sha256": "e9a808a5373853d2ff73a863b6e487014bb85a56ff7b6b92b6773c0cb9669ac8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018317379139667
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-claim-ledger-native-native.jsonl",
+      "sha256": "37648b563425970cceb30e13688426572edc3bb9d107d99fb9e5acdbf4c7db73",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018316986000032
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-claim-ledger-native-start.json",
+      "sha256": "89dd92b8ee65c96ae4e8d70c25602d13372ef13c8b2ea814f05b8c5372a58baf",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018225243735148
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-claim-ledger-observed.json",
+    "sha256": "4a959b98bd163b57992ec837abd74e2ce0fcdcbfb1de5d2657575dfe5da133da",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792018372855591964
+  },
+  "grossReward": "6000000000000000000",
+  "paidReward": "5850000000000000000",
+  "feePaid": "150000000000000000",
+  "gasFee": "13515606368415564",
+  "feeRate": "250",
+  "feePrecision": "10000",
+  "previewBlock": "0x27",
+  "minedBlock": "0x28",
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-99d65wep",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-99d65wep/reports/claim-ledger-inventory.json",
+        "sha256": "70d0226e3950a76f1c2d6f3e71d410b2615d803cb464f74886f30f1c1bae9439",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018372891149040
+      }
+    }
+  ],
+  "retainedFiles": 228,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-claim-ledger-publication.json",
+    "sha256": "d2b792eeeceab8c7a00829028a6b6fbf434cacaf37d952ef31825186f4bb8650",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792018049301574829
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-claim-ledger-red.log",
+      "sha256": "c98fecb68c956a3f822beb01854a93112588eeca5e805b50a7f54acbc03ecec8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017955935694609
+    },
+    {
+      "path": "/private/tmp/chainbench-claim-ledger-green.log",
+      "sha256": "4a88fd27fb2112ff0b28fdf84dcc8c0e2256e037605a67172cfed4bd08ad9d5d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017998175331627
+    },
+    {
+      "path": "/private/tmp/chainbench-claim-ledger-related-race.log",
+      "sha256": "ae6f1ed1158a20e0aa9a4aad6a200ce28f65b77c233bae6cc7fc4db8f6eecbfb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018128453484533
+    },
+    {
+      "path": "/private/tmp/chainbench-claim-ledger-check.log",
+      "sha256": "932c4f89ab923c27e314403d662857909e745bf5d3799e640cbd410b0f478c1e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018212078178227
+    }
+  ],
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/claim_ledger_e2e_test.go",
+      "sha256": "f81c419961ffdcff4a937a0fd9aa9a517f71e59cf87b93349e700798203e4bbd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792017993362130602
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "21dd7a580d70b5d95e63b828a647e8338aba4e20ba7050100811384eef48b093",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792018049263677623
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

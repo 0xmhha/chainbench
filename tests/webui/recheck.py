@@ -7,7 +7,9 @@ import subprocess
 import sys
 import tempfile
 from capture import RUNNERS, verify_published
+from git_snapshot import git_environment, stage_git_metadata
 from runtime_contract import base_commit, runtime_root, source_digest, stage_sources
+from runtime_storage import create_runtime, reclaim_after_shutdown
 
 
 def check(criterion, output):
@@ -26,31 +28,36 @@ def check(criterion, output):
     protected = {str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob('*') if p.is_file()}
     root = runtime_root(); root.mkdir(parents=True, exist_ok=True)
     # WEB-14 synthesizes the published criteria, which the staged copy has none of.
-    env = dict(os.environ, WEBUI_BASE_COMMIT=base_commit(), PYTHONDONTWRITEBYTECODE='1',
+    env = dict(git_environment(), WEBUI_BASE_COMMIT=base_commit(), PYTHONDONTWRITEBYTECODE='1',
                WEBUI_ACCEPTANCE_ROOT=str(workspace / output))
     selection = workspace / '.ouroboros/web-ui-analysis/selected-binaries/manifest.json'
     if selection.is_file() and 'WEBUI_SELECTED_BINARIES' not in env:
         env['WEBUI_SELECTED_BINARIES'] = str(selection)
-    runtime = Path(tempfile.mkdtemp(prefix='recheck-', dir=root))
-    source = stage_sources(workspace, runtime)
-    if source_digest(source) != before:
-        raise ValueError('Staged source differs from protected source')
-    result = subprocess.run([sys.executable, 'tests/webui/capture.py', criterion, output], cwd=source, env=env)
-    fresh_directory = source / output / criterion
-    if result.returncode:
-        raise ValueError('Fresh independent live reproduction failed; evidence: ' + str(fresh_directory))
-    fresh = json.loads((fresh_directory / 'result.json').read_text())
-    if fresh['invocationId'] == evidence['invocationId']:
-        raise ValueError('Fresh reproduction reused the published invocation')
-    if source_digest(source) != before:
-        raise ValueError('Reproduction changed source/SPA')
-    if source_digest(workspace) != before:
-        raise ValueError('Protected source/SPA mutated during recheck')
-    after = {str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob('*') if p.is_file()}
-    if protected != after:
-        raise ValueError('Protected evidence mutated during recheck')
-    print('Independent fresh evidence: ' + str(fresh_directory))
-    print(criterion + ' PASS (fresh reproduction; protected source/evidence unchanged)')
+    runtime = create_runtime(prefix='recheck-')
+    try:
+        source = stage_sources(workspace, runtime)
+        git_view = stage_git_metadata(workspace, source)
+        (runtime / 'git-view.json').write_text(json.dumps(git_view, indent=2) + '\n')
+        if source_digest(source) != before:
+            raise ValueError('Staged source differs from protected source')
+        result = subprocess.run([sys.executable, 'tests/webui/capture.py', criterion, output], cwd=source, env=env)
+        fresh_directory = source / output / criterion
+        if result.returncode:
+            raise ValueError('Fresh independent live reproduction failed; evidence: ' + str(fresh_directory))
+        fresh = json.loads((fresh_directory / 'result.json').read_text())
+        if fresh['invocationId'] == evidence['invocationId']:
+            raise ValueError('Fresh reproduction reused the published invocation')
+        if source_digest(source) != before:
+            raise ValueError('Reproduction changed source/SPA')
+        if source_digest(workspace) != before:
+            raise ValueError('Protected source/SPA mutated during recheck')
+        after = {str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob('*') if p.is_file()}
+        if protected != after:
+            raise ValueError('Protected evidence mutated during recheck')
+        print('Independent fresh evidence: ' + str(fresh_directory))
+        print(criterion + ' PASS (fresh reproduction; protected source/evidence unchanged)')
+    finally:
+        reclaim_after_shutdown(runtime, directory)
 
 
 if __name__ == '__main__':

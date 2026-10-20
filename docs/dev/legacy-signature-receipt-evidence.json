@@ -1,0 +1,335 @@
+{
+  "scope": "One public signature case with explicit receipt sender/recipient assertions on owned Linux BP4/EN2, old1.0.1 bf17 to pinned4d17 ENs. Full logs/history/head/receipt evidence, not original15 topology, all L1/legacy87/254 or final Web.",
+  "acceptedScope": true,
+  "headAtProof": "34a535743a9f358a1114de203589bf4e563cefee",
+  "sourceDigest": "51fe8ef22cf5bcbe15b251b4f3b80e4765483ef941485acf2bbed010622accc2",
+  "sourceUnchanged": true,
+  "helperInputsUnchanged": true,
+  "runtime": "/private/tmp/cbui/ss-cb3p3dww",
+  "prior36AssertionEvidenceRetained": "docs/dev/legacy-signature-compatibility-evidence.json",
+  "tdd": {
+    "newFalsePassesRed": 4,
+    "publicControls": 23,
+    "healthyControls": 2,
+    "faultControls": 21,
+    "newPublicReceiptAddressAssertions": 6,
+    "relatedWholeRacePackages": [
+      "internal/testhelper",
+      "internal/testengine",
+      "internal/app",
+      "internal/mcp"
+    ],
+    "wholeCheckPassed": true,
+    "publishedWholeCheckPassed": true
+  },
+  "proof": {
+    "acceptedScope": true,
+    "scope": "One public signature case with explicit receipt sender/recipient assertions on owned Linux BP4/EN2, old1.0.1 bf17 to pinned4d17 ENs. Full logs/history/head/receipt evidence, not original15 topology, all L1/legacy87/254 or final Web.",
+    "sourceDigest": "51fe8ef22cf5bcbe15b251b4f3b80e4765483ef941485acf2bbed010622accc2",
+    "runtime": "/private/tmp/cbui/ss-cb3p3dww",
+    "publicCases": 1,
+    "publicAssertions": 42,
+    "nodes": 6,
+    "upgradedENs": 2,
+    "nodeExecutableHashesVerified": 6,
+    "independentRPCObservations": 18,
+    "rawTransactionBytesAndKeccakVerified": true,
+    "independentSecp256k1RecoveryClaimed": false,
+    "archiveEntries": 364,
+    "archives": [
+      {
+        "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server1-metadata.tar.gz",
+        "sha256": "be0f380da478f917fe559282c9a0d13973ea3afd6e2fcd189915669378c50c11",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792121136645412540
+      },
+      {
+        "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server2-metadata.tar.gz",
+        "sha256": "ed817d562a3a54c38be0fb8ee409aa180af3cb79e5415dca084e25ac9f518a89",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792121155575757635
+      },
+      {
+        "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server3-metadata.tar.gz",
+        "sha256": "0265e7b04befd7ca33fe251ab2181be1405811ae4dc52565f5deca2c1110f23e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792121171309334256
+      },
+      {
+        "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server4-metadata.tar.gz",
+        "sha256": "6297f29d1c47aaca09dbb3b1fddaf00b042ff93428eda96c004713ba6aa7c7ef",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792121199859854983
+      },
+      {
+        "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server5-metadata.tar.gz",
+        "sha256": "913bb14d93b7846d307e647c7d17ae77d317ba88ea270b0d10c4bb4b5bfcaa59",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792121222107866659
+      },
+      {
+        "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server6-metadata.tar.gz",
+        "sha256": "828d8d0452015dd056a0021eb7a34857d3b845be9903942cf6906a5f46eab587",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792121278317713726
+      }
+    ],
+    "localFilesPreserved": 151,
+    "freshIndependentProcessInventories": 12,
+    "sharedRemoteKeysUnchanged": true,
+    "presetFilesUnchanged": 45,
+    "negativeControlsRejected": [
+      "missing assertion",
+      "hidden failed assertion",
+      "second EN version unchanged",
+      "head gap three",
+      "empty capture",
+      "forged zero for new error",
+      "receipt from falsified with pass true",
+      "receipt to falsified with pass true"
+    ],
+    "remainingDatabases": 0,
+    "fullLegacyAccepted": false,
+    "all87Accepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "closure": {
+    "runExitCode": 0,
+    "stopExitCode": 0,
+    "sharedRemoteKeysUnchanged": true,
+    "retainedServers": 6,
+    "remainingDisposableDatabasePaths": 0,
+    "databaseNames": [
+      "chaindata",
+      "lightchaindata",
+      "etcd",
+      "triecache"
+    ]
+  },
+  "limitations": [
+    "This new source cut executes42 public assertions including all six receipt from/to checks; the previous36-assertion cut remains historical.",
+    "BP4/EN2 with1.0.1 bf17c960 and pinned1.1.0 4d17eea0 on Linux; not original15 topology or every build pair.",
+    "Raw signed bytes, Keccak and actual-node signature fields/from match. Separate secp256k1 recovery is not claimed.",
+    "No browser interaction, full legacy254, all87, fullL1, external issue fix or finalWeb acceptance is claimed.",
+    "Generated evidence/worklist publication follows the immutable proof cut."
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/signature_sufficiency_test.go",
+      "sha256": "15cd778669a0cc3c3d33d3a357b2d739dab540476c454b475744acac98a037c8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792120614833661352
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json",
+      "sha256": "1a65c32e3d68e77f66eac7cfa2afe81da55fe9e4a74ebdd81e7d158cf9ccd50e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792120650487884233
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-20261016-start.json",
+      "sha256": "5d456e2ae125414ce379f1b61607772f8e9fd01bd7a7bc2faaaaad375118c109",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120961908524903
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-20261016-summary.json",
+      "sha256": "324b2db5d023a6501a12364d20061e71aa0f7cae25b1a2ae5f255bedcc1f2f50",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121290955966234
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-20261016-independent.json",
+      "sha256": "398fc002b2077ac108dbbf13f4e47510531b64320db00cdc516822c6e5875427",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121426879308897
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-run-20261016.py",
+      "sha256": "8a7e53716d3050e5b854508fbaddfa8a7c2bf49d51f0619016b796606720b016",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120741131101735
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-independent-20261016.py",
+      "sha256": "dbc9d1fcb81bab480f5dc0539f44d05cfa8d63d30122a9a948edfa39f20fa093",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120741131778949
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-retention-20261016.py",
+      "sha256": "5603b7f73781e48cd1f082e18df20b259161010b30fe6b8255f3deb7b2b87dce",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120741130308686
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/sessions/20261016-032404-72615/UTC-20261016-032404/tests/001_signature-compat-across-swap/assert.json",
+      "sha256": "2601526a53fcd2f40f6e48e35aaba59b64ff6f4582dfecc1d497922f920c03d0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121094905506841
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/sessions/20261016-032404-72615/UTC-20261016-032404/tests/001_signature-compat-across-swap/steps.json",
+      "sha256": "f32d463f8547aed2fe0db00e72d208e791a7d4c246166190c20a9788da4e738b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121094900044337
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/independent-rpc.json",
+      "sha256": "40a745033f88da132b9197ebe05abaa4871b243897e5e0d89a63d8665e5363e5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121111364276776
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention.json",
+      "sha256": "8e14f7205002b65c22cf4a6ca0184874fc6541bc2d21dda72dab7021eb25905c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121284229664716
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server1-metadata.tar.gz",
+      "sha256": "be0f380da478f917fe559282c9a0d13973ea3afd6e2fcd189915669378c50c11",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121136645412540
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server2-metadata.tar.gz",
+      "sha256": "ed817d562a3a54c38be0fb8ee409aa180af3cb79e5415dca084e25ac9f518a89",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121155575757635
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server3-metadata.tar.gz",
+      "sha256": "0265e7b04befd7ca33fe251ab2181be1405811ae4dc52565f5deca2c1110f23e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121171309334256
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server4-metadata.tar.gz",
+      "sha256": "6297f29d1c47aaca09dbb3b1fddaf00b042ff93428eda96c004713ba6aa7c7ef",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121199859854983
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server5-metadata.tar.gz",
+      "sha256": "913bb14d93b7846d307e647c7d17ae77d317ba88ea270b0d10c4bb4b5bfcaa59",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121222107866659
+    },
+    {
+      "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server6-metadata.tar.gz",
+      "sha256": "828d8d0452015dd056a0021eb7a34857d3b845be9903942cf6906a5f46eab587",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121278317713726
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-red-20261016.log",
+      "sha256": "7182f7c38e9a99b6b3a449026eba4b364b82dea5d42823afef3d0ade0ac5a4d4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120620040049363
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-green-20261016.log",
+      "sha256": "fbfc9ff3c79aedc70cb765d491f2e6ce522ab7aab1cc5c231af67b04d6d96763",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120657616152536
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-ready-race-20261016.log",
+      "sha256": "1c1927d6312d0a009f90fcea8094ecfb73d44d9e475162b150dcc570f79c848c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120801096262760
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-ready-check-20261016.log",
+      "sha256": "e8b3c7a381a79202132cceb3fd2460224c4c0fd6d612d01dbe17739d09f55ceb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120934933930492
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-driver-20261016.log",
+      "sha256": "a45ddcaab8b72a145883764a551b932c3d4f9f64efb78c5bc26fc40c9ec6792f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121290966448573
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-independent-20261016.log",
+      "sha256": "c432d23a4dba882598da9a50df98c11be2e1e625f6865d46d38d9eedde79f995",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121426888548391
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-receipt-published-check-20261016.log",
+      "sha256": "4eb8a43b318282fdd707292ae1def57e5f859d0108760af400544ae264e8b11b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792121631694092333
+    }
+  ]
+}

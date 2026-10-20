@@ -2,14 +2,14 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "signature-compat-across-swap",
-  "description": "TC-3-1-04 — 노드가 다른 바이너리로 재기동해도 기존 tx 의 blockNumber·status·from·to 가 보존된다 그 tx 는 별도 계정이 서명해 eth_sendRawTransaction 으로 보낸다. 이 케이스가 보존을 확인하는 값에 from 이 들어 있는데, from 은 영수증에 적힌 값이 아니라 서명에서 되찾는 값이다. 그러니 바이너리를 바꾼 노드가 같은 from 을 내놓는지가 곧 서명 호환성이다. 노드가 자기 계정으로 서명하면 그 서명은 우리가 만든 것이 아니라 노드가 만든 것이라, 사용자가 보낸 tx 가 살아남는지를 묻는 이 케이스의 뜻과 어긋난다. 교체 전후 web3_clientVersion 이 달라야 한다. 같으면 같은 프로그램으로 바꿔 끼운 것이라, 새 버전과의 서명 호환이라는 이 케이스의 질문에 답하지 못한다. upgrade 바이너리가 기본 바이너리와 같은 빌드면(예: 두 번째 빌드가 없는 체인) 이 검사가 실패한다. 2026-09-29 에 공통에서 go-stablenet 전용으로 되돌렸다. 이 케이스는 바꿔 낄 두 번째 바이너리가 있어야 성립하는데, 그 빌드가 체인마다 따로 필요하다. 세 체인이면 여섯 개다. 지금은 go-stablenet 만 1.0.1 과 1.1.0 두 개를 갖고 있고, go-wbft 와 go-wemix 에서는 같은 바이너리를 바꿔 끼우게 되어 web3_clientVersion 이 그대로다. 그래서 교체가 일어났는지 자체를 확인하지 못한다. 재료가 없는 것이지 테스트가 틀린 것이 아니므로, 두 체인의 업그레이드 빌드가 생기면 다시 공통으로 올릴 수 있다.",
+  "description": "TC-3-1-04 — 서로 다른 빌드로 두 EN을 데이터 유지 재시작한다. 원래 키로 직접 서명한 성공 거래의 해시·블록·송수신자·영수증(송수신자 포함)을 양쪽 EN에서 보존하고, 교체 후 BP가 두 블록 이상 전진하며 두 EN이 이후 높이와 현재 BP의 ±2블록 이내까지 따라왔는지 확인한다. 두 EN의 버전 변경·eth_syncing=false·정확한 이전 블록 해시를 검증한다. 교체 전후 로그는 각각 완전한 1MiB 미만 캡처여야 하며, 이전 접두가 유지된 새 구간에 원문의 서명 오류 패턴이 없어야 한다. 로그 읽기 실패·잘림·접두 손실은 실패다. 원문은 15노드 중 EN8/11을 사용하며 이 fixture는 BP4/EN2다. 두 번째 빌드가 필요해 StableNet 전용이며 전체 legacy나 원문 전체 토폴로지 인수는 아니다.",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
   "skipsOn": [],
-  "chainPreset": "stablenet-bp4-en1-default-upgrade",
+  "chainPreset": "stablenet-bp4-en2-default-upgrade",
   "steps": [
     {
       "do": "waitBlock",
@@ -86,17 +86,170 @@
       "save": "toBefore"
     },
     {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "0x1",
+      "select": "status"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "from",
+      "compare": "EqualCI",
+      "is": "$sender"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$toBefore"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blockBefore",
+        false
+      ],
+      "save": "legacyBlockHash",
+      "select": "hash"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blockBefore",
+        false
+      ],
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$",
+      "select": "hash"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyBlockHash",
+      "select": "blockHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyTx",
+      "select": "transactionHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "EqualCI",
+      "is": "$sender",
+      "select": "from"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "headBefore"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$headBefore",
+        "2"
+      ],
+      "save": "progressTarget"
+    },
+    {
       "do": "read",
       "on": "en1",
       "source": "rpcCall",
       "method": "web3_clientVersion",
       "params": [],
-      "save": "versionBefore"
+      "save": "en1VersionBefore"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "en1",
+      "maxBytes": 1048576,
+      "requireComplete": true,
+      "save": "en1LogBefore"
+    },
+    {
+      "do": "read",
+      "on": "en2",
+      "source": "rpcCall",
+      "method": "web3_clientVersion",
+      "params": [],
+      "save": "en2VersionBefore"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "en2",
+      "maxBytes": 1048576,
+      "requireComplete": true,
+      "save": "en2LogBefore"
     },
     {
       "do": "swapNode",
-      "on": "en1",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
       "binary": "upgrade"
+    },
+    {
+      "do": "waitBlock",
+      "on": "node1",
+      "target": "$progressTarget",
+      "timeout": "180s"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "node1",
+      "compare": "Greater",
+      "is": "$headBefore"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "headAfter"
     },
     {
       "do": "waitFor",
@@ -105,9 +258,9 @@
       "method": "eth_blockNumber",
       "params": [],
       "compare": "GreaterOrEqual",
-      "expected": "$blockBefore",
+      "expected": "$headAfter",
       "timeout": "180s",
-      "pollInterval": "2s"
+      "pollInterval": "1s"
     },
     {
       "expect": "rpc",
@@ -115,7 +268,15 @@
       "method": "web3_clientVersion",
       "params": [],
       "compare": "NotEqual",
-      "is": "$versionBefore"
+      "is": "$en1VersionBefore"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_syncing",
+      "params": [],
+      "compare": "Equal",
+      "is": false
     },
     {
       "expect": "rpc",
@@ -124,9 +285,9 @@
       "params": [
         "$legacyTx"
       ],
-      "select": "blockNumber",
       "compare": "Equal",
-      "is": "$blockBefore"
+      "is": "$blockBefore",
+      "select": "blockNumber"
     },
     {
       "expect": "rpc",
@@ -135,20 +296,53 @@
       "params": [
         "$legacyTx"
       ],
-      "select": "status",
       "compare": "Equal",
-      "is": "$statusBefore"
+      "is": "0x1",
+      "select": "status"
     },
     {
       "expect": "rpc",
       "on": "en1",
-      "method": "eth_getTransactionByHash",
+      "method": "eth_getTransactionReceipt",
       "params": [
         "$legacyTx"
       ],
       "select": "from",
+      "compare": "EqualCI",
+      "is": "$sender"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$toBefore"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
       "compare": "Equal",
-      "is": "$fromBefore"
+      "is": "$legacyBlockHash",
+      "select": "blockHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyTx",
+      "select": "transactionHash"
     },
     {
       "expect": "rpc",
@@ -157,14 +351,335 @@
       "params": [
         "$legacyTx"
       ],
-      "select": "to",
+      "compare": "EqualCI",
+      "is": "$sender",
+      "select": "from"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "EqualCI",
+      "is": "$toBefore",
+      "select": "to"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
       "compare": "Equal",
-      "is": "$toBefore"
+      "is": "$legacyTx",
+      "select": "hash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyBlockHash",
+      "select": "blockHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blockBefore",
+        false
+      ],
+      "compare": "Equal",
+      "is": "$legacyBlockHash",
+      "select": "hash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blockBefore",
+        false
+      ],
+      "compare": "Equal",
+      "is": "$blockBefore",
+      "select": "number"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "en1SourceHead"
+    },
+    {
+      "do": "read",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "en1CurrentHead"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$en1SourceHead",
+        "$en1CurrentHead"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$en1SourceHead",
+        "$en1CurrentHead"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "-2"
     },
     {
       "do": "readNodeLog",
       "on": "en1",
-      "save": "upgradedNodeLog"
+      "maxBytes": 1048576,
+      "requireComplete": true,
+      "save": "en1LogAfter"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$en1LogAfter"
+      ],
+      "since": "$en1LogBefore",
+      "pattern": "(?i)ecrecover failed|invalid[^[:cntrl:]]*sig|verify[^[:cntrl:]]*error|signature[^[:cntrl:]]*(error|fail|invalid)|secp256k1[^[:cntrl:]]*(error|fail|invalid)",
+      "compare": "Equal",
+      "is": "0"
+    },
+    {
+      "do": "waitFor",
+      "on": "en2",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "$headAfter",
+      "timeout": "180s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotEqual",
+      "is": "$en2VersionBefore"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_syncing",
+      "params": [],
+      "compare": "Equal",
+      "is": false
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$blockBefore",
+      "select": "blockNumber"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "0x1",
+      "select": "status"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "from",
+      "compare": "EqualCI",
+      "is": "$sender"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$toBefore"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyBlockHash",
+      "select": "blockHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyTx",
+      "select": "transactionHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "EqualCI",
+      "is": "$sender",
+      "select": "from"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "EqualCI",
+      "is": "$toBefore",
+      "select": "to"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyTx",
+      "select": "hash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$legacyTx"
+      ],
+      "compare": "Equal",
+      "is": "$legacyBlockHash",
+      "select": "blockHash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blockBefore",
+        false
+      ],
+      "compare": "Equal",
+      "is": "$legacyBlockHash",
+      "select": "hash"
+    },
+    {
+      "expect": "rpc",
+      "on": "en2",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blockBefore",
+        false
+      ],
+      "compare": "Equal",
+      "is": "$blockBefore",
+      "select": "number"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "en2SourceHead"
+    },
+    {
+      "do": "read",
+      "on": "en2",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "en2CurrentHead"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$en2SourceHead",
+        "$en2CurrentHead"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$en2SourceHead",
+        "$en2CurrentHead"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "-2"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "en2",
+      "maxBytes": 1048576,
+      "requireComplete": true,
+      "save": "en2LogAfter"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$en2LogAfter"
+      ],
+      "since": "$en2LogBefore",
+      "pattern": "(?i)ecrecover failed|invalid[^[:cntrl:]]*sig|verify[^[:cntrl:]]*error|signature[^[:cntrl:]]*(error|fail|invalid)|secp256k1[^[:cntrl:]]*(error|fail|invalid)",
+      "compare": "Equal",
+      "is": "0"
     }
   ]
 }

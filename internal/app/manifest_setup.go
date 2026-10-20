@@ -60,7 +60,8 @@ func (a ManifestBinary) Verify(ctx context.Context, chain string) (ManifestBinar
 	if err != nil {
 		return evidence, errors.New("binary version probe failed")
 	}
-	if !strings.Contains(string(version), "Git Commit: "+a.Commit) || !strings.Contains(string(version), "Operating System: "+runtime.GOOS) || !strings.Contains(string(version), "Architecture: "+runtime.GOARCH) {
+	commit, identityErr := manifestSourceCommit(a.Path, version)
+	if identityErr != nil || commit != a.Commit || !strings.Contains(string(version), "Operating System: "+runtime.GOOS) || !strings.Contains(string(version), "Architecture: "+runtime.GOARCH) {
 		return evidence, errors.New("binary version identity mismatch")
 	}
 	evidence.Version = string(version)

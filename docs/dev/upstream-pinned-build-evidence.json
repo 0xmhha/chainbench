@@ -1,0 +1,266 @@
+{
+  "scope": "Official pinned StableNet/WBFT revisions fetched into separate pristine copies and built for Darwin/Linux ARM64. Source and binary provenance only; no fresh fleet, chain startup, L1 or defect-resolution claim.",
+  "profiles": [
+    {
+      "platform": "darwin",
+      "chain": "stablenet",
+      "revision": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+      "binary": {
+        "path": "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+        "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1792094963879863833
+      },
+      "sourceRoot": "/private/tmp/chainbench-upstream-20261016/go-stablenet",
+      "sourceInventory": {
+        "path": "/private/tmp/chainbench-upstream-20261016/stablenet-source-inventory.json",
+        "sha256": "3b466787b8ae4a15bd28fb989e93e3aa6506be7bc2d146d17682d5ddeb4f2915",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792094862462234391
+      },
+      "sourceEntries": 2233,
+      "uninitializedGitlinks": 4,
+      "sourceUnchanged": true,
+      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 4d17eea018c8dd579409db30bfd27de79c4f4121\nGit Commit Date: 20261013\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "buildInfo": {
+        "go": "go1.25.2",
+        "vcsModified": false,
+        "revision": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+        "os": "darwin",
+        "architecture": "arm64"
+      },
+      "arguments": [
+        "/Users/0xtopaz/.gvm/gos/go1.25.2/bin/go",
+        "build",
+        "-trimpath",
+        "-buildvcs=true",
+        "-ldflags",
+        "-X github.com/ethereum/go-ethereum/internal/version.gitCommit=4d17eea018c8dd579409db30bfd27de79c4f4121 -X github.com/ethereum/go-ethereum/internal/version.gitDate=20261013",
+        "-tags=urfave_cli_no_docs,ckzg",
+        "-o",
+        "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+        "./cmd/gstable"
+      ],
+      "elapsedSeconds": 103.94551749998936
+    },
+    {
+      "platform": "darwin",
+      "chain": "wbft",
+      "revision": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+      "binary": {
+        "path": "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+        "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1792095013232017765
+      },
+      "sourceRoot": "/private/tmp/chainbench-upstream-20261016/go-wbft",
+      "sourceInventory": {
+        "path": "/private/tmp/chainbench-upstream-20261016/wbft-source-inventory.json",
+        "sha256": "98364019394cf621ab91d7b9f8aadaea0603e1443dacec51550acea7a2e25068",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792094970111631364
+      },
+      "sourceEntries": 2219,
+      "uninitializedGitlinks": 4,
+      "sourceUnchanged": true,
+      "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: d535dd3d25110977ce19503d8fcbf7e9a5430562\nGit Commit Date: 20261008\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "buildInfo": {
+        "go": "go1.25.2",
+        "vcsModified": false,
+        "revision": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+        "os": "darwin",
+        "architecture": "arm64"
+      },
+      "arguments": [
+        "/Users/0xtopaz/.gvm/gos/go1.25.2/bin/go",
+        "build",
+        "-trimpath",
+        "-buildvcs=true",
+        "-ldflags",
+        "-X github.com/ethereum/go-ethereum/internal/version.gitCommit=d535dd3d25110977ce19503d8fcbf7e9a5430562 -X github.com/ethereum/go-ethereum/internal/version.gitDate=20261008",
+        "-tags=urfave_cli_no_docs,ckzg",
+        "-o",
+        "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+        "./cmd/gwemix"
+      ],
+      "elapsedSeconds": 44.68935604096623
+    },
+    {
+      "platform": "linux",
+      "chain": "stablenet",
+      "revision": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+      "binary": {
+        "path": "/private/tmp/chainbench-upstream-20261016/linux/gstable",
+        "sha256": "9ca995c38dc9fc3c0921577c7f91860f956189c9e34618d9004797337e863a47",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792095248000000000
+      },
+      "sourceRoot": "/private/tmp/chainbench-upstream-20261016/go-stablenet",
+      "sourceInventory": {
+        "path": "/private/tmp/chainbench-upstream-20261016/stablenet-source-inventory.json",
+        "sha256": "3b466787b8ae4a15bd28fb989e93e3aa6506be7bc2d146d17682d5ddeb4f2915",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792094862462234391
+      },
+      "sourceEntries": 2233,
+      "uninitializedGitlinks": 4,
+      "sourceUnchanged": true,
+      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 4d17eea018c8dd579409db30bfd27de79c4f4121\nGit Commit Date: 20261013\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=/go\nGOROOT=\n",
+      "buildInfo": {
+        "go": "go1.25.14",
+        "vcsModified": false,
+        "revision": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+        "os": "linux",
+        "architecture": "arm64"
+      },
+      "arguments": [
+        "go",
+        "build",
+        "-trimpath",
+        "-buildvcs=true",
+        "-ldflags",
+        "-X github.com/ethereum/go-ethereum/internal/version.gitCommit=4d17eea018c8dd579409db30bfd27de79c4f4121 -X github.com/ethereum/go-ethereum/internal/version.gitDate=20261013",
+        "-tags=urfave_cli_no_docs,ckzg",
+        "-o",
+        "/out/gstable",
+        "./cmd/gstable"
+      ],
+      "elapsedSeconds": 222.87701254105195
+    },
+    {
+      "platform": "linux",
+      "chain": "wbft",
+      "revision": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+      "binary": {
+        "path": "/private/tmp/chainbench-upstream-20261016/linux/gwbft",
+        "sha256": "cb9bc31632a852c27e9dddaeb24911aea32c8c0f5ea78bfbcb1df644b54235c2",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792095464000000000
+      },
+      "sourceRoot": "/private/tmp/chainbench-upstream-20261016/go-wbft",
+      "sourceInventory": {
+        "path": "/private/tmp/chainbench-upstream-20261016/wbft-source-inventory.json",
+        "sha256": "98364019394cf621ab91d7b9f8aadaea0603e1443dacec51550acea7a2e25068",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792094970111631364
+      },
+      "sourceEntries": 2219,
+      "uninitializedGitlinks": 4,
+      "sourceUnchanged": true,
+      "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: d535dd3d25110977ce19503d8fcbf7e9a5430562\nGit Commit Date: 20261008\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=/go\nGOROOT=\n",
+      "buildInfo": {
+        "go": "go1.25.14",
+        "vcsModified": false,
+        "revision": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+        "os": "linux",
+        "architecture": "arm64"
+      },
+      "arguments": [
+        "go",
+        "build",
+        "-trimpath",
+        "-buildvcs=true",
+        "-ldflags",
+        "-X github.com/ethereum/go-ethereum/internal/version.gitCommit=d535dd3d25110977ce19503d8fcbf7e9a5430562 -X github.com/ethereum/go-ethereum/internal/version.gitDate=20261008",
+        "-tags=urfave_cli_no_docs,ckzg",
+        "-o",
+        "/out/gwbft",
+        "./cmd/gwemix"
+      ],
+      "elapsedSeconds": 184.83247487503104
+    }
+  ],
+  "provenance": [
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/darwin-provenance.json",
+      "sha256": "ab7607e6510dbd15465c114e31c1dbfc65a87e7ec70718bc726823d60499b04c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095014824119372
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-20261016/linux-provenance.json",
+      "sha256": "bff5097c2cdb1a04fc19615828521e3d39e917850066e4710371a45114baba57",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095510251243350
+    }
+  ],
+  "remoteComparisons": [
+    {
+      "path": "/private/tmp/chainbench-stable-head-compare-20261016.json",
+      "sha256": "7ac696e06421b3a1215024b8b1aeb8a75f315cef5a8bf7fb7a6bf721ca59dd00",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792093985109605873
+    },
+    {
+      "path": "/private/tmp/chainbench-wbft-head-compare-20261016.json",
+      "sha256": "fd34b9961e2009586a983879270be05fce1fdb7cc0be4abce0573ef87d167e1d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792093983887021683
+    }
+  ],
+  "wemixUnchangedRevision": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+  "originalExternalWorkingTreesModified": false,
+  "allSourceEntriesVerifiedAgainstGitBlobs": true,
+  "linuxCopyComparedBeforeAndAfterBuild": true,
+  "darwinNonfatalWarning": "karalabe/usb deprecated ATOMIC_VAR_INIT macro; build exited0.",
+  "linuxBuilder": {
+    "id": "sha256:4e2219ca515d99610115539a96f733fa567f62941e31ac5bfb87c7ade6143bcc",
+    "repoDigests": [
+      "golang@sha256:699337d620559a59b4a2bb298ad59611e535d2ee755a34cf2d2a98f37578dc80"
+    ]
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-upstream-refresh-20261016.log",
+      "sha256": "00d4d9f13f8a532feb66749ee1ee82a240b68478e3719de50e942af6b46acc2e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095014823944372
+    },
+    {
+      "path": "/private/tmp/chainbench-upstream-linux-build-20261016.log",
+      "sha256": "2c47eb523ef775b9596791f0aa75f3017aa1efe60c0477973d17b8dbb9ebcc3c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792095510240729274
+    }
+  ],
+  "fullL1Accepted": false,
+  "externalIssuesResolved": false,
+  "pinPolicy": "Pin at campaign start and finish against these revisions. Further upstream changes are separate inputs, not an implicit mid-campaign replacement.",
+  "completedBuildCacheCleanup": {
+    "path": "/private/tmp/chainbench-upstream-20261016/completed-build-cache-cleanup.json",
+    "sha256": "b7b6e2015443cd1aa37a4c6a143d39c244e6cbbdb9cc7c3e01302c1f22fd7f66",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792095678790905449
+  },
+  "cleanupScope": "Removed this campaign unused owned Docker build cache (1,032,376,320 bytes) and unreferenced freshly pulled Go1.25 builder image. All four binaries, pristine sources and evidence retained; no global prune."
+}

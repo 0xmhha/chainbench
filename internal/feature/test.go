@@ -9,6 +9,7 @@ import "github.com/0xmhha/chainbench/internal/app"
 // them so each definition's own preflight decides whether to reuse it. They are
 // registered together so a surface cannot offer one without the other.
 func init() {
+	Register(Registration{Name: "test.run-matrix", Stage: StageTest, Summary: "Run the same ordered suite on every selected chain preset"}, app.RunMatrix)
 	Register(Registration{
 		Name: "test.run", Stage: StageTest,
 		Summary: "Run a DSL test definition: compose the network it declares, then run it",

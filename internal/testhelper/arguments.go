@@ -22,20 +22,20 @@ import (
 // case claim a timeout, a node or a saved value it never had.
 var builtinArguments = map[string]string{
 	"action:crossFork":                   "timeout",
-	"action:deployContract":              "bytecode data from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout value",
+	"action:deployContract":              "accessList bytecode data feePayer feePayerKey from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout value",
 	"action:faucet":                      "amount from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout to",
 	"action:healPartition":               "groups method",
 	"action:load":                        "blocks fillPercent from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout",
 	"action:newAccount":                  "save saveKey",
 	"action:partition":                   "groups method",
 	"action:read":                        "on onEach save source",
-	"action:readNodeLog":                 "maxBytes on onEach save",
+	"action:readNodeLog":                 "maxBytes on onEach requireComplete save",
 	"action:registerContract":            "data from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout to value",
 	"action:resetNode":                   "on onEach",
 	"action:restartNode":                 "on onEach",
-	"action:sendRawTampered":             "feePayerKey on onEach reason save senderKey to value which",
+	"action:sendRawTampered":             "feePayerKey on onEach raw reason save senderKey to value which",
 	"action:sendSetCode":                 "authorityKey delegate key on onEach save",
-	"action:sendTx":                      "accessList blocks data expect expectReject expectRevert feePayerKey from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval reason save timeout to value wait",
+	"action:sendTx":                      "accessList blocks data expect expectReject expectRevert feePayer feePayerKey from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval reason save timeout to value wait",
 	"action:signAuthorization":           "authorityKey delegate on onEach save",
 	"action:startNode":                   "expect expectFail on onEach reason save",
 	"action:stopNode":                    "on onEach",
@@ -45,6 +45,7 @@ var builtinArguments = map[string]string{
 	"action:wsOpen":                      "address event on onEach params save topics",
 	"assertion:balanceAt":                "address compare delta expected on onEach tol",
 	"assertion:baseFee":                  "compare delta expected on onEach tol",
+	"assertion:blockLag":                 "maxLag on onEach pollInterval reference timeout",
 	"assertion:blockAdvance":             "on onEach pollInterval timeout",
 	"assertion:blockHalt":                "maxAdvance on onEach within",
 	"assertion:blockInterval":            "blocks maxMillis maxSeconds minMillis minSeconds on",
@@ -52,22 +53,25 @@ var builtinArguments = map[string]string{
 	"assertion:blockStalled":             "on pollInterval timeout",
 	"assertion:call":                     "compare data delta expected on onEach to tol",
 	"assertion:callError":                "data on reason to",
+	"assertion:remoteBalance":            "address on onEach",
+	"assertion:rpcHealth":                "on onEach",
+	"assertion:chainInfo":                "on onEach",
 	"assertion:chainId":                  "compare delta expected on onEach tol",
 	"assertion:codeAt":                   "address compare delta expected on onEach tol",
 	"assertion:contractChecksum":         "address bytecode compare data expected on onEach",
 	"assertion:createAddress":            "compare delta deployer expected from nonce on onEach tol",
-	"assertion:derive":                   "compare delta expected format index of on onEach op selector tol",
+	"assertion:derive":                   "compare delta expected format index of on onEach op pattern selector since tol",
 	"assertion:estimateGas":              "compare data delta expected from on onEach to tol",
 	"assertion:gasPrice":                 "compare delta expected on onEach tol",
 	"assertion:gasPriceIsBaseFeePlusTip": "on",
 	"assertion:logs":                     "address compare delta expected fromBlock index on onEach select toBlock tol topics",
 	"assertion:methodPresent":            "method on params",
-	"assertion:metric":                   "compare expected name on onEach",
+	"assertion:metric":                   "alternatives compare expected name on onEach",
 	"assertion:nonceAt":                  "address compare delta expected on onEach tol",
 	"assertion:peerCount":                "compare delta expected on onEach tol",
 	"assertion:receiptLog":               "address compare delta expected hash index on onEach select tol topic topic0",
 	"assertion:rpcCall":                  "compare delta expected method on onEach params select tol",
-	"assertion:rpcError":                 "method on params reason",
+	"assertion:rpcError":                 "errorData method on params reason",
 	"assertion:sameBlockHash":            "block on onEach",
 	"assertion:txMined":                  "expected hash on",
 	"assertion:txStatus":                 "compare delta expected hash on onEach tol",
@@ -82,7 +86,7 @@ var builtinArguments = map[string]string{
 	"reader:codeAt":                      "address",
 	"reader:contractChecksum":            "address bytecode data",
 	"reader:createAddress":               "deployer from nonce",
-	"reader:derive":                      "format index of op selector",
+	"reader:derive":                      "format index of op pattern selector since",
 	"reader:estimateGas":                 "data from to",
 	"reader:gasPrice":                    "",
 	"reader:logs":                        "address fromBlock index select toBlock topics",
@@ -198,7 +202,7 @@ var nonNumeric = map[string]bool{assertContractChecksum: true, assertValidators:
 // builds that transaction itself.
 var localSigning = map[string][]string{
 	"sendTx":         {"from"},
-	"deployContract": {"from", "gas", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce"},
+	"deployContract": {"from"},
 }
 
 // unreadOnThisPath returns the arguments a statement gives that its
@@ -301,14 +305,18 @@ func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes [
 		}
 	case assertDerive:
 		if op, ok := text("op"); ok {
+			if op != "regexpCount" {
+				refuse("pattern", "read only with op regexpCount")
+				refuse("since", "read only with op regexpCount")
+			}
 			if op != "abiCall" {
 				refuse("selector", "read only with op abiCall")
 			}
 			if op != "word" {
 				refuse("index", "read only with op word")
 			}
-			if op != "sum" && op != "diff" && op != "mul" {
-				refuse("format", "read only with op sum, diff or mul")
+			if op != "sum" && op != "diff" && op != "mul" && op != "min" {
+				refuse("format", "read only with op sum, diff, mul or min")
 			}
 		}
 	case assertLogs:

@@ -1,0 +1,179 @@
+{
+  "date": "2026-10-18",
+  "scope": "Owned Docker preparation uses the same server set and local map as gated Go tests. Selected actual SSH regression and exact preservation of current matching fixtures; not whole native race, full L1, original TC adequacy or final Web acceptance.",
+  "implementation": [
+    "Resolve server1 through production resource loaders; no independent YAML parser or hardcoded container/login.",
+    "Select the single configured Compose service and verify immutable ID, running state, source paths, real IP and explicit loopback SSH mapping before preparation.",
+    "Use private staging; reject existing mismatched content/type/ownership/permissions without rewriting it. Only missing fixture paths are installed; cleanup failure is reported.",
+    "Add Docker-free fixture-test to make check and document the measured new helper package. No new product CLI or MCP input."
+  ],
+  "red": {
+    "contracts": 4,
+    "failingObservationsAgainstParentWithCorrectedFixtures": 10,
+    "fixtureCorrections": "Version and canonical temporary paths corrected before final parent RED and GREEN. Earlier invalid fixture failures are retained, not counted as product RED."
+  },
+  "green": {
+    "contracts": 4,
+    "expandedCases": 10,
+    "makeCheckExitCode": 0,
+    "relatedRacePackages": 3,
+    "shellSyntaxExitCode": 0,
+    "sandboxBindFailuresPreservedAndHostChecksPassed": true
+  },
+  "initialAttempt": {
+    "accepted": false,
+    "liveTestsPassed": 5,
+    "conflictRefused": true,
+    "initialMissingFixturesInstalled": true,
+    "idempotentRepeatObserved": true,
+    "failure": "Final unrelated-data comparison assertion failed. Initial before/after manifests were held in memory and not persisted before validation, so that first difference cannot be reconstructed. Do not claim initial-install preservation was independently accepted.",
+    "resolutionClaimed": false,
+    "allLogsPreserved": true
+  },
+  "diagnostic": {
+    "sourceDigest": "522bbac5ac1e007ef4346b10928a40d9ba2e3df4d74629ddbfa588629034c75b",
+    "sameSnapshot": true,
+    "normalizerAccepted": true,
+    "differences": {},
+    "nativeAcceptanceAwarded": false
+  },
+  "actualRetry": {
+    "scope": "Exact preservation of current matching fixtures on the selected owned Docker server, a reversible owned sentinel refusal, idempotent preparation and five SSH regression tests. Initial installation was observed in prior failed overall preservation attempt; that attempt is not accepted.",
+    "sourceBefore": "522bbac5ac1e007ef4346b10928a40d9ba2e3df4d74629ddbfa588629034c75b",
+    "sourceAfter": "522bbac5ac1e007ef4346b10928a40d9ba2e3df4d74629ddbfa588629034c75b",
+    "conflictExit": 1,
+    "successExit": 0,
+    "repeatExit": 0,
+    "tests": {
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    "noStaging": true,
+    "remainingDatabases": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "actualRetryPreservation": {
+    "containers": 15,
+    "baselineWrittenBeforeChanges": true,
+    "beforePreparedRepeatedAfterExactlyEqual": true,
+    "conflictSnapshotExactlyEqual": true,
+    "sentinelHandling": "Only a file created by the initial owned proof was temporarily moved to a private backup; that same original file was restored after refusing the owned sentinel. No pre-existing unrelated fixture was deleted or replaced."
+  },
+  "independent": {
+    "scopeAccepted": true,
+    "scope": "Selected Docker fixture preservation and SSH regression; not full L1 or final Web acceptance",
+    "sourceDigest": "522bbac5ac1e007ef4346b10928a40d9ba2e3df4d74629ddbfa588629034c75b",
+    "containersIndependentlyReobserved": 15,
+    "exactFixtureAndUnrelatedDataPreserved": true,
+    "conflictRefusedWithoutChanges": true,
+    "matchingFixtureIdempotence": true,
+    "liveTests": {
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    "tamperControlsRejected": [
+      "sourceAfter",
+      "inputsAfter",
+      "conflictExit",
+      "conflictAfter",
+      "prepared",
+      "repeated",
+      "after",
+      "tests",
+      "remainingDatabases",
+      "noStaging",
+      "finalWebAccepted"
+    ],
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "fullPythonRegressionAccepted": false,
+  "fullRaceAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-summary.json",
+      "sha256": "28247418b0df841d983186a09bed3b319f37b24efafef8bd4903736ad8fac697"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-before.json",
+      "sha256": "46e2535f91a195ed0a64220e01bd964d1d1e5521e2e3f69880967c8ef3db5323"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-after.json",
+      "sha256": "46e2535f91a195ed0a64220e01bd964d1d1e5521e2e3f69880967c8ef3db5323"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-conflict-before.json",
+      "sha256": "70eceb0901da08bbb56a67af51cee7ec6f4cd221432f4f811f7ad0c2b019fea5"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-conflict-after.json",
+      "sha256": "70eceb0901da08bbb56a67af51cee7ec6f4cd221432f4f811f7ad0c2b019fea5"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-live.jsonl",
+      "sha256": "55479607a1675d4bb16f8ed57d29c17b1be47dbdefbeb8ad78bc6e8e5a530f2c"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018-independent.json",
+      "sha256": "c4ad53d1d35019a071f0e1f0ea991afe9c2dbfc1c5fa1f8a985fb20cd862962a"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-red-final-20261018.log",
+      "sha256": "2003e6f838b4c476659bc1b9f0ed0154830d36a03a41c04220b7f5b5bd7ba29f"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-green-canonical-20261018.log",
+      "sha256": "05e532919c4f3253af37750d9516451af6e68a67b1541b6be7de306dddae9cf2"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-check-host-20261018.log",
+      "sha256": "8e616aa85f517e892318fabb1c9bc55d0e907916fa2eb8ed4839cc85df24c9ff"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-race-host-20261018.log",
+      "sha256": "22d6766bf7bfdf1ac4617744a56fad8dc1f3f0d4a88e75c5e40fcb3528faa357"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-proof-run-20261018.log",
+      "sha256": "f441addcd30d31034984107bb180fbdc7d9ba097a7319c4e9802e71671781777"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-diagnostic-run-20261018.log",
+      "sha256": "85bbfa9e217f41fd75fb1e8793a25da39a9a695dde0b6084fcc8c2df400698da"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-run-20261018.log",
+      "sha256": "343767e68decedd5b7aa4a29f1662fc909ff6bec576394aed48647951ac8b893"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-audit-run-20261018.log",
+      "sha256": "318e511bd4dde84d5ea48e055cc1f13f58e071bfb24fb96f80633687c6adeffc"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-proof-20261018.py",
+      "sha256": "b92c85cec4d56c93f4202e271cc46bc810bd850609b234f1aed6c749186d39d0"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-audit-20261018.py",
+      "sha256": "da1c173d7a577b61192dd9a1258b7f29f186464f91aa8d1054c71fe5240b96bd"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-20261018.py",
+      "sha256": "cdabd4af19447f078487126c0c5ee259861cdcf539810bbe1117cf73b608f712"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-retry-audit-20261018.py",
+      "sha256": "827c7f784995e4801760769d11694edb223a3ab72e46e46a47e2ff4a18af8d0f"
+    },
+    {
+      "path": "/private/tmp/chainbench-docker-preparation-preservation-diagnostic-20261018.py",
+      "sha256": "48790f84cc9c1db00a2c1c2afa66f0a23d17c319d42f7f2b23d696c0e40c7434"
+    }
+  ]
+}

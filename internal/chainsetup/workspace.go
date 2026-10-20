@@ -349,6 +349,7 @@ func (w *Workspace) NodeSet() node.NodeSet {
 			nodeHost = host
 		}
 		ns.Nodes = append(ns.Nodes, node.Node{
+			Chain:      w.chainFor(n),
 			Index:      n.Index,
 			Role:       node.Role(n.Role),
 			Host:       nodeHost,

@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -47,8 +48,9 @@ type rpcRequest struct {
 }
 
 type rpcError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code    *int            `json:"code"`
+	Message *string         `json:"message"`
+	Data    json.RawMessage `json:"data"`
 }
 
 // ServerError is a JSON-RPC error the node answered with, as opposed to a
@@ -58,6 +60,8 @@ type ServerError struct {
 	Method  string
 	Code    int
 	Message string
+	// Data preserves the optional JSON-RPC error payload without flattening its type.
+	Data json.RawMessage `json:",omitempty"`
 }
 
 // Error keeps the text callers matched on before the type existed.
@@ -91,13 +95,33 @@ func (c *Client) Call(ctx context.Context, method string, out any, params ...any
 		return fmt.Errorf("rpc: %s: %w", method, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("rpc: %s: HTTP status %d", method, resp.StatusCode)
+	}
 
 	var rr rpcResponse
-	if err := json.NewDecoder(resp.Body).Decode(&rr); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&rr); err != nil {
 		return fmt.Errorf("rpc: decode %s: %w", method, err)
 	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err != nil {
+			return fmt.Errorf("rpc: decode %s trailing data: %w", method, err)
+		}
+		return fmt.Errorf("rpc: %s: response must contain exactly one JSON value", method)
+	}
 	if rr.Error != nil {
-		return &ServerError{Method: method, Code: rr.Error.Code, Message: rr.Error.Message}
+		if len(rr.Result) > 0 && !bytes.Equal(bytes.TrimSpace(rr.Result), []byte("null")) {
+			return fmt.Errorf("rpc: %s: response contains both a result and an error", method)
+		}
+		if rr.Error.Code == nil || rr.Error.Message == nil {
+			return fmt.Errorf("rpc: %s: response error requires code and message", method)
+		}
+		return &ServerError{Method: method, Code: *rr.Error.Code, Message: *rr.Error.Message, Data: rr.Error.Data}
+	}
+	if len(rr.Result) == 0 {
+		return fmt.Errorf("rpc: %s: response contains neither result nor error", method)
 	}
 	if out != nil {
 		if err := json.Unmarshal(rr.Result, out); err != nil {
@@ -270,14 +294,26 @@ func (c *Client) Enode(ctx context.Context) (string, error) {
 // AddPeer asks the node to connect to enode (admin_addPeer).
 func (c *Client) AddPeer(ctx context.Context, enode string) error {
 	var ok bool
-	return c.Call(ctx, "admin_addPeer", &ok, enode)
+	if err := c.Call(ctx, "admin_addPeer", &ok, enode); err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("rpc: admin_addPeer refused peer %s", enode)
+	}
+	return nil
 }
 
 // RemovePeer asks the node to drop enode (admin_removePeer). It is how a spec
 // severs a link to partition a network.
 func (c *Client) RemovePeer(ctx context.Context, enode string) error {
 	var ok bool
-	return c.Call(ctx, "admin_removePeer", &ok, enode)
+	if err := c.Call(ctx, "admin_removePeer", &ok, enode); err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("rpc: admin_removePeer refused peer %s", enode)
+	}
+	return nil
 }
 
 // Block is the subset of an Ethereum block chainbench reads. BaseFeePerGas is

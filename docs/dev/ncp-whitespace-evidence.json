@@ -1,0 +1,220 @@
+{
+  "scope": "NODE006 actual WEMIX\u2192WBFT Croissant20 with useNCP=true and seven whitespace-padded addresses retained verbatim in generated genesis plus all node genesis files. Pinned ncpCount7, ncpList exact set, each trimmed address isNCP word1, zero-address word0; actual block progress>=2. Init-only regression remains separate. Not full87/Linux/mainnet/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Init-only model accepted twelve incorrect network activation/count/membership/list/production/input controls.",
+  "unitGreen": "Positive and twelve negatives plus order-independent list control.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "40556e48fd021f690ce311ecd2aa3cb295e13f166e9c6416a5bc5c8a0f0f518c",
+    "sourceAfter": "40556e48fd021f690ce311ecd2aa3cb295e13f166e9c6416a5bc5c8a0f0f518c",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixNCPWhitespaceE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-lkce4pwv"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-lkce4pwv": []
+    },
+    "elapsedSeconds": 73.467,
+    "log": {
+      "path": "/private/tmp/chainbench-ncp-whitespace-native-native.jsonl",
+      "sha256": "cef1bc9deb680e133049f86abfbc946a6ab1a545edf32d78f253536ce34b93f9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035576133053710
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-ncp-whitespace-native-summary.json",
+      "sha256": "18c1bb8a857212ae6bd0bde7d5615e6673e5d50f4f4617992f267c1e4a2ecb41",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035576615075686
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-ncp-whitespace-native-start.json",
+      "sha256": "4f40b9c23ee9dd7f1fb2d0f056b02f55afed10b1c86e1a71c7639ba631f878e3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035500276441019
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-ncp-whitespace-observed.json",
+    "sha256": "b0a2a6c5a9012eb10cf9d131a7d13d357719974c50e7ce6a20309087a178b068",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792035596592901199
+  },
+  "members": [
+    "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+    "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+    "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+    "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+    "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+    "0x000000000000000000000000000000000000aa06",
+    "0x000000000000000000000000000000000000aa07"
+  ],
+  "height": 25,
+  "later": 27,
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-lkce4pwv",
+      "genesis": [
+        {
+          "path": "/private/tmp/cbui/hf-lkce4pwv/w/genesis.json",
+          "sha256": "8bc89c065979878e6df4b8fae4914384b6db104ff54f7ca95792b38605497a5e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792035503199369703
+        },
+        {
+          "path": "/private/tmp/cbui/hf-lkce4pwv/w/node1/genesis.json",
+          "sha256": "8bc89c065979878e6df4b8fae4914384b6db104ff54f7ca95792b38605497a5e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792035503225553807
+        },
+        {
+          "path": "/private/tmp/cbui/hf-lkce4pwv/w/node2/genesis.json",
+          "sha256": "8bc89c065979878e6df4b8fae4914384b6db104ff54f7ca95792b38605497a5e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792035503488924202
+        },
+        {
+          "path": "/private/tmp/cbui/hf-lkce4pwv/w/node3/genesis.json",
+          "sha256": "8bc89c065979878e6df4b8fae4914384b6db104ff54f7ca95792b38605497a5e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792035503727310300
+        },
+        {
+          "path": "/private/tmp/cbui/hf-lkce4pwv/w/node4/genesis.json",
+          "sha256": "8bc89c065979878e6df4b8fae4914384b6db104ff54f7ca95792b38605497a5e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792035503969524658
+        },
+        {
+          "path": "/private/tmp/cbui/hf-lkce4pwv/w/node5/genesis.json",
+          "sha256": "8bc89c065979878e6df4b8fae4914384b6db104ff54f7ca95792b38605497a5e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792035504198134540
+        }
+      ],
+      "sessions": [
+        {
+          "file": {
+            "path": "/private/tmp/cbui/hf-lkce4pwv/reports/20261015-033823-20367/UTC-20261015-033823/session.json",
+            "sha256": "2a58191b6d5236942999a8fbd0fffe9a9276e516e2f702ae8cacfe06f0bc8fe1",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792035570757193572
+          },
+          "summary": {
+            "pass": 1,
+            "fail": 0,
+            "blocked": 0,
+            "skip": 0
+          }
+        }
+      ],
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-lkce4pwv/reports/ncp-whitespace-inventory.json",
+        "sha256": "becb53cab1647d6b2dcffed383e0c68e6d148df7705fc80c7133291ee645bac9",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035596639127740
+      }
+    }
+  ],
+  "retainedFiles": 228,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-ncp-whitespace-publication.json",
+    "sha256": "33d2b6a5480f92af8f443cb2aeddcf1c9edce10364794efe1b93d4eea356bef3",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792035087207063155
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-ncp-whitespace-red.log",
+      "sha256": "f8868fac626cc8d7e1febc71719744b19192488a505489e4d0f98e955dd29540",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035315693005781
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-whitespace-green.log",
+      "sha256": "a1d995de9e150be76f336562f049404822fb5b3c6eab52c0c629951652513b68",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035370411472480
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-whitespace-related-race.log",
+      "sha256": "f5a56daefdb4f32f8e0a90e48737e91670f40824fb45f2a3d5b580445cc791ad",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035489801411566
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-whitespace-check.log",
+      "sha256": "8a342b5543d1abda9a2216ede44af284cb1318eb870dc420b79cf3621a8193f5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035487292947402
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-whitespace-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035394508936522
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

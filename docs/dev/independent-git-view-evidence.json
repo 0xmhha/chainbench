@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-18",
+  "scope": "Independent staged source receives a private Git view so tracked-document checks execute. Not full independent browser/Web reproduction, whole race/live/e2e, full L1 or final acceptance.",
+  "implementation": [
+    "Keep stage_sources source bytes/dirty working tree/untracked inputs. Local shared-object clone checks out no files; index, split base, config and refs are private. Hooks disabled in private metadata.",
+    "Copy index and candidate shared bases without querying the original index through Git. Determine the required split base only in the private clone and remove unused private copies.",
+    "Remove inherited Git location overrides. Bind private/original HEAD and source digests, verify separate index inode and preserve original index bytes/mode/owner/mtime. No new product CLI/MCP input."
+  ],
+  "red": {
+    "originalIndependentCaptureFailures": 2,
+    "additionalOriginalSplitBaseMtimeFailure": 1,
+    "reason": "git rev-parse --shared-index-path on the original split index refreshed its mtime; move that read to the private copy instead of restoring original timestamps."
+  },
+  "green": {
+    "privateGitContracts": 6,
+    "runtimeContracts": 6,
+    "prerequisiteContracts": 7,
+    "nativeSelectionContracts": 15,
+    "web14Contracts": 11,
+    "makeCheckExitCode": 0
+  },
+  "actual": {
+    "scope": "Actual whole-checkout private Git staging and two formerly skipped tracked-document Go checks. Not whole race, independent Web/browser capture, full L1 or final acceptance.",
+    "sourceBefore": "d8b6aadee6d47483837f783b8156543fdb843011ddc86c3e31318c379cd1b56f",
+    "sourceAfter": "d8b6aadee6d47483837f783b8156543fdb843011ddc86c3e31318c379cd1b56f",
+    "stagedDigest": "d8b6aadee6d47483837f783b8156543fdb843011ddc86c3e31318c379cd1b56f",
+    "runtime": "/private/tmp/cbui/git-proof-p4__ri5e",
+    "gitView": {
+      "head": "36399be3ae6244be4ce752366aa11da54732a6f7",
+      "indexSHA256": "d5a3573cb68a53f313123d7310fad561a81638d25ee811ae575c1466530b9bab",
+      "privateGitDirectory": "/private/tmp/cbui/git-proof-p4__ri5e/source/.git",
+      "privateIndex": true,
+      "objectPolicy": "read-only alternates to the original object store",
+      "sourceDigest": "d8b6aadee6d47483837f783b8156543fdb843011ddc86c3e31318c379cd1b56f"
+    },
+    "originalIndexSHA256": "d5a3573cb68a53f313123d7310fad561a81638d25ee811ae575c1466530b9bab",
+    "privateIndexSeparate": true,
+    "trackedPaths": 2476,
+    "gitTrackedExit": 0,
+    "goExit": 0,
+    "tests": {
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    "wholeRaceExecuted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "independent": {
+    "scopeAccepted": true,
+    "sourceDigest": "d8b6aadee6d47483837f783b8156543fdb843011ddc86c3e31318c379cd1b56f",
+    "trackedPaths": 2476,
+    "gitFilesPreserved": 2180,
+    "sourceAndUntrackedInputsPreserved": true,
+    "privateIndexSeparate": true,
+    "trackedDocumentTests": {
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    "tamperControlsRejected": [
+      "sourceAfter",
+      "stagedDigest",
+      "inputsAfter",
+      "originalGitAfter",
+      "originalIndexSHA256",
+      "trackedPaths",
+      "gitTrackedExit",
+      "goExit",
+      "tests",
+      "privateIndexSeparate",
+      "finalWebAccepted",
+      "wholeRaceExecuted"
+    ],
+    "wholeRaceExecuted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "postShutdownMaintenance": {
+    "reclaimed": [
+      {
+        "path": "/private/tmp/cbui/git-proof-p4__ri5e/source/web/node_modules",
+        "event": "reclaimed",
+        "allocatedBytes": 36921344,
+        "finishedAt": "2026-10-17T22:12:27.602422+00:00"
+      },
+      {
+        "path": "/private/tmp/cbui/git-proof-p4__ri5e/source/tests/webui/node_modules",
+        "event": "reclaimed",
+        "allocatedBytes": 14364672,
+        "finishedAt": "2026-10-17T22:12:27.776101+00:00"
+      }
+    ],
+    "sourceDigestPreserved": true,
+    "gitAndEvidenceRetained": true,
+    "allocatedBytesReported": 51286016
+  },
+  "fullPythonRegressionAccepted": false,
+  "wholeRaceExecuted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "remaining": "Post-change complete source AST refresh and actual Web criterion capture/recheck, fresh receipt regression, full mandatory race/live/e2e and all L1/external input gates remain.",
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-recheck-git-proof-20261018-summary.json",
+      "sha256": "ff9e0bcea4f2e92c55e4c76c405f378c7f38a198a8ed328553ea70a451a980c2"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-proof-20261018-start.json",
+      "sha256": "0280dc47833175e89a704615012f101c25e02df316d7450af0613f036344469d"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-proof-20261018-go.jsonl",
+      "sha256": "3daab4624684a30cf5223a6dbf30aad92b2c7899ecef66c7c4460edf6d949f25"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-proof-20261018-tracked.bin",
+      "sha256": "8e18681587dfe5990077cdfddd57f1f4287c1d79a9b90961c78cd96ad1f9bfae"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-proof-20261018-independent.json",
+      "sha256": "74e056e53a3747a8442653e5093421f5c6c8eb61e81ac9e3920c683c395e9e99"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-red-20261018.log",
+      "sha256": "dbca16229c6929d4d7f44952193ae3918092123ccd9c2cd19a37e2805ace59bd"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-green-20261018.log",
+      "sha256": "21d0932a57c54d954ec44ee8b270e62f80a4c8826cf4079377d632110002c5d2"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-expanded-green-20261018.log",
+      "sha256": "c55da04777e84448a1c37db4c2a577022e44f54283ab4e69db991a230228ce64"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-all-metadata-green-20261018.log",
+      "sha256": "5c9ec268a887acdc85210813aefde36682b31d58bc1b96742c5f0bc1682f0094"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-split-preservation-green-20261018.log",
+      "sha256": "105b13512e7c6c80f48d51a16eb744cd969b20cb317789f635587e0e824b426e"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-runtime-final-20261018.log",
+      "sha256": "f36e1d7c9fef0d8379f06c5a18f342fc336eddf4df0971de085f44eada61e9ae"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-prerequisite-regression-20261018.log",
+      "sha256": "fd49aba5f35c938be43436424bc3c2f9f2397a091da4f7e2a3cf10e5b4ba5abf"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-native-regression-20261018.log",
+      "sha256": "5e2fd9689c191e2258597f01a01396413d1cc786a45e87637b3f5dd1789aeefb"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-web14-regression-20261018.log",
+      "sha256": "1d83585b97486319bb9c2fff2996c7435fd78e26e63e611aae2ad6791d35db6b"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-check-20261018.log",
+      "sha256": "1ea9ecc2213f3e7c7ba213089cf009faf2a5685963b59c7d99ff63f8a9e9bf55"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-proof-run-20261018.log",
+      "sha256": "cc900c1fa985f33b9e3cffe131b0498248d51e3c74e01e981338cbe152fe6e4e"
+    },
+    {
+      "path": "/private/tmp/chainbench-recheck-git-audit-run-20261018.log",
+      "sha256": "4ab917d9cce9d3eb8831fe6f441e267d6930b314d0e0e51f6b1bc1d5b0bbc17f"
+    },
+    {
+      "path": "/private/tmp/cbui/git-proof-p4__ri5e/git-view.json",
+      "sha256": "441fa129c16016b816fc0a929bf647fca407c3e3c20a843651a19b0ba589306e"
+    },
+    {
+      "path": "/private/tmp/cbui/git-proof-p4__ri5e/storage-audit.jsonl",
+      "sha256": "6b2cb9f88882e3a189a4ff7c444fed05f74cb2a0399853a649bd40c03879ee2f"
+    }
+  ]
+}

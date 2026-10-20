@@ -1,0 +1,1374 @@
+{
+  "scope": "User-approved GOV-019 mined below-minimum rejection with exact reason, refunded value/fee and unchanged inactive amount/list; GOV-020 immediate fee, exact Requested event and no delayed request; GOV-021 shortened 30-second fixture, mined early rejection, exact Requested/Executed events and chain timestamp delay. Includes actual reactivation epochs and emergency-mode regression. Not full 87-case, Linux/mainnet 604800-second timing or final Web acceptance.",
+  "decisions": {
+    "date": "2026-10-15",
+    "gov019": "approved current v1 mined refusal",
+    "gov020": "approved current v1 immediate Requested event",
+    "gov021": "approved shortened 30-second live fixture with original mainnet scope distinguished"
+  },
+  "red": "11 invalid mined-refusal witnesses and 7 topic-only malformed fee events accepted by missing/weak validation; retained RED log.",
+  "green": {
+    "nativeTests": 4,
+    "skipped": 0,
+    "source": "b05ede48bf65c0fac68a912c4e855b55d4f5a10fc13a873474f6ce690b54a287"
+  },
+  "runs": [
+    {
+      "exitCode": 0,
+      "sourceBefore": "60c294fd6eb296ba5004c95bc2d4e8b9653c9f933f411a7e5bdfff963ab53921",
+      "sourceAfter": "60c294fd6eb296ba5004c95bc2d4e8b9653c9f933f411a7e5bdfff963ab53921",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovernanceReactivateE2E",
+        "TestWemixGovernanceFeeChangeDelayedE2E"
+      ],
+      "failed": [],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-u2b1xik6",
+        "/private/tmp/cbui/hf-xnunsf5e",
+        "/private/tmp/cbui/hf-z3d4e6hb"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-u2b1xik6": [],
+        "/private/tmp/cbui/hf-xnunsf5e": [],
+        "/private/tmp/cbui/hf-z3d4e6hb": []
+      },
+      "label": "primary",
+      "summaryFile": {
+        "path": "/private/tmp/chainbench-governance-guards-primary-summary.json",
+        "sha256": "01f366f3d89edfd8cce613823e1449c0e3012ed28d4ce12a67e9a6cde68a2bf0",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791993178222131683
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-governance-guards-primary-native.jsonl",
+        "sha256": "3d65c32a37a68b68d00226c9b4328d85a2cd65ee98ba40a64aa9e6cd7c1c6819",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791993177710641097
+      },
+      "observations": [
+        {
+          "test": "TestWemixGovernanceReactivateE2E",
+          "label": "mined-refusal",
+          "value": {
+            "Hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+            "Transaction": {
+              "blockHash": "0x88f05adb7ed556dbf58e0625360382ac750ac2ff0adc0ed05e7b1357c063c2d3",
+              "blockNumber": "0x34",
+              "chainId": "0x205d",
+              "from": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+              "gas": "0x7a120",
+              "gasPrice": "0x174876f09e",
+              "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+              "input": "0xa694fc3a0000000000000000000000000000000000000000000845951614014849ffffff",
+              "nonce": "0x2",
+              "r": "0x5c2e762c412b26bd39968b7dde8ada60789fb286f591d5be2695f46531316605",
+              "s": "0x603fc6504abe3cf8d8ea70bd722ce13aea1bdf18e09bd2e0b450d3bbf7264c45",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionIndex": "0x0",
+              "type": "0x0",
+              "v": "0x40dd",
+              "value": "0x845951614014849ffffff"
+            },
+            "Receipt": {
+              "blockHash": "0x88f05adb7ed556dbf58e0625360382ac750ac2ff0adc0ed05e7b1357c063c2d3",
+              "blockNumber": "0x34",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xc2c7",
+              "effectiveGasPrice": "0x174876f09e",
+              "from": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+              "gasUsed": "0xc2c7",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionHash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+              "transactionIndex": "0x0",
+              "type": "0x0"
+            },
+            "Trace": {
+              "failed": true,
+              "returnValue": "08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000023616d6f756e74206973206c657373207468616e206d696e696d756d207374616b696e670000000000000000000000000000000000000000000000000000000000"
+            }
+          }
+        },
+        {
+          "test": "TestWemixGovernanceReactivateE2E",
+          "label": "refusal-fee",
+          "value": {
+            "after": "989999999915858176326217731",
+            "before": "989999999920844476436215509",
+            "fee": "4986300109997778",
+            "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+            "refundedValue": "9999999999999999999999999"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceReactivateE2E",
+          "label": "GOV-019-state",
+          "value": {
+            "activeAfter": false,
+            "amountAfter": "0",
+            "callRefusal": {
+              "Method": "eth_call",
+              "Code": 3,
+              "Message": "execution reverted: amount is less than minimum staking"
+            },
+            "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+            "inputAmount": "9999999999999999999999999",
+            "listAfter": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000008c4a10b9108d49b9d23f764464090831d9c17764",
+            "listBefore": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000008c4a10b9108d49b9d23f764464090831d9c17764",
+            "minimum": "10000000000000000000000000",
+            "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "fee-receipt",
+          "value": {
+            "blockHash": "0x241e867b1a66fb05d09568a0ec6229b4ca366cc7f1a2f2016acc7d2a85e0e02d",
+            "blockNumber": "0x1c",
+            "contractAddress": null,
+            "cumulativeGasUsed": "0x17edc",
+            "effectiveGasPrice": "0x1748773b43",
+            "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+            "gasUsed": "0x17edc",
+            "logs": [
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0x4ceabe57088ae1780628bab06acc8e4adffee3a9190c4325dc57b557298782fd",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fa",
+                "blockNumber": "0x1c",
+                "transactionHash": "0xad266a2c44ae4dd28074e513bda4bf955ac3da246a357fa98e410af8f1962795",
+                "transactionIndex": "0x0",
+                "blockHash": "0x241e867b1a66fb05d09568a0ec6229b4ca366cc7f1a2f2016acc7d2a85e0e02d",
+                "logIndex": "0x0",
+                "removed": false
+              }
+            ],
+            "logsBloom": "0x00000000000000001000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000100000000000000000040000000000000000000000000000000200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000",
+            "status": "0x1",
+            "to": "0x0000000000000000000000000000000000001001",
+            "transactionHash": "0xad266a2c44ae4dd28074e513bda4bf955ac3da246a357fa98e410af8f1962795",
+            "transactionIndex": "0x0",
+            "type": "0x2"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "mined-refusal",
+          "value": {
+            "Hash": "0xb131999a03c637f2eb3c4e5bc5aba32f026192c95cc47c77eb19528e33b80bf2",
+            "Transaction": {
+              "blockHash": "0x1b4306b699b8fe28c956838b6c44ac2f35241eeedc8f91f651601636e52337cc",
+              "blockNumber": "0x1e",
+              "chainId": "0x205d",
+              "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+              "gas": "0x7a120",
+              "gasPrice": "0x17487730e0",
+              "hash": "0xb131999a03c637f2eb3c4e5bc5aba32f026192c95cc47c77eb19528e33b80bf2",
+              "input": "0x8ed86b84000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "nonce": "0x2",
+              "r": "0x537c1738d990f52d39b439f9b35162fcf8b0883c13b1bd57a44f303a3d62ae2c",
+              "s": "0x3437c5e06780b09bc7f93ed4d0b8b34cf7cf9b932e44e67b4777a54bbd86c2d3",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionIndex": "0x0",
+              "type": "0x0",
+              "v": "0x40de",
+              "value": "0x0"
+            },
+            "Receipt": {
+              "blockHash": "0x1b4306b699b8fe28c956838b6c44ac2f35241eeedc8f91f651601636e52337cc",
+              "blockNumber": "0x1e",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xa085",
+              "effectiveGasPrice": "0x17487730e0",
+              "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+              "gasUsed": "0xa085",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionHash": "0xb131999a03c637f2eb3c4e5bc5aba32f026192c95cc47c77eb19528e33b80bf2",
+              "transactionIndex": "0x0",
+              "type": "0x0"
+            },
+            "Trace": {
+              "failed": true,
+              "returnValue": "08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003074686520726571756573742063616e6e6f74206265206578656375746564206265666f72652064656c61792074696d6500000000000000000000000000000000"
+            }
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "refusal-fee",
+          "value": {
+            "after": "989999999930659279544046108",
+            "before": "989999999934768580310677116",
+            "fee": "4109300766631008",
+            "hash": "0xb131999a03c637f2eb3c4e5bc5aba32f026192c95cc47c77eb19528e33b80bf2",
+            "refundedValue": "0"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "fee-receipt",
+          "value": {
+            "blockHash": "0x763ce1c795b056efe0e606ed014f6cb6c4ee14324d7a0a14072d88e8cd9dc91f",
+            "blockNumber": "0x3b",
+            "contractAddress": null,
+            "cumulativeGasUsed": "0x160de",
+            "effectiveGasPrice": "0x174876e957",
+            "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+            "gasUsed": "0x160de",
+            "logs": [
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0xfbe8b7d19566e22844442fd8f565b742cfa5532230553f133818c8bb886c84ee",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x00000000000000000000000000000000000000000009195731e2ce35eb000000000000000000000000000000000000000000000000000001d7d843dc3b480000000000000000000000000000000000000000000000000001c9f78d2893e400000000000000000000000000000000000000000000000000a80d24677efef000000000000000000000000000000000000000000000000000000000000000000000",
+                "blockNumber": "0x3b",
+                "transactionHash": "0x0ad271d2f938dd6d2a90b779611871a403dc3fa30bf639641a30243842805b45",
+                "transactionIndex": "0x0",
+                "blockHash": "0x763ce1c795b056efe0e606ed014f6cb6c4ee14324d7a0a14072d88e8cd9dc91f",
+                "logIndex": "0x0",
+                "removed": false
+              },
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0xbda9217c3e4f8495e5662ad216dacde11b9ea1e945027fbdd43b7817b9d78fe5",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x00000000000000000000000000000000000000000000000000000000000000fa",
+                "blockNumber": "0x3b",
+                "transactionHash": "0x0ad271d2f938dd6d2a90b779611871a403dc3fa30bf639641a30243842805b45",
+                "transactionIndex": "0x0",
+                "blockHash": "0x763ce1c795b056efe0e606ed014f6cb6c4ee14324d7a0a14072d88e8cd9dc91f",
+                "logIndex": "0x1",
+                "removed": false
+              }
+            ],
+            "logsBloom": "0x00000000000000001000000000000000000000000010000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000800000000000000000000000000000400000000800000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000004000000000000000000000000",
+            "status": "0x1",
+            "to": "0x0000000000000000000000000000000000001001",
+            "transactionHash": "0x0ad271d2f938dd6d2a90b779611871a403dc3fa30bf639641a30243842805b45",
+            "transactionIndex": "0x0",
+            "type": "0x2"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "GOV-021-delay",
+          "value": {
+            "boundary": "1791993172",
+            "delay": "30",
+            "earlyHash": "0xb131999a03c637f2eb3c4e5bc5aba32f026192c95cc47c77eb19528e33b80bf2",
+            "earlyTimestamp": 1791993144,
+            "executionHash": "0x0ad271d2f938dd6d2a90b779611871a403dc3fa30bf639641a30243842805b45",
+            "newRate": 250,
+            "pendingAfterEarlyRefusal": "0x00000000000000000000000000000000000000000000000000000000000000fa000000000000000000000000000000000000000000000000000000006acfa536",
+            "pendingAfterExecution": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "readyTimestamp": 1791993172,
+            "requestHash": "0xad266a2c44ae4dd28074e513bda4bf955ac3da246a357fa98e410af8f1962795",
+            "requestTime": "1791993142",
+            "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+          }
+        }
+      ]
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "60c294fd6eb296ba5004c95bc2d4e8b9653c9f933f411a7e5bdfff963ab53921",
+      "sourceAfter": "60c294fd6eb296ba5004c95bc2d4e8b9653c9f933f411a7e5bdfff963ab53921",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovernanceFeeChangeE2E",
+        "TestWemixGovernanceEmergencyModeE2E"
+      ],
+      "failed": [],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-7um_blwr",
+        "/private/tmp/cbui/hf-dey9jnbo",
+        "/private/tmp/cbui/hf-zr1f3tgr"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-7um_blwr": [],
+        "/private/tmp/cbui/hf-dey9jnbo": [],
+        "/private/tmp/cbui/hf-zr1f3tgr": []
+      },
+      "label": "related",
+      "summaryFile": {
+        "path": "/private/tmp/chainbench-governance-guards-related-summary.json",
+        "sha256": "97584675224b8dcca5638626f618b283f8c089429e987c4acbb7144723c1dcea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791993454415267690
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-governance-guards-related-native.jsonl",
+        "sha256": "aeed72f5ac4fa94f2602a27f3fd81fb02b15a7a2e39e374d097dc8cc9b8fd121",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791993453927949507
+      },
+      "observations": []
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "b05ede48bf65c0fac68a912c4e855b55d4f5a10fc13a873474f6ce690b54a287",
+      "sourceAfter": "b05ede48bf65c0fac68a912c4e855b55d4f5a10fc13a873474f6ce690b54a287",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovernanceFeeChangeE2E",
+        "TestWemixGovernanceReactivateE2E",
+        "TestWemixGovernanceEmergencyModeE2E",
+        "TestWemixGovernanceFeeChangeDelayedE2E"
+      ],
+      "failed": [],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-7q4p8569",
+        "/private/tmp/cbui/hf-7r4opbuo",
+        "/private/tmp/cbui/hf-ba_t2_n5",
+        "/private/tmp/cbui/hf-j60x1s6n",
+        "/private/tmp/cbui/hf-kmlzhbil"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-7q4p8569": [],
+        "/private/tmp/cbui/hf-7r4opbuo": [],
+        "/private/tmp/cbui/hf-ba_t2_n5": [],
+        "/private/tmp/cbui/hf-j60x1s6n": [],
+        "/private/tmp/cbui/hf-kmlzhbil": []
+      },
+      "label": "approved-retry",
+      "summaryFile": {
+        "path": "/private/tmp/chainbench-governance-guards-approved-retry-summary.json",
+        "sha256": "67f64c27ed351ca082009da2bea160458a1f9b3121e0686e6d85ea41e9334615",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994452551175676
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-governance-guards-approved-retry-native.jsonl",
+        "sha256": "160bcfcb5ecca078fc26e9ed198729b8cd2f5118a277fd7fb69051d9ac41c885",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994452075721641
+      },
+      "observations": [
+        {
+          "test": "TestWemixGovernanceFeeChangeE2E",
+          "label": "fee-receipt",
+          "value": {
+            "blockHash": "0xb0dd6280c7826e55619120acba29068f558bebf66a50f59a5e93f2cb094f0dd8",
+            "blockNumber": "0x1c",
+            "contractAddress": null,
+            "cumulativeGasUsed": "0x12831",
+            "effectiveGasPrice": "0x17487882ef",
+            "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+            "gasUsed": "0x12831",
+            "logs": [
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0x4ceabe57088ae1780628bab06acc8e4adffee3a9190c4325dc57b557298782fd",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fa",
+                "blockNumber": "0x1c",
+                "transactionHash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+                "transactionIndex": "0x0",
+                "blockHash": "0xb0dd6280c7826e55619120acba29068f558bebf66a50f59a5e93f2cb094f0dd8",
+                "logIndex": "0x0",
+                "removed": false
+              }
+            ],
+            "logsBloom": "0x00000000000000001000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000100000000000000000040000000000000000000000000000000200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000",
+            "status": "0x1",
+            "to": "0x0000000000000000000000000000000000001001",
+            "transactionHash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+            "transactionIndex": "0x0",
+            "type": "0x2"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeE2E",
+          "label": "GOV-020-immediate",
+          "value": {
+            "delegatedAmount": "0",
+            "hash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+            "newRate": 250,
+            "oldRate": 0,
+            "pending": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "transaction": {
+              "accessList": [],
+              "blockHash": "0xb0dd6280c7826e55619120acba29068f558bebf66a50f59a5e93f2cb094f0dd8",
+              "blockNumber": "0x1c",
+              "chainId": "0x205d",
+              "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+              "gas": "0x16792",
+              "gasPrice": "0x17487882ef",
+              "hash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+              "input": "0x41bd370b00000000000000000000000000000000000000000000000000000000000000fa",
+              "maxFeePerGas": "0x2e90efa5a3",
+              "maxPriorityFeePerGas": "0x174876e800",
+              "nonce": "0x1",
+              "r": "0x25c3d60dfbcf855e523744579fedb17c8c6a6588a19bf3c952e09c6b18c77e3e",
+              "s": "0x7fc9a003afa341085a8c5f469930262e8d1758ce1d76d8e3bc4456d35b52e14",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionIndex": "0x0",
+              "type": "0x2",
+              "v": "0x1",
+              "value": "0x0",
+              "yParity": "0x1"
+            }
+          }
+        },
+        {
+          "test": "TestWemixGovernanceReactivateE2E",
+          "label": "mined-refusal",
+          "value": {
+            "Hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+            "Transaction": {
+              "blockHash": "0x23c0ac8dd8363a8262786f7f2959a1b395aa85581db1d841cc2891d5e8a5d913",
+              "blockNumber": "0x34",
+              "chainId": "0x205d",
+              "from": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+              "gas": "0x7a120",
+              "gasPrice": "0x174876f09e",
+              "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+              "input": "0xa694fc3a0000000000000000000000000000000000000000000845951614014849ffffff",
+              "nonce": "0x2",
+              "r": "0x5c2e762c412b26bd39968b7dde8ada60789fb286f591d5be2695f46531316605",
+              "s": "0x603fc6504abe3cf8d8ea70bd722ce13aea1bdf18e09bd2e0b450d3bbf7264c45",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionIndex": "0x0",
+              "type": "0x0",
+              "v": "0x40dd",
+              "value": "0x845951614014849ffffff"
+            },
+            "Receipt": {
+              "blockHash": "0x23c0ac8dd8363a8262786f7f2959a1b395aa85581db1d841cc2891d5e8a5d913",
+              "blockNumber": "0x34",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xc2c7",
+              "effectiveGasPrice": "0x174876f09e",
+              "from": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+              "gasUsed": "0xc2c7",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionHash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+              "transactionIndex": "0x0",
+              "type": "0x0"
+            },
+            "Trace": {
+              "failed": true,
+              "returnValue": "08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000023616d6f756e74206973206c657373207468616e206d696e696d756d207374616b696e670000000000000000000000000000000000000000000000000000000000"
+            }
+          }
+        },
+        {
+          "test": "TestWemixGovernanceReactivateE2E",
+          "label": "refusal-fee",
+          "value": {
+            "after": "989999999915858179023466703",
+            "before": "989999999920844479133464481",
+            "fee": "4986300109997778",
+            "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+            "refundedValue": "9999999999999999999999999"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceReactivateE2E",
+          "label": "GOV-019-state",
+          "value": {
+            "activeAfter": false,
+            "amountAfter": "0",
+            "callRefusal": {
+              "Method": "eth_call",
+              "Code": 3,
+              "Message": "execution reverted: amount is less than minimum staking"
+            },
+            "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+            "inputAmount": "9999999999999999999999999",
+            "listAfter": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000008c4a10b9108d49b9d23f764464090831d9c17764",
+            "listBefore": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000008c4a10b9108d49b9d23f764464090831d9c17764",
+            "minimum": "10000000000000000000000000",
+            "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "fee-receipt",
+          "value": {
+            "blockHash": "0xd9c39da8bc294295f89061e762c0fb0edd6e2309f79a28523c80985b33bc8baf",
+            "blockNumber": "0x21",
+            "contractAddress": null,
+            "cumulativeGasUsed": "0x17edc",
+            "effectiveGasPrice": "0x17487746e7",
+            "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+            "gasUsed": "0x17edc",
+            "logs": [
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0x4ceabe57088ae1780628bab06acc8e4adffee3a9190c4325dc57b557298782fd",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fa",
+                "blockNumber": "0x21",
+                "transactionHash": "0xad464d6add3dd256f64410f75a88e601d9bcccf6c70c18633b61e846cfdeaf7f",
+                "transactionIndex": "0x0",
+                "blockHash": "0xd9c39da8bc294295f89061e762c0fb0edd6e2309f79a28523c80985b33bc8baf",
+                "logIndex": "0x0",
+                "removed": false
+              }
+            ],
+            "logsBloom": "0x00000000000000001000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000100000000000000000040000000000000000000000000000000200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000",
+            "status": "0x1",
+            "to": "0x0000000000000000000000000000000000001001",
+            "transactionHash": "0xad464d6add3dd256f64410f75a88e601d9bcccf6c70c18633b61e846cfdeaf7f",
+            "transactionIndex": "0x0",
+            "type": "0x2"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "mined-refusal",
+          "value": {
+            "Hash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+            "Transaction": {
+              "blockHash": "0x4aa5fe2a2e57107bc38e1781e9f468532a8e3567a7e11e703a025d141884e74f",
+              "blockNumber": "0x23",
+              "chainId": "0x205d",
+              "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+              "gas": "0x7a120",
+              "gasPrice": "0x1748773b10",
+              "hash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+              "input": "0x8ed86b84000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "nonce": "0x2",
+              "r": "0x5d4b1db03f1c7b06cfff0b403550ad79d0ad6ce0aa2f309864b86345d27a7ba2",
+              "s": "0x40693b4447c05a93dc227db5194bea0dd90c8da34f0196522ab9058219743f8d",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionIndex": "0x0",
+              "type": "0x0",
+              "v": "0x40de",
+              "value": "0x0"
+            },
+            "Receipt": {
+              "blockHash": "0x4aa5fe2a2e57107bc38e1781e9f468532a8e3567a7e11e703a025d141884e74f",
+              "blockNumber": "0x23",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xa085",
+              "effectiveGasPrice": "0x1748773b10",
+              "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+              "gasUsed": "0xa085",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x0000000000000000000000000000000000001001",
+              "transactionHash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+              "transactionIndex": "0x0",
+              "type": "0x0"
+            },
+            "Trace": {
+              "failed": true,
+              "returnValue": "08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003074686520726571756573742063616e6e6f74206265206578656375746564206265666f72652064656c61792074696d6500000000000000000000000000000000"
+            }
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "refusal-fee",
+          "value": {
+            "after": "989999999930659273818511886",
+            "before": "989999999934768574692313438",
+            "fee": "4109300873801552",
+            "hash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+            "refundedValue": "0"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "fee-receipt",
+          "value": {
+            "blockHash": "0xccdb673b48a78ab76ec368cf083cc02648edecb3d2606f824d63a69406d56ceb",
+            "blockNumber": "0x40",
+            "contractAddress": null,
+            "cumulativeGasUsed": "0x160de",
+            "effectiveGasPrice": "0x174876e987",
+            "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+            "gasUsed": "0x160de",
+            "logs": [
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0xfbe8b7d19566e22844442fd8f565b742cfa5532230553f133818c8bb886c84ee",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x00000000000000000000000000000000000000000009195731e2ce35eb000000000000000000000000000000000000000000000000000001e5b8fa8fe2ac0000000000000000000000000000000000000000000000000001c9f78d2893e400000000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000000000000000000000",
+                "blockNumber": "0x40",
+                "transactionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+                "transactionIndex": "0x0",
+                "blockHash": "0xccdb673b48a78ab76ec368cf083cc02648edecb3d2606f824d63a69406d56ceb",
+                "logIndex": "0x0",
+                "removed": false
+              },
+              {
+                "address": "0x0000000000000000000000000000000000001001",
+                "topics": [
+                  "0xbda9217c3e4f8495e5662ad216dacde11b9ea1e945027fbdd43b7817b9d78fe5",
+                  "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+                ],
+                "data": "0x00000000000000000000000000000000000000000000000000000000000000fa",
+                "blockNumber": "0x40",
+                "transactionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+                "transactionIndex": "0x0",
+                "blockHash": "0xccdb673b48a78ab76ec368cf083cc02648edecb3d2606f824d63a69406d56ceb",
+                "logIndex": "0x1",
+                "removed": false
+              }
+            ],
+            "logsBloom": "0x00000000000000001000000000000000000000000010000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000800000000000000000000000000000400000000800000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000004000000000000000000000000",
+            "status": "0x1",
+            "to": "0x0000000000000000000000000000000000001001",
+            "transactionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+            "transactionIndex": "0x0",
+            "type": "0x2"
+          }
+        },
+        {
+          "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+          "label": "GOV-021-delay",
+          "value": {
+            "boundary": "1791994446",
+            "delay": "30",
+            "earlyHash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+            "earlyTimestamp": 1791994418,
+            "executionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+            "newRate": 250,
+            "pendingAfterEarlyRefusal": "0x00000000000000000000000000000000000000000000000000000000000000fa000000000000000000000000000000000000000000000000000000006acfaa30",
+            "pendingAfterExecution": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "readyTimestamp": 1791994446,
+            "requestHash": "0xad464d6add3dd256f64410f75a88e601d9bcccf6c70c18633b61e846cfdeaf7f",
+            "requestTime": "1791994416",
+            "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+          }
+        }
+      ]
+    }
+  ],
+  "finalObservations": [
+    {
+      "test": "TestWemixGovernanceFeeChangeE2E",
+      "label": "fee-receipt",
+      "value": {
+        "blockHash": "0xb0dd6280c7826e55619120acba29068f558bebf66a50f59a5e93f2cb094f0dd8",
+        "blockNumber": "0x1c",
+        "contractAddress": null,
+        "cumulativeGasUsed": "0x12831",
+        "effectiveGasPrice": "0x17487882ef",
+        "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "gasUsed": "0x12831",
+        "logs": [
+          {
+            "address": "0x0000000000000000000000000000000000001001",
+            "topics": [
+              "0x4ceabe57088ae1780628bab06acc8e4adffee3a9190c4325dc57b557298782fd",
+              "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+            ],
+            "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fa",
+            "blockNumber": "0x1c",
+            "transactionHash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+            "transactionIndex": "0x0",
+            "blockHash": "0xb0dd6280c7826e55619120acba29068f558bebf66a50f59a5e93f2cb094f0dd8",
+            "logIndex": "0x0",
+            "removed": false
+          }
+        ],
+        "logsBloom": "0x00000000000000001000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000100000000000000000040000000000000000000000000000000200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000",
+        "status": "0x1",
+        "to": "0x0000000000000000000000000000000000001001",
+        "transactionHash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+        "transactionIndex": "0x0",
+        "type": "0x2"
+      }
+    },
+    {
+      "test": "TestWemixGovernanceFeeChangeE2E",
+      "label": "GOV-020-immediate",
+      "value": {
+        "delegatedAmount": "0",
+        "hash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+        "newRate": 250,
+        "oldRate": 0,
+        "pending": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "transaction": {
+          "accessList": [],
+          "blockHash": "0xb0dd6280c7826e55619120acba29068f558bebf66a50f59a5e93f2cb094f0dd8",
+          "blockNumber": "0x1c",
+          "chainId": "0x205d",
+          "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+          "gas": "0x16792",
+          "gasPrice": "0x17487882ef",
+          "hash": "0x8e94db36c49211c9d72bc976088b38cdc3e4252fa1a821e2c16ef56523e88302",
+          "input": "0x41bd370b00000000000000000000000000000000000000000000000000000000000000fa",
+          "maxFeePerGas": "0x2e90efa5a3",
+          "maxPriorityFeePerGas": "0x174876e800",
+          "nonce": "0x1",
+          "r": "0x25c3d60dfbcf855e523744579fedb17c8c6a6588a19bf3c952e09c6b18c77e3e",
+          "s": "0x7fc9a003afa341085a8c5f469930262e8d1758ce1d76d8e3bc4456d35b52e14",
+          "to": "0x0000000000000000000000000000000000001001",
+          "transactionIndex": "0x0",
+          "type": "0x2",
+          "v": "0x1",
+          "value": "0x0",
+          "yParity": "0x1"
+        }
+      }
+    },
+    {
+      "test": "TestWemixGovernanceReactivateE2E",
+      "label": "mined-refusal",
+      "value": {
+        "Hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+        "Transaction": {
+          "blockHash": "0x23c0ac8dd8363a8262786f7f2959a1b395aa85581db1d841cc2891d5e8a5d913",
+          "blockNumber": "0x34",
+          "chainId": "0x205d",
+          "from": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+          "gas": "0x7a120",
+          "gasPrice": "0x174876f09e",
+          "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+          "input": "0xa694fc3a0000000000000000000000000000000000000000000845951614014849ffffff",
+          "nonce": "0x2",
+          "r": "0x5c2e762c412b26bd39968b7dde8ada60789fb286f591d5be2695f46531316605",
+          "s": "0x603fc6504abe3cf8d8ea70bd722ce13aea1bdf18e09bd2e0b450d3bbf7264c45",
+          "to": "0x0000000000000000000000000000000000001001",
+          "transactionIndex": "0x0",
+          "type": "0x0",
+          "v": "0x40dd",
+          "value": "0x845951614014849ffffff"
+        },
+        "Receipt": {
+          "blockHash": "0x23c0ac8dd8363a8262786f7f2959a1b395aa85581db1d841cc2891d5e8a5d913",
+          "blockNumber": "0x34",
+          "contractAddress": null,
+          "cumulativeGasUsed": "0xc2c7",
+          "effectiveGasPrice": "0x174876f09e",
+          "from": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+          "gasUsed": "0xc2c7",
+          "logs": [],
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "status": "0x0",
+          "to": "0x0000000000000000000000000000000000001001",
+          "transactionHash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+          "transactionIndex": "0x0",
+          "type": "0x0"
+        },
+        "Trace": {
+          "failed": true,
+          "returnValue": "08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000023616d6f756e74206973206c657373207468616e206d696e696d756d207374616b696e670000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "test": "TestWemixGovernanceReactivateE2E",
+      "label": "refusal-fee",
+      "value": {
+        "after": "989999999915858179023466703",
+        "before": "989999999920844479133464481",
+        "fee": "4986300109997778",
+        "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+        "refundedValue": "9999999999999999999999999"
+      }
+    },
+    {
+      "test": "TestWemixGovernanceReactivateE2E",
+      "label": "GOV-019-state",
+      "value": {
+        "activeAfter": false,
+        "amountAfter": "0",
+        "callRefusal": {
+          "Method": "eth_call",
+          "Code": 3,
+          "Message": "execution reverted: amount is less than minimum staking"
+        },
+        "hash": "0x8bfd87ea464547b14f30b844c799091fbea1c22665d1aa280760639a6008b326",
+        "inputAmount": "9999999999999999999999999",
+        "listAfter": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000008c4a10b9108d49b9d23f764464090831d9c17764",
+        "listBefore": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000008c4a10b9108d49b9d23f764464090831d9c17764",
+        "minimum": "10000000000000000000000000",
+        "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      }
+    },
+    {
+      "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+      "label": "fee-receipt",
+      "value": {
+        "blockHash": "0xd9c39da8bc294295f89061e762c0fb0edd6e2309f79a28523c80985b33bc8baf",
+        "blockNumber": "0x21",
+        "contractAddress": null,
+        "cumulativeGasUsed": "0x17edc",
+        "effectiveGasPrice": "0x17487746e7",
+        "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+        "gasUsed": "0x17edc",
+        "logs": [
+          {
+            "address": "0x0000000000000000000000000000000000001001",
+            "topics": [
+              "0x4ceabe57088ae1780628bab06acc8e4adffee3a9190c4325dc57b557298782fd",
+              "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+            ],
+            "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fa",
+            "blockNumber": "0x21",
+            "transactionHash": "0xad464d6add3dd256f64410f75a88e601d9bcccf6c70c18633b61e846cfdeaf7f",
+            "transactionIndex": "0x0",
+            "blockHash": "0xd9c39da8bc294295f89061e762c0fb0edd6e2309f79a28523c80985b33bc8baf",
+            "logIndex": "0x0",
+            "removed": false
+          }
+        ],
+        "logsBloom": "0x00000000000000001000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000100000000000000000040000000000000000000000000000000200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000",
+        "status": "0x1",
+        "to": "0x0000000000000000000000000000000000001001",
+        "transactionHash": "0xad464d6add3dd256f64410f75a88e601d9bcccf6c70c18633b61e846cfdeaf7f",
+        "transactionIndex": "0x0",
+        "type": "0x2"
+      }
+    },
+    {
+      "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+      "label": "mined-refusal",
+      "value": {
+        "Hash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+        "Transaction": {
+          "blockHash": "0x4aa5fe2a2e57107bc38e1781e9f468532a8e3567a7e11e703a025d141884e74f",
+          "blockNumber": "0x23",
+          "chainId": "0x205d",
+          "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+          "gas": "0x7a120",
+          "gasPrice": "0x1748773b10",
+          "hash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+          "input": "0x8ed86b84000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "nonce": "0x2",
+          "r": "0x5d4b1db03f1c7b06cfff0b403550ad79d0ad6ce0aa2f309864b86345d27a7ba2",
+          "s": "0x40693b4447c05a93dc227db5194bea0dd90c8da34f0196522ab9058219743f8d",
+          "to": "0x0000000000000000000000000000000000001001",
+          "transactionIndex": "0x0",
+          "type": "0x0",
+          "v": "0x40de",
+          "value": "0x0"
+        },
+        "Receipt": {
+          "blockHash": "0x4aa5fe2a2e57107bc38e1781e9f468532a8e3567a7e11e703a025d141884e74f",
+          "blockNumber": "0x23",
+          "contractAddress": null,
+          "cumulativeGasUsed": "0xa085",
+          "effectiveGasPrice": "0x1748773b10",
+          "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+          "gasUsed": "0xa085",
+          "logs": [],
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "status": "0x0",
+          "to": "0x0000000000000000000000000000000000001001",
+          "transactionHash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+          "transactionIndex": "0x0",
+          "type": "0x0"
+        },
+        "Trace": {
+          "failed": true,
+          "returnValue": "08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003074686520726571756573742063616e6e6f74206265206578656375746564206265666f72652064656c61792074696d6500000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+      "label": "refusal-fee",
+      "value": {
+        "after": "989999999930659273818511886",
+        "before": "989999999934768574692313438",
+        "fee": "4109300873801552",
+        "hash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+        "refundedValue": "0"
+      }
+    },
+    {
+      "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+      "label": "fee-receipt",
+      "value": {
+        "blockHash": "0xccdb673b48a78ab76ec368cf083cc02648edecb3d2606f824d63a69406d56ceb",
+        "blockNumber": "0x40",
+        "contractAddress": null,
+        "cumulativeGasUsed": "0x160de",
+        "effectiveGasPrice": "0x174876e987",
+        "from": "0x1563915e194d8cfba1943570603f7606a3115508",
+        "gasUsed": "0x160de",
+        "logs": [
+          {
+            "address": "0x0000000000000000000000000000000000001001",
+            "topics": [
+              "0xfbe8b7d19566e22844442fd8f565b742cfa5532230553f133818c8bb886c84ee",
+              "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+            ],
+            "data": "0x00000000000000000000000000000000000000000009195731e2ce35eb000000000000000000000000000000000000000000000000000001e5b8fa8fe2ac0000000000000000000000000000000000000000000000000001c9f78d2893e400000000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000000000000000000000",
+            "blockNumber": "0x40",
+            "transactionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+            "transactionIndex": "0x0",
+            "blockHash": "0xccdb673b48a78ab76ec368cf083cc02648edecb3d2606f824d63a69406d56ceb",
+            "logIndex": "0x0",
+            "removed": false
+          },
+          {
+            "address": "0x0000000000000000000000000000000000001001",
+            "topics": [
+              "0xbda9217c3e4f8495e5662ad216dacde11b9ea1e945027fbdd43b7817b9d78fe5",
+              "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+            ],
+            "data": "0x00000000000000000000000000000000000000000000000000000000000000fa",
+            "blockNumber": "0x40",
+            "transactionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+            "transactionIndex": "0x0",
+            "blockHash": "0xccdb673b48a78ab76ec368cf083cc02648edecb3d2606f824d63a69406d56ceb",
+            "logIndex": "0x1",
+            "removed": false
+          }
+        ],
+        "logsBloom": "0x00000000000000001000000000000000000000000010000000000000000000000000000002000000000000000000000000000000000080000000000000000000000000000000000000000000000000800000000000000000000000000000400000000800000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000004000000000000000000000000",
+        "status": "0x1",
+        "to": "0x0000000000000000000000000000000000001001",
+        "transactionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+        "transactionIndex": "0x0",
+        "type": "0x2"
+      }
+    },
+    {
+      "test": "TestWemixGovernanceFeeChangeDelayedE2E",
+      "label": "GOV-021-delay",
+      "value": {
+        "boundary": "1791994446",
+        "delay": "30",
+        "earlyHash": "0x674426bc5e6b323b867cf14bcca15f1e96d05e3e0fc0f880cfd9a0e194805c82",
+        "earlyTimestamp": 1791994418,
+        "executionHash": "0xa39e98fa453931e553b1ca318870211ea01e022509242d019ac4a28285e65960",
+        "newRate": 250,
+        "pendingAfterEarlyRefusal": "0x00000000000000000000000000000000000000000000000000000000000000fa000000000000000000000000000000000000000000000000000000006acfaa30",
+        "pendingAfterExecution": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "readyTimestamp": 1791994446,
+        "requestHash": "0xad464d6add3dd256f64410f75a88e601d9bcccf6c70c18633b61e846cfdeaf7f",
+        "requestTime": "1791994416",
+        "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      }
+    }
+  ],
+  "interrupted": {
+    "record": {
+      "path": "/private/tmp/chainbench-governance-guards-approved-final-interrupted.json",
+      "sha256": "32b518e148c7983916963078d4acda474e293ea4dc84375f30579113ab4d5f07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791993964184426663
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-governance-guards-approved-final-native.jsonl",
+      "sha256": "fd2d5efb994f9ae50c65fc62eba132e4af7e8cc26b7a5a87c0c3fa74c5699a7c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791993750803015782
+    },
+    "details": {
+      "outcome": "interrupted; not final acceptance",
+      "log": "/private/tmp/chainbench-governance-guards-approved-final-native.jsonl",
+      "logSha256": "fd2d5efb994f9ae50c65fc62eba132e4af7e8cc26b7a5a87c0c3fa74c5699a7c",
+      "completedTests": [
+        "TestWemixGovernanceFeeChangeE2E"
+      ],
+      "runtimes": [
+        {
+          "runtime": "/private/tmp/cbui/hf-4xm9con4",
+          "active": false,
+          "reclaimed": [],
+          "remainingDatabases": []
+        },
+        {
+          "runtime": "/private/tmp/cbui/hf-lvcale84",
+          "active": false,
+          "reclaimed": [
+            {
+              "path": "/private/tmp/cbui/hf-lvcale84/w/node1/gwemix/chaindata",
+              "event": "reclaimed",
+              "allocatedBytes": 61440,
+              "finishedAt": "2026-10-14T16:06:03.452776+00:00"
+            },
+            {
+              "path": "/private/tmp/cbui/hf-lvcale84/w/node1/gwemix/lightchaindata",
+              "event": "reclaimed",
+              "allocatedBytes": 61440,
+              "finishedAt": "2026-10-14T16:06:03.620138+00:00"
+            },
+            {
+              "path": "/private/tmp/cbui/hf-lvcale84/w/node3/gwemix/chaindata",
+              "event": "reclaimed",
+              "allocatedBytes": 61440,
+              "finishedAt": "2026-10-14T16:06:03.761524+00:00"
+            },
+            {
+              "path": "/private/tmp/cbui/hf-lvcale84/w/node3/gwemix/lightchaindata",
+              "event": "reclaimed",
+              "allocatedBytes": 61440,
+              "finishedAt": "2026-10-14T16:06:03.921559+00:00"
+            },
+            {
+              "path": "/private/tmp/cbui/hf-lvcale84/w/node2/gwemix/chaindata",
+              "event": "reclaimed",
+              "allocatedBytes": 61440,
+              "finishedAt": "2026-10-14T16:06:04.053444+00:00"
+            },
+            {
+              "path": "/private/tmp/cbui/hf-lvcale84/w/node2/gwemix/lightchaindata",
+              "event": "reclaimed",
+              "allocatedBytes": 61440,
+              "finishedAt": "2026-10-14T16:06:04.182392+00:00"
+            }
+          ],
+          "remainingDatabases": []
+        }
+      ]
+    },
+    "sourceBeforeUnavailable": true,
+    "notAcceptance": true
+  },
+  "startCheckpoint": {
+    "path": "/private/tmp/chainbench-governance-guards-approved-retry-start.json",
+    "sha256": "81ea59267d2e15be6e411fec6ddf28e422755b7c65817ec1d834de7e94774cdb",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791994031852431805
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/governance_failure_e2e_test.go",
+      "sha256": "7028a722b88925a97d4fedc7e949986ba81fc2827e6c191810d5df8e6a7862af",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791992773157227241
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791993562566217791
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/tc/wemix4.0/01-test-scenarios.md",
+      "sha256": "05285f7b8ea698ae155ef978bb011d5aa316e1036a41c0a110647237ea6da5d3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791993562524128460
+    }
+  ],
+  "unitLogs": [
+    {
+      "path": "/private/tmp/chainbench-governance-guards-unit-red.log",
+      "sha256": "3019566c4cb54b7991bbb6ea59ab923b95e5861ff5de3ad1a93dc7914458913c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791992671346456816
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-guards-unit-green.log",
+      "sha256": "28d4496e199fc7149f074d3c079984e84d8eda20428adff103ae2aa88c53dea7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791992778748900861
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-guards-related-unit.log",
+      "sha256": "827f496ba5c000e179f2fe54ffce56b8c0a615fcd99dc971371b417080580778",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791992884475826387
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-guards-final-unit.log",
+      "sha256": "6b59f2e333db037c149b7b13c6c5837a2be81d31ee18a580938910e3c76b6c4c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791993607846664191
+    },
+    {
+      "path": "/private/tmp/chainbench-governance-guards-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791993607989646421
+    }
+  ],
+  "binaries": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/hf-4xm9con4",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-4xm9con4/reports/governance-guards-inventory.json",
+        "sha256": "4fd76457b355af44f5f4b30668771e536721f339891af253a000623b57a34846",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530707386530
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-7q4p8569",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-7q4p8569/reports/governance-guards-inventory.json",
+        "sha256": "53b60b92c5d6155d977b54785970a28a4e143bf352a97d053a9d7a0e85064aba",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530763360108
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-7r4opbuo",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-7r4opbuo/reports/governance-guards-inventory.json",
+        "sha256": "0126ad038c921d88525decdd0898922c457cf6e2309b8bc8000ccb780d039a49",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530809143198
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-7um_blwr",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-7um_blwr/reports/governance-guards-inventory.json",
+        "sha256": "6ffa7a07dd62586e43a473cba0a7579dcddac582a9604b34b8a146179a540e45",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530854263828
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-ba_t2_n5",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-ba_t2_n5/reports/governance-guards-inventory.json",
+        "sha256": "4b29b95a0fc41551e4e87fffcfe9315336fb6b1885607a2127c89dabddde0d3f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530905580934
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-dey9jnbo",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-dey9jnbo/reports/governance-guards-inventory.json",
+        "sha256": "08403cb4060ac75f39894a0b0979cf824b73f661f4c99dfb2b137fff8e450780",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530946400051
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-j60x1s6n",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-j60x1s6n/reports/governance-guards-inventory.json",
+        "sha256": "8f53313da0d213b509c19b917bc1051067511a4fdcc3ef0be5e849d287577a51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994530996363362
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-kmlzhbil",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-kmlzhbil/reports/governance-guards-inventory.json",
+        "sha256": "ee10e936b0ea5772313fc63529dbbbf728f68f0bafba3e8c5a25feeb074cb4f4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994531050028599
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-lvcale84",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 28,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-lvcale84/reports/governance-guards-inventory.json",
+        "sha256": "42cb2e6869faf53dce2f4f86d1fe562f4625508d235542c9d65e93d38206baf7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994531062102842
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-u2b1xik6",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-u2b1xik6/reports/governance-guards-inventory.json",
+        "sha256": "1860aa59cad7f33f1a59835a057d3d572235a90f98b752cd52f341094c858704",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994531111313234
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-xnunsf5e",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-xnunsf5e/reports/governance-guards-inventory.json",
+        "sha256": "12d5d64c81b57aa845380b0157b54b7852ec0271d77ca39bbf48f20fba77c27e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994531176594255
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-z3d4e6hb",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-z3d4e6hb/reports/governance-guards-inventory.json",
+        "sha256": "7c7b79fd4a7de4ed51b3c9fb9a4843c8565208511cea6263527dd2eda385a6ec",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994531235837175
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-zr1f3tgr",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-zr1f3tgr/reports/governance-guards-inventory.json",
+        "sha256": "a43862a905759b3f622cc4ec988cb04f7d27f7c5acd381288fcce362360dbb06",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994531288980912
+      }
+    }
+  ],
+  "finalChecks": {
+    "makeCheck": "pass",
+    "fullTaggedCLIRace": "pass",
+    "taggedVet": "pass",
+    "ordinaryNativeGatesUnset": true,
+    "ordinaryGatedSkipsNotCountedAsNativeAcceptance": true,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-governance-guards-check.log",
+        "sha256": "1cc5c4c08275dd5a0725ede9d23599a86e64cf1725d6df43241e401db0d5eb4e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791994835192994329
+      },
+      {
+        "path": "/private/tmp/chainbench-governance-guards-full-tagged-race.log",
+        "sha256": "9c9dc87a604747dcfa36c2ce214d98df9a8ec23bbea3e1e839f8cd968cd60308",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791995038438512400
+      },
+      {
+        "path": "/private/tmp/chainbench-governance-guards-vet.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791993607989646421
+      }
+    ]
+  }
+}

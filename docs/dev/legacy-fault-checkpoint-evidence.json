@@ -1,0 +1,364 @@
+{
+  "date": "2026-10-19",
+  "status": "scoped_checkpoint_verified",
+  "scope": "Legacy fault/node-crash and node-recover relative progress and fresh-head recovery checkpoints. Original10/20-block reference heights retained; fixed common block/hash/stateRoot plus generated private keys on all three chains. Not full original temporal behavior or whole legacy/L1/Web acceptance.",
+  "headAtProof": "2683a2c867a0062e0edbfd96df6137b7d32a453d",
+  "workingTreeModifiedAtProof": true,
+  "sourceAtNativeProof": "873f0d7b41f2f15db001a74bcdb3059321d5a81ce4652ce2546b85685b0043cf",
+  "implementationFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/legacy_fault_checkpoint_semantics_test.go",
+      "sha256": "5e67975328ef025e89f4e9c95a5b7fbcbe7a2592c6910be4c91346594f9c0499",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792414919571058312
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_fault_native_test.go",
+      "sha256": "b98012014f185993fe850134b569955c3c4934dd4c5bde2274d8f0ceff4b3410",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792415317652534198
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+      "sha256": "3f98c7ef695d3548407d4431dcabb8cd9c240e5bf678bfe9ca3125ec83c39859",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792415253880691053
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+      "sha256": "7c1ab7f01645323d2da59973c83befa28796face9fa977a4f981b2354a50a418",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792415253880958509
+    }
+  ],
+  "semanticRed": {
+    "falsePasses": 7,
+    "compileOnlyPreparationNotSemanticRed": {
+      "path": "/private/tmp/chainbench-legacy-fault-red-20261019.log",
+      "sha256": "84a387ac0e34ebdc6ee97920d2dac42d18ca104b182ff3a78c18c9693ed63111",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792414465259920932
+    },
+    "meaning": "0/1 new block despite matching old absolute target; stale current heads despite matching historical hashes. Valid two-block boundary and directional ahead-node controls retained."
+  },
+  "testLogs": [
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-red-v2-20261019.log",
+      "sha256": "1a33eb498c865784a601bbb3bd4421e51ba80f1ef6ff680cf6cd7a0a5f31bf43",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792414553384500649
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-green-v2-20261019.log",
+      "sha256": "ae7454a4e054e68273ba4886b69426f9b9f8f13856980030b7852b8303560b20",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792414927479330177
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-related-race-final-20261019.log",
+      "sha256": "671c58769eab206736e1cc86d32151de9e90a3a3dcdd931435715416fd371208",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792416841767027034
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-make-check-v3-20261019.log",
+      "sha256": "9e747b4987aecccf4e9227761dbf6fb2340f1c71002cba6de17b49bb3363e5f9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792416026573936696
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-native-compile-20261019.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792416884808231339
+    }
+  ],
+  "native": {
+    "exitCode": 0,
+    "actualProofPassed": true,
+    "sourceBefore": "873f0d7b41f2f15db001a74bcdb3059321d5a81ce4652ce2546b85685b0043cf",
+    "sourceAfter": "873f0d7b41f2f15db001a74bcdb3059321d5a81ce4652ce2546b85685b0043cf",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "runtimes": [
+      "/private/tmp/cbui/txfail-2ea27a4i",
+      "/private/tmp/cbui/txfail-5eywyhp7",
+      "/private/tmp/cbui/txfail-bn142o0r",
+      "/private/tmp/cbui/txfail-krb2o8za",
+      "/private/tmp/cbui/txfail-mtruvo96",
+      "/private/tmp/cbui/txfail-odtjsuli",
+      "/private/tmp/cbui/txfail-r78x264u"
+    ],
+    "runtimeCount": 7,
+    "testPasses": [
+      "TestNativeLegacyFaultRecovery/stablenet/fault-node-crash",
+      "TestNativeLegacyFaultRecovery/stablenet/fault-node-recover",
+      "TestNativeLegacyFaultRecovery/wbft/fault-node-crash",
+      "TestNativeLegacyFaultRecovery/wbft/fault-node-recover",
+      "TestNativeLegacyFaultRecovery/wemix/fault-node-crash",
+      "TestNativeLegacyFaultRecovery/wemix/fault-node-recover",
+      "TestNativeLegacyFaultRecovery",
+      "TestNativeValidatorRestartParticipation"
+    ],
+    "testFailures": [],
+    "testSkips": [],
+    "eventLog": {
+      "path": "/private/tmp/chainbench-legacy-fault-native-v2-20261019-events.jsonl",
+      "sha256": "a97a8387e579f0c7c82dccaff5f53ce41a1d411a15a7b67714bdaccb277d5b10",
+      "bytes": 9680,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792417822895208457
+    },
+    "stderr": {
+      "path": "/private/tmp/chainbench-legacy-fault-native-v2-20261019-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792417238395491879
+    },
+    "elapsedSeconds": 586.7891430854797,
+    "freeBytesAfter": 23357288448,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "accepted": true,
+    "sourceDigest": "873f0d7b41f2f15db001a74bcdb3059321d5a81ce4652ce2546b85685b0043cf",
+    "runtimes": [
+      {
+        "root": "/private/tmp/cbui/txfail-mtruvo96",
+        "chain": "stablenet",
+        "case": "CT-FAULT-001-producer-crash-and-restart.json",
+        "progress": "10",
+        "headRange": [
+          56,
+          56
+        ],
+        "assertions": 8
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-odtjsuli",
+        "chain": "stablenet",
+        "case": "CT-FAULT-002-node-recover-and-sync.json",
+        "progress": "20",
+        "headRange": [
+          37,
+          37
+        ],
+        "assertions": 3
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-r78x264u",
+        "chain": "wbft",
+        "case": "CT-FAULT-001-producer-crash-and-restart.json",
+        "progress": "10",
+        "headRange": [
+          65,
+          65
+        ],
+        "assertions": 8
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-bn142o0r",
+        "chain": "wbft",
+        "case": "CT-FAULT-002-node-recover-and-sync.json",
+        "progress": "20",
+        "headRange": [
+          41,
+          41
+        ],
+        "assertions": 3
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-5eywyhp7",
+        "chain": "wemix",
+        "case": "CT-FAULT-001-producer-crash-and-restart.json",
+        "progress": "10",
+        "headRange": [
+          61,
+          61
+        ],
+        "assertions": 8
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-2ea27a4i",
+        "chain": "wemix",
+        "case": "CT-FAULT-002-node-recover-and-sync.json",
+        "progress": "20",
+        "headRange": [
+          74,
+          74
+        ],
+        "assertions": 3
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-krb2o8za",
+        "participationVerified": true,
+        "healthyLinks": 5
+      }
+    ],
+    "retainedFiles": 1271,
+    "independentControlsRejected": [
+      "progress not achieved",
+      "stale head",
+      "wrong block hash",
+      "no recovered node",
+      "empty root",
+      "scope broadened"
+    ],
+    "freshInventories": [
+      {
+        "attempt": 1,
+        "processLines": 528,
+        "openFileNames": 11483,
+        "allSevenInactive": true
+      },
+      {
+        "attempt": 2,
+        "processLines": 528,
+        "openFileNames": 11483,
+        "allSevenInactive": true
+      },
+      {
+        "attempt": 3,
+        "processLines": 528,
+        "openFileNames": 11483,
+        "allSevenInactive": true
+      }
+    ],
+    "remainingDatabases": 0,
+    "sourceUnchanged": true,
+    "keysAndBinariesUnchanged": true,
+    "fullTemporalLegacyEquivalenceAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-native-v2-20261019-start.json",
+      "sha256": "84dfc22fc6ea377d506dd73ef480f0bde741185e0c3876f0f4ac9af8a0e3a19e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792417238395323501
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-native-v2-20261019-summary.json",
+      "sha256": "86ddfe9d5a081c4dd12f2c2fb514921f4c60f2862cb98e946ee3cf13102bb40f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792417825183468563
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-native-v2-20261019-independent.json",
+      "sha256": "7ff580041b898cbe83df717eda3bbcba122de11a7fb668cbe3b37000b6fdeb2d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792417842164670184
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-fault-native-v2-20261019-events.jsonl",
+      "sha256": "a97a8387e579f0c7c82dccaff5f53ce41a1d411a15a7b67714bdaccb277d5b10",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792417822895208457
+    }
+  ],
+  "preparationFailures": {
+    "nodesStarted": 0,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-legacy-fault-native-controller-20261019.log",
+        "sha256": "000d4ddbbe3160cedbb4de1e604bcc46a451180b0af62f728f43e4ba750d9d1b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792417002469934022
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-fault-native-controller-v2-20261019.log",
+        "sha256": "e05c4128fa202c137f33ff7b5e756f1f62399792472424ac1a4957683b78206c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792417025238886504
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-fault-native-controller-v3-20261019.log",
+        "sha256": "94efdefd15c32e008985c3b5a2e6712e29a3d8dfd68ed15f3c025f329d123162",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792417064668492348
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-fault-native-controller-v4-20261019.log",
+        "sha256": "53ba97a2501119335450e03d16d278a880b6a1c10e37f43b877f2ffdf121b79d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792417154780579680
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-fault-native-controller-v5-20261019.log",
+        "sha256": "744d13f605ae4318eee3567281720bdb3f76334c05106c0034116b02b67a4c7c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792417194744852762
+      }
+    ],
+    "details": [
+      "uninitialized gitlinks initially read as files",
+      "aged WEMIX source checkout metadata/files absent",
+      "initial source copy followed ignored generated directory links; rejected fingerprint mismatch",
+      "Go1.26 test2json is built on demand; fixed tool-path discovery before execution"
+    ]
+  },
+  "recoveredWemixSource": {
+    "originalSource": "/private/tmp/chainbench-w3-head-source",
+    "restoredSource": "/private/tmp/chainbench-w3-preserved-source-20261019",
+    "revision": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+    "verifiedFileHashes": 2051,
+    "verifiedUninitializedGitlinks": 5,
+    "basis": "Read-only preserved Git object pack; independently compared original file hashes and gitlink object identities",
+    "externalSourceModified": false,
+    "sharedGitObjects": "/private/tmp/chainbench-w3-head-source/.git/objects"
+  },
+  "remainingConditions": [
+    "Full original crash60s/progress90s/recovery90s/120s temporal equivalence is not established by these checkpoints.",
+    "Whole legacy254 scenarios, full358 Linux L1 and final WEB01–14 capture/independent replay remain open.",
+    "W3/W4 and earlier StableNet faults remain unresolved; preserved early WEMIX admin_wemixInfo errors are not silently discarded."
+  ],
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false
+}

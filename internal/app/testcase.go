@@ -237,7 +237,7 @@ func PrepareTestCase(in TestCaseInput) (TestCasePrepared, error) {
 	if err != nil {
 		return TestCasePrepared{}, err
 	}
-	if err = testengine.Precheck([]dsl.Spec{spec}); err != nil {
+	if err = testengine.PrecheckCase(spec); err != nil {
 		return TestCasePrepared{}, err
 	}
 	fingerprint := testCaseSemantics(spec)
@@ -248,6 +248,9 @@ func PrepareTestCase(in TestCaseInput) (TestCasePrepared, error) {
 }
 
 func testCaseSemantics(s dsl.Spec) string {
+	// Declaration names are provenance. Migrating v1 introduces a preset ID
+	// without changing the executable body or environment configuration.
+	s.PresetID = ""
 	// v2 stores actions only in Sequence, while v1 stores them in Steps as well.
 	// Normalize the duplicate representations, but include every exported field
 	// (encoding Spec directly would omit runtime-only env fields).
@@ -369,6 +372,10 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 		if _, ok := value.(string); !ok {
 			return fmt.Errorf("%s: expected string", path)
 		}
+	case "null":
+		if value != nil {
+			return fmt.Errorf("%s: expected null", path)
+		}
 	case "boolean":
 		if _, ok := value.(bool); !ok {
 			return fmt.Errorf("%s: expected boolean", path)
@@ -428,6 +435,19 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 				}
 			}
 			child, exists := props[key].(map[string]any)
+			patterns, _ := s["patternProperties"].(map[string]any)
+			for pattern, constraint := range patterns {
+				matched, err := regexp.MatchString(pattern, key)
+				if err != nil {
+					return fmt.Errorf("%s: invalid property pattern", path)
+				}
+				if matched {
+					exists = true
+					if err := checkEditorValue(v, constraint.(map[string]any), root, path+"/"+key); err != nil {
+						return err
+					}
+				}
+			}
 			if !exists {
 				switch a := s["additionalProperties"].(type) {
 				case bool:

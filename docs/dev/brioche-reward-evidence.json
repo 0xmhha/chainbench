@@ -1,0 +1,305 @@
+{
+  "scope": "RPC008 exact configured2ETH reward and50percent first halving10/period10/times4/finish1000. Actual mined5/15 public-case input heights and9/10 boundary on four managed WBFT validators, direct Croissant0/Brioche0. No registered stakers or reward beneficiaries, no transactions/gas in sampled blocks, so full reward credits actual proposer fallback address. Exact parent/mined balance delta equals configured reward/API,2ETH before and1ETH after. Brioche already active from genesis: this is halving transition, not Brioche activation or staged migration/public JSON full reexecution/Linux/mainnet/full87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Positive/decreasing reward model accepted23 wrong exact configuration/half/boundary/mined-origin/proposer/mint/isolation controls.",
+  "unitGreen": "Positive plus23 negative controls; engine/setup/monitor race, final engine race, vet and full make check passed. Staticcheck expression issue was corrected before native proof. First native attempt reached ready then reward RPC was unavailable(-32601); explicit per-node HTTP wemix module scopes applied, regressions rechecked, and that attempt retained separately.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "ce82637ec29cc3b8728a56068d69824fd11c8f724a192ef1452cb4d0bbab4289",
+    "sourceAfter": "ce82637ec29cc3b8728a56068d69824fd11c8f724a192ef1452cb4d0bbab4289",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeBriocheHalvingProposerLedger"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-r0lwrkg9"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-r0lwrkg9": []
+    },
+    "elapsedSeconds": 55.53,
+    "log": {
+      "path": "/private/tmp/chainbench-brioche-reward-modules-native.jsonl",
+      "sha256": "4ef00f5705966f41c5f55bc8793848a94f3e3484b0ca22d08183cad04236e090",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048782365696560
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-brioche-reward-modules-summary.json",
+      "sha256": "fa49f099994f91e8a44a3869fab5d5f5410fb0bbd58ecd42950b71de6d259727",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048782863699691
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-brioche-reward-modules-start.json",
+      "sha256": "c482af99c139033125aaa95c25c0c5288f38bab1fcf094c6f6aa2d453389cc75",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048724543034539
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-r0lwrkg9/reports/brioche-reward-proof.json",
+    "sha256": "2c7b4803f39c6b65c58120b555165c397635c7b812195bc249af2c5ade565fa4",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792048779205692689
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-brioche-reward-evidence.py",
+    "sha256": "783767f1910ed19bd1a32872f3db7da1ac8f30c92e3868cda2f06a5687404149",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792048628438798066
+  },
+  "reusedDecoderSource": {
+    "path": "/private/tmp/chainbench-original-epoch-evidence.py",
+    "sha256": "87794f7ac8055e5d727b63b3bdcb47896f6b4e4bb8fafca488e3a8ba202c7987",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792038415534476826
+  },
+  "rows": [
+    {
+      "height": 5,
+      "hash": "0xa27566765378db839679dc7806958cb59fab45ddfafe880691162d3b871fc92d",
+      "proposer": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "reward": "2000000000000000000",
+      "before": "10000002000000000000000000",
+      "after": "10000004000000000000000000",
+      "delta": "2000000000000000000",
+      "transactions": 0,
+      "gasUsed": 0,
+      "registeredStakers": 0
+    },
+    {
+      "height": 9,
+      "hash": "0xd88edc7e2f4b01f34bf249d2a84cb13b95f987647a1888089c09f64feac3a8d5",
+      "proposer": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "reward": "2000000000000000000",
+      "before": "10000004000000000000000000",
+      "after": "10000006000000000000000000",
+      "delta": "2000000000000000000",
+      "transactions": 0,
+      "gasUsed": 0,
+      "registeredStakers": 0
+    },
+    {
+      "height": 10,
+      "hash": "0x629d4f497babf52677d8f0a4d8773cce5f40e123096be89a36b733a572380486",
+      "proposer": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "reward": "1000000000000000000",
+      "before": "10000004000000000000000000",
+      "after": "10000005000000000000000000",
+      "delta": "1000000000000000000",
+      "transactions": 0,
+      "gasUsed": 0,
+      "registeredStakers": 0
+    },
+    {
+      "height": 15,
+      "hash": "0x224f0ab465e132689ec1ef5cb01e78ab77090d5c6487e56f801bc8991a54b1e0",
+      "proposer": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "reward": "1000000000000000000",
+      "before": "10000005000000000000000000",
+      "after": "10000006000000000000000000",
+      "delta": "1000000000000000000",
+      "transactions": 0,
+      "gasUsed": 0,
+      "registeredStakers": 0
+    }
+  ],
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/txfail-r0lwrkg9/w/genesis.json",
+      "sha256": "f51f062e328d290e9e1454b3afbc0f91b1603ff6faa91f37012c3c2a93cdb119",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048727614780071
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-r0lwrkg9/w/node1/genesis.json",
+      "sha256": "f51f062e328d290e9e1454b3afbc0f91b1603ff6faa91f37012c3c2a93cdb119",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048727637074745
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-r0lwrkg9/w/node2/genesis.json",
+      "sha256": "f51f062e328d290e9e1454b3afbc0f91b1603ff6faa91f37012c3c2a93cdb119",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048728100841024
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-r0lwrkg9/w/node3/genesis.json",
+      "sha256": "f51f062e328d290e9e1454b3afbc0f91b1603ff6faa91f37012c3c2a93cdb119",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048728377140932
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-r0lwrkg9/w/node4/genesis.json",
+      "sha256": "f51f062e328d290e9e1454b3afbc0f91b1603ff6faa91f37012c3c2a93cdb119",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048728661105963
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/txfail-r0lwrkg9",
+      "attemptExitCode": 0,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 199,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-r0lwrkg9/reports/brioche-reward-inventory.json",
+        "sha256": "002aa2fea5880ab35fbdd4c5703e2e836d3d9edd96dde9a75a4a4dfe7e2e69df",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792048822937935367
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/txfail-7f0m2_x3",
+      "attemptExitCode": 1,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 199,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-7f0m2_x3/reports/brioche-reward-inventory.json",
+        "sha256": "c5a79d4afba44ba5e5f0b7f5475c3aa6327aa96ff4d0c2b9e6c152dd659d08fb",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792048822963382490
+      }
+    }
+  ],
+  "retainedFiles": 398,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-brioche-reward-publication.json",
+    "sha256": "8a83f4a16faefd0568a28c2127635224f39f89d6f30c7cedff46da199645b37f",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792047467413432408
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-red.log",
+      "sha256": "7262feeee3468778abfeba0870cb8c14e98f63fac19fb60975a93e580053fdbf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792047920985363565
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-green.log",
+      "sha256": "79852d3d8e6a5a40a25a1b958fe73a04f3c2c13e187778efec86bcd136606fd6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792047982151286825
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-compile.log",
+      "sha256": "6ae8794ace7472fc362c5eaec6c7e1f7d6df958acbeab1368dbc5e04680bd074",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048099520793425
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-related-race.log",
+      "sha256": "b0aaf49cb92f55bfd73a29294d9d8786c17149dd73fe640649383fba96c7696c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048188353686991
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-engine-race2.log",
+      "sha256": "2cf3a012ac78027dce63840b0ee3f915259d4508733ddc33e9684b66ea53c807",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048231163505760
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-engine-race3.log",
+      "sha256": "49fbe7be9a3f1c304cc55823d539e145f7e946e37eeffb4bdd17366b86cd9d52",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048569470494707
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048141331895903
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-check.log",
+      "sha256": "ba9e1d767b12bd6bab4648fab05f7a3e8e03bb65a411eccee71b64e7808d3e14",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048144152111852
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-check2.log",
+      "sha256": "ad636dab802fd1beb93223b87b0e9df26455be0ec96cb51c1b375df999a73c85",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048323033615929
+    },
+    {
+      "path": "/private/tmp/chainbench-brioche-reward-check3.log",
+      "sha256": "66d0c957e7b8545af8db44a3373d16b570f0d71f258aa1aa6098283dfeeddd3f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792048664692996951
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

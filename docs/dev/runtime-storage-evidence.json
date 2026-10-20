@@ -1,0 +1,79 @@
+{
+  "scope": "Completed owned test runtimes only; preserve all proof artifacts and refuse activity/inventory failures",
+  "contracts": 31,
+  "nativeProbe": "/private/tmp/chainbench-runtime-storage-proof.json",
+  "nativeProbeSHA256": "92e6d6d211b2347bcfa163598ad1848673ed18708dfb2746d8192b628137332b",
+  "repeatedFixtures": [
+    {
+      "runtime": "/private/tmp/cbui/storage-probe-bttz3v0n",
+      "beforeAllocatedBytes": 134230016,
+      "afterAllocatedBytes": 16384,
+      "reclaimed": [
+        {
+          "path": "/private/tmp/cbui/storage-probe-bttz3v0n/store/networks/owned/nodes/node1/etcd",
+          "event": "reclaimed",
+          "allocatedBytes": 134217728,
+          "finishedAt": "2026-10-13T08:46:01.022294+00:00"
+        }
+      ],
+      "openFileProtected": true,
+      "proofBytesModeMtimePreserved": true,
+      "copyOnWriteIsolation": true
+    },
+    {
+      "runtime": "/private/tmp/cbui/storage-probe-er0l2zr7",
+      "beforeAllocatedBytes": 134230016,
+      "afterAllocatedBytes": 16384,
+      "reclaimed": [
+        {
+          "path": "/private/tmp/cbui/storage-probe-er0l2zr7/store/networks/owned/nodes/node1/etcd",
+          "event": "reclaimed",
+          "allocatedBytes": 134217728,
+          "finishedAt": "2026-10-13T08:46:01.543641+00:00"
+        }
+      ],
+      "openFileProtected": true,
+      "proofBytesModeMtimePreserved": true,
+      "copyOnWriteIsolation": true
+    },
+    {
+      "runtime": "/private/tmp/cbui/storage-probe-ug1pc21o",
+      "beforeAllocatedBytes": 134230016,
+      "afterAllocatedBytes": 16384,
+      "reclaimed": [
+        {
+          "path": "/private/tmp/cbui/storage-probe-ug1pc21o/store/networks/owned/nodes/node1/etcd",
+          "event": "reclaimed",
+          "allocatedBytes": 134217728,
+          "finishedAt": "2026-10-13T08:46:02.056689+00:00"
+        }
+      ],
+      "openFileProtected": true,
+      "proofBytesModeMtimePreserved": true,
+      "copyOnWriteIsolation": true
+    }
+  ],
+  "web08CaptureAndIndependentReproduction": "passed before adding standalone completion hooks",
+  "independentEvidence": "/private/tmp/cbui/recheck-6ro42476/source/chainbench-out/web-ui-acceptance/WEB-08",
+  "standaloneProofs": [
+    {
+      "proof": "native-jobs",
+      "receipt": "chainbench-out/web-ui-development/native-jobs/receipt.json",
+      "receiptSHA256": "dda119be625ecb301e92f758d2f31b53b52e994b2058fd59629120a4506f54b7",
+      "runtime": "/private/tmp/cbui/76a5cadb-bb99-4af1-b859-94b9005c22a9",
+      "removedDirectories": 24,
+      "reclaimedAllocatedBytes": 4575232,
+      "nativeDatabaseCheck": "passed"
+    },
+    {
+      "proof": "ssh-log-collection",
+      "receipt": "chainbench-out/web-ui-development/ssh-log-collection/receipt.json",
+      "receiptSHA256": "c3d40d9f29c8fcc2c4be16855e984cc5daa9171baa35a058059db9d005c5ce94",
+      "runtime": "/private/tmp/cbui/1288434a-9a23-43d1-aa43-000c41e949f1",
+      "removedDirectories": 8,
+      "reclaimedAllocatedBytes": 1490944,
+      "nativeDatabaseCheck": "passed"
+    }
+  ],
+  "finalWeb14Acceptance": "pending final source freeze"
+}

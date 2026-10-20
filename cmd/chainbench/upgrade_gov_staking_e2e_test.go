@@ -22,6 +22,8 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"strconv"
@@ -67,7 +69,7 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 		t.Fatalf("minimumStaking() = %s, want > 0", amount)
 	}
 
-	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+	hash := stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
 
 	// Post-state: the staker is registered and mapped from its operator.
 	if !stakingIsStaker(t, c, staker) {
@@ -76,6 +78,63 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 	if got := stakingStakerByOperator(t, c, operator.Address()); !strings.EqualFold(got, staker) {
 		t.Fatalf("stakerByOperator(%s) = %s, want %s", operator.Address(), got, staker)
 	}
+	w := registrationWitness{Reward: rewardLedgerProof{Staker: staker, Operator: operator.Address(), Minimum: amount.String(), BLSKey: "0x" + hex.EncodeToString(blsPK)}, Hash: hash, PoP: "0x" + hex.EncodeToString(blsSig), Active: stakingIsStaker(t, c, staker), Mapped: stakingStakerByOperator(t, c, operator.Address())}
+	w.Reward.Rewardee = wordToAddr(stakingInfoWord(t, c, staker, 1))
+	w.Reward.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(ctx, "eth_getTransactionByHash", &w.Transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getTransactionReceipt", &w.Receipt, hash); err != nil {
+		t.Fatal(err)
+	}
+	number, e := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(w.Receipt["blockNumber"]), "0x"), 16, 64)
+	if e != nil || number == 0 {
+		t.Fatal("registration block missing", e)
+	}
+	tag := fmt.Sprintf("0x%x", number)
+	parent := fmt.Sprintf("0x%x", number-1)
+	if err = c.Call(ctx, "eth_getCode", &w.BeforeCode, w.Reward.Rewardee, parent); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getCode", &w.Code, w.Reward.Rewardee, tag); err != nil {
+		t.Fatal(err)
+	}
+	slot := "0x4ef8d65ed4f969898f05d331f7b880c9611386779b412e35e117f26e0983c85d"
+	if err = c.Call(ctx, "eth_getStorageAt", &w.Implementation, w.Reward.Rewardee, slot, tag); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getCode", &w.ImplementationCode, "0x0000000000000000000000000000000000001002", tag); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-003-registration-witness", w)
+	if e := verifyRegistrationWitness(w); e != nil {
+		t.Fatal(e)
+	}
+
+	// RPC-009 reads execution-adjacent state, so a later unrelated transaction
+	// cannot masquerade as this registration's totalStaking increase.
+	read := stakingReadWitness{Registration: w, ConfiguredMinimum: "10000000000000000000000000", ParentTag: parent, MinedTag: tag}
+	for _, q := range []struct {
+		sig, tag string
+		out      *string
+	}{
+		{"minimumStaking()", tag, &read.Minimum},
+		{"totalStaking()", parent, &read.BeforeTotal},
+		{"totalStaking()", tag, &read.AfterTotal},
+	} {
+		contract := e2eGovStaking
+		if q.sig == "minimumStaking()" {
+			contract = e2eGovConfig
+		}
+		if err := c.Call(ctx, "eth_call", q.out, map[string]string{"to": contract, "data": accounts.Selector(q.sig)}, q.tag); err != nil {
+			t.Fatal(err)
+		}
+	}
+	logGovernanceProof(t, "RPC-009-staking-read", read)
+	if err := verifyStakingRead(read); err != nil {
+		t.Fatal(err)
+	}
+
 }
 
 // TestWemixGovernanceDelegateE2E ports wemix4 GOV-011 (delegation) on top of the
@@ -139,8 +198,8 @@ func TestWemixGovernanceDelegateE2E(t *testing.T) {
 // registered staker: the operator unstakes its full stake, which drops the
 // staker's amount to zero and deactivates it (a partial unstake below
 // minimumStaking is rejected, so a full unstake is the deactivation path). The
-// withdrawal credential then matures over the unbonding period, which this test
-// does not wait out.
+// withdrawal credential is followed through a mined early refusal and exact
+// maturity, event, slot, pointer and withdrawal ledger checks.
 //
 //	go test -tags e2e -run TestWemixGovernanceUnstakeE2E -timeout 8m ./cmd/chainbench
 func TestWemixGovernanceUnstakeE2E(t *testing.T) {
@@ -149,21 +208,27 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
 	ctx := context.Background()
-
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	key := mustHexBytes(t, scenarioOpKeys["op1"])
+	address, err := ap.AddressForKey(key)
 	if err != nil {
-		t.Fatalf("open operator wallet: %v", err)
+		t.Fatal(err)
 	}
+	url := runGovHandoffOverlay(t, fromBin, toBin, map[string]any{"alloc": map[string]any{address: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}})
+	c := rpc.Dial(url)
+	operator, err := ap.OpenWallet(ctx, key, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertGuardCallerOutsideValidators(t, c, operator.Address())
 	staker := presetNodeAddr(t, 1)
 	blsPK, blsSig := presetNodeBLS(t, 1)
-	amount := govConfigUint(t, c, "minimumStaking()")
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	amount := new(big.Int).Mul(minimum, big.NewInt(2))
 	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
 
 	// The registered stake is the staker's own amount.
@@ -174,6 +239,7 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 		t.Fatal("staker not registered before unstake")
 	}
 
+	p := fullUnstakeWitness{Operator: operator.Address(), Staker: staker, Minimum: minimum.String(), Amount: amount.String(), Before: stakingUint(t, c, "getStakerAmount(address)", staker).String(), ActiveBefore: stakingIsStaker(t, c, staker)}
 	// Full unstake by the operator: staker's amount -> 0.
 	data := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount))
 	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
@@ -190,23 +256,91 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Sign() != 0 {
 		t.Fatalf("getStakerAmount = %s after full unstake, want 0", staked)
 	}
+	p.Hash = hash
+	p.After = stakingUint(t, c, "getStakerAmount(address)", staker).String()
+	p.ActiveAfter = stakingIsStaker(t, c, staker)
+	p.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(ctx, "eth_getTransactionByHash", &p.Transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getTransactionReceipt", &p.Receipt, hash); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-016-full-unstake-witness", p)
+	if e := verifyFullUnstakeWitness(p); e != nil {
+		t.Fatal(e)
+	}
+
+	createdIndex, oldest := credentialPointers(t, c, operator.Address())
+	n, err := strconv.ParseUint(oldest, 10, 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	created := credentialAt(t, c, operator.Address(), n)
+	delay := govConfigUint(t, c, "unbondingPeriodStaker()")
+	if !delay.IsUint64() {
+		t.Fatal("unbonding delay invalid")
+	}
+	workflow := unstakeWithdrawalWitness{Ledger: credentialExpiryProof{Caller: operator.Address(), Contract: e2eGovStaking, Amount: amount.String(), N: n}, Delay: delay.Uint64(), Created: created, BeforeCredentialIndex: createdIndex, BeforeWithdrawalIndex: oldest}
+	creationBlock, err := c.BlockByNumber(ctx, fmt.Sprint(p.Receipt["blockNumber"]))
+	if err != nil || created.RequestTime != fmt.Sprint(creationBlock.Timestamp) {
+		t.Fatal("credential creation timestamp differs", err)
+	}
+	input := accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1)))
+	workflow.Early = stakingRejectedTx(t, c, operator, input, new(big.Int), "insufficient withdrawable credentials")
+	earlyBlock, err := c.BlockByNumber(ctx, fmt.Sprint(workflow.Early.Receipt["blockNumber"]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow.EarlyTimestamp = earlyBlock.Timestamp
+	workflow.AfterEarly = credentialAt(t, c, operator.Address(), n)
+	workflow.EarlyCredentialIndex, workflow.EarlyWithdrawalIndex = credentialPointers(t, c, operator.Address())
+	mature, err := strconv.ParseUint(created.WithdrawableTime, 10, 64)
+	if err != nil || earlyBlock.Timestamp >= mature {
+		t.Fatal("early refusal not before credential maturity", err)
+	}
+	waitCredentialTime(t, c, mature)
+	paidHash := stakingSendOK(t, c, operator, input, nil)
+	paid := credentialWithdrawal{Hash: paidHash, Index: n}
+	if err = c.Call(ctx, "eth_getTransactionByHash", &paid.Transaction, paidHash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(ctx, "eth_getTransactionReceipt", &paid.Receipt, paidHash); err != nil {
+		t.Fatal(err)
+	}
+	paidBlock, err := c.BlockByNumber(ctx, fmt.Sprint(paid.Receipt["blockNumber"]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	paid.Timestamp = paidBlock.Timestamp
+	paid.Credentials = []withdrawalCredential{credentialAt(t, c, operator.Address(), n)}
+	paid.CredentialIndex, paid.WithdrawalIndex = credentialPointers(t, c, operator.Address())
+	logs, err := json.Marshal(feeReceipt(t, c, paidHash))
+	if err != nil {
+		t.Fatal(err)
+	}
+	paid.LogsJSON = string(logs)
+	if err = c.Call(ctx, "debug_traceTransaction", &paid.Diff, paidHash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+		t.Fatal(err)
+	}
+	workflow.Success = paid
+	logGovernanceProof(t, "GOV-004-unstake-withdrawal", workflow)
+	if e := verifyUnstakeWithdrawal(workflow); e != nil {
+		t.Fatal(e)
+	}
+
 }
 
-// TestWemixGovernanceUnstakeMinimumGuardE2E ports wemix4 GOV-015 (unstake below
-// minimum is rejected): a staker registered at exactly minimumStaking cannot be
-// partially unstaked, because unstake requires the remaining balance to be either
-// >= minimumStaking or exactly 0 ("amount must equal balance to deactivate
-// staker"). Unstaking 1 wei would leave minimumStaking-1, which is neither, so it
-// reverts and the stake is unchanged.
-//
-//	go test -tags e2e -run TestWemixGovernanceUnstakeMinimumGuardE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceUnstakeMinimumGuardE2E verifies the original two-minimum
+// stake and minimum-plus-one unstake using an actual mined revert and exact reason.
 func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	overlay, operatorKey := governanceGuardOverlay(t, false)
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -214,101 +348,120 @@ func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 	if err != nil {
 		t.Fatalf("accounts.ForChain(wbft): %v", err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	operator, err := ap.OpenWallet(ctx, operatorKey, url)
 	if err != nil {
 		t.Fatalf("open operator wallet: %v", err)
 	}
 	staker := presetNodeAddr(t, 1)
 	blsPK, blsSig := presetNodeBLS(t, 1)
-	amount := govConfigUint(t, c, "minimumStaking()")
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	amount := new(big.Int).Mul(minimum, big.NewInt(2))
 	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
 
 	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
 		t.Fatalf("getStakerAmount = %s after register, want %s", staked, amount)
 	}
 
-	// Unstaking 1 wei leaves minimumStaking-1 (neither >= minimum nor 0) -> revert.
-	data := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(big.NewInt(1)))
-	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
-	if err != nil {
-		t.Fatalf("decode calldata: %v", err)
-	}
-	hash, execErr := operator.Execute(ctx, e2eGovStaking, raw, nil)
-	if execErr == nil {
-		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
-			t.Fatal("partial unstake below minimum succeeded (status 0x1) — guard missing")
-		}
-	}
-	// The reverted unstake left the stake untouched.
-	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
-		t.Fatalf("getStakerAmount = %s after rejected partial unstake, want %s (unchanged)", staked, amount)
+	assertGuardCallerOutsideValidators(t, c, operator.Address())
+	before := readGovernanceGuardState(t, c, staker)
+	input := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(new(big.Int).Add(minimum, big.NewInt(1))))
+	reason := "amount must equal balance to deactivate staker"
+	failure := stakingRejectedTx(t, c, operator, input, big.NewInt(0), reason)
+	cases := []guardCase{{Name: "unstake", Input: input, Sender: operator.Address(), Subject: staker, Value: "0", Reason: reason, Before: before, After: readGovernanceGuardState(t, c, staker), Failure: failure}}
+	logGovernanceProof(t, "GOV-015-guards", map[string]any{"minimum": minimum.String(), "cases": cases})
+	if err := verifyGovernanceGuards(cases, minimum, false); err != nil {
+		t.Fatal(err)
 	}
 }
 
-// TestWemixGovernanceClaimGuardE2E ports wemix4 GOV-022 (claim theft guard): an
-// account that is neither the staker's operator nor a delegator to it cannot
-// claim that staker's rewards. GovStaking.claim resolves the caller to _user =
-// (operator match ? staker : msg.sender) and requires that user to have a stake
-// or pending reward, so a third party's claim reverts with "no reward to claim"
-// — the staker's rewardee balance is never touched. This needs no accrued
-// rewards: the guard reverts before any transfer.
-//
-//	go test -tags e2e -run TestWemixGovernanceClaimGuardE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceClaimGuardE2E verifies both original unauthorized callers
+// against two registered stakers with accrued rewards, using actual mined failures
+// and transaction-level state diffs to separate block reward income from claims.
 func TestWemixGovernanceClaimGuardE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual claim guards")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
-	ctx := context.Background()
-
-	ap, err := accounts.ForChain("wbft")
+	provider, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
-	if err != nil {
-		t.Fatalf("open operator wallet: %v", err)
-	}
-	staker := presetNodeAddr(t, 1)
-	blsPK, blsSig := presetNodeBLS(t, 1)
-	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
-
-	// The staker's rewardee (word 1 of the struct) holds any rewards; its balance
-	// must not change on a thief's claim.
-	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
-	balBefore, err := c.BalanceAt(ctx, rewardee)
-	if err != nil {
-		t.Fatalf("balance rewardee: %v", err)
-	}
-
-	// A third party (node3) is neither node1's operator nor a delegator to it.
-	thief, err := ap.OpenWallet(ctx, presetNodeKey(t, 3), url)
-	if err != nil {
-		t.Fatalf("open thief wallet: %v", err)
-	}
-	data := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
-	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
-	if err != nil {
-		t.Fatalf("decode calldata: %v", err)
-	}
-	hash, execErr := thief.Execute(ctx, e2eGovStaking, raw, nil)
-	if execErr == nil {
-		// The tx was admitted; it must revert (status 0x0), not succeed.
-		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
-			t.Fatal("thief's claim succeeded (status 0x1) — reward theft not prevented")
+	names := []string{"op1", "op2", "opX"}
+	keys := [][]byte{}
+	alloc := map[string]any{}
+	for _, name := range names {
+		key := mustHexBytes(t, scenarioOpKeys[name])
+		address, err := provider.AddressForKey(key)
+		if err != nil {
+			t.Fatal(err)
 		}
+		keys = append(keys, key)
+		alloc[address] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
 	}
-	// execErr != nil (reverted at estimate) or status 0x0 both mean the guard held.
-
-	balAfter, err := c.BalanceAt(ctx, rewardee)
-	if err != nil {
-		t.Fatalf("balance rewardee after: %v", err)
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": alloc})
+	c := rpc.Dial(url)
+	wallets := []accounts.Wallet{}
+	for _, key := range keys {
+		w, err := provider.OpenWallet(t.Context(), key, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets = append(wallets, w)
+		assertGuardCallerOutsideValidators(t, c, w.Address())
 	}
-	if balAfter.Cmp(balBefore) < 0 {
-		t.Fatalf("rewardee balance decreased (%s -> %s) — reward stolen", balBefore, balAfter)
+	stakers := []string{presetNodeAddr(t, 1), presetNodeAddr(t, 2)}
+	rewardees := []string{}
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	for i, staker := range stakers {
+		pk, sig := presetNodeBLS(t, i+1)
+		stakingRegister(t, c, wallets[i], staker, pk, sig, minimum)
+		if !strings.EqualFold(stakingStakerByOperator(t, c, wallets[i].Address()), staker) {
+			t.Fatal("operator mapping absent")
+		}
+		rewardees = append(rewardees, wordToAddr(stakingInfoWord(t, c, staker, 1)))
+	}
+	deadline := time.Now().Add(90 * time.Second)
+	balances := []string{}
+	for {
+		balances = nil
+		ready := true
+		for _, address := range rewardees {
+			n, err := c.BalanceAt(t.Context(), address)
+			if err != nil {
+				t.Fatal(err)
+			}
+			balances = append(balances, n.String())
+			ready = ready && n.Sign() > 0
+		}
+		if ready {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("both registered stakers did not accrue reward", balances)
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	proofs := []claimGuardProof{}
+	for _, attempt := range []struct {
+		name            string
+		caller, subject int
+	}{{"operatorA-to-B", 0, 1}, {"third-party-to-A", 2, 0}} {
+		caller := wallets[attempt.caller]
+		staker := stakers[attempt.subject]
+		input := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
+		failure := stakingRejectedTx(t, c, caller, input, big.NewInt(0), "no reward to claim")
+		p := claimGuardProof{Name: attempt.name, Caller: caller.Address(), Staker: staker, Rewardees: rewardees, RewardBalances: balances, Protected: []string{rewardees[0], rewardees[1], wallets[1].Address(), e2eGovStaking}, Failure: failure}
+		if err = c.Call(t.Context(), "debug_traceTransaction", &p.Diff, failure.Hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+			t.Fatal("claim guard state diff unavailable", err)
+		}
+		logGovernanceProof(t, "GOV-022-claim-diff", p)
+		if err := verifyClaimGuardDiff(p); err != nil {
+			t.Fatal(err)
+		}
+		proofs = append(proofs, p)
+	}
+	if len(proofs) != 2 {
+		t.Fatal("original caller matrix incomplete")
 	}
 }
 
@@ -378,6 +531,28 @@ func TestWemixGovernanceFeeChangeE2E(t *testing.T) {
 		t.Fatalf("requestChangingFee reverted (status %s)", st)
 	}
 
+	if stakingUint(t, c, "getDelegatedAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-020 fixture unexpectedly has delegators")
+	}
+	logs := feeReceipt(t, c, hash)
+	if !exactFeeEvent(logs, staker, "ChangingFeeRateRequested(address,uint256,uint256)", big.NewInt(0), big.NewInt(newRate)) {
+		t.Fatal("GOV-020 missing or incorrect immediate Requested event")
+	}
+	if _, found := accounts.FindLog(logs, accounts.EventTopic("ChangingFeeRateExecuted(address,uint256)")); found {
+		t.Fatal("GOV-020 v1 immediate request emitted unexpected Executed event")
+	}
+	pending, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil || pending != "0x"+strings.Repeat("0", 128) {
+		t.Fatal("GOV-020 immediate fee left a delayed request", pending, err)
+	}
+	var transaction map[string]any
+	if err := c.Call(ctx, "eth_getTransactionByHash", &transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if transaction["hash"] != hash || transaction["input"] != data || transaction["value"] != "0x0" || !strings.EqualFold(fmt.Sprint(transaction["from"]), operator.Address()) || !strings.EqualFold(fmt.Sprint(transaction["to"]), e2eGovStaking) {
+		t.Fatal("GOV-020 actual request input differs", transaction)
+	}
+	logGovernanceProof(t, "GOV-020-immediate", map[string]any{"hash": hash, "staker": staker, "oldRate": 0, "newRate": newRate, "delegatedAmount": "0", "pending": pending, "transaction": transaction})
 	// No delegators -> the fee change is immediate.
 	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
 		t.Fatalf("feeRate = %s after immediate change, want %d", fee, newRate)
@@ -407,7 +582,7 @@ func stakingInfoWord(t *testing.T, c *rpc.Client, staker string, idx int) *big.I
 
 // stakingRegister sends registerStaker(amount, staker, staker, 0, blsPK, blsSig)
 // from operator (value=amount) and fails unless it mines successfully.
-func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) {
+func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) string {
 	t.Helper()
 	data := accounts.EncodeCallArgs(
 		"registerStaker(uint256,address,address,uint256,bytes,bytes)",
@@ -429,6 +604,7 @@ func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, stak
 	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
 		t.Fatalf("registerStaker reverted (status %s)", st)
 	}
+	return hash
 }
 
 // stakingUint reads a GovStaking uint256 getter taking a single address arg.
@@ -542,56 +718,197 @@ func stakingWaitStatus(t *testing.T, c *rpc.Client, hash string) string {
 	return ""
 }
 
-// TestWemixGovernanceReactivateE2E ports wemix4 GOV-016 (inactive -> active): a
-// staker deactivated by a full unstake can be reactivated by staking again.
-// isStaker tracks the active set, so it flips true -> false (full unstake) ->
-// true (re-stake); the staker stays registered throughout, so stake() (which
-// requires a registered staker) reactivates it.
-//
-//	go test -tags e2e -run TestWemixGovernanceReactivateE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceReactivateE2E covers GOV-019 reactivation on a decided
+// permissioned candidate set. Two supporting stakers keep producing while the
+// subject is inactive; epochs must exclude it and later include it again.
+// The approved below-minimum criterion requires a mined v1 rejection with its
+// exact reason and unchanged inactive state, distinct from eth_call refusal.
 func TestWemixGovernanceReactivateE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
 	ctx := context.Background()
-
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
-	if err != nil {
-		t.Fatalf("open operator wallet: %v", err)
+	operators := make([]string, 3)
+	alloc := map[string]any{}
+	for i, name := range []string{"op1", "op2", "op3"} {
+		operators[i], err = ap.AddressForKey(mustHexBytes(t, scenarioOpKeys[name]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		alloc[operators[i]] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
+	}
+	overlay := map[string]any{
+		"alloc": alloc,
+		"config": map[string]any{"croissant": map[string]any{
+			"wBFT":         map[string]any{"useNCP": true, "targetValidators": 4, "stabilizingStakersThreshold": 2},
+			"govContracts": map[string]any{"govNCP": map[string]any{"params": map[string]any{"ncps": strings.Join(operators, ",")}}},
+		}},
+	}
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
+	c := rpc.Dial(url)
+	amount := govConfigUint(t, c, "minimumStaking()")
+	var operator accounts.Wallet
+	// Register the supporting validators first, then the subject (node1).
+	for _, i := range []int{2, 3, 1} {
+		w, err := ap.OpenWallet(ctx, mustHexBytes(t, scenarioOpKeys["op"+strconv.Itoa(i)]), url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pk, sig := presetNodeBLS(t, i)
+		stakingRegister(t, c, w, presetNodeAddr(t, i), pk, sig, amount)
+		if i == 1 {
+			operator = w
+		}
 	}
 	staker := presetNodeAddr(t, 1)
-	blsPK, blsSig := presetNodeBLS(t, 1)
-	amount := govConfigUint(t, c, "minimumStaking()")
-	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
-	if !stakingIsStaker(t, c, staker) {
-		t.Fatal("staker not active after register")
-	}
+	boundary := assertReactivationSet(t, c, staker, true)
+	observations := []validatorObservation{observeValidatorTransition(t, c, url, staker, boundary)}
 
-	// Full unstake -> INACTIVE.
 	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount)), nil)
-	if stakingIsStaker(t, c, staker) {
-		t.Fatal("staker still active after full unstake")
+	if stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-019 full unstake did not deactivate and clear the subject stake")
 	}
-	if v := stakingUint(t, c, "getStakerAmount(address)", staker); v.Sign() != 0 {
-		t.Fatalf("getStakerAmount = %s after full unstake, want 0", v)
-	}
+	boundary = assertReactivationSet(t, c, staker, false)
+	observations = append(observations, observeValidatorTransition(t, c, url, staker, boundary))
 
-	// Re-stake -> ACTIVE again (stake is payable, value == amount).
-	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
-	if !stakingIsStaker(t, c, staker) {
-		t.Fatal("staker not reactivated after re-stake")
+	// Preserve the typed call refusal and separately prove the actual mined failure.
+	below := new(big.Int).Sub(amount, big.NewInt(1))
+	var out string
+	err = c.Call(ctx, "eth_call", &out, map[string]string{
+		"from": operator.Address(), "to": e2eGovStaking,
+		"data":  accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(below)),
+		"value": "0x" + below.Text(16),
+	}, "latest")
+	var refusal *rpc.ServerError
+	if !errors.As(err, &refusal) || refusal.Code != 3 || refusal.Message != "execution reverted: amount is less than minimum staking" {
+		t.Fatalf("GOV-019 below-minimum call did not return the specific v1 rejection: %v", err)
 	}
-	if v := stakingUint(t, c, "getStakerAmount(address)", staker); v.Cmp(amount) != 0 {
-		t.Fatalf("getStakerAmount = %s after re-stake, want %s", v, amount)
+	if stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-019 rejected below-minimum call changed the inactive state")
 	}
+	listBefore, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("stakers()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rejected := stakingRejectedTx(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(below)), below, "amount is less than minimum staking")
+	listAfter, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("stakers()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if listAfter != listBefore || stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-019 mined below-minimum failure changed inactive state or list")
+	}
+	logGovernanceProof(t, "GOV-019-state", map[string]any{"hash": rejected.Hash, "staker": staker, "minimum": amount.String(), "inputAmount": below.String(), "activeAfter": false, "amountAfter": "0", "listBefore": listBefore, "listAfter": listAfter, "callRefusal": refusal})
+
+	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
+	if !stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Cmp(amount) != 0 {
+		t.Fatal("GOV-019 minimum stake did not restore active state and exact amount")
+	}
+	receipt, err := c.TxReceipt(ctx, hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		Status          string         `json:"status"`
+		TransactionHash string         `json:"transactionHash"`
+		Logs            []accounts.Log `json:"logs"`
+	}
+	if err := json.Unmarshal(receipt, &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Status != "0x1" || !strings.EqualFold(result.TransactionHash, hash) {
+		t.Fatalf("GOV-019 wrong or failed receipt: %s", receipt)
+	}
+	event, found := accounts.FindLog(result.Logs, accounts.EventTopic("Staked(address,uint256)"))
+	if !found || !strings.EqualFold(event.Address, e2eGovStaking) || len(event.Topics) != 2 || !strings.EqualFold(accounts.TopicToAddress(event.Topics[1]), staker) {
+		t.Fatalf("GOV-019 wrong or missing Staked event: %+v", event)
+	}
+	value, ok := accounts.WordToBig(event.Data)
+	if !ok || len(event.Data) != 66 || value.Cmp(amount) != 0 {
+		t.Fatalf("GOV-019 event amount differs: %q", event.Data)
+	}
+	t.Logf("GOV-019 reactivation receipt: %s", receipt)
+	boundary = assertReactivationSet(t, c, staker, true)
+	observations = append(observations, observeValidatorTransition(t, c, url, staker, boundary))
+	logGovernanceProof(t, "RPC-023-transition", map[string]any{"subject": staker, "epochLength": scenarioEpochLen, "observations": observations})
+	if err := verifyValidatorTransition(observations, staker, scenarioEpochLen); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// assertReactivationSet checks the contract's exact active list and the next
+// completed epoch after the latest state change. A historical matching epoch
+// or the stabilizing stage's inherited validators cannot satisfy this check.
+func assertReactivationSet(t *testing.T, c *rpc.Client, subject string, active bool) uint64 {
+	t.Helper()
+	want := map[string]bool{}
+	for _, i := range []int{1, 2, 3} {
+		addr := strings.ToLower(presetNodeAddr(t, i))
+		if active || !strings.EqualFold(addr, subject) {
+			want[addr] = true
+		}
+	}
+	out, err := c.EthCall(context.Background(), e2eGovStaking, accounts.EncodeCallArgs("stakers()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := hex.DecodeString(strings.TrimPrefix(out, "0x"))
+	// A sole address[] result has offset 32, its length, and padded addresses.
+	if err != nil || len(data) != 64+32*len(want) || new(big.Int).SetBytes(data[:32]).Cmp(big.NewInt(32)) != 0 || new(big.Int).SetBytes(data[32:64]).Cmp(big.NewInt(int64(len(want)))) != 0 {
+		t.Fatalf("GOV-019 malformed or wrong-size stakers() result: %s", out)
+	}
+	seen := map[string]bool{}
+	for i := 64; i < len(data); i += 32 {
+		addr := "0x" + hex.EncodeToString(data[i+12:i+32])
+		if new(big.Int).SetBytes(data[i:i+12]).Sign() != 0 || !want[addr] || seen[addr] {
+			t.Fatalf("GOV-019 unexpected or duplicate contract staker: %s", addr)
+		}
+		seen[addr] = true
+	}
+	head, err := c.BlockNumber(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	boundary := (head/scenarioEpochLen + 1) * scenarioEpochLen
+	waitForHead(t, c, boundary, 90*time.Second)
+	epoch := epochInfoAt(t, c, boundary)
+	if epoch.Stabilizing || len(epoch.Stakers) != len(want) || len(epoch.Validators) != len(want) {
+		t.Fatalf("GOV-019 epoch %d has wrong or inherited candidate set: %+v", boundary, epoch)
+	}
+	seen = map[string]bool{}
+	for _, raw := range epoch.Stakers {
+		var candidate struct {
+			Addr string `json:"addr"`
+		}
+		if err := json.Unmarshal(raw, &candidate); err != nil {
+			t.Fatal(err)
+		}
+		addr := strings.ToLower(candidate.Addr)
+		if !want[addr] || seen[addr] {
+			t.Fatalf("GOV-019 epoch %d unexpected or duplicate candidate: %s", boundary, addr)
+		}
+		seen[addr] = true
+	}
+	seen = map[string]bool{}
+	for _, validator := range epoch.Validators {
+		addr := strings.ToLower(validator.Addr)
+		if !want[addr] || seen[addr] {
+			t.Fatalf("GOV-019 epoch %d unexpected or duplicate validator: %s", boundary, addr)
+		}
+		seen[addr] = true
+	}
+	encoded, err := json.Marshal(epoch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("GOV-019 active=%v contract stakers=%s subsequent epoch=%d info=%s", active, out, boundary, encoded)
+	return boundary
 }
 
 // TestWemixGovernanceEmergencyModeE2E ports wemix4 GOV-017 (emergency mode): the
@@ -607,7 +924,8 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	overlay, operatorKey := governanceGuardOverlay(t, true)
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -615,7 +933,7 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	if err != nil {
 		t.Fatalf("accounts.ForChain(wbft): %v", err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	operator, err := ap.OpenWallet(ctx, operatorKey, url)
 	if err != nil {
 		t.Fatalf("open operator wallet: %v", err)
 	}
@@ -639,12 +957,26 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 		t.Fatal("emergencyMode not true after the accepted proposal")
 	}
 
-	// A guarded staking op is now blocked by the council.
-	raw, _ := hex.DecodeString(strings.TrimPrefix(accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), "0x"))
-	if hash, execErr := operator.Execute(ctx, e2eGovStaking, raw, amount); execErr == nil {
-		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
-			t.Fatal("stake() succeeded during emergency mode — council guard missing")
-		}
+	// All original guarded operations must fail in a mined transaction, rather
+	// than accepting an SDK preparation/estimation/HTTP error as the guard.
+	guardCases := []guardCase{}
+	for _, op := range []struct {
+		name, input string
+		value       *big.Int
+	}{
+		{"stake", accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount},
+		{"unstake", accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(big.NewInt(1))), big.NewInt(0)},
+		{"delegate", accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(amount)), amount},
+	} {
+		assertGuardCallerOutsideValidators(t, c, operator.Address())
+		before := readGovernanceGuardState(t, c, staker)
+		reason := "operation not permitted by council"
+		failure := stakingRejectedTx(t, c, operator, op.input, op.value, reason)
+		guardCases = append(guardCases, guardCase{Name: op.name, Input: op.input, Sender: operator.Address(), Subject: staker, Value: op.value.String(), Reason: reason, Before: before, After: readGovernanceGuardState(t, c, staker), Failure: failure})
+	}
+	logGovernanceProof(t, "GOV-017-guards", map[string]any{"minimum": amount.String(), "cases": guardCases, "emergencyMode": ncpBool(t, c, "emergencyMode()")})
+	if err := verifyGovernanceGuards(guardCases, amount, true); err != nil {
+		t.Fatal(err)
 	}
 
 	// Leave emergency mode; the flag clears.
@@ -652,11 +984,41 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	if ncpBool(t, c, "emergencyMode()") {
 		t.Fatal("emergencyMode still true after deactivation")
 	}
+	// GOV-018 requires the guarded operation to resume, beyond flag clearing.
+	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
+	want := new(big.Int).Mul(amount, big.NewInt(2))
+	if got := stakingUint(t, c, "getStakerAmount(address)", staker); got.Cmp(want) != 0 {
+		t.Fatalf("GOV-018 staking did not resume after deactivation: amount=%s, want %s", got, want)
+	}
+	receipt, err := c.TxReceipt(ctx, hash)
+	if err != nil {
+		t.Fatal("GOV-018 resumed staking receipt", err)
+	}
+	var result struct {
+		Status          string         `json:"status"`
+		TransactionHash string         `json:"transactionHash"`
+		Logs            []accounts.Log `json:"logs"`
+	}
+	if err := json.Unmarshal(receipt, &result); err != nil {
+		t.Fatal("GOV-018 receipt decoding", err)
+	}
+	if result.Status != "0x1" || !strings.EqualFold(result.TransactionHash, hash) {
+		t.Fatalf("GOV-018 wrong or failed resumed transaction receipt: %s", receipt)
+	}
+	event, found := accounts.FindLog(result.Logs, accounts.EventTopic("Staked(address,uint256)"))
+	if !found || !strings.EqualFold(event.Address, e2eGovStaking) || len(event.Topics) != 2 || !strings.EqualFold(accounts.TopicToAddress(event.Topics[1]), staker) {
+		t.Fatalf("GOV-018 Staked event is missing or belongs to another contract/staker: %+v", event)
+	}
+	value, ok := accounts.WordToBig(event.Data)
+	if !ok || len(event.Data) != 66 || value.Cmp(amount) != 0 {
+		t.Fatalf("GOV-018 Staked event amount differs: %q, want %s", event.Data, amount)
+	}
+	t.Logf("GOV-018 resumed staking receipt: %s", receipt)
 }
 
 // stakingSendOK sends calldata to GovStaking from w (with optional value) and
 // fails unless it mines with status 0x1.
-func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, value *big.Int) {
+func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, value *big.Int) string {
 	t.Helper()
 	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 	if err != nil {
@@ -669,6 +1031,7 @@ func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, 
 	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
 		t.Fatalf("GovStaking tx reverted (status %s)", st)
 	}
+	return hash
 }
 
 // ncpBool reads a no-arg bool getter from GovNCP.
@@ -736,169 +1099,251 @@ func registerProducingStaker(t *testing.T, c *rpc.Client, ap accounts.AccountPro
 	return staker, operator
 }
 
-// TestWemixGovernanceBlockRewardE2E ports wemix4 GOV-012 (block reward accrual):
-// once a producing validator is a registered staker, its unclaimed reward
-// (previewReward) grows block over block as the engine distributes block rewards.
-//
-//	go test -tags e2e -run TestWemixGovernanceBlockRewardE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceBlockRewardE2E binds a sole registered validator rewardee
+// to exact fixed-height balances and fifteen actual per-height reward RPC values.
 func TestWemixGovernanceBlockRewardE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual block reward ledger")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"config": map[string]any{"brioche": map[string]any{"blockReward": json.Number("1000000000000000000")}}}, rewardNodeLaunchScopes())
 	c := rpc.Dial(url)
-	ap, err := accounts.ForChain("wbft")
-	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	var modules map[string]string
+	var nodeInfo map[string]any
+	if err := c.Call(t.Context(), "rpc_modules", &modules); err != nil {
+		t.Fatal(err)
 	}
-	staker, _ := registerProducingStaker(t, c, ap, url)
+	if err := c.Call(t.Context(), "admin_nodeInfo", &nodeInfo); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-012-api-context", map[string]any{"rpcModules": modules, "nodeInfo": nodeInfo})
 
-	before := stakingPreviewPending(t, c, staker, staker)
-	start, _ := c.BlockNumber(context.Background())
-	// Wait ~15 blocks for rewards to accrue.
-	deadline := time.Now().Add(90 * time.Second)
-	for {
-		if h, _ := c.BlockNumber(context.Background()); h >= start+15 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("chain did not advance 15 blocks")
-		}
-		time.Sleep(2 * time.Second)
+	provider, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatal(err)
 	}
-	after := stakingPreviewPending(t, c, staker, staker)
-	if after.Cmp(before) <= 0 {
-		t.Fatalf("previewReward did not grow: before=%s after=%s", before, after)
+	operator, err := provider.OpenWallet(t.Context(), presetNodeKey(t, 3), url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	staker := presetNodeAddr(t, 2)
+	pk, sig := presetNodeBLS(t, 2)
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	hash := stakingRegister(t, c, operator, staker, pk, sig, minimum)
+	p := rewardLedgerProof{Staker: staker, Operator: operator.Address(), Rewardee: wordToAddr(stakingInfoWord(t, c, staker, 1)), Minimum: minimum.String(), BLSKey: "0x" + hex.EncodeToString(pk), Logs: feeReceipt(t, c, hash)}
+	if p.Start, err = c.BlockNumber(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	p.End = p.Start + 15
+	var beforeHex, afterHex string
+	if err = c.Call(t.Context(), "eth_getBalance", &beforeHex, p.Rewardee, hexUint(p.Start)); err != nil {
+		t.Fatal(err)
+	}
+	waitForHead(t, c, p.End, 90*time.Second)
+	if err = c.Call(t.Context(), "eth_getBalance", &afterHex, p.Rewardee, hexUint(p.End)); err != nil {
+		t.Fatal(err)
+	}
+	before, ok := new(big.Int).SetString(strings.TrimPrefix(beforeHex, "0x"), 16)
+	if !ok {
+		t.Fatal("balance missing")
+	}
+	after, ok := new(big.Int).SetString(strings.TrimPrefix(afterHex, "0x"), 16)
+	if !ok {
+		t.Fatal("balance missing")
+	}
+	p.Before = before.String()
+	p.After = after.String()
+	for n := p.Start + 1; n <= p.End; n++ {
+		tag := hexUint(n)
+		var h struct {
+			Hash, ParentHash string
+			Transactions     []string
+		}
+		if err = c.Call(t.Context(), "eth_getBlockByNumber", &h, tag, false); err != nil {
+			t.Fatal(err)
+		}
+		row := rewardLedgerBlock{Number: n, Hash: h.Hash, ParentHash: h.ParentHash, Transactions: h.Transactions}
+		if err = c.Call(t.Context(), "wemix_getBriocheBlockReward", &row.Reward, tag); err != nil {
+			t.Fatal("actual reward RPC missing", err)
+		}
+		if err = c.Call(t.Context(), "istanbul_getValidators", &row.Validators, tag); err != nil {
+			t.Fatal(err)
+		}
+		p.Blocks = append(p.Blocks, row)
+	}
+	if err = c.Call(t.Context(), "eth_call", &p.ContractStakers, map[string]string{"to": e2eGovStaking, "data": accounts.EncodeCallArgs("stakers()")}, hexUint(p.End)); err != nil {
+		t.Fatal(err)
+	}
+	for user, dest := range map[string]*string{p.Operator: &p.OriginalOperatorPreview, p.Staker: &p.StakerPreview} {
+		data := accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(p.Staker), accounts.Address(user))
+		if err = c.Call(t.Context(), "eth_call", dest, map[string]string{"to": e2eGovStaking, "data": data}, hexUint(p.End)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	logGovernanceProof(t, "GOV-012-reward-ledger", p)
+	if err := verifyBlockRewardLedger(p); err != nil {
+		t.Fatal(err)
 	}
 }
 
-// TestWemixGovernanceOperatorClaimE2E ports wemix4 GOV-013 (operator claim): the
-// operator claims the staker's accrued reward, which resets the pending amount
-// (claim sets pendingReward = 0 before transferring).
-//
-//	go test -tags e2e -run TestWemixGovernanceOperatorClaimE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceOperatorClaimE2E records the approved GOV-013 difference:
+// previewReward does not map the operator to the staker, while claim does.
+// The staker-share parent preview is bound to exact payout events and ledgers.
 func TestWemixGovernanceOperatorClaimE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual operator claim ledger")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	provider, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := mustHexBytes(t, scenarioOpKeys["op1"])
+	addr, err := provider.AddressForKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": map[string]any{addr: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}})
 	c := rpc.Dial(url)
-	ctx := context.Background()
-	ap, err := accounts.ForChain("wbft")
+	operator, err := provider.OpenWallet(t.Context(), key, url)
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	staker, operator := registerProducingStaker(t, c, ap, url)
-
-	// Wait until a sizeable reward has accrued (rewards grow ~1e18/block, so this
-	// clears the claim's gas cost and the read-timing noise).
-	const threshold = "5000000000000000000" // 5e18
-	want, _ := new(big.Int).SetString(threshold, 10)
-	deadline := time.Now().Add(120 * time.Second)
-	for stakingPreviewPending(t, c, staker, staker).Cmp(want) < 0 {
-		if time.Now().After(deadline) {
-			t.Fatal("reward did not accrue past the claim threshold")
+	assertGuardCallerOutsideValidators(t, c, operator.Address())
+	staker := presetNodeAddr(t, 2)
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	pk, sig := presetNodeBLS(t, 2)
+	stakingRegister(t, c, operator, staker, pk, sig, minimum)
+	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
+	start, err := c.BlockNumber(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitForHead(t, c, start+10, 90*time.Second)
+	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0})), nil)
+	p := operatorClaimProof{Claim: claimLedgerProof{Hash: hash, Caller: operator.Address(), Staker: staker, Rewardee: rewardee, FeePrecision: govConfigUint(t, c, "feePrecision()").String()}}
+	if err = c.Call(t.Context(), "eth_getTransactionByHash", &p.Claim.Transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(t.Context(), "eth_getTransactionReceipt", &p.Claim.Receipt, hash); err != nil {
+		t.Fatal(err)
+	}
+	number, err := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(p.Claim.Receipt["blockNumber"]), "0x"), 16, 64)
+	if err != nil || number == 0 {
+		t.Fatal("missing mined block", err)
+	}
+	p.Claim.PreviewBlock = fmt.Sprintf("0x%x", number-1)
+	query := func(input string) string {
+		var out string
+		if err := c.Call(t.Context(), "eth_call", &out, map[string]string{"from": p.Claim.Caller, "to": e2eGovStaking, "data": input}, p.Claim.PreviewBlock); err != nil {
+			t.Fatal(err)
 		}
-		time.Sleep(3 * time.Second)
+		return out
 	}
-
-	// The operator (msg.sender) receives the reward on a no-restake claim, so its
-	// balance rises by ~the reward minus gas — a clear net increase.
-	opAddr := operator.Address()
-	balBefore, err := c.BalanceAt(ctx, opAddr)
-	if err != nil {
-		t.Fatalf("operator balance: %v", err)
+	p.Claim.Preview = query(accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(staker)))
+	p.OperatorPreview = query(accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(p.Claim.Caller)))
+	word := func(raw string, index int) *big.Int {
+		if !strings.HasPrefix(raw, "0x") || len(raw) < 2+(index+1)*64 {
+			t.Fatal("missing ABI word", index)
+		}
+		n, ok := new(big.Int).SetString(raw[2+index*64:2+(index+1)*64], 16)
+		if !ok {
+			t.Fatal("invalid ABI word", index)
+		}
+		return n
 	}
-	data := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
-	raw, _ := hex.DecodeString(strings.TrimPrefix(data, "0x"))
-	hash, err := operator.Execute(ctx, e2eGovStaking, raw, nil)
-	if err != nil {
-		t.Fatalf("claim execute: %v", err)
+	p.MappedStaker = wordToAddr(word(query(accounts.EncodeCallArgs("stakerByOperator(address)", accounts.Address(p.Claim.Caller))), 0))
+	info := query(accounts.EncodeCallArgs("stakerInfo(address)", accounts.Address(staker)))
+	p.Claim.FeeRecipient = wordToAddr(word(info, 2))
+	p.Claim.FeeRate = word(info, 3).String()
+	p.TotalStaked = word(info, 5).String()
+	p.Staked = word(query(accounts.EncodeCallArgs("userRewardInfo(address,address)", accounts.Address(staker), accounts.Address(staker))), 0).String()
+	p.Claim.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(t.Context(), "debug_traceTransaction", &p.Claim.Diff, hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+		t.Fatal(err)
 	}
-	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
-		t.Fatalf("claim reverted (status %s)", st)
-	}
-	balAfter, err := c.BalanceAt(ctx, opAddr)
-	if err != nil {
-		t.Fatalf("operator balance after: %v", err)
-	}
-	if balAfter.Cmp(balBefore) <= 0 {
-		t.Fatalf("operator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
+	logGovernanceProof(t, "GOV-013-operator-ledger", p)
+	if err := verifyOperatorClaimProof(p); err != nil {
+		t.Fatal(err)
 	}
 }
 
-// TestWemixGovernanceDelegatorClaimE2E ports wemix4 GOV-014 (delegator claim): a
-// delegator to a producing staker accrues its share of block rewards and can
-// claim them — claiming as a non-operator resolves _user to the caller, so the
-// reward (minus fee) is sent to the delegator, raising its balance.
-//
-//	go test -tags e2e -run TestWemixGovernanceDelegatorClaimE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceDelegatorClaimE2E binds the actual payout and fee to
+// parent-state preview, exact events and transaction-level balance changes.
 func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual delegator ledger")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
-	ctx := context.Background()
-	ap, err := accounts.ForChain("wbft")
+	provider, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	staker, _ := registerProducingStaker(t, c, ap, url)
-
-	// A delegator (node4) delegates to the producing staker.
-	delegator, err := ap.OpenWallet(ctx, presetNodeKey(t, 4), url)
-	if err != nil {
-		t.Fatalf("open delegator wallet: %v", err)
-	}
-	delegAmount, _ := new(big.Int).SetString("1000000000000000000000000", 10) // 1e24
-	dData := accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(delegAmount))
-	dRaw, _ := hex.DecodeString(strings.TrimPrefix(dData, "0x"))
-	dHash, err := delegator.Execute(ctx, e2eGovStaking, dRaw, delegAmount)
-	if err != nil {
-		t.Fatalf("delegate execute: %v", err)
-	}
-	if st := stakingWaitStatus(t, c, dHash); st != "0x1" {
-		t.Fatalf("delegate reverted (status %s)", st)
-	}
-
-	// Wait until the delegator's own share of rewards has accrued.
-	deleg := delegator.Address()
-	want, _ := new(big.Int).SetString("2000000000000000000", 10) // 2e18
-	deadline := time.Now().Add(120 * time.Second)
-	for stakingPreviewPending(t, c, staker, deleg).Cmp(want) < 0 {
-		if time.Now().After(deadline) {
-			t.Fatal("delegator reward did not accrue past the claim threshold")
+	keys := [][]byte{}
+	alloc := map[string]any{}
+	for _, name := range []string{"op1", "op2", "opX"} {
+		key := mustHexBytes(t, scenarioOpKeys[name])
+		addr, err := provider.AddressForKey(key)
+		if err != nil {
+			t.Fatal(err)
 		}
-		time.Sleep(3 * time.Second)
+		keys = append(keys, key)
+		alloc[addr] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
 	}
-
-	// The delegator claims its share; the reward (minus fee) lands in its balance.
-	balBefore, err := c.BalanceAt(ctx, deleg)
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": alloc})
+	c := rpc.Dial(url)
+	wallets := []accounts.Wallet{}
+	for _, key := range keys {
+		w, err := provider.OpenWallet(t.Context(), key, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets = append(wallets, w)
+		assertGuardCallerOutsideValidators(t, c, w.Address())
+	}
+	operator, delegator := wallets[0], wallets[1]
+	feeRecipient := wallets[2].Address()
+	staker := presetNodeAddr(t, 2)
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	rate := big.NewInt(250)
+	precision := govConfigUint(t, c, "feePrecision()")
+	pk, sig := presetNodeBLS(t, 2)
+	input := accounts.EncodeCallArgs("registerStaker(uint256,address,address,uint256,bytes,bytes)", accounts.Uint(minimum), accounts.Address(staker), accounts.Address(feeRecipient), accounts.Uint(rate), accounts.Bytes(pk), accounts.Bytes(sig))
+	stakingSendOK(t, c, operator, input, minimum)
+	if stakingInfoWord(t, c, staker, 3).Cmp(rate) != 0 {
+		t.Fatal("declared fee rate not applied")
+	}
+	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
+	stakingSendOK(t, c, delegator, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(minimum)), minimum)
+	start, err := c.BlockNumber(t.Context())
 	if err != nil {
-		t.Fatalf("delegator balance: %v", err)
+		t.Fatal(err)
 	}
-	cData := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
-	cRaw, _ := hex.DecodeString(strings.TrimPrefix(cData, "0x"))
-	cHash, err := delegator.Execute(ctx, e2eGovStaking, cRaw, nil)
-	if err != nil {
-		t.Fatalf("delegator claim execute: %v", err)
+	waitForHead(t, c, start+10, 90*time.Second)
+	hash := stakingSendOK(t, c, delegator, accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0})), nil)
+	p := claimLedgerProof{Hash: hash, Caller: delegator.Address(), Staker: staker, Rewardee: rewardee, FeeRecipient: feeRecipient, FeeRate: rate.String(), FeePrecision: precision.String()}
+	if err = c.Call(t.Context(), "eth_getTransactionByHash", &p.Transaction, hash); err != nil {
+		t.Fatal(err)
 	}
-	if st := stakingWaitStatus(t, c, cHash); st != "0x1" {
-		t.Fatalf("delegator claim reverted (status %s)", st)
+	if err = c.Call(t.Context(), "eth_getTransactionReceipt", &p.Receipt, hash); err != nil {
+		t.Fatal(err)
 	}
-	balAfter, err := c.BalanceAt(ctx, deleg)
-	if err != nil {
-		t.Fatalf("delegator balance after: %v", err)
+	number, err := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(p.Receipt["blockNumber"]), "0x"), 16, 64)
+	if err != nil || number == 0 {
+		t.Fatal("receipt block missing", err)
 	}
-	if balAfter.Cmp(balBefore) <= 0 {
-		t.Fatalf("delegator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
+	p.PreviewBlock = fmt.Sprintf("0x%x", number-1)
+	previewInput := accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(p.Caller))
+	if err = c.Call(t.Context(), "eth_call", &p.Preview, map[string]string{"from": p.Caller, "to": e2eGovStaking, "data": previewInput}, p.PreviewBlock); err != nil {
+		t.Fatal("execution-parent preview unavailable", err)
+	}
+	p.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(t.Context(), "debug_traceTransaction", &p.Diff, hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-014-claim-ledger", p)
+	if err := verifyClaimLedger(p); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -906,8 +1351,8 @@ func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
 // delayed path): when a staker HAS delegators, requestChangingFee does NOT apply
 // the new rate immediately (unlike GOV-020's no-delegator case) — it records a
 // pending request (changingFeeRequests[staker].requestTime != 0) and leaves the
-// current feeRate unchanged until executeChangingFee after changeFeeDelay (which
-// this test, bounded to seconds, does not wait out).
+// current feeRate unchanged until the chain timestamp reaches changeFeeDelay.
+// It checks a mined early revert and exact request/execution events.
 //
 //	go test -tags e2e -run TestWemixGovernanceFeeChangeDelayedE2E -timeout 8m ./cmd/chainbench
 func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
@@ -916,14 +1361,24 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	key := mustHexBytes(t, scenarioOpKeys["op2"])
+	provider, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatal(err)
+	}
+	operatorAddress, err := provider.AddressForKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	overlay := map[string]any{"alloc": map[string]any{operatorAddress: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}, "config": map[string]any{"croissant": map[string]any{"govContracts": map[string]any{"govConfig": map[string]any{"params": map[string]any{"changeFeeDelay": "30"}}}}}}
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
 		t.Fatalf("accounts.ForChain(wbft): %v", err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	operator, err := ap.OpenWallet(ctx, key, url)
 	if err != nil {
 		t.Fatalf("open operator wallet: %v", err)
 	}
@@ -941,7 +1396,14 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 
 	// Request a new fee rate; with a delegator present it must NOT apply now.
 	const newRate = 250
-	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("requestChangingFee(uint256)", accounts.Uint(big.NewInt(newRate))), nil)
+	requestHash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("requestChangingFee(uint256)", accounts.Uint(big.NewInt(newRate))), nil)
+	requestLogs := feeReceipt(t, c, requestHash)
+	if !exactFeeEvent(requestLogs, staker, "ChangingFeeRateRequested(address,uint256,uint256)", big.NewInt(0), big.NewInt(newRate)) {
+		t.Fatal("GOV-021 missing or incorrect request event")
+	}
+	if _, found := accounts.FindLog(requestLogs, accounts.EventTopic("ChangingFeeRateExecuted(address,uint256)")); found {
+		t.Fatal("GOV-021 executed before delay")
+	}
 
 	if fee := stakingInfoWord(t, c, staker, 3); fee.Sign() != 0 {
 		t.Fatalf("feeRate changed immediately despite a delegator (got %s, want 0 until execute)", fee)
@@ -965,112 +1427,176 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 		t.Fatalf("pending newFeeRate = %s, want %d", newFee, newRate)
 	}
 
-	// After changeFeeDelay elapses (short in the test genesis), executeChangingFee
-	// applies the pending rate. The delay is block.timestamp-based, so wait it out.
 	delay := govConfigUint(t, c, "changeFeeDelay()")
-	time.Sleep(time.Duration(delay.Int64()+3) * time.Second)
-	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("executeChangingFee(address)", accounts.Address(staker)), nil)
-	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
-		t.Fatalf("feeRate = %s after executeChangingFee, want %d", fee, newRate)
+	if delay.Cmp(big.NewInt(30)) != 0 {
+		t.Fatal("GOV-021 explicit delay overlay not applied", delay)
 	}
+	boundary := new(big.Int).Add(reqTime, delay)
+	block, err := c.BlockByNumber(ctx, "latest")
+	if err != nil || new(big.Int).SetUint64(block.Timestamp).Cmp(boundary) >= 0 {
+		t.Fatalf("early check missed chain time window: %v %+v", err, block)
+	}
+	executeInput := accounts.EncodeCallArgs("executeChangingFee(address)", accounts.Address(staker))
+	var callResult string
+	callErr := c.Call(ctx, "eth_call", &callResult, map[string]string{"from": operator.Address(), "to": e2eGovStaking, "data": executeInput}, "latest")
+	var refusal *rpc.ServerError
+	const reason = "the request cannot be executed before delay time"
+	if !errors.As(callErr, &refusal) || refusal.Code != 3 || refusal.Message != "execution reverted: "+reason {
+		t.Fatal("GOV-021 wrong early call refusal", callErr)
+	}
+	early := stakingRejectedTx(t, c, operator, executeInput, new(big.Int), reason)
+	earlyBlock, err := c.BlockByNumber(ctx, fmt.Sprint(early.Receipt["blockNumber"]))
+	if err != nil || new(big.Int).SetUint64(earlyBlock.Timestamp).Cmp(boundary) >= 0 {
+		t.Fatal("GOV-021 refusal was not mined before delay", err)
+	}
+	pendingAfter, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil || pendingAfter != out || stakingInfoWord(t, c, staker, 3).Sign() != 0 {
+		t.Fatal("GOV-021 early failure changed pending request or fee")
+	}
+	deadline := time.Now().Add(90 * time.Second)
+	for {
+		block, err = c.BlockByNumber(ctx, "latest")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if new(big.Int).SetUint64(block.Timestamp).Cmp(boundary) >= 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("GOV-021 chain timestamp did not reach delay")
+		}
+		select {
+		case <-t.Context().Done():
+			t.Fatal(t.Context().Err())
+		case <-time.After(time.Second):
+		}
+	}
+	executionHash := stakingSendOK(t, c, operator, executeInput, nil)
+	executionLogs := feeReceipt(t, c, executionHash)
+	if !exactFeeEvent(executionLogs, staker, "ChangingFeeRateExecuted(address,uint256)", big.NewInt(newRate)) {
+		t.Fatal("GOV-021 missing or incorrect executed event")
+	}
+	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
+		t.Fatal("GOV-021 applied rate differs", fee)
+	}
+	pending, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil || pending != "0x"+strings.Repeat("0", 128) {
+		t.Fatal("GOV-021 applied request not cleared", pending, err)
+	}
+	logGovernanceProof(t, "GOV-021-delay", map[string]any{"requestHash": requestHash, "executionHash": executionHash, "earlyHash": early.Hash, "staker": staker, "requestTime": reqTime.String(), "delay": delay.String(), "boundary": boundary.String(), "earlyTimestamp": earlyBlock.Timestamp, "readyTimestamp": block.Timestamp, "newRate": newRate, "pendingAfterEarlyRefusal": pendingAfter, "pendingAfterExecution": pending})
+
 }
 
-// TestWemixGovernanceCredentialExpiryE2E ports wemix4 GOV-023 (per-credential
-// unbonding expiry). A single account accumulates two withdrawal credentials of
-// different maturities:
-//
-//   - a STAKER credential from unstake (unbondingPeriodStaker, longer), and
-//   - a DELEGATOR credential from undelegate (unbondingPeriodDelegator, shorter).
-//
-// GovStaking.withdraw(count) scans credentials in creation order, SKIPS any that
-// are still locked, and processes matured ones until `count` are drained (or
-// reverts the whole call if fewer mature — all-or-nothing). So withdraw(1) after
-// only the delegator window elapses must skip the still-locked staker credential
-// (created first, lower index) and drain the matured delegator one; a second
-// withdraw(1) after the staker window elapses then drains the staker credential.
-// The proof that the first call did NOT wrongly drain the staker credential is
-// that the second call also succeeds with a full-sized payout — had both been
-// drained at once, the second withdraw would revert with no credential left. The
-// unbonding windows are block.timestamp-based (short in the test genesis).
-//
-//	go test -tags e2e -run TestWemixGovernanceCredentialExpiryE2E -timeout 10m ./cmd/chainbench
+// TestWemixGovernanceCredentialExpiryE2E proves individual chain-time maturity,
+// exact skipped/drained slots, event indices, pointers and withdrawal ledgers.
 func TestWemixGovernanceCredentialExpiryE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual credential expiry")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
-	ctx := context.Background()
-	ap, err := accounts.ForChain("wbft")
+	provider, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	open := func(idx int) accounts.Wallet {
-		w, err := ap.OpenWallet(ctx, presetNodeKey(t, idx), url)
+	keys := [][]byte{}
+	alloc := map[string]any{}
+	for _, name := range []string{"op1", "op2"} {
+		key := mustHexBytes(t, scenarioOpKeys[name])
+		address, err := provider.AddressForKey(key)
 		if err != nil {
-			t.Fatalf("open wallet node%d: %v", idx, err)
+			t.Fatal(err)
+		}
+		keys = append(keys, key)
+		alloc[address] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
+	}
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": alloc})
+	c := rpc.Dial(url)
+	wallets := []accounts.Wallet{}
+	for _, key := range keys {
+		w, err := provider.OpenWallet(t.Context(), key, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets = append(wallets, w)
+		assertGuardCallerOutsideValidators(t, c, w.Address())
+	}
+	op := wallets[0]
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	valA, valB := presetNodeAddr(t, 2), presetNodeAddr(t, 4)
+	pkA, sigA := presetNodeBLS(t, 2)
+	pkB, sigB := presetNodeBLS(t, 4)
+	stakingRegister(t, c, op, valA, pkA, sigA, new(big.Int).Mul(minimum, big.NewInt(2)))
+	stakingRegister(t, c, wallets[1], valB, pkB, sigB, minimum)
+	// Delegation setup precedes creation of the long-lived credential.
+	stakingSendOK(t, c, op, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(valB), accounts.Uint(minimum)), minimum)
+	p := credentialExpiryProof{Caller: op.Address(), Contract: e2eGovStaking, Amount: minimum.String(), StakerDelay: govConfigUint(t, c, "unbondingPeriodStaker()").String(), DelegatorDelay: govConfigUint(t, c, "unbondingPeriodDelegator()").String()}
+	index, _ := credentialPointers(t, c, p.Caller)
+	parsed, ok := new(big.Int).SetString(index, 10)
+	if !ok || !parsed.IsUint64() {
+		t.Fatal("initial credential pointer invalid")
+	}
+	p.N = parsed.Uint64()
+	longHash := stakingSendOK(t, c, op, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(minimum)), nil)
+	if !stakingIsStaker(t, c, valA) || stakingUint(t, c, "getStakerAmount(address)", valA).Cmp(minimum) != 0 {
+		t.Fatal("partial unstake changed active minimum")
+	}
+	shortHash := stakingSendOK(t, c, op, accounts.EncodeCallArgs("undelegate(address,uint256)", accounts.Address(valB), accounts.Uint(minimum)), nil)
+	p.Created = []withdrawalCredential{credentialAt(t, c, p.Caller, p.N), credentialAt(t, c, p.Caller, p.N+1)}
+	for i, hash := range []string{longHash, shortHash} {
+		var receipt map[string]any
+		if err = c.Call(t.Context(), "eth_getTransactionReceipt", &receipt, hash); err != nil {
+			t.Fatal(err)
+		}
+		block, err := c.BlockByNumber(t.Context(), fmt.Sprint(receipt["blockNumber"]))
+		if err != nil || fmt.Sprint(block.Timestamp) != p.Created[i].RequestTime {
+			t.Fatal("credential request does not match actual creation block", err)
+		}
+	}
+	withdraw := func(index uint64) credentialWithdrawal {
+		hash := stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
+		w := credentialWithdrawal{Hash: hash, Index: index}
+		if err = c.Call(t.Context(), "eth_getTransactionByHash", &w.Transaction, hash); err != nil {
+			t.Fatal(err)
+		}
+		if err = c.Call(t.Context(), "eth_getTransactionReceipt", &w.Receipt, hash); err != nil {
+			t.Fatal(err)
+		}
+		block, err := c.BlockByNumber(t.Context(), fmt.Sprint(w.Receipt["blockNumber"]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.Timestamp = block.Timestamp
+		w.Credentials = []withdrawalCredential{credentialAt(t, c, p.Caller, p.N), credentialAt(t, c, p.Caller, p.N+1)}
+		w.CredentialIndex, w.WithdrawalIndex = credentialPointers(t, c, p.Caller)
+		logs := feeReceipt(t, c, hash)
+		encoded, err := json.Marshal(logs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.LogsJSON = string(encoded)
+		if err = c.Call(t.Context(), "debug_traceTransaction", &w.Diff, hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+			t.Fatal(err)
+		}
+		logGovernanceProof(t, "GOV-023-withdrawal", w)
+		if err := verifyWithdrawalLedger(p, w); err != nil {
+			t.Fatal(err)
 		}
 		return w
 	}
-
-	min := govConfigUint(t, c, "minimumStaking()")
-
-	// VAL_A = node2 staker via operator node3, registered at 2*minimumStaking so a
-	// partial unstake of `min` leaves exactly `min` and keeps it active.
-	op := open(3)
-	valA := presetNodeAddr(t, 2)
-	pkA, sigA := presetNodeBLS(t, 2)
-	regA := new(big.Int).Mul(min, big.NewInt(2))
-	stakingRegister(t, c, op, valA, pkA, sigA, regA)
-
-	// VAL_B = node4 staker via operator node1 — a distinct active staker that node3
-	// (VAL_A's operator, barred from delegating to VAL_A) can delegate to. node1 is
-	// a funded, non-operator account (node5's preset address is not genesis-funded).
-	valB := presetNodeAddr(t, 4)
-	pkB, sigB := presetNodeBLS(t, 4)
-	stakingRegister(t, c, open(1), valB, pkB, sigB, min)
-
-	// (1) Staker credential: OP_A unstakes `min` from VAL_A. Remaining == min (not
-	// below minimum), so VAL_A stays active and a staker credential is created.
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(min)), nil)
-	if !stakingIsStaker(t, c, valA) {
-		t.Fatal("VAL_A deactivated by partial unstake (should stay active with min remaining)")
+	shortMature, _ := strconv.ParseUint(p.Created[1].WithdrawableTime, 10, 64)
+	longMature, _ := strconv.ParseUint(p.Created[0].WithdrawableTime, 10, 64)
+	waitCredentialTime(t, c, shortMature)
+	latest, err := c.BlockByNumber(t.Context(), "latest")
+	if err != nil || latest.Timestamp >= longMature {
+		t.Fatal("missed distinct maturity window", err)
 	}
-
-	// (2) Delegator credential: OP_A delegates `min` to VAL_B then undelegates it,
-	// producing a delegator credential (shorter unbonding) for the same account.
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(valB), accounts.Uint(min)), min)
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("undelegate(address,uint256)", accounts.Address(valB), accounts.Uint(min)), nil)
-
-	delegUnbond := govConfigUint(t, c, "unbondingPeriodDelegator()")
-	stakerUnbond := govConfigUint(t, c, "unbondingPeriodStaker()")
-
-	// A withdrawal of ~min is unambiguous against gas (< 1e15 wei), so a net
-	// balance rise above min-1e18 proves exactly one credential was drained.
-	threshold := new(big.Int).Sub(min, big.NewInt(1_000_000_000_000_000_000))
-	drained := func(before, after *big.Int, what string) {
-		t.Helper()
-		if delta := new(big.Int).Sub(after, before); delta.Cmp(threshold) < 0 {
-			t.Fatalf("%s: balance rose by %s, want ~%s (one credential drained)", what, delta, min)
-		}
+	p.First = withdraw(p.N + 1)
+	waitCredentialTime(t, c, longMature)
+	p.Second = withdraw(p.N)
+	logGovernanceProof(t, "GOV-023-expiry", p)
+	if err := verifyCredentialExpiry(p); err != nil {
+		t.Fatal(err)
 	}
-
-	// (3) After only the delegator window elapses, withdraw(1) skips the locked
-	// staker credential and drains the matured delegator credential.
-	time.Sleep(time.Duration(delegUnbond.Int64()+3) * time.Second)
-	before := balanceOf(t, c, op.Address())
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
-	drained(before, balanceOf(t, c, op.Address()), "delegator withdraw(1)")
-
-	// (4) After the staker window elapses, withdraw(1) drains the staker credential
-	// that the first call correctly left in place. Sleeping the full staker window
-	// again (from now) guarantees maturity regardless of the delegator wait.
-	time.Sleep(time.Duration(stakerUnbond.Int64()+3) * time.Second)
-	before = balanceOf(t, c, op.Address())
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
-	drained(before, balanceOf(t, c, op.Address()), "staker withdraw(1)")
 }
 
 // stabilizingStakersThreshold is the wbft test genesis'

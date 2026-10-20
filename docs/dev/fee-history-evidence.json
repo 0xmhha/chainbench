@@ -1,0 +1,452 @@
+{
+  "scope": "RPC-017 original 10/latest/[25,75] input, 11 positive base fees, 10 ratios in [0,1], 10 rewards of two percentiles. Every public assertion plus independently parsed single response on three local native families. Not complete87/mainnet/Linux/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Seven malformed arrays/ranges passed old NotNil assertion.",
+  "unitGreen": "One positive and seven negative controls execute actual public DSL; every RPC uses original input.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "e387b3038ceb8cda59ab9e62cf198b60fa8a974a474d7beaa2fd09c2755d460c",
+    "sourceAfter": "e387b3038ceb8cda59ab9e62cf198b60fa8a974a474d7beaa2fd09c2755d460c",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeFeeHistoryArrays/stablenet",
+      "TestNativeFeeHistoryArrays/wbft",
+      "TestNativeFeeHistoryArrays/wemix",
+      "TestNativeFeeHistoryArrays"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-74pkp0c5",
+      "/private/tmp/cbui/txfail-859t6ulf",
+      "/private/tmp/cbui/txfail-amt95ra2"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-74pkp0c5/reports/fee-history-proof.json",
+      "/private/tmp/cbui/txfail-859t6ulf/reports/fee-history-proof.json",
+      "/private/tmp/cbui/txfail-amt95ra2/reports/fee-history-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-74pkp0c5": [],
+      "/private/tmp/cbui/txfail-859t6ulf": [],
+      "/private/tmp/cbui/txfail-amt95ra2": []
+    },
+    "elapsedSeconds": 157.281,
+    "log": {
+      "path": "/private/tmp/chainbench-fee-history-native-native.jsonl",
+      "sha256": "aa8264317e5f64369469d01600821c42d05d0b70fb64c84c5370dadfaee489bb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005755191082631
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-fee-history-native-summary.json",
+      "sha256": "99216cb9460feece31492ad8169d93fc9b80fb66932ed34f50ae2d8900a81013",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005755669292442
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-fee-history-native-start.json",
+      "sha256": "b93a1006f08d122a3784c39b7ce5c3bc64da797674036501ea44820c85e907db",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005595909166523
+    }
+  },
+  "families": [
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-74pkp0c5/reports/fee-history-proof.json",
+        "sha256": "c4fdc5c93d5df81ccc5b9b55d0ff075beb47b68f4ae6bd0f0b6c3a88a82250d9",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005737974975778
+      },
+      "history": {
+        "oldestBlock": "0x18",
+        "baseFeePerGas": [
+          "0x559",
+          "0x269",
+          "0x116",
+          "0x7e",
+          "0x39",
+          "0x1a",
+          "0xc",
+          "0x6",
+          "0x3",
+          "0x2",
+          "0x1"
+        ],
+        "gasUsedRatio": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "reward": [
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ]
+        ]
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-74pkp0c5/reports/20261014-191958-13907/UTC-20261014-192104/tests/001_fee-history-well-formed/assert.json",
+        "sha256": "db23446c691e1cd9f8e2e55b6dc58111f0da5e63594a9fc566e876f0862921d9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005737971373540
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-74pkp0c5/reports/20261014-191958-13907/UTC-20261014-192104/tests/001_fee-history-well-formed/steps.json",
+        "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005737711308718
+      },
+      "assertionCount": 45,
+      "runtime": "/private/tmp/cbui/txfail-74pkp0c5",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-74pkp0c5/reports/fee-history-inventory.json",
+        "sha256": "61f55af91c9eee4f086f1346a6ed4315ceea3604fd3e06a3f4c00602e8dc3c40",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005775794405849
+      }
+    },
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-859t6ulf/reports/fee-history-proof.json",
+        "sha256": "2bea7bca12c65a163a176585aac2e7e8ff8bebe84270edec0de78c8747648e6e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005642543230043
+      },
+      "history": {
+        "oldestBlock": "0x1c",
+        "baseFeePerGas": [
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000",
+          "0x12309ce54000"
+        ],
+        "gasUsedRatio": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "reward": [
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ]
+        ]
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-859t6ulf/reports/20261014-191958-13907/UTC-20261014-191958/tests/001_fee-history-well-formed/assert.json",
+        "sha256": "f853b849cfa4cecf3e4d60d45d86cf2eaee8afedd78ea92d6b75fe250438f34f",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005642539540706
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-859t6ulf/reports/20261014-191958-13907/UTC-20261014-191958/tests/001_fee-history-well-formed/steps.json",
+        "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005642286319418
+      },
+      "assertionCount": 45,
+      "runtime": "/private/tmp/cbui/txfail-859t6ulf",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-859t6ulf/reports/fee-history-inventory.json",
+        "sha256": "9cc53012f94c1670c521af7501b7e5613d890bc067fe7d5a5d67c3b815e48c9a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005775824449782
+      }
+    },
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-amt95ra2/reports/fee-history-proof.json",
+        "sha256": "5effcf59eceff631cc5a462ce2883b26512ca5fdc8815956e154fcda238296ec",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005660583520046
+      },
+      "history": {
+        "oldestBlock": "0x1",
+        "baseFeePerGas": [
+          "0x342770c0",
+          "0x2da282a8",
+          "0x27ee3253",
+          "0x22f06c09",
+          "0x1e925e88",
+          "0x1ac012b7",
+          "0x17681061",
+          "0x147b0e55",
+          "0x11ebac8b",
+          "0xfae36fa",
+          "0xdb8701b"
+        ],
+        "gasUsedRatio": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "reward": [
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ],
+          [
+            "0x0",
+            "0x0"
+          ]
+        ]
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-amt95ra2/reports/20261014-191958-13907/UTC-20261014-192049/tests/001_fee-history-well-formed/assert.json",
+        "sha256": "b07e597d9c1a197f4214eedf5c765030e0a7d56aa26fb3e3f44d944883d5416e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005660580216626
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-amt95ra2/reports/20261014-191958-13907/UTC-20261014-192049/tests/001_fee-history-well-formed/steps.json",
+        "sha256": "efbc2b0bfb7df1dfad24b636c310e0a4861c5866be33e4aaa0ba06a766ac46c8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005660308777112
+      },
+      "assertionCount": 45,
+      "runtime": "/private/tmp/cbui/txfail-amt95ra2",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-amt95ra2/reports/fee-history-inventory.json",
+        "sha256": "1731eefc8f6a35e9e8e488ce25b026c5e493a2fe157222c0361dab165ebf2544",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005775851126968
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-fee-history-publication.json",
+    "sha256": "2af9a0f2c459525ee84db8583379fde009fc8ddea9aac00fe3408f334e900fe5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792005499226224247
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-fee-history-red.log",
+      "sha256": "456590274f5b47e964f33550274d8b1121c463a9c3763aad9dde489017d2a750",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005345069031200
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-history-green.log",
+      "sha256": "d45899f3de9a9724b3d730ef5fb5e98e9c403280f3954d953e69ae8c5c15a0d0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005368779748259
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-history-related-race.log",
+      "sha256": "964f078f531759e586928a1275cfa9ea105dd4c95d17d6d02feab0527d59036d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005443007340822
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-history-check.log",
+      "sha256": "fcec5e1381881454f613a067d9353e8bb31725202be60bcae81720233c82e73b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005568673454328
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

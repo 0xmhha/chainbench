@@ -129,6 +129,9 @@ func MigrateV1(raw []byte) ([]byte, error) {
 	if s.SkipsOn != nil {
 		out["skipsOn"] = s.SkipsOn
 	}
+	if s.Prepared != nil {
+		out["prepared"] = s.Prepared
+	}
 	if s.DefaultOn != "" {
 		out["on"] = s.DefaultOn
 	}

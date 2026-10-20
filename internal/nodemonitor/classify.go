@@ -38,6 +38,10 @@ type Facts struct {
 	// network's head, as the observer sees it. Zero means the caller did not
 	// supply it and the lag is not checked.
 	WantHeight uint64
+	// WantMinHeight is a declared activation boundary this node must have
+	// executed. Unlike WantHeight, it is not reduced by sampling lag tolerance.
+	// Zero leaves the absolute height unconstrained.
+	WantMinHeight uint64
 
 	PIDAlive      bool
 	RPCUp         bool
@@ -137,6 +141,9 @@ func Classify(f Facts) NodeReport {
 	}
 	if !f.Advancing {
 		r = reason(Waitable, "block height not advancing yet")
+	}
+	if f.Height < f.WantMinHeight {
+		r = reason(Waitable, "below required height: height %d, need %d", f.Height, f.WantMinHeight)
 	}
 	// Behind the network is its own condition, because neither of the two above
 	// catches it. "Syncing" is false both for a node that has caught up and for

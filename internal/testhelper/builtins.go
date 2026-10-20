@@ -42,6 +42,7 @@ const (
 	assertTxStatus         = "txStatus"
 	assertReceiptLog       = "receiptLog"
 	assertBlockAdvance     = "blockAdvance"
+	assertBlockLag         = "blockLag"
 	assertBlockStalled     = "blockStalled"
 	assertSameBlockHash    = "sameBlockHash"
 	assertBaseFee          = "baseFee"
@@ -100,6 +101,7 @@ func Register(r interp.Registry) {
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
+	r.RegisterAssertion(assertBlockLag, blockLagAssertion{})
 	r.RegisterAssertion(assertBlockStalled, blockStalledAssertion{})
 	r.RegisterAssertion(assertBlockHalt, blockHaltAssertion{})
 	r.RegisterAssertion(assertBlockInterval, blockIntervalAssertion{})
@@ -107,6 +109,9 @@ func Register(r interp.Registry) {
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	r.RegisterAssertion(assertCallError, callErrorAssertion{})
 	r.RegisterAssertion(assertMethodPresent, methodPresentAssertion{})
+	r.RegisterAssertion("rpcHealth", rpcHealthAssertion{})
+	r.RegisterAssertion("remoteBalance", remoteBalanceAssertion{})
+	r.RegisterAssertion("chainInfo", chainInfoAssertion{})
 	r.RegisterAssertion(assertRPCError, rpcErrorAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
@@ -121,6 +126,16 @@ func Register(r interp.Registry) {
 type waitBlockAction struct{}
 
 func (waitBlockAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("waitBlock", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
+	if err := validateUnsignedControl("action", "waitBlock", "target", ac.Args); err != nil {
+		return err
+	}
+
 	target, ok := uintArg(ac.Args["target"])
 	if !ok {
 		return fmt.Errorf("dsl: waitBlock requires a numeric \"target\"")

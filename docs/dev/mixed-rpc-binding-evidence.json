@@ -1,0 +1,457 @@
+{
+  "date": "2026-10-18",
+  "status": "scoped_actual_ast_and_full_check_verified",
+  "scope": "HTTP/WS bindings follow effective configuration and explicit operator overrides. Exactly five selected mixed-implementation cases and preservation independently verified; full L1 and final Web remain open.",
+  "implementationFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/nodeconfig/nodeconfig.go",
+      "sha256": "4e6767dafd352166e1f117dc72b10272025895dfe952e08a562fc58fbdb3572c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792307520416271464
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/nodeconfig/rpc_binding_test.go",
+      "sha256": "43ad0653d271690053f9a8319505935e2d154524c56558c53d6c3b41037707a1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792307444097623799
+    }
+  ],
+  "unit": {
+    "failingScenariosBeforeFix": 20,
+    "red": {
+      "path": "/private/tmp/chainbench-rpc-binding-red-20261018.log",
+      "sha256": "f638b8710c23130044e492669637ec97c8712f7ed7b00ac98cc02f9decd0e080",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307447294626526
+    },
+    "nodeconfigPackageGreen": {
+      "path": "/private/tmp/chainbench-rpc-binding-green-20261018.log",
+      "sha256": "ac8d90670593a5d5276b6d5aa34187b3c7d15315fce40cd9865e8258547bc5b7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307523300656132
+    },
+    "fivePackagesRaceGreen": {
+      "path": "/private/tmp/chainbench-rpc-binding-related-race-20261018.log",
+      "sha256": "04df78360c5772b36712cb71e5ef6a615d6083f487985b44fa236395596c7946",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307822720819152
+    },
+    "commandOverridePrecedence": "retained"
+  },
+  "initialPreflight": {
+    "independent": {
+      "path": "/private/tmp/chainbench-mixed-five-20261018-preflight-independent.json",
+      "sha256": "f846647c613195b3a4da213695fe53fc792dfa279f3310c65d6f5742ec4fd373",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792306531805432840
+    },
+    "caseExecutions": 0,
+    "excludedCheckerMistake": "Assumed a literal chain round rather than default-preset dash; preserved original helper and corrected a new attempt."
+  },
+  "actualBeforeFix": {
+    "summary": {
+      "path": "/private/tmp/chainbench-mixed-five-v2-20261018-summary.json",
+      "sha256": "99c0742753c01892bc6720746b1e1ccdb8943428863239a9fd4bfb6c6f44a2af",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307042994947599
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-mixed-five-v2-20261018-independent-v3.json",
+      "sha256": "8e8b07409e360f4d2be15ea8cba8894f63e80e48a9281500ecb02293af8a12b4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307309262052468
+    },
+    "totals": {
+      "pass": 0,
+      "fail": 0,
+      "blocked": 1,
+      "skip": 0,
+      "notrun": 4
+    },
+    "archiveEntries": 229,
+    "localFilesPreserved": 185,
+    "remainingDatabasePaths": 0,
+    "runtime": "/private/tmp/cbui/l1i-1xvmv_9z",
+    "bindingEvidence": {
+      "archive": {
+        "path": "/private/tmp/cbui/l1i-1xvmv_9z/reports/retention-c1/server3-metadata.tar.gz",
+        "sha256": "463a83db36a312eab005f68b9513cb3a07cf639f4d273d0ec91d83663e1c46c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792307031864923045
+      },
+      "member": "l1i-1xvmv_9z/c1/logs/18150139c986/node3.log",
+      "memberSHA256": "9906f282fdf0647af2d44c922977badc4356dcdde10e307593c53e28b98d3518",
+      "bindingLines": [
+        "time=2026-10-18T06:58:12.638Z level=INFO msg=\"HTTP server started\" endpoint=127.0.0.1:8601 auth=false prefix=\"\" cors=* vhosts=*",
+        "time=2026-10-18T06:58:12.638Z level=INFO msg=\"WebSocket enabled\" url=ws://127.0.0.1:8701"
+      ]
+    },
+    "notAConsensusFailureClaim": true,
+    "controllerBoilerplateCountTypo": "One introductory controller line retained 216; the authoritative selected plan, sweep denominator and structured proof all describe exactly five. Later helper fixes the text."
+  },
+  "spaceMaintenance": {
+    "legacyGuardRefusal": {
+      "path": "/private/tmp/chainbench-rpc-binding-low-space-cleanup-20261018.log",
+      "sha256": "c334c8e831ea1e42b4d2f589c9c2e4ab19a91d52087acff69e20218de92a7036",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307964591685271
+    },
+    "completedGoCache": {
+      "path": "/private/tmp/chainbench-rpc-binding-completed-cache-20261018.json",
+      "sha256": "3b91a285717e51a60b23491354e1a161d9fffb9e34daf5aaef0e87dcd1a8f85c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792307987820689779
+    },
+    "artifactCompression": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-rpc-binding-1792309195852180000.json",
+      "sha256": "2b62b66cea5d96b729f530891254d51299079867a9e0783072615b57b5ea263a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792309207764828291
+    },
+    "artifactCompressionIndependent": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-rpc-binding-1792309195852180000-independent.json",
+      "sha256": "f01639dbb0078f81abc2dc6cf43eb8286377d4393734bedf18190a2c5a75a95f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792309370635884385
+    },
+    "preservedRecordedGraphs": 86,
+    "preservedPublishedSummaries": 2,
+    "compressedArtifacts": 12,
+    "savedArtifactAllocatedBytes": 660762624,
+    "compressionContracts": 27,
+    "compressionScopeRed": {
+      "path": "/private/tmp/chainbench-rpc-binding-artifact-compression-red-20261018.log",
+      "sha256": "1b6e5a5db112b7b7db273ba12820c30f4caa5d79342c285634c7abfe72a91a53",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792308995361867733
+    },
+    "compressionGreen": {
+      "path": "/private/tmp/chainbench-rpc-binding-artifact-compression-green-20261018.log",
+      "sha256": "9f238b1b3e378b9fb00cc2c91214acb10f14072a48ef6c0780e072cda4821b74",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792309043509501571
+    },
+    "maintenanceSpaceBudget": "Preservation-only compression checks its temporary copy headroom; native acceptance still requires 20GiB before starting.",
+    "completedTransportCache": {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/completed-git-transport-cache-1792309556509071000.json",
+      "sha256": "f1e836290d710abc7abe7de5c48914f5446d12dbb937a77012dd6c25ac1b4877",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792309557510728722
+    },
+    "completedTransportCacheIndependent": {
+      "path": "/private/tmp/chainbench-mixed-upstream-20261018/completed-git-transport-cache-1792309556509071000-independent.json",
+      "sha256": "728642a554e74b7577a14d5ca3d3345cf53e2a478584fc42396fbd1ea19a7bf4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792310013541049261
+    },
+    "transportAllocatedBytesRemoved": 211509248,
+    "moduleSourceZIPAndProofFilesPreserved": 2670
+  },
+  "astRefreshPending": false,
+  "actualRetryPending": false,
+  "mixedInteropAccepted": true,
+  "fullL1Accepted": false,
+  "all14Accepted": false,
+  "fullRecurringStorageGrowthSolved": false,
+  "actualAfterFix": {
+    "sourceDigest": "39734d50affd79fb17087fc2f0dd07fc315b0487107cadbf7c094a62355c34ec",
+    "cliSHA256": "7206d25171b28595faf18bb99ea955dd5b761a7c768670f76ec140f54209b3ba",
+    "summary": {
+      "path": "/private/tmp/chainbench-mixed-five-v3-20261018-summary.json",
+      "sha256": "aec15d66fe475d7e87a64874cc9814592b428249923347902ab64cc8fb262039",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792310999608843312
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-mixed-five-v3-20261018-independent-v3.json",
+      "sha256": "06cf3f71bd673c8a83ad8e0d634cf0e542475afe71ecc6124cd73d369ee6ccdd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792311067490191378
+    },
+    "frozenInputManifest": {
+      "path": "/private/tmp/chainbench-mixed-five-v3-20261018-frozen-inputs/manifest.json",
+      "sha256": "3b690bc25eabaa70e1d693923612e6deb77d6f7a5c99e81f9a4ff10f8770497a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792311081218376644
+    },
+    "sourceFingerprintFilesPreserved": 2472,
+    "explicitInputsPreserved": 84,
+    "cases": [
+      {
+        "id": "mixed-quorum-across-implementations",
+        "status": "pass",
+        "assertions": 12,
+        "recordedSteps": 7,
+        "session": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-075845-90060/UTC-20261018-075845/session.json",
+          "sha256": "c517663604cc92ee5504699e91c6c15571dc962ef439d78e02f462ffb106374f",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310400804957682
+        },
+        "assertionRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-075845-90060/UTC-20261018-075845/tests/001_mixed-quorum-across-implementations/assert.json",
+          "sha256": "5a8dca3dc139aac4189251e10bd0ca350ffcecb706484cb0820133a9c1e0aa37",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310400804425105
+        },
+        "stepRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-075845-90060/UTC-20261018-075845/tests/001_mixed-quorum-across-implementations/steps.json",
+          "sha256": "57c1174609a826667e926975267eded095d57d67451577fc203016d2b99d7a53",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310390776825243
+        }
+      },
+      {
+        "id": "mixed-transfer-across-implementations",
+        "status": "pass",
+        "assertions": 6,
+        "recordedSteps": 10,
+        "session": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080040-95219/UTC-20261018-080040/session.json",
+          "sha256": "4585176e0110c919725bf54ae0a2e6c8c5d6d67e702fba57eda5d37e0b4c5284",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310473481009758
+        },
+        "assertionRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080040-95219/UTC-20261018-080040/tests/001_mixed-transfer-across-implementations/assert.json",
+          "sha256": "8157d0be326d288484cb323e06dd83e06c44b436e0118c3f125cfeba9e857943",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310473479551275
+        },
+        "stepRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080040-95219/UTC-20261018-080040/tests/001_mixed-transfer-across-implementations/steps.json",
+          "sha256": "751e4b9ffc75e71d794f06f84a8892d44b89aaea98d44cd18199e601d0a089a0",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310473480659887
+        }
+      },
+      {
+        "id": "mixed-validator-swapped-to-wbft-stablenet",
+        "status": "pass",
+        "assertions": 6,
+        "recordedSteps": 9,
+        "session": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080144-97162/UTC-20261018-080144/session.json",
+          "sha256": "cf306c6f260bdd1b2330c5094df9a6ae449db076ec6b8fdfe9475cfb32e3e428",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310570747348571
+        },
+        "assertionRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080144-97162/UTC-20261018-080144/tests/001_mixed-validator-swapped-to-wbft-stablenet/assert.json",
+          "sha256": "00bc14511adfc4b81088ffa5468d625d7f0e04ead5ac69fff436b8db67e6db13",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310570746162752
+        },
+        "stepRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080144-97162/UTC-20261018-080144/tests/001_mixed-validator-swapped-to-wbft-stablenet/steps.json",
+          "sha256": "73ed2c85c187f55cd15cab49018f1a1145a0323ac991a6bdb0358c64b3b2c9d7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310560716851702
+        }
+      },
+      {
+        "id": "mixed-rolling-takeover",
+        "status": "pass",
+        "assertions": 24,
+        "recordedSteps": 45,
+        "session": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080326-4925/UTC-20261018-080326/session.json",
+          "sha256": "093b8bcc6ca5c3401e5250c2df15c49559428292322af1151bfd9c9189cabc81",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310726305978803
+        },
+        "assertionRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080326-4925/UTC-20261018-080326/tests/001_mixed-rolling-takeover/assert.json",
+          "sha256": "3cbe2433b9993b16618809c582d7a212559fd1036a4e8023cd35eaf3450da9cd",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310726305106855
+        },
+        "stepRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080326-4925/UTC-20261018-080326/tests/001_mixed-rolling-takeover/steps.json",
+          "sha256": "caf979cd769b666c941b6328aa80f7aaf0ad2591cbcaba99e053092b8a70d124",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310724217563763
+        }
+      },
+      {
+        "id": "mixed-takeover-over-f-halts-and-recovers",
+        "status": "pass",
+        "assertions": 16,
+        "recordedSteps": 25,
+        "session": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080628-16386/UTC-20261018-080628/session.json",
+          "sha256": "2bd510b1f8755e30da7c65994aab794784b9152da7ae9cfe97f8ab8eeb68e8db",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310946486667088
+        },
+        "assertionRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080628-16386/UTC-20261018-080628/tests/001_mixed-takeover-over-f-halts-and-recovers/assert.json",
+          "sha256": "93ef04ab13105b265d442ce8586fe81e35183317c8a35700455b203f70209017",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310946484902150
+        },
+        "stepRecord": {
+          "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/sessions/20261018-080628-16386/UTC-20261018-080628/tests/001_mixed-takeover-over-f-halts-and-recovers/steps.json",
+          "sha256": "aa34bf3e86db13f3c07ecae597afd254a2f8be61c1f3194d02074dba981bb5e8",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792310942410064049
+        }
+      }
+    ],
+    "assertions": 64,
+    "recordedSteps": 96,
+    "totals": {
+      "pass": 5,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 0
+    },
+    "archiveCount": 29,
+    "archiveEntries": 1545,
+    "localFilesPreserved": 853,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 75,
+    "remainingDatabasePaths": 0,
+    "remainingPartitionRules": 0,
+    "sharedKeysAndBinariesPreserved": true,
+    "bindingEvidence": {
+      "archive": {
+        "path": "/private/tmp/cbui/l1i-kae4fxfy/reports/retention-c1/server3-metadata.tar.gz",
+        "sha256": "9a43ed63210c6e60ce3257a9617f559ce6b7b1a9bdb9c26f251190a10335d933",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792310431935901722
+      },
+      "member": "l1i-kae4fxfy/c1/logs/4d447081e6ae/node3.log",
+      "memberSHA256": "d49af150d867cb3ced34d0e4327263eaf05c3a47bf43516e064f5d3856e98ed3",
+      "bindingLines": [
+        "time=2026-10-18T07:59:10.321Z level=INFO msg=\"HTTP server started\" endpoint=[::]:8601 auth=false prefix=\"\" cors=* vhosts=*",
+        "time=2026-10-18T07:59:10.321Z level=INFO msg=\"WebSocket enabled\" url=ws://[::]:8701",
+        "time=2026-10-18T07:59:48.920Z level=INFO msg=\"HTTP server started\" endpoint=[::]:8601 auth=false prefix=\"\" cors=* vhosts=*",
+        "time=2026-10-18T07:59:48.922Z level=INFO msg=\"WebSocket enabled\" url=ws://[::]:8701"
+      ],
+      "scope": "Real mixed node3 initial launch and restarted HTTP/WS listen logs; not an actual WebSocket subscription test."
+    },
+    "coverage": {
+      "scope": "Five mixed cases only",
+      "files": 5,
+      "runs": 5,
+      "paths": [
+        "tests/tc/go-stablenet/mixed/01-quorum-across-implementations.json",
+        "tests/tc/go-stablenet/mixed/02-transfer-across-implementations.json",
+        "tests/tc/go-stablenet/mixed/03-validator-swapped-to-wbft-stablenet.json",
+        "tests/tc/go-stablenet/mixed/04-rolling-takeover.json",
+        "tests/tc/go-stablenet/mixed/05-takeover-over-f-halts-and-recovers.json"
+      ],
+      "fullL1Accepted": false,
+      "finalWebAccepted": false
+    },
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "astEvidence": "all-code-graph-rpc-binding-evidence.json",
+  "makeCheck": {
+    "outcome": "pass",
+    "scope": "Ordinary full repository checks with native gates unset; not whole live/race or final Web acceptance",
+    "log": {
+      "path": "/private/tmp/chainbench-rpc-binding-make-check2-20261018.log",
+      "sha256": "21d74a50d8ea48ffc6beb3ae68cfe02f54f091a5ba37e36050a67a2fcff32e22",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792311629764253616
+    }
+  },
+  "measuredPackageTree": {
+    "red": {
+      "path": "/private/tmp/chainbench-rpc-binding-make-check-20261018.log",
+      "sha256": "4b6cfa85e4619ee3c62a3d1b49bbf3767c2a845fdb828edb917fd509caf00c38",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792311481894951842
+    },
+    "correction": "Existing refresh-package-tree generator measured +3 production lines; no rule weakened.",
+    "publishedDocument": "docs/dev/architecture/package-tree.md",
+    "greenLog": {
+      "path": "/private/tmp/chainbench-rpc-binding-make-check2-20261018.log",
+      "sha256": "21d74a50d8ea48ffc6beb3ae68cfe02f54f091a5ba37e36050a67a2fcff32e22",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792311629764253616
+    }
+  }
+}

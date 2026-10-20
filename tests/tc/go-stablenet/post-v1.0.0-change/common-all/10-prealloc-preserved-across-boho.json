@@ -2,22 +2,27 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "prealloc-preserved-across-boho",
-  "description": "TC-1-1-11/12: 하드포크가 prealloc 계정의 잔액·nonce 를 보존하고, 시스템 컨트랙트의 스토리지 슬롯도 그대로 둔다.",
+  "description": "TC-1-1-11/12: Boho 10 경계의 GovMinter v1/v2 고정 코드 해시와 원문 스토리지 네 슬롯의 보존, v2 refundableBalance 호출을 확인한다. 기존 prealloc 잔액·nonce 검사도 유지하며 블록 9/10을 고정한다.",
   "requires": [
     "rpc",
     "fork:boho",
     "contract:govMinter"
   ],
   "chainPreset": {
-    "extends": "stablenet-bp4",
-    "hardforks": {
-      "boho": 10
-    },
+    "extends": "stablenet-bp4-boho-at-10",
     "capabilities": [
       "rpc"
     ]
   },
   "steps": [
+    {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "11",
+      "pollInterval": "2s",
+      "source": "blockNumber",
+      "timeout": "120s"
+    },
     {
       "compare": "NotEqual",
       "do": "waitFor",
@@ -25,7 +30,7 @@
       "method": "eth_getBalance",
       "params": [
         "0x71562b71999873db5b286df957af199ec94617f7",
-        "0x1"
+        "0x9"
       ],
       "pollInterval": "1s",
       "source": "rpcCall",
@@ -36,7 +41,7 @@
       "method": "eth_getBalance",
       "params": [
         "0x71562b71999873db5b286df957af199ec94617f7",
-        "0x1"
+        "0x9"
       ],
       "save": "balEarly",
       "source": "rpcCall"
@@ -47,18 +52,10 @@
       "params": [
         "0x0000000000000000000000000000000000001003",
         "0x0000000000000000000000000000000000000000000000000000000000000004",
-        "0x1"
+        "0x9"
       ],
       "save": "storagePreBoho",
       "source": "rpcCall"
-    },
-    {
-      "compare": "GreaterOrEqual",
-      "do": "waitFor",
-      "expected": "11",
-      "pollInterval": "2s",
-      "source": "blockNumber",
-      "timeout": "120s"
     },
     {
       "compare": "Equal",
@@ -67,7 +64,7 @@
       "method": "eth_getBalance",
       "params": [
         "0x71562b71999873db5b286df957af199ec94617f7",
-        "latest"
+        "0xa"
       ]
     },
     {
@@ -77,7 +74,7 @@
       "method": "eth_getTransactionCount",
       "params": [
         "0x71562b71999873db5b286df957af199ec94617f7",
-        "latest"
+        "0xa"
       ]
     },
     {
@@ -88,8 +85,125 @@
       "params": [
         "0x0000000000000000000000000000000000001003",
         "0x0000000000000000000000000000000000000000000000000000000000000004",
-        "latest"
+        "0xa"
       ]
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x9"
+      ],
+      "save": "legacyCodeV1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0xa"
+      ],
+      "save": "legacyCodeV2"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x000000000000000000000000000000000000000000000000000000000000000c",
+        "0x9"
+      ],
+      "save": "legacyStorage1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x000000000000000000000000000000000000000000000000000000000000000c",
+        "0xa"
+      ],
+      "compare": "Equal",
+      "is": "$legacyStorage1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0000000000000000000000000000000000000000000000000000000000000032",
+        "0x9"
+      ],
+      "save": "legacyStorage2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0000000000000000000000000000000000000000000000000000000000000032",
+        "0xa"
+      ],
+      "compare": "Equal",
+      "is": "$legacyStorage2"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x80497882cf9008f7f796a89e5514a7b55bd96eab88ecb66aee4fb0a6fd34811c",
+        "0x9"
+      ],
+      "save": "legacyStorage3"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x80497882cf9008f7f796a89e5514a7b55bd96eab88ecb66aee4fb0a6fd34811c",
+        "0xa"
+      ],
+      "compare": "Equal",
+      "is": "$legacyStorage3"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "0x0000000000000000000000000000000000001003",
+          "data": "0xb03d36cd0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "0xa"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "web3_sha3",
+      "params": [
+        "$legacyCodeV1"
+      ],
+      "compare": "Equal",
+      "is": "0x3ea99dd77ff9bbc4a88b126e9aa06ddbf144f535a5b432040dbedadd66f3c759"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "web3_sha3",
+      "params": [
+        "$legacyCodeV2"
+      ],
+      "compare": "Equal",
+      "is": "0xf369fcc4edab330169f427fd2aedbe97432cf1cfa31200da06464034f3edaa05"
     }
   ]
 }

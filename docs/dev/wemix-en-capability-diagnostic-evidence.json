@@ -1,0 +1,481 @@
+{
+  "scope": "Repeated Linux WEMIX BP4/EN1 CT-NODE-009 diagnostic, not a repair or full L1 acceptance",
+  "sourceDigest": "2527c6471f65780dd058a707fbe380c518a9489dba2e64dadc49d3999fbd72bd",
+  "headAtProof": "7b5c0d9509d2886bbba9b3ab6496d900b17f36a8",
+  "runtime": "/private/tmp/cbui/ep-zd39207y",
+  "nativeCasePassed": true,
+  "assertions": 3,
+  "previousBlockedAttemptRetained": true,
+  "previousAttemptEvidence": "docs/dev/linux-retention-transport-evidence.json",
+  "priorToCurrentFunctionalSourceChanged": false,
+  "emptyAdminInfoReproduced": false,
+  "rootCauseEstablished": false,
+  "issueResolved": false,
+  "observedScope": {
+    "allFiveRuntimeConsensusProbesSupported": true,
+    "allFiveRawHeads": 132,
+    "allFiveAdminInfoResultKinds": "object",
+    "sameGovernanceCodeAndFourMemberAddressesOnAllFive": true,
+    "ENSelfField": null,
+    "ENEtcdObjectEmpty": true,
+    "rawRPCObservations": 55,
+    "liveExecutableHashesVerified": 5,
+    "unauthorizedBlockLogOccurrences": 0
+  },
+  "independentDiagnosticAudit": {
+    "acceptedDiagnosticScope": true,
+    "sourceDigest": "2527c6471f65780dd058a707fbe380c518a9489dba2e64dadc49d3999fbd72bd",
+    "runtime": "/private/tmp/cbui/ep-zd39207y",
+    "nativeExitCode": 0,
+    "caseStatus": {
+      "id": "basic-consensus",
+      "seq": 1,
+      "result": "pass",
+      "env": "env-fbdedd0a7bb7",
+      "presetId": "wemix-bp4-en1"
+    },
+    "consensusProbe": {
+      "capability": "consensus",
+      "status": "supported",
+      "source": "poa runtime validators",
+      "node": 1,
+      "validatorCount": 4,
+      "nodes": [
+        {
+          "chain": "wemix",
+          "node": 1,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 2,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 3,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 4,
+          "role": "bp",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        },
+        {
+          "chain": "wemix",
+          "node": 5,
+          "role": "en",
+          "status": "supported",
+          "source": "poa runtime validators",
+          "validatorCount": 4
+        }
+      ]
+    },
+    "rawRPCFacts": {
+      "heads": {
+        "1": 132,
+        "2": 132,
+        "3": 132,
+        "4": 132,
+        "5": 132
+      },
+      "adminInfoKinds": {
+        "1": "dict",
+        "2": "dict",
+        "3": "dict",
+        "4": "dict",
+        "5": "dict"
+      },
+      "ENAdminInfo": {
+        "baseFeeMaxChangeRate": 55,
+        "blockGasLimit": 105000000,
+        "blockInterval": 1000,
+        "blockReward": 1000000000000000000,
+        "blocksPer": 1,
+        "consensus": 2,
+        "defaultBriocheBlockReward": 1000000000000000000,
+        "etcd": {},
+        "gasTargetPercentage": 30,
+        "governance": "0x05b184897e2c4c425565a63e9b58d877a778d09a",
+        "maxBaseFee": 50000000000000,
+        "maxIdle": 5,
+        "maxPriorityFeePerGas": 100000000000,
+        "miners": "node1/up node2/up node3/up node4/up",
+        "modifiedblock": 11,
+        "nodes": [
+          {
+            "name": "node1",
+            "enode": "7653e55c72e3f5893888e73041bf6108363d2b8b21bc2dd45464024bd52e08593bc43a276b78ece7cccc6bdce35512921091188a7975867c7f94492114b67958",
+            "id": "bce1ae422ce884c25933937f8850c61ca71806c795d4a2d5fd580c6e4e6223b8",
+            "ip": "172.31.42.11",
+            "port": 30301,
+            "addr": "0x8850c61ca71806c795d4a2d5fd580c6e4e6223b8",
+            "status": "",
+            "miner": false
+          },
+          {
+            "name": "node2",
+            "enode": "1d334caedfb780c458ae5cab10e5c3c4425c03285c96a8d3231ff7d96e411d296c26fafb923d59c367f280c63ef5e71bdedaeffb1ec81613545db4d771127391",
+            "id": "c1fb8d847ae02cd761bd893a6ab31b353422c5c780b4c9a60a45a6ef822184e0",
+            "ip": "172.31.42.12",
+            "port": 30301,
+            "addr": "0x6ab31b353422c5c780b4c9a60a45a6ef822184e0",
+            "status": "",
+            "miner": false
+          },
+          {
+            "name": "node3",
+            "enode": "bf4754461a07462a332c6d4f73c92c60e9e99f5e4e2240169519de76b318b5f955af06ad0fc625c98dd02ae19ef8597a5592d564ca514d0fd6221c4bea982476",
+            "id": "4675a7c61becfa429d4c4a337b036236a4da26a7bcce2a9cffd8e1f1371fe90b",
+            "ip": "172.31.42.13",
+            "port": 30301,
+            "addr": "0x7b036236a4da26a7bcce2a9cffd8e1f1371fe90b",
+            "status": "",
+            "miner": false
+          },
+          {
+            "name": "node4",
+            "enode": "26af47c1c94eaa6cca028ba284592b0869914ff9b14de63edadff4c761b9705bd2a7b675c0eb8e5176a1da85f9131e9840c3f10d57d58b519d8406025c42c029",
+            "id": "96dd66fb48b0e2b542440e3dbb155cbf523b1d0fbf45d4f8ddf5d6004b10dacb",
+            "ip": "172.31.42.14",
+            "port": 30301,
+            "addr": "0xbb155cbf523b1d0fbf45d4f8ddf5d6004b10dacb",
+            "status": "",
+            "miner": false
+          }
+        ],
+        "registry": "0x057108069a82266bb9d6c7f565e9d7546fcf82de",
+        "self": null,
+        "staking": "0x85a5e2b0a3232a22164cbf7a7ce2179fe7f4930b"
+      },
+      "BPAdminGovernance": {
+        "1": "0x05b184897e2c4c425565a63e9b58d877a778d09a",
+        "2": "0x05b184897e2c4c425565a63e9b58d877a778d09a",
+        "3": "0x05b184897e2c4c425565a63e9b58d877a778d09a",
+        "4": "0x05b184897e2c4c425565a63e9b58d877a778d09a"
+      },
+      "governanceCodeSHA256": "296ecbf00a0eacb58aac54ba3f1eabdbb2cca5155df65b4d6462a82edf693d61",
+      "sameFourMembersOnAllFiveNodes": true,
+      "rawENEmptyString": false,
+      "genesisHash": "0xd12e3ad413e4d11f27070e4799c12574d839fcb34170a21d90da03d94bda69c6"
+    },
+    "emptyAdminInfoReproduced": false,
+    "RPCNegativeControlsRejected": [
+      "wire response changed",
+      "node omitted",
+      "request ID changed",
+      "member response changed"
+    ],
+    "rawRPCObservations": 55,
+    "liveExecutableHashesVerified": 5,
+    "archiveEntries": 135,
+    "archiveCount": 5,
+    "archives": [
+      {
+        "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server1-metadata.tar.gz",
+        "sha256": "6042ec20a3ccd2ea8f7aac643f63d98f3ac1bd59b9e33a94ed702c702332dc1e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792132778040335144
+      },
+      {
+        "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server2-metadata.tar.gz",
+        "sha256": "3619ffadb2b280cb5586f0368014e0a1d85353ac0ee5850f8b9fffa207ff51c7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792132791750954409
+      },
+      {
+        "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server3-metadata.tar.gz",
+        "sha256": "2029088e83364de1570493fbf34bb36dfcddbdb8222e5165d74ac9fab46f2c65",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792132805312071753
+      },
+      {
+        "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server4-metadata.tar.gz",
+        "sha256": "de3a3f7268bb8a8512009a071d0647bbea5a054216cd5d24608ca46cf872641b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792132824368087818
+      },
+      {
+        "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server5-metadata.tar.gz",
+        "sha256": "4ac78b0b3e0691b000f5afe234c210e7b3fdee74bd7d3ada6115d1cf8b5d731e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792132839266378464
+      }
+    ],
+    "localFilesPreserved": 125,
+    "freshIndependentProcessInventories": 10,
+    "remainingDatabasePaths": 0,
+    "sharedRemoteKeysUnchanged": true,
+    "presetFilesUnchanged": 45,
+    "unauthorizedBlockLogOccurrences": 0,
+    "issueResolved": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "independentAssertionAudit": {
+    "acceptedAssertionScope": true,
+    "sourceDigest": "2527c6471f65780dd058a707fbe380c518a9489dba2e64dadc49d3999fbd72bd",
+    "nativeCasePassed": true,
+    "nativeCases": 1,
+    "assertions": 3,
+    "bothHashChecksIncludeAllFiveNodes": true,
+    "comparedBlockHeights": [
+      68,
+      70
+    ],
+    "negativeControlsRejected": [
+      "EN block omitted",
+      "failed assertion hidden",
+      "head did not advance",
+      "blocked CLI counted as pass"
+    ],
+    "priorToCurrentFunctionalSourceChanged": false,
+    "comparedCommits": "7c84b189..7b5c0d9509d2886bbba9b3ab6496d900b17f36a8",
+    "changedPaths": [
+      ".github/workflows/ci.yml",
+      "Makefile",
+      "docs/dev/all-code-graph-stdin-evidence.json",
+      "docs/dev/chainbench-worklist.md",
+      "docs/dev/go-cache-maintenance-evidence.json",
+      "docs/dev/linux-retention-transport-evidence.json",
+      "scripts/inventory/README.md",
+      "scripts/inventory/all_code_graph.py",
+      "scripts/inventory/inline_python.py",
+      "scripts/inventory/test_all_code_graph.py",
+      "scripts/prune_go_cache.py",
+      "scripts/test_prune_go_cache.py",
+      "tests/webui/linux_retention_transport.py",
+      "tests/webui/test_linux_retention_transport.py"
+    ],
+    "localFilesUnchanged": 125,
+    "inputAssertions": {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/sessions/20261016-063528-15138/UTC-20261016-063528/tests/001_basic-consensus/assert.json",
+      "sha256": "5782a6fe6c00a38db9b5faa34bc76a272411a0cb17ddcf683be37f1f9bfe7512",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132683968005318
+    },
+    "helper": {
+      "path": "/private/tmp/chainbench-wemix-en-assertion-audit-20261016.py",
+      "sha256": "3905d5f32aeec6d09f76206cdce05bb1ebee8f5b6564a4b6987d198dababffa4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132974021238992
+    },
+    "issueResolved": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "validation": {
+    "relatedUnitTestsPassed": 37,
+    "environmentGatedTestsSkipped": 3,
+    "RPCAlterationControlsRejected": 4,
+    "assertionAlterationControlsRejected": 4,
+    "implementationREDGreenNotClaimed": true,
+    "wholeCheckPassedBeforeDiagnostic": true,
+    "publishedWholeCheckPassed": true
+  },
+  "limits": [
+    "Earlier EN unknown remains unexplained: its original failed RPC response and error category were not retained.",
+    "Current successful raw responses were observed after the test; they do not reconstruct the earlier failed instant.",
+    "No production gate, timeout, declared requirement, external chain source or failure expectation was changed to obtain this pass.",
+    "The external Info() empty-string branch is a possible source behavior, but it was not observed in this run and is not the established earlier cause.",
+    "No W3/W4 resolution, complete L1 campaign or final Web acceptance follows from this scoped case."
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-20261016-start.json",
+      "sha256": "a2817b91e01bf0ba23ab072341d7f66afcf5defa9ffba7fd1617c36cd06df798",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132515152964050
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-20261016-summary.json",
+      "sha256": "a568d40e526809a1d1530c9437c9d0c0fabfd8b1f3ea13fcc674c054828f65ab",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132844711073186
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-20261016-independent.json",
+      "sha256": "a52e4cd1c331bf83a6a60b87bcf5d6a944b4213b0f56137cb76be6589f8012e8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132898591765465
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-20261016.py",
+      "sha256": "4e3c12ec3bbf85d6cf904b3459975500225bdb8f6d90c926694071161ab6124f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132401535760622
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-independent-20261016.py",
+      "sha256": "47c3e0390a1bdb114bf370cef8c77d445fd795838cad8eb1bfb08308a3effbe1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132514188130572
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-driver-20261016.log",
+      "sha256": "80bb3ed9d2000419a9337f9b6273553f258c29ce6d2b3faea9d1243b1b1e31e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132844733624838
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-independent-20261016.log",
+      "sha256": "63df64962a8ad02c28167d62717e7816444a188dcece5d3ebb7c1a4e7a1da554",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132898592720630
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-assertion-audit-20261016.py",
+      "sha256": "3905d5f32aeec6d09f76206cdce05bb1ebee8f5b6564a4b6987d198dababffa4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132974021238992
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-assertion-audit-20261016.json",
+      "sha256": "5c4898d7fab656613878e86721773496fb27d078c8a3d033289a6f2eb7687589",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132974935381596
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-assertion-audit-20261016.log",
+      "sha256": "57c352268a3aa8343acb6ab17225d9d0a3e1f67844917a219deb38c750e12051",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132974935588346
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-related-20261016.log",
+      "sha256": "0fe7a3662854d62b974562b82187b3eaf5f6da476eaa842a0631bc0f35b0cb0b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132241396113255
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-related2-20261016.jsonl",
+      "sha256": "24cbb5b8c4dcc56cea646dcd39887a835a97241766cf970f4db2ff9485e69171",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132405671693262
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server1-metadata.tar.gz",
+      "sha256": "6042ec20a3ccd2ea8f7aac643f63d98f3ac1bd59b9e33a94ed702c702332dc1e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132778040335144
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server2-metadata.tar.gz",
+      "sha256": "3619ffadb2b280cb5586f0368014e0a1d85353ac0ee5850f8b9fffa207ff51c7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132791750954409
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server3-metadata.tar.gz",
+      "sha256": "2029088e83364de1570493fbf34bb36dfcddbdb8222e5165d74ac9fab46f2c65",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132805312071753
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server4-metadata.tar.gz",
+      "sha256": "de3a3f7268bb8a8512009a071d0647bbea5a054216cd5d24608ca46cf872641b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132824368087818
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/retention/server5-metadata.tar.gz",
+      "sha256": "4ac78b0b3e0691b000f5afe234c210e7b3fdee74bd7d3ada6115d1cf8b5d731e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132839266378464
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/rpc-baseline.json",
+      "sha256": "7302249d7a60026e4afb7a6fffd9111bb4d992f22a01f981018921cad14594f8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132749747874114
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/rpc-governance.json",
+      "sha256": "99f8022428fd9201f0febc463e74855e7a31cf3d52c392d1c426b6f71bac3603",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132750317299532
+    },
+    {
+      "path": "/private/tmp/cbui/ep-zd39207y/reports/rpc-members.json",
+      "sha256": "074cbcbab850029a051e27aac2f22e29b848f6e28a199c3cd8897639cc93ca8e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792132751999085312
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix-en-probe-published-check-20261016.log",
+      "sha256": "6e421f2e63bff8e5af28aef330ac5d7b06ac0b28ed5b700e28c92a23cb61a8c9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792133159885123901
+    }
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

@@ -31,9 +31,58 @@
     "capabilities": [
       "rpc",
       "ws"
-    ]
+    ],
+    "accounts": {
+      "webSponsor": {
+        "fund": "100000000000000000000"
+      }
+    }
   },
   "steps": [
+    {
+      "expect": "remoteBalance",
+      "address": "node1",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "rpcHealth",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "chainInfo",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "remoteBalance",
+      "address": "node1",
+      "on": "en2"
+    },
+    {
+      "expect": "rpcHealth",
+      "on": "en2"
+    },
+    {
+      "expect": "chainInfo",
+      "on": "en2"
+    },
     {
       "do": "read",
       "source": "gasPrice",
@@ -290,7 +339,10 @@
       "expect": "metric",
       "name": "chain_head_block",
       "compare": "GreaterOrEqual",
-      "is": 1
+      "is": 1,
+      "alternatives": [
+        "p2p_peers"
+      ]
     },
     {
       "expect": "metric",
@@ -460,6 +512,63 @@
       "is": "$head",
       "tol": "1000000",
       "timeout": "30s"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "regexpCount",
+      "of": [
+        "INFO before\nWARN unrelated\nINFO after\n"
+      ],
+      "pattern": "(?m)^INFO",
+      "since": "INFO before\n",
+      "save": "suffixMatches"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "INFO before\nWARN unrelated\nINFO after\n"
+      ],
+      "pattern": "(?m)^INFO",
+      "since": "INFO before\n",
+      "is": "1"
+    },
+    {
+      "do": "waitFor",
+      "source": "derive",
+      "op": "regexpCount",
+      "of": [
+        "INFO before\nWARN unrelated\nINFO after\n"
+      ],
+      "pattern": "(?m)^INFO",
+      "since": "INFO before\n",
+      "expected": "1",
+      "timeout": "1s",
+      "save": "suffixWait"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$suffixMatches",
+        "$suffixWait"
+      ],
+      "is": "0"
+    },
+    {
+      "expect": "rpcError",
+      "on": "node1",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "$reverter",
+          "data": "0x"
+        },
+        "latest"
+      ],
+      "reason": "execution reverted",
+      "errorData": "0x"
     }
   ]
 }

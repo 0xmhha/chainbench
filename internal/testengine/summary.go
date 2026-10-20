@@ -8,9 +8,10 @@ import (
 
 // TestOutcome is one test's recorded result in a session summary.
 type TestOutcome struct {
-	Seq    int    `json:"seq"`
-	ID     string `json:"id"`
-	Status string `json:"status"`
+	PresetID string `json:"presetId,omitempty"`
+	Seq      int    `json:"seq"`
+	ID       string `json:"id"`
+	Status   string `json:"status"`
 }
 
 // Summary is the session.json verdict: the per-test outcomes and the
@@ -41,7 +42,7 @@ func ReadSessionSummary(root string) (Summary, error) {
 	}
 	s := Summary{Tests: make([]TestOutcome, 0, len(res.Tests))}
 	for _, t := range res.Tests {
-		s.Tests = append(s.Tests, TestOutcome{Seq: t.Seq, ID: t.ID, Status: t.Status})
+		s.Tests = append(s.Tests, TestOutcome{Seq: t.Seq, ID: t.ID, Status: t.Status, PresetID: t.PresetID})
 	}
 	s.Summary.Pass = res.Summary.Pass
 	s.Summary.Fail = res.Summary.Fail

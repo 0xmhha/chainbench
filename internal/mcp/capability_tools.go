@@ -84,7 +84,7 @@ func capabilitiesDiscoveryTool() Tool {
 		Description: "List the capabilities chainbench exposes, grouped by version and chain, with the tool name to call each. Args: chain (optional; returns common + that chain's features).",
 		InputSchema: map[string]any{
 			"type":       "object",
-			"properties": map[string]any{"chain": map[string]any{"type": "string", "description": "chain id to scope to"}},
+			"properties": map[string]any{"chain": commonProperty("chain", map[string]any{"description": "chain id to scope to"})},
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
 			chain := argString(args, "chain", "")

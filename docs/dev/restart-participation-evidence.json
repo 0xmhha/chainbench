@@ -1,0 +1,179 @@
+{
+  "scope": "NODE005 direct native WBFT Croissant0 BP4 with actual blockPeriod1. Unmodified public crash/restart case, four assertions and all action steps: survivor progression, same block hash, same fixed caught stateRoot, real node3 stopped/restarted. Prior/current process PID+revision changed with identical binary/command/datadir; original preset identity, actual fixed-height resync agreement. Bounded recorded post-sync candidates yield six consecutive round0 headers/five individual timestamp1 intervals, exact commit signer header origin/quorum and original node participation; restarted endpoint reached last header. Not claim immediate first window if earlier candidates rejected; not staged migration/Linux/mainnet/full87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Link-only model accepted eleven interval/identity/sync/signer-origin/quorum controls; existing short-window and broken-link guards remained rejecting.",
+  "unitGreen": "Positive and thirteen negative controls plus existing readiness/view-change oracle regressions.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "76ba5d35f1ef513eafbf5f6712a720359477b2ae0fcf6ee9806178502d631673",
+    "sourceAfter": "76ba5d35f1ef513eafbf5f6712a720359477b2ae0fcf6ee9806178502d631673",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeValidatorRestartParticipation"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-iexw1hn3"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-iexw1hn3": []
+    },
+    "elapsedSeconds": 35.455,
+    "summary": {
+      "path": "/private/tmp/chainbench-restart-participation-native-summary.json",
+      "sha256": "ee8731644fc69eea799309b69375f62f1649ad5a1a1433055de4f38efc5abd9a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036514270834726
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-restart-participation-native-native.jsonl",
+      "sha256": "d7d5497050d8bded1061a8bf4247a23af0b7fc5257dd5b8dda96f7f821befd73",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036513772420415
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-restart-participation-native-start.json",
+      "sha256": "b573adb4400492a9b3dcc7ead9cc1ffb94c41b653bbb094f3b1f2958262e12e0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036475955162435
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-iexw1hn3/reports/restart-participation-proof.json",
+    "sha256": "2728772012bb9d73e5f600da27889d8e695519a6bb361d377f1f88cdc9c20607",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792036511131174853
+  },
+  "publicSource": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+    "sha256": "e6cb6f46df805e988308df194f27173fe4fa7b4a668d8f1ab98930d25d41e0e6",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1791380070127636166
+  },
+  "assertions": {
+    "path": "/private/tmp/cbui/txfail-iexw1hn3/reports/20261015-035438-42811/UTC-20261015-035439/tests/001_fault-node-crash/assert.json",
+    "sha256": "2aef05883320cdb35cd445697ed2efc2cb49445a2d9b8d465f772041f33cbbea",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792036505078322616
+  },
+  "steps": {
+    "path": "/private/tmp/cbui/txfail-iexw1hn3/reports/20261015-035438-42811/UTC-20261015-035439/tests/001_fault-node-crash/steps.json",
+    "sha256": "1c1c094ef6eb2c954fcce7d997edd84dc0d853582edd549c81be4cf9ba0b8a46",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792036505082421158
+  },
+  "genesis": {
+    "path": "/private/tmp/cbui/txfail-iexw1hn3/w/genesis.json",
+    "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792036479072396307
+  },
+  "window": {
+    "start": 26,
+    "end": 31,
+    "timestamps": [
+      1792036506,
+      1792036507,
+      1792036508,
+      1792036509,
+      1792036510,
+      1792036511
+    ],
+    "observedCandidates": 6,
+    "restartSigner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+    "oldPID": 42830,
+    "newPID": 42924
+  },
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/txfail-iexw1hn3",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 199,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-iexw1hn3/reports/restart-participation-inventory.json",
+        "sha256": "958a8b559f549d45ab91f15dcbbe014c49293f467f234c4d280445ba4f0f0bb9",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792036549037940545
+      }
+    }
+  ],
+  "retainedFiles": 199,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-restart-participation-publication.json",
+    "sha256": "1356e1710d32d35315f0d8feb984e96df7c0a3bf53058528d6178c88e4166608",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792035633962561346
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-restart-participation-red.log",
+      "sha256": "522f61e8072f9767e888a4835c12c617fff72db0d3e065aa64d00f41da3ee74f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036074572369142
+    },
+    {
+      "path": "/private/tmp/chainbench-restart-participation-green.log",
+      "sha256": "21d7da550dbd778f56103a98888bfa9c881e640e2e47e757392363588a5d52b3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036234698207576
+    },
+    {
+      "path": "/private/tmp/chainbench-restart-participation-related-race.log",
+      "sha256": "705491cee1b9f1d8f699ebaa7828ab5b09c464896a2eeab8c251e548d8c2a835",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036361031669770
+    },
+    {
+      "path": "/private/tmp/chainbench-restart-participation-check.log",
+      "sha256": "1a2808e1228e1221ccf16cbda1221c53ae8e76ef7e3483e2a86b1a1427c97649",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036449968119334
+    },
+    {
+      "path": "/private/tmp/chainbench-restart-participation-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792036352925232453
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  }
+}

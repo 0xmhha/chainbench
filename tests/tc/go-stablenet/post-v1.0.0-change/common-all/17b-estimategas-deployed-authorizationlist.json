@@ -1,0 +1,299 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "estimategas-deployed-authorizationlist-cost",
+  "description": "원문17: 배포한 Simple7702Delegate에 fresh authority 두 개가 서명하고, 같은 sponsor 주소 사이의 금액 없는 추정에서 authorizationList 0/1/2건 비용을 검증한다. 기존17의 EOA 1wei 기준선과 구분한다.",
+  "requires": [
+    "rpc",
+    "family:wbft"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "hooks": {
+    "pre": [
+      {
+        "do": "read",
+        "of": [
+          "21000"
+        ],
+        "op": "sum",
+        "save": "gasBaselineExpected",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "46000"
+        ],
+        "op": "sum",
+        "save": "gas1AuthMin",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "47500"
+        ],
+        "op": "sum",
+        "save": "gas1AuthMax",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "71000"
+        ],
+        "op": "sum",
+        "save": "gas2AuthMin",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "74000"
+        ],
+        "op": "sum",
+        "save": "gas2AuthMax",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "25000"
+        ],
+        "op": "sum",
+        "save": "authCost1Min",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "26500"
+        ],
+        "op": "sum",
+        "save": "authCost1Max",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "50000"
+        ],
+        "op": "sum",
+        "save": "authCost2Min",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "53000"
+        ],
+        "op": "sum",
+        "save": "authCost2Max",
+        "source": "derive"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "do": "deployContract",
+      "from": "node1",
+      "bytecode": "0x6080604052348015600e575f5ffd5b506101c38061001c5f395ff3fe608060405234801561000f575f5ffd5b5060043610610034575f3560e01c80633fb5c1cb14610038578063f2c9ecd814610068575b5f5ffd5b610052600480360381019061004d919061013a565b610086565b60405161005f9190610174565b60405180910390f35b6100706100fb565b60405161007d9190610174565b60405180910390f35b5f815f819055503373ffffffffffffffffffffffffffffffffffffffff163073ffffffffffffffffffffffffffffffffffffffff167f0b7b279c5e742911eb6e7d8f4bd1adc7f545a98d9745ac1baaf13c7a9774fcc4846040516100ea9190610174565b60405180910390a35f549050919050565b5f5f54905090565b5f5ffd5b5f819050919050565b61011981610107565b8114610123575f5ffd5b50565b5f8135905061013481610110565b92915050565b5f6020828403121561014f5761014e610103565b5b5f61015c84828501610126565b91505092915050565b61016e81610107565b82525050565b5f6020820190506101875f830184610165565b9291505056fea2646970667358221220c4a804d7d7e60444f9e5e5a1cad29ab6d013d9e39eb0e46e5e6ea3afdcab432364736f6c634300081c0033",
+      "gas": "1000000",
+      "save": "delegate"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority1",
+      "saveKey": "authority1Key"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority2",
+      "saveKey": "authority2Key"
+    },
+    {
+      "do": "read",
+      "method": "eth_coinbase",
+      "params": [],
+      "save": "sponsor",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "$delegate",
+        "latest"
+      ],
+      "save": "delegateCode"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "web3_sha3",
+      "params": [
+        "$delegateCode"
+      ],
+      "compare": "Equal",
+      "is": "0x3adfd91f5bd2fb415d9791da4f139dc10eea4b6c1ec98d19979c01377522ef89"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "$delegate",
+          "data": "0xf2c9ecd8"
+        },
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "authorityKey": "$authority1Key",
+      "delegate": "$delegate",
+      "do": "signAuthorization",
+      "save": "auth1"
+    },
+    {
+      "authorityKey": "$authority2Key",
+      "delegate": "$delegate",
+      "do": "signAuthorization",
+      "save": "auth2"
+    },
+    {
+      "do": "read",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "$sponsor",
+          "to": "$sponsor"
+        }
+      ],
+      "save": "gasBaseline",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "authorizationList": [
+            "$auth1"
+          ],
+          "from": "$sponsor",
+          "to": "$sponsor"
+        }
+      ],
+      "save": "gas1Auth",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "authorizationList": [
+            "$auth1",
+            "$auth2"
+          ],
+          "from": "$sponsor",
+          "to": "$sponsor"
+        }
+      ],
+      "save": "gas2Auth",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "$gasBaselineExpected",
+      "of": [
+        "$gasBaseline"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$gas1AuthMin",
+      "of": [
+        "$gas1Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$gas1AuthMax",
+      "of": [
+        "$gas1Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$gas2AuthMin",
+      "of": [
+        "$gas2Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$gas2AuthMax",
+      "of": [
+        "$gas2Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$authCost1Min",
+      "of": [
+        "$gas1Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$authCost1Max",
+      "of": [
+        "$gas1Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$authCost2Min",
+      "of": [
+        "$gas2Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$authCost2Max",
+      "of": [
+        "$gas2Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    }
+  ]
+}

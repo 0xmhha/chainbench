@@ -1,0 +1,415 @@
+{
+  "scope": "WBFT-003/004 managed current WBFT Croissant0 BP4; observed next round-zero proposer stopped, requestTimeout3/blockPeriod2 confirmed actual genesis, immediate next header changed round/proposer with delay, successor PrevRound trace, propagated logs from surviving nodes, original process/identity restarted/resynced, five subsequent links. Not original migrated/mainnet/Linux/legacy/complete87/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence-only three-link recovery baseline accepted missing actual target/round/trace/timeout/proposer/PID/longer-chain/height/log conditions.",
+  "unitGreen": "Positive and malformed semantic contexts; exact selected proposer, timeout/round trace, surviving propagation logs and original restart identity.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "439f9e782b076bfbbfc39e860946ff6c0211c7d270a9d4bdc62531837dbc4250",
+    "sourceAfter": "439f9e782b076bfbbfc39e860946ff6c0211c7d270a9d4bdc62531837dbc4250",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeProposerViewChangeAndFiveLinks"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-r42hz9dl"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-r42hz9dl/reports/view-change-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-r42hz9dl": []
+    },
+    "elapsedSeconds": 44.289,
+    "summary": {
+      "path": "/private/tmp/chainbench-view-change-retry-summary.json",
+      "sha256": "37727bffe6832097624d367a8837cf901ae7e31e3fbe91307c7c310472f82021",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013319262645554
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-view-change-retry-native.jsonl",
+      "sha256": "99519c0a72abc4693bffbf8853b101abda8d68962b6c8cee2b9c107ee6a75923",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013318802593964
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-view-change-retry-start.json",
+      "sha256": "f429cfcabe66ee37eccc1295c0908b2b2d07d4aa2d31b84068aacb02793d9e39",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013271697576140
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-r42hz9dl/reports/view-change-proof.json",
+    "sha256": "d832625f3b9ef4e98960bd8886d62b301dfcb1571d3b340ec5273bfb55a7b279",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792013315635904266
+  },
+  "view": {
+    "Validators": [
+      "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+    ],
+    "Before": {
+      "Number": 13,
+      "Timestamp": 1792013301,
+      "Round": 0,
+      "PrevRound": 0,
+      "Hash": "0xf8ee6bceaf2ff318537b6b9a5b3ac6be691beba21eb8bc8db2ee9ead9e8da357",
+      "ParentHash": "0x5560b4311dc6d1975bcf8bd5703069002d69b76b0877634df0ba5d301573b2a9",
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+    },
+    "Changed": {
+      "Number": 14,
+      "Timestamp": 1792013303,
+      "Round": 1,
+      "PrevRound": 0,
+      "Hash": "0x9e89be461251dc964dc11a93bf57bf0ab896d257457afa306b91cb1916f114a1",
+      "ParentHash": "0xf8ee6bceaf2ff318537b6b9a5b3ac6be691beba21eb8bc8db2ee9ead9e8da357",
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+    },
+    "Successor": {
+      "Number": 15,
+      "Timestamp": 1792013305,
+      "Round": 0,
+      "PrevRound": 1,
+      "Hash": "0xac612607eb95a3e1ebb0bf6ba6fd976aa78a315743a5fa097806abed30e99aad",
+      "ParentHash": "0x9e89be461251dc964dc11a93bf57bf0ab896d257457afa306b91cb1916f114a1",
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+    },
+    "StoppedAddress": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+    "RestartedAddress": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+    "RequestTimeout": 3,
+    "BlockPeriod": 2,
+    "OldPID": 54443,
+    "NewPID": 54697,
+    "TargetIndex": 2,
+    "RoundChangeNodes": 3,
+    "CommitLogDelayMillis": 3055,
+    "AfterRestart": [
+      {
+        "Number": 15,
+        "Timestamp": 1792013305,
+        "Round": 0,
+        "PrevRound": 1,
+        "Hash": "0xac612607eb95a3e1ebb0bf6ba6fd976aa78a315743a5fa097806abed30e99aad",
+        "ParentHash": "0x9e89be461251dc964dc11a93bf57bf0ab896d257457afa306b91cb1916f114a1",
+        "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      },
+      {
+        "Number": 16,
+        "Timestamp": 1792013307,
+        "Round": 0,
+        "PrevRound": 0,
+        "Hash": "0xe79ef07e7325f1cf34c8bb8d12852197d14bb224fde3dc4dc380f3a0fe0a0623",
+        "ParentHash": "0xac612607eb95a3e1ebb0bf6ba6fd976aa78a315743a5fa097806abed30e99aad",
+        "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      },
+      {
+        "Number": 17,
+        "Timestamp": 1792013309,
+        "Round": 1,
+        "PrevRound": 0,
+        "Hash": "0x563ae38610d016848e07ebdd8c45e568f80824ad00add2c5b60a8c5e4ff058e9",
+        "ParentHash": "0xe79ef07e7325f1cf34c8bb8d12852197d14bb224fde3dc4dc380f3a0fe0a0623",
+        "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+      },
+      {
+        "Number": 18,
+        "Timestamp": 1792013311,
+        "Round": 0,
+        "PrevRound": 1,
+        "Hash": "0x3d6c52f60d8110f64836b723504d9d0e69d9ff1c2926463b0d9ceb7126b9150f",
+        "ParentHash": "0x563ae38610d016848e07ebdd8c45e568f80824ad00add2c5b60a8c5e4ff058e9",
+        "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      },
+      {
+        "Number": 19,
+        "Timestamp": 1792013313,
+        "Round": 0,
+        "PrevRound": 0,
+        "Hash": "0xa61e2fb4c67a2335d42ec4d0a7ffa67b6080497a42b999f0bb8af08fcae05865",
+        "ParentHash": "0x3d6c52f60d8110f64836b723504d9d0e69d9ff1c2926463b0d9ceb7126b9150f",
+        "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      },
+      {
+        "Number": 20,
+        "Timestamp": 1792013315,
+        "Round": 0,
+        "PrevRound": 0,
+        "Hash": "0xe6e5b838d12e8ab3052ef79c5cc57c08beee0f78cc833273f37fe1530007ef2f",
+        "ParentHash": "0xa61e2fb4c67a2335d42ec4d0a7ffa67b6080497a42b999f0bb8af08fcae05865",
+        "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+      }
+    ]
+  },
+  "genesis": {
+    "path": "/private/tmp/cbui/txfail-r42hz9dl/w/genesis.json",
+    "sha256": "6cf850e3e6fd9bc81deca253772a9f5cb466c4545c0390d5c8dc16afb6da5c4d",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792013274945194771
+  },
+  "wbftConfig": {
+    "blockPeriodSeconds": 2,
+    "epochLength": 10,
+    "maxRequestTimeoutSeconds": null,
+    "proposerPolicy": 0,
+    "requestTimeoutSeconds": 3,
+    "stabilizingStakersThreshold": 5,
+    "targetValidators": 4
+  },
+  "commitLogs": {
+    "13": {
+      "line": "INFO [10-15|06:28:21.031] WBFT: block proposal committed           author=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 hash=f8ee6b..8da357 number=13",
+      "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node1.log",
+      "timestamp": "10-15|06:28:21.031"
+    },
+    "14": {
+      "line": "INFO [10-15|06:28:24.086] WBFT: block proposal committed           author=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 hash=9e89be..f114a1 number=14",
+      "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node1.log",
+      "timestamp": "10-15|06:28:24.086"
+    }
+  },
+  "roundChangeLogs": {
+    "node1.log": {
+      "lines": [
+        "INFO [10-15|06:28:24.042] WBFT: handle ROUND-CHANGE message        address=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 current.round=1 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=0",
+        "INFO [10-15|06:28:24.061] WBFT: handle ROUND-CHANGE message        address=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 current.round=1 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0x8eB79036Bc0f3ABa136eF18B3A2Fb8C1188939A6 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=1",
+        "INFO [10-15|06:28:24.063] WBFT: handle ROUND-CHANGE message        address=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 current.round=1 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0x8c4A10b9108D49b9D23F764464090831d9c17764 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=2"
+      ],
+      "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node1.log",
+      "file": {
+        "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node1.log",
+        "sha256": "8d65424bb4c35886904ae383a7f97875562f7478dbd91b4ef4ea79da20568e72",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792013315702230820
+      }
+    },
+    "node3.log": {
+      "lines": [
+        "INFO [10-15|06:28:24.043] WBFT: handle ROUND-CHANGE message        address=0x8c4A10b9108D49b9D23F764464090831d9c17764 current.round=0 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=0",
+        "INFO [10-15|06:28:24.062] WBFT: handle ROUND-CHANGE message        address=0x8c4A10b9108D49b9D23F764464090831d9c17764 current.round=0 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0x8eB79036Bc0f3ABa136eF18B3A2Fb8C1188939A6 msg.round=1 msg.sequence=14 higherRoundChanges.count=1 currentRoundChanges.count=0",
+        "INFO [10-15|06:28:24.062] WBFT: handle ROUND-CHANGE message        address=0x8c4A10b9108D49b9D23F764464090831d9c17764 current.round=1 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0x8c4A10b9108D49b9D23F764464090831d9c17764 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=2"
+      ],
+      "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node3.log",
+      "file": {
+        "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node3.log",
+        "sha256": "c500971fd9857fe82cbb4e3fafd02f5cee60975f72233fc6f0b474ddc7601489",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792013315866127602
+      }
+    },
+    "node4.log": {
+      "lines": [
+        "INFO [10-15|06:28:24.043] WBFT: handle ROUND-CHANGE message        address=0x8eB79036Bc0f3ABa136eF18B3A2Fb8C1188939A6 current.round=0 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0xc17d493883EAA3B4CCeB0F214b273392d562F9D8 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=0",
+        "INFO [10-15|06:28:24.060] WBFT: handle ROUND-CHANGE message        address=0x8eB79036Bc0f3ABa136eF18B3A2Fb8C1188939A6 current.round=1 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0x8eB79036Bc0f3ABa136eF18B3A2Fb8C1188939A6 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=1",
+        "INFO [10-15|06:28:24.063] WBFT: handle ROUND-CHANGE message        address=0x8eB79036Bc0f3ABa136eF18B3A2Fb8C1188939A6 current.round=1 current.sequence=14 state=\"Accept request\" msg.code=21 msg.source=0x8c4A10b9108D49b9D23F764464090831d9c17764 msg.round=1 msg.sequence=14 higherRoundChanges.count=0 currentRoundChanges.count=2"
+      ],
+      "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node4.log",
+      "file": {
+        "path": "/private/tmp/cbui/txfail-r42hz9dl/w/logs/node4.log",
+        "sha256": "6baad9872c9cd410d4155ab5ed5fcf02e55f58a648e819910f3a717428ec429f",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792013315862810351
+      }
+    }
+  },
+  "runtime": {
+    "path": "/private/tmp/cbui/txfail-r42hz9dl",
+    "active": false,
+    "remainingDatabases": 0,
+    "retainedFiles": 200,
+    "inventory": {
+      "path": "/private/tmp/cbui/txfail-r42hz9dl/reports/view-change-inventory.json",
+      "sha256": "834ceed2ddc9bb72214fb62d0897a4c59eea6df7953a3eef0038d41d4e6e9d9c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013352412023332
+    }
+  },
+  "failedRuntimes": [
+    {
+      "path": "/private/tmp/cbui/txfail-4gyofqp2",
+      "retainedFiles": 198,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-4gyofqp2/reports/view-change-failed-inventory.json",
+        "sha256": "ddddc934061e22cd7d4043a199c80fcb15e5cf907d08b782fce1fe07ca9b3bf4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792013352469234885
+      },
+      "active": false,
+      "remainingDatabases": 0
+    }
+  ],
+  "priorFailure": {
+    "summary": {
+      "path": "/private/tmp/chainbench-view-change-native-summary.json",
+      "sha256": "1c4f9848e4e63e65ed7b08292d24985edb8af8ba50aad2bef2276e196a452d61",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012911285555280
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-view-change-native-native.jsonl",
+      "sha256": "0d2a1aca6450e00a255a4a890eba8ed9e572717e1e7f91dd2068ab2fe213afd5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012910915515209
+    },
+    "accepted": false
+  },
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-view-change-publication.json",
+    "sha256": "8ea5160f1bd22ff4d5a2c9b1c2138f8883ecc3e6ca83902da153f3b428492c10",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792013165264171281
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-view-change-red.log",
+      "sha256": "c2e6e0087ffffa36c5190a0e2c0317ab9a0bb5b2c472c654859bd9a575d1ea96",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012562107317200
+    },
+    {
+      "path": "/private/tmp/chainbench-view-change-green.log",
+      "sha256": "04c69f2d5c0d6e59d3e9d8eaeb74dba5d9dabbee66e552d890ef85f03097416b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012611788652239
+    },
+    {
+      "path": "/private/tmp/chainbench-view-change-final-related-race.log",
+      "sha256": "30be4c3b82d97d825c10570d6c1d44566b4b104a842d16f7c2323e8106d7e452",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012723600349594
+    },
+    {
+      "path": "/private/tmp/chainbench-view-change-preflight-race.log",
+      "sha256": "2d3b63ccb736a36c0ce1ca7891b9d68875cffc47f99c585791bb315b4461a69d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012768611199735
+    },
+    {
+      "path": "/private/tmp/chainbench-view-change-check.log",
+      "sha256": "ea2e8f62b4eff26360e3926588ae659256609f8a500af29d3f05f3241c8e75b2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012862366223693
+    },
+    {
+      "path": "/private/tmp/chainbench-view-change-readiness-clock-check-green.log",
+      "sha256": "9996bba280a422e7b0dffee5a68d13fe46a2628051a6e65a98a73d0704fc9e6e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013255121006501
+    },
+    {
+      "path": "/private/tmp/chainbench-view-restart-readiness-red.log",
+      "sha256": "511f11739c3d861edb74e96a827ad5f26655bdc173559c819c7610dddb0a816b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012964146863349
+    },
+    {
+      "path": "/private/tmp/chainbench-view-generation-clock-behavior-red.log",
+      "sha256": "7e69a45a0b3823dac951e7d5ba7a2f3b4782686fe68270426f4ba559411093eb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013055717299484
+    },
+    {
+      "path": "/private/tmp/chainbench-view-readiness-clock-green.log",
+      "sha256": "ba7f0c49f3860c8350ad8dea44ccd1104cb52017033573e069c1fea1361afa6a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013092895893587
+    },
+    {
+      "path": "/private/tmp/chainbench-view-readiness-final-race.log",
+      "sha256": "8685a76de1f3fd3a74a71ba5f9d73a778a9f5a071fb8e0df60f4038a9832b6da",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013136406214004
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  },
+  "retainedFilesIncludingFailure": 398,
+  "publicationGuardRepair": {
+    "reason": "Hardcoded self-merge target was no longer the selected merged row after WBFT-004 scoped proof. Actual row ID mutation preserves cycle rejection as review states evolve.",
+    "references": [
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/test_tc_sufficiency.py",
+        "sha256": "1f7f05d1d6d1407d83456691519cb320a3f1d3bfb4a04d14718a5b44173f7aa8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1792013442823797326
+      },
+      {
+        "path": "/private/tmp/chainbench-view-publication-check.log",
+        "sha256": "145669e94a4d6c56ed01b6ded686b3434fa1241bcec7d1e7292b21837c719d58",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792013393318258784
+      },
+      {
+        "path": "/private/tmp/chainbench-view-publication-guard-green.log",
+        "sha256": "0786171b8ec57625a9ed201d9f783342b8038b3754c1db4c80c559ca82efe7f9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792013446232100155
+      }
+    ]
+  }
+}

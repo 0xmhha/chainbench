@@ -35,6 +35,8 @@ type Wallet interface {
 	// covers the gas. Returns the transaction hash. Only meaningful on chains
 	// whose provider reports SupportsTxType(0x16).
 	SendFeeDelegated(ctx context.Context, feePayerKey []byte, toHex string, amountWei *big.Int) (txHash string, err error)
+	// SendFeeDelegatedTx preserves a fully specified EIP-1559 inner transaction.
+	SendFeeDelegatedTx(ctx context.Context, feePayerKey []byte, args DynamicTxArgs) (txHash string, err error)
 	// SendLegacy sends a type 0x00 (EIP-155 legacy) value transfer of amountWei
 	// to the hex recipient, returning the tx hash. SendCoin uses type 0x02; this
 	// exposes the legacy path for tx-type regression coverage.
@@ -74,6 +76,27 @@ type Wallet interface {
 	// helpers do not expose — gas-limit bounds, out-of-gas, revert receipts, nonce
 	// ordering, and replacement transactions.
 	SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (txHash string, err error)
+	// SendLegacyTx signs a fully specified legacy or EIP-2930 transaction.
+	// A non-nil AccessList selects EIP-2930, including an explicitly empty list.
+	SendLegacyTx(ctx context.Context, args LegacyTxArgs) (txHash string, err error)
+}
+
+// AccessTuple names an address and its exact 32-byte storage keys.
+type AccessTuple struct {
+	Address     string   `json:"address"`
+	StorageKeys []string `json:"storageKeys"`
+}
+
+// LegacyTxArgs preserves gas, calldata, nonce and access-list contents.
+// Empty ToHex creates a contract; nil Nonce uses the account's pending nonce.
+type LegacyTxArgs struct {
+	ToHex      string
+	Value      *big.Int
+	Data       []byte
+	Gas        uint64
+	GasPrice   *big.Int
+	Nonce      *uint64
+	AccessList []AccessTuple
 }
 
 // DynamicTxArgs fully specifies a type-0x02 transaction. A nil Nonce uses the
@@ -81,19 +104,22 @@ type Wallet interface {
 // and GasTipCap must be non-nil; Gas must be set (no auto-estimation, so a call
 // that would revert or run out of gas still mines with status 0x0).
 type DynamicTxArgs struct {
-	ToHex     string
-	Value     *big.Int
-	Data      []byte
-	Gas       uint64
-	GasFeeCap *big.Int
-	GasTipCap *big.Int
-	Nonce     *uint64
+	ToHex      string
+	Value      *big.Int
+	Data       []byte
+	Gas        uint64
+	GasFeeCap  *big.Int
+	GasTipCap  *big.Int
+	Nonce      *uint64
+	AccessList []AccessTuple
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
 type sdkWallet struct {
-	w    *sdkwallet.Wallet
-	addr string
+	w       *sdkwallet.Wallet
+	client  walletRPC
+	account *sdkacct.Account
+	addr    string
 }
 
 func (s sdkWallet) Address() string { return s.addr }
@@ -106,6 +132,13 @@ func (s sdkWallet) SendCoin(ctx context.Context, toHex string, amountWei *big.In
 	if amountWei == nil {
 		return "", fmt.Errorf("accounts: nil amount")
 	}
+	if s.w == nil {
+		if err := s.guardTransfer(ctx, &to, amountWei); err != nil {
+			return "", err
+		}
+		hash, _, err := s.autoDynamic(ctx, &to, amountWei, nil, 21000)
+		return hash, err
+	}
 	h, err := s.w.SendCoin(ctx, to, amountWei)
 	if err != nil {
 		return "", err
@@ -116,6 +149,17 @@ func (s sdkWallet) SendCoin(ctx context.Context, toHex string, amountWei *big.In
 func (s sdkWallet) Deploy(ctx context.Context, initCode []byte, value *big.Int) (string, string, error) {
 	if len(initCode) == 0 {
 		return "", "", fmt.Errorf("accounts: empty init code")
+	}
+	if s.w == nil {
+		if value == nil {
+			value = new(big.Int)
+		}
+		gas := s.estimatedGas(ctx, nil, value, initCode, 1_000_000)
+		hash, nonce, err := s.autoDynamic(ctx, nil, value, initCode, gas)
+		if err != nil {
+			return "", "", err
+		}
+		return hash, sdktx.CreateAddress(s.account.Address(), nonce).Hex(), nil
 	}
 	h, addr, err := s.w.Deploy(ctx, initCode, value)
 	if err != nil {
@@ -128,6 +172,17 @@ func (s sdkWallet) Execute(ctx context.Context, toHex string, data []byte, value
 	to, err := sdktypes.HexToAddress(toHex)
 	if err != nil {
 		return "", fmt.Errorf("accounts: invalid contract address %q: %w", toHex, err)
+	}
+	if s.w == nil {
+		if value == nil {
+			value = new(big.Int)
+		}
+		if err := s.guardTransfer(ctx, &to, value); err != nil {
+			return "", err
+		}
+		gas := s.estimatedGas(ctx, &to, value, data, 200_000)
+		hash, _, err := s.autoDynamic(ctx, &to, value, data, gas)
+		return hash, err
 	}
 	h, err := s.w.Execute(ctx, to, data, value)
 	if err != nil {
@@ -148,6 +203,9 @@ func (s sdkWallet) SendFeeDelegated(ctx context.Context, feePayerKey []byte, toH
 	if err != nil {
 		return "", fmt.Errorf("accounts: bad fee-payer key: %w", err)
 	}
+	if s.w == nil {
+		return s.rpcFeeDelegated(ctx, feePayer, to, amountWei)
+	}
 	h, err := s.w.SendFeeDelegated(ctx, feePayer, to, amountWei)
 	if err != nil {
 		return "", err
@@ -165,23 +223,23 @@ func (s sdkWallet) SendLegacy(ctx context.Context, toHex string, amountWei *big.
 	}
 	// The SDK wallet's SendCoin is type 0x02; build a legacy tx directly using
 	// the wallet's exported account and client (no SDK change needed).
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	gasPrice, err := s.w.Client.GasPrice(ctx)
+	gasPrice, err := s.client.GasPrice(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: gas price: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
 	t := &sdktx.LegacyTx{Nonce: nonce, GasPrice: gasPrice, Gas: 21000, To: &to, Value: amountWei}
-	if err := t.Sign(chainID, s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(chainID, s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign legacy tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -196,19 +254,19 @@ func (s sdkWallet) SendDynamicFee(ctx context.Context, toHex string, amountWei *
 	if amountWei == nil {
 		return "", fmt.Errorf("accounts: nil amount")
 	}
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	tip, err := s.w.Client.MaxPriorityFeePerGas(ctx)
+	tip, err := s.client.MaxPriorityFeePerGas(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: max priority fee: %w", err)
 	}
-	gasPrice, err := s.w.Client.GasPrice(ctx)
+	gasPrice, err := s.client.GasPrice(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: gas price: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
@@ -216,10 +274,10 @@ func (s sdkWallet) SendDynamicFee(ctx context.Context, toHex string, amountWei *
 		ChainID: chainID, Nonce: nonce, GasTipCap: tip,
 		GasFeeCap: new(big.Int).Add(gasPrice, tip), Gas: 21000, To: &to, Value: amountWei,
 	}
-	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -234,15 +292,15 @@ func (s sdkWallet) SendAccessList(ctx context.Context, toHex string, amountWei *
 	if amountWei == nil {
 		return "", fmt.Errorf("accounts: nil amount")
 	}
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	gasPrice, err := s.w.Client.GasPrice(ctx)
+	gasPrice, err := s.client.GasPrice(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: gas price: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
@@ -250,10 +308,10 @@ func (s sdkWallet) SendAccessList(ctx context.Context, toHex string, amountWei *
 		ChainID: chainID, Nonce: nonce, GasPrice: gasPrice, Gas: 21000,
 		To: &to, Value: amountWei, AccessList: sdktx.AccessList{},
 	}
-	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign access-list tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -268,11 +326,11 @@ func (s sdkWallet) SendDynamicFeeGas(ctx context.Context, toHex string, amountWe
 	if amountWei == nil || gasFeeCap == nil || gasTipCap == nil {
 		return "", fmt.Errorf("accounts: nil amount or fee")
 	}
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
@@ -280,10 +338,10 @@ func (s sdkWallet) SendDynamicFeeGas(ctx context.Context, toHex string, amountWe
 		ChainID: chainID, Nonce: nonce, GasTipCap: gasTipCap, GasFeeCap: gasFeeCap,
 		Gas: 21000, To: &to, Value: amountWei,
 	}
-	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -302,28 +360,32 @@ func (s sdkWallet) SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (st
 		}
 		toPtr = &to
 	}
+	list, err := sdkAccessList(args.AccessList)
+	if err != nil {
+		return "", err
+	}
 	nonce := uint64(0)
 	if args.Nonce != nil {
 		nonce = *args.Nonce
 	} else {
-		n, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+		n, err := s.client.Nonce(ctx, s.account.Address())
 		if err != nil {
 			return "", fmt.Errorf("accounts: nonce: %w", err)
 		}
 		nonce = n
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
 	t := &sdktx.DynamicFeeTx{
 		ChainID: chainID, Nonce: nonce, GasTipCap: args.GasTipCap, GasFeeCap: args.GasFeeCap,
-		Gas: args.Gas, To: toPtr, Value: args.Value, Data: args.Data,
+		Gas: args.Gas, To: toPtr, Value: args.Value, Data: args.Data, AccessList: list,
 	}
-	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -338,19 +400,19 @@ func (s sdkWallet) SendLegacyGas(ctx context.Context, toHex string, amountWei, g
 	if amountWei == nil || gasPrice == nil {
 		return "", fmt.Errorf("accounts: nil amount or gas price")
 	}
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
 	t := &sdktx.LegacyTx{Nonce: nonce, GasPrice: gasPrice, Gas: 21000, To: &to, Value: amountWei}
-	if err := t.Sign(chainID, s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(chainID, s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign legacy tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -365,11 +427,11 @@ func (s sdkWallet) SendAccessListGas(ctx context.Context, toHex string, amountWe
 	if amountWei == nil || gasPrice == nil {
 		return "", fmt.Errorf("accounts: nil amount or gas price")
 	}
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: chain id: %w", err)
 	}
@@ -377,10 +439,10 @@ func (s sdkWallet) SendAccessListGas(ctx context.Context, toHex string, amountWe
 		ChainID: chainID, Nonce: nonce, GasPrice: gasPrice, Gas: 21000,
 		To: &to, Value: amountWei, AccessList: sdktx.AccessList{},
 	}
-	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign access-list tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -405,11 +467,11 @@ func (s sdkWallet) signAuthorization(ctx context.Context, authorityKey []byte, d
 	if err != nil {
 		return zero, fmt.Errorf("accounts: bad authority key: %w", err)
 	}
-	chainID, err := s.w.Client.ChainID(ctx)
+	chainID, err := s.client.ChainID(ctx)
 	if err != nil {
 		return zero, fmt.Errorf("accounts: chain id: %w", err)
 	}
-	authNonce, err := s.w.Client.Nonce(ctx, authority.Address())
+	authNonce, err := s.client.Nonce(ctx, authority.Address())
 	if err != nil {
 		return zero, fmt.Errorf("accounts: authority nonce: %w", err)
 	}
@@ -455,15 +517,15 @@ func (s sdkWallet) SendSetCode(ctx context.Context, authorityKey []byte, delegat
 	if err != nil {
 		return "", err
 	}
-	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	nonce, err := s.client.Nonce(ctx, s.account.Address())
 	if err != nil {
 		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
-	tip, err := s.w.Client.MaxPriorityFeePerGas(ctx)
+	tip, err := s.client.MaxPriorityFeePerGas(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: priority fee: %w", err)
 	}
-	gp, err := s.w.Client.GasPrice(ctx)
+	gp, err := s.client.GasPrice(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: gas price: %w", err)
 	}
@@ -471,13 +533,13 @@ func (s sdkWallet) SendSetCode(ctx context.Context, authorityKey []byte, delegat
 	// the transaction needs — no second lookup.
 	t := &sdktx.SetCodeTx{
 		ChainID: auth.ChainID, Nonce: nonce, GasTipCap: tip, GasFeeCap: new(big.Int).Add(gp, tip),
-		Gas: setCodeGasLimit, To: s.w.Account.Address(), Value: big.NewInt(0),
+		Gas: setCodeGasLimit, To: s.account.Address(), Value: big.NewInt(0),
 		AuthorizationList: []sdktx.SetCodeAuthorization{auth},
 	}
-	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign set-code tx: %w", err)
 	}
-	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	h, err := s.client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
@@ -507,7 +569,7 @@ func openWallet(ctx context.Context, privKey []byte, rpcURL string) (Wallet, err
 	if err != nil {
 		return nil, fmt.Errorf("accounts: open wallet: %w", err)
 	}
-	return sdkWallet{w: w, addr: acct.Address().Hex()}, nil
+	return sdkWallet{w: w, client: client, account: acct, addr: acct.Address().Hex()}, nil
 }
 
 // AddressForKey derives the 0x-prefixed hex address for a private key, offline.

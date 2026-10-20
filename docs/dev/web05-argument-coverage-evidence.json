@@ -1,0 +1,830 @@
+{
+  "date": "2026-10-18",
+  "scope": "Close 15 missing WEB05 argument execution paths and prevent the corpus address unit fixture from rewriting committed keys. Scoped capture plus independent artifact audit; not fresh browser reproduction or final all14 acceptance.",
+  "headAtProof": "07eae156bf7e6e0a872f867f178ffb783f0937e7",
+  "workingTreeModifiedAtProof": true,
+  "red": {
+    "missingRegistrations": 9,
+    "missingArgumentPaths": 15,
+    "oldCoverage": {
+      "executed": 423,
+      "denominator": 438
+    },
+    "addressBaselineAddedPositions": 21,
+    "committedKeyMetadataFailures": 20
+  },
+  "implementation": [
+    "Keep all six coverage presets compatible and declare a local named payer. Exercise named-payer sends and both named/key contract-creation sponsorship, deployed code and sender/payer balances.",
+    "Exercise node-signed raw fee delegation: typed tampered-signature refusal with unchanged nonce, then the original signed envelope mining successfully.",
+    "Exercise regexpCount pattern/since in read, waitFor and derive assertions, a fully read node log, and both finite observed metric samples.",
+    "Use a disposable KeySet for corpus address resolution. Its Register call persists derived key files and must never target committed presets/keys. Preserve original key bytes/mode/owner/mtime in subsequent checks.",
+    "Add a CI declaration guard against the served editor contract. This guard alone is not execution evidence."
+  ],
+  "green": {
+    "makeCheckExitCode": 0,
+    "relatedRacePackages": [
+      "internal/app",
+      "internal/testhelper",
+      "internal/dsl",
+      "internal/dsl/assert",
+      "internal/dsl/interp"
+    ],
+    "actualCapture": {
+      "criterion": "WEB-05",
+      "phase": "capture",
+      "head": "07eae156bf7e6e0a872f867f178ffb783f0937e7",
+      "sourceBefore": "c5694c81e377af305b5b12553bf67981367902cb05d4b10c1cb0f71f6967005c",
+      "sourceAfter": "c5694c81e377af305b5b12553bf67981367902cb05d4b10c1cb0f71f6967005c",
+      "sourceUnchanged": true,
+      "trackedAndUserMetadataUnchanged": true,
+      "exitCode": 0,
+      "elapsedSeconds": 588.658313035965,
+      "log": "/private/tmp/chainbench-final-web-05-capture-1792282252453489000.log",
+      "all14Accepted": false
+    },
+    "independentAudit": {
+      "accepted": true,
+      "scope": "WEB05 argument coverage capture and independent artifact audit; fresh browser reproduction and all14 final acceptance remain separate",
+      "sourceDigest": "c5694c81e377af305b5b12553bf67981367902cb05d4b10c1cb0f71f6967005c",
+      "nativePassedTests": 14,
+      "coverageCasesIncludingFork": 7,
+      "executedAndEditedArgumentPaths": 438,
+      "scopedNewArgumentPaths": 15,
+      "sourceAndUserMetadataUnchanged": true,
+      "negativeControlsRejected": [
+        "failed-capture",
+        "changed-source",
+        "changed-key-metadata",
+        "false-all14-claim",
+        "reduced-denominator",
+        "missing-executed-argument",
+        "hidden-failure",
+        "hidden-skip",
+        "mock-target",
+        "omitted-case",
+        "changed-case-result",
+        "omitted-step",
+        "wrong-step-type",
+        "step-error",
+        "failed-assertion",
+        "omitted-assertion",
+        "changed-native-input",
+        "failed-key-deployment",
+        "wrong-deployment-type",
+        "wrong-deployment-hash",
+        "wrong-runtime-code",
+        "wrong-interval-count",
+        "unavailable-alternative"
+      ],
+      "runtime": "/private/tmp/cbui/239bf302-2739-474e-871b-5f506cd666d3",
+      "remainingDatabases": 0,
+      "activeRuntime": false,
+      "realRawAccessListValueIndependentlyQueried": false,
+      "regexpIntervalSource": "deterministic captured string, not a claim about a live log interval",
+      "all14Accepted": false
+    },
+    "corpusImported": 238
+  },
+  "historicalPartialAcceptance": {
+    "scope": "07e/c5f2 source only; do not reuse these four pairs on the changed source",
+    "preservation": {
+      "acceptedPreservation": true,
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-07eae156-web01-04-pass-web05-argument-gaps",
+      "entries": 377,
+      "allContentAndMetadataMatch": true,
+      "sourceDigest": "c5f2320ae27f8ee4658c90882415f928d993d872fe098b99a928770d8d9a2ebe",
+      "web01To04CaptureAndRecheckPassed": true,
+      "web05Accepted": false,
+      "web05ActualJobsPassed": true,
+      "argumentPaths": 438,
+      "executedArgumentPaths": 423,
+      "web05Blockers": [
+        "argument paths not executed by a passing Web job: {\"action:deployContract\": [\"accessList\", \"feePayer\", \"feePayerKey\"], \"action:read\": [\"pattern\", \"since\"], \"action:readNodeLog\": [\"requireComplete\"], \"action:sendRawTampered\": [\"raw\"], \"action:sendTx\": [\"feePayer\"], \"action:waitFor\": [\"pattern\", \"since\"], \"assertion:derive\": [\"pattern\", \"since\"], \"assertion:metric\": [\"alternatives\"], \"reader:derive\": [\"pattern\", \"since\"]}"
+      ],
+      "runtime": "/private/tmp/cbui/26da3fc2-43d8-4bdd-9e7e-2710acf12c9b",
+      "runtimeRemainingDBs": [],
+      "independentSourceTreesPreservedByIndex": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/independent-runtime-index.jsonl",
+      "all14Accepted": false
+    },
+    "fourPassedPairs": [
+      {
+        "criterion": "WEB-01",
+        "phases": [
+          {
+            "phase": "capture",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-01-capture-1792279088282993000.json",
+              "sha256": "5cae15ff345954bbb1e9c03a13d75b1c7b88a15aa822a6f6070278815378907c",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279156266885333
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-01-capture-1792279088282993000.log",
+              "sha256": "b3ae2c181f3fb8dc90effb7dbc64b8dc57ef32332a74e9bc045fc43b26439a2c",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279156069946268
+            },
+            "exitCode": 0
+          },
+          {
+            "phase": "recheck",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-01-recheck-1792279187268304000.json",
+              "sha256": "6d2828c1ad0fc69e4b058abe271bc393564f587e64e01acb658c6c636346a34c",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279301499756397
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-01-recheck-1792279187268304000.log",
+              "sha256": "1f11b2edb03e02ce9ed6e9e8f660d67537ffd7323bd4f3e1d1a2441ad8195a8f",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279301286026888
+            },
+            "exitCode": 0
+          }
+        ]
+      },
+      {
+        "criterion": "WEB-02",
+        "phases": [
+          {
+            "phase": "capture",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-02-capture-1792279347886933000.json",
+              "sha256": "77408f2fa35851d539ad7bbb68848c392b6a40f858770399f9d3c3f9adf462c0",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279469605351524
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-02-capture-1792279347886933000.log",
+              "sha256": "e6cdc4a8fc0cabbaae3b95e7fffd9487409d1de59cdc5ca79bf5400734217e87",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279469403435701
+            },
+            "exitCode": 0
+          },
+          {
+            "phase": "recheck",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-02-recheck-1792279492443796000.json",
+              "sha256": "2e99014287a6b9996d8a1208f7b872aab3a90aeaa7b8368a7dc2f741040cdbd9",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279633651471977
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-02-recheck-1792279492443796000.log",
+              "sha256": "a0bc65c97736cc4b195ac45a65508de2d6c9608ab9cacee0edc710df954cb8b7",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279633430586507
+            },
+            "exitCode": 0
+          }
+        ]
+      },
+      {
+        "criterion": "WEB-03",
+        "phases": [
+          {
+            "phase": "capture",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-03-capture-1792279642456501000.json",
+              "sha256": "7e2ddd3aeda9ef10eb28b0e6bb4e232ac11ded8b6ec9d7a5f810543cff85048b",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279657507502232
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-03-capture-1792279642456501000.log",
+              "sha256": "e32831e2943c9b9926446b460b4e38d36d9581a02a11d36057246e8f706d4fb9",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279657316499642
+            },
+            "exitCode": 0
+          },
+          {
+            "phase": "recheck",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-03-recheck-1792279675407232000.json",
+              "sha256": "bee7dd3170650515d443ae6ccc5e88686b1d27bcb92f32fdb0c2659987534789",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279733808540940
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-03-recheck-1792279675407232000.log",
+              "sha256": "993f4773aef7a0626a110fa1403761c77764d33a1583e52667e9c3463bee9ce6",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279733598181664
+            },
+            "exitCode": 0
+          }
+        ]
+      },
+      {
+        "criterion": "WEB-04",
+        "phases": [
+          {
+            "phase": "capture",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-04-capture-1792279759198435000.json",
+              "sha256": "6f2475f80f288269ee87bbe764d5536753b063089f3891bad8692dc4fa59f5fc",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279792288398574
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-04-capture-1792279759198435000.log",
+              "sha256": "a5225768c23c7d9f4b90f47dd509b4743c5e6b35c1faacebae2631ceed5376f5",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279791797695065
+            },
+            "exitCode": 0
+          },
+          {
+            "phase": "recheck",
+            "summary": {
+              "path": "/private/tmp/chainbench-final-web-04-recheck-1792279807504248000.json",
+              "sha256": "cb0c14910e63be6ef7fd21c0df3e9cfea439c581b82c08e8a015ced494bd8eab",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279861556051345
+            },
+            "log": {
+              "path": "/private/tmp/chainbench-final-web-04-recheck-1792279807504248000.log",
+              "sha256": "efd1da232935530bf3aa6036ed62a32c983979fb622db354b978dcb441b175f6",
+              "mode": "0o644",
+              "uid": 501,
+              "gid": 0,
+              "mtimeNS": 1792279861326712004
+            },
+            "exitCode": 0
+          }
+        ]
+      }
+    ],
+    "all14Accepted": false
+  },
+  "firstNativeAttempt": {
+    "acceptedPreservation": true,
+    "originals": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-first-fee-budget-failure",
+    "entries": 28,
+    "allContentAndMetadataMatch": true,
+    "failedCapture": {
+      "criterion": "WEB-05",
+      "phase": "capture",
+      "head": "07eae156bf7e6e0a872f867f178ffb783f0937e7",
+      "sourceBefore": "2c49c5c9594f6ba5d5f5bad2bcd127c48feb9d0e0808fc11f7839b7ca67e41d0",
+      "sourceAfter": "2c49c5c9594f6ba5d5f5bad2bcd127c48feb9d0e0808fc11f7839b7ca67e41d0",
+      "sourceUnchanged": true,
+      "trackedAndUserMetadataUnchanged": false,
+      "exitCode": 1,
+      "elapsedSeconds": 360.01337599754333,
+      "log": "/private/tmp/chainbench-final-web-05-capture-1792281499020849000.log",
+      "all14Accepted": false
+    },
+    "sourceKeyMetadataViolation": [
+      {
+        "path": "presets/keys/node1/address",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469736419719,
+        "afterAdditionalUnitREDMtimeNS": 1792281928519000162
+      },
+      {
+        "path": "presets/keys/node1/bls",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469736489179,
+        "afterAdditionalUnitREDMtimeNS": 1792281928519055038
+      },
+      {
+        "path": "presets/keys/node1/pop",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469736556472,
+        "afterAdditionalUnitREDMtimeNS": 1792281928519103997
+      },
+      {
+        "path": "presets/keys/node1/private",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469736318967,
+        "afterAdditionalUnitREDMtimeNS": 1792281928518868368
+      },
+      {
+        "path": "presets/keys/node2/address",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469747215638,
+        "afterAdditionalUnitREDMtimeNS": 1792281928520028682
+      },
+      {
+        "path": "presets/keys/node2/bls",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469747280764,
+        "afterAdditionalUnitREDMtimeNS": 1792281928520076016
+      },
+      {
+        "path": "presets/keys/node2/pop",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469747347682,
+        "afterAdditionalUnitREDMtimeNS": 1792281928520119975
+      },
+      {
+        "path": "presets/keys/node2/private",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469747145387,
+        "afterAdditionalUnitREDMtimeNS": 1792281928519971681
+      },
+      {
+        "path": "presets/keys/node3/address",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469757624550,
+        "afterAdditionalUnitREDMtimeNS": 1792281928521144537
+      },
+      {
+        "path": "presets/keys/node3/bls",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469757691635,
+        "afterAdditionalUnitREDMtimeNS": 1792281928521198955
+      },
+      {
+        "path": "presets/keys/node3/pop",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469757759636,
+        "afterAdditionalUnitREDMtimeNS": 1792281928521248539
+      },
+      {
+        "path": "presets/keys/node3/private",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469757550507,
+        "afterAdditionalUnitREDMtimeNS": 1792281928521056577
+      },
+      {
+        "path": "presets/keys/node4/address",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469767276947,
+        "afterAdditionalUnitREDMtimeNS": 1792281928522408687
+      },
+      {
+        "path": "presets/keys/node4/bls",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469767348532,
+        "afterAdditionalUnitREDMtimeNS": 1792281928522465563
+      },
+      {
+        "path": "presets/keys/node4/pop",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469767410866,
+        "afterAdditionalUnitREDMtimeNS": 1792281928522531772
+      },
+      {
+        "path": "presets/keys/node4/private",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469767204445,
+        "afterAdditionalUnitREDMtimeNS": 1792281928522325102
+      },
+      {
+        "path": "presets/keys/node5/address",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469776816800,
+        "afterAdditionalUnitREDMtimeNS": 1792281928523649503
+      },
+      {
+        "path": "presets/keys/node5/bls",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469776877509,
+        "afterAdditionalUnitREDMtimeNS": 1792281928523705129
+      },
+      {
+        "path": "presets/keys/node5/pop",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469776941427,
+        "afterAdditionalUnitREDMtimeNS": 1792281928523787672
+      },
+      {
+        "path": "presets/keys/node5/private",
+        "contentAndPermissionsUnchanged": true,
+        "beforeCaptureMtimeNS": 1792281469776742090,
+        "afterAdditionalUnitREDMtimeNS": 1792281928523574626
+      }
+    ],
+    "mtimeObservation": "After the additional unit RED; no original mtime restoration performed",
+    "intentionalRepositoryEditsAfterProofExited": [
+      "internal/testhelper/corpus_address_test.go"
+    ],
+    "firstPreserverError": "Preservation rename and exact manifest comparison succeeded, then the source diagnosis rejected the intentional post-proof unit-test edit. Completion rechecked the unchanged preserved manifest and classified that edit separately.",
+    "originalTimesRestored": false,
+    "failureRuntime": "/private/tmp/cbui/3e5d8ad4-9b7f-48d3-b7ed-353d72137860",
+    "remainingDatabases": 0,
+    "activeRuntime": false,
+    "web05Accepted": false,
+    "all14Accepted": false
+  },
+  "auditCorrections": [
+    {
+      "original": "chainbench-web05-arguments-independent-20261018.py",
+      "failure": "An assertion-only case legitimately has no steps.json. Empty steps are allowed only when the spec has no actions; otherwise exact action indices still reject omission."
+    },
+    {
+      "original": "chainbench-web05-arguments-independent-corrected-20261018.py",
+      "failure": "An action expect outcome argument was double-counted as a standalone assertion. The corrected audit distinguishes statements by do before expect."
+    },
+    {
+      "original": "chainbench-preserve-web05-first-20261018.py",
+      "failure": "Exact same-volume preservation succeeded; later source diagnosis rejected the intentional post-proof RED-test edit. The completion helper reverified the preserved manifest and recorded that separate edit."
+    }
+  ],
+  "environmentFailure": "First make check could not bind local test servers in the sandbox. The host check and final check passed; this is not product RED.",
+  "preservation": {
+    "acceptedPreservation": true,
+    "originals": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81",
+    "entries": 240,
+    "allContentAndMetadataMatch": true,
+    "preserved": [
+      "type",
+      "content",
+      "mode",
+      "uid",
+      "gid",
+      "mtime",
+      "xattrs",
+      "ACL"
+    ],
+    "runtime": "/private/tmp/cbui/239bf302-2739-474e-871b-5f506cd666d3",
+    "remainingDatabases": 0,
+    "activeRuntime": false,
+    "sourceDigest": "c5694c81e377af305b5b12553bf67981367902cb05d4b10c1cb0f71f6967005c",
+    "web05CapturePassed": true,
+    "freshWeb05BrowserReproductionPassed": false,
+    "all14Accepted": false
+  },
+  "limits": [
+    "Fourteen native cases are not fourteen Web criteria.",
+    "Fresh independent Web browser reproduction, current-source final WEB01..14, full live race/e2e and whole L1 remain open.",
+    "The new accessList was executed and its deployment mined, but the raw wire access-list value was not separately queried by this artifact audit.",
+    "The regexp interval fixture uses a deterministic captured string; it does not claim a live log interval.",
+    "First failed capture changed committed key mtimes without changing bytes or permissions. No original timestamps were restored to hide the failure.",
+    "Earlier missing historical receipts and external W3/W4, testnet inputs and wbft-stablenet provenance remain separate open work."
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-red-20261018.log",
+      "sha256": "1e3d83a69c5d4c81f7ee0f08efd7ea0804073af22917f751acd440db6035a391",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792280686887973832
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-green-20261018.log",
+      "sha256": "1a169f2f3d8de977727f38c131f2c0ce06b9d69c0c2af51d16990d736d4d0d5b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281057966176073
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-corpus-addresses-first-20261018.log",
+      "sha256": "77c4d06e2841d245838c9e35af48853c80b1f0b235ee7c0e91180ca9192a9f6b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281205829441037
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-corpus-addresses-update-20261018.log",
+      "sha256": "8ed12351e97b619ff51dd8ff612ff871e0de487e814427298807684073ecddd9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281218975909231
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-key-preservation-red-20261018.log",
+      "sha256": "727f3cf0316f5e2d6873766759c1ec1757e8718dd7de20470f450c4ea012d9f5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281928526930317
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-key-preservation-green-20261018.log",
+      "sha256": "4f45d210dc75d1c5e09aed510b595c2c7f539721c83775ffeffbf3315a64fae4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281988806305890
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-check-20261018.log",
+      "sha256": "27c8e5e6a52b70c1b422479208497d434a156feb6547ac2d82230cb236c7355c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281249022423823
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-check-host-20261018.log",
+      "sha256": "5c091bf816a285a1dfe57a1efb321eb20546bb8148105e093a24aacd072e3503",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281418949317091
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-check-final-20261018.log",
+      "sha256": "af5b556b9adcaf382d7fe758efb836326aa56a178e18ad360a344785b708a1c2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282170134568062
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-race-final-20261018.log",
+      "sha256": "2db8e816936d1755b9c908911cddf2e44505085ce5a5a426607c279bf9ec6708",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282244499661006
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-05-capture-1792281499020849000.json",
+      "sha256": "41146cc45bde6f3c0066580ae78fdf8e18ef5d21f86d832cf30781531f3d842e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281859736258760
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-05-capture-1792281499020849000.log",
+      "sha256": "348e7db5c42098ba5bc26f0714c93e2aa21e20dd3fdc477c9bdaec9f45f8936c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281858242910495
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-05-capture-1792282252453489000.json",
+      "sha256": "27e847a5116e119352b4405045bfacdad8ede7c0f9d18eb6213433ff1ae3246a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282841890209279
+    },
+    {
+      "path": "/private/tmp/chainbench-final-web-05-capture-1792282252453489000.log",
+      "sha256": "da132e62d3de890333b9ef5251fe8b3d8b48e38d22af560558cc19af654906ea",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282841643758963
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-20261018.py",
+      "sha256": "fcadc815f26d9f6504149d3586cfde8ffc12997281efacd4502eba587aa85445",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282361657532488
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-20261018.log",
+      "sha256": "2cd3fcce5d215aef4bcab6a3322e8bf4989f6bb03bf061ee7c0dbe2efb2df79a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282864945626008
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-corrected-20261018.py",
+      "sha256": "50588bbd833515b0076a373062c7a09d009ebf5a24a179c91be7d9e91ae9ab6b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282880200127384
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-corrected-20261018.log",
+      "sha256": "bbf86af5a5a640f8ac47716d1f40aa73eda4602b54dfc60d99f0140a4aad7b6d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282880240323628
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-v2-20261018.py",
+      "sha256": "740408d0cb2b634afcb0edd5167dcb7ef34393bdcee2bb416785e6b4625d4c81",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282907595113246
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-v2-20261018.log",
+      "sha256": "d4c1607b89bb47cf0026275a528eddbadcf658cc8b96de5ebb0d7c531777a567",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282908630594230
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-independent-20261018.json",
+      "sha256": "6292bef4470617462e41250f6fc8b32a52d3bf1b7c655bd26296d52e7f2d6d5e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282908630429310
+    },
+    {
+      "path": "/private/tmp/chainbench-preserve-web05-first-20261018.py",
+      "sha256": "d0a4a4cf1316c609d3376e07fce7a58b707339883e271c8aad6762abb0566464",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281941746311009
+    },
+    {
+      "path": "/private/tmp/chainbench-preserve-web05-first-complete-20261018.py",
+      "sha256": "41899cbf3f5d9301565317490f7bd3290b771891a5eff0b8b58cc880dab5f339",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281970747898014
+    },
+    {
+      "path": "/private/tmp/chainbench-preserve-web05-green-20261018.py",
+      "sha256": "aa3116e89bf961f15fc82fcfe867bd76517142260dc231d0507f980160acb6a1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282924455172788
+    },
+    {
+      "path": "/private/tmp/chainbench-web05-arguments-publish-20261018.py",
+      "sha256": "be3a228d957ee4d5a7bf49bf36202f3a26ee048d3eb8f01154fffa8673a8c20c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282980368372167
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-07eae156-preservation.json",
+      "sha256": "9f72270b0beb0e74bbce090986edd3e8e4e3b1d31c9b97d901569262a4656183",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792280612957965153
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-07eae156-before.json",
+      "sha256": "e1a40778bc1e02cbaac91aff3996fbd686d6ffe5ded1395c19e2f92123c9e7d7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792280610401215088
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/independent-runtime-index.jsonl",
+      "sha256": "3e4ed97530d419d27265005099627a05cafc30ba318d7a78fc01453998516c23",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792280576421152806
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-first-preservation.json",
+      "sha256": "44527bd751f51aed3e27c137a323c9c9616806601c8c905f2db5e94cb159b06a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281971513651853
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-first-before.json",
+      "sha256": "46de4b0d913de44f392e8742a37663b08cf85499ef79c76db51ee102a5150454",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792281942150987166
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-preservation.json",
+      "sha256": "2b867b55d975af78d2cad8688dad6651089236c4ed9051c62154e0ecb124b14f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282927857859279
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-before.json",
+      "sha256": "3192c024bc37eb007e83f85f4dbab04339714cb458df3b8102312a3a181a4960",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792282926261369666
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/evidence.json",
+      "sha256": "be433b571cc337c7418660797d507ee0eef7b4ae4c8d60dcc1ce489c646ebbe1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282839385295872
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/result.json",
+      "sha256": "6dfd61ff96843f0b505a547571c6c0870cb994899e7d5f7fcf1e304725735097",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282839388439309
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/coverage.json",
+      "sha256": "06596eea9550ac54d3ef5c630ce56a820e364c283ba83025b7c9d67f4e889173",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282838396092626
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/sessions.json",
+      "sha256": "d35a032142d2d8d31840d90136460eca652fce779d63bb1deb83bf51da599d27",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282838396987768
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/attach-sessions.json",
+      "sha256": "09e924429bb1ea63bb6ab717317c6d0204ab737f4cc2b78e85671a6022573b69",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282838432537963
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/declared-accounts-session.json",
+      "sha256": "9e053a18c17106e36180b4c1ebb4418d4309cc468cc867007a4ec6485041adb2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282838438021153
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/contract.json",
+      "sha256": "24d8d5b89fbdc9faa8c554266cc33199bafec2339d19a5548287db1f4d61eb0c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282272161856547
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/job.json",
+      "sha256": "8195999df960789e11ae8dd8af8fbb97ad556726369f241a5864e1acc14b96fe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282620578768596
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/fork-job.json",
+      "sha256": "d3fc462d3ccd6431bbe2a3954b5c14ad4b409e32819fc1e7cbbfa0c3a50f5b73",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282787260150764
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/web05-arguments-green-c5694c81/WEB-05/attach-job.json",
+      "sha256": "0e2d7df10942cef31f2e3691fd8a9e021b4ff24591ac420c9a631173ff0152a1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792282838153232755
+    }
+  ],
+  "all14Accepted": false
+}

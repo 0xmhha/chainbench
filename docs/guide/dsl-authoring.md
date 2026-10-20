@@ -328,7 +328,20 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 주소는 대소문자를 무시하며, 빈 집합은 아무것도 통과시키지 않는다. "이 주소가 아니다"를
 `NotEqual` 로 쓰면 세상의 다른 모든 주소가 통과하므로, 허용 집합이 있으면 `In` 을 쓴다.
 
-`derive` 의 `op` 는 여섯 가지다. `sum` `diff` `mul` `word` `quorum` `abiCall`.
+`derive` 의 `op` 는 여덟 가지다. `sum` `diff` `mul` `min` `word` `quorum` `abiCall` `regexpCount`.
+`min`은 임의 정밀도의 정수 중 최솟값을 고른다. 동적 수수료의 포함 블록 기본 수수료와
+실제 거래 cap/tip을 읽은 뒤 `baseFee + min(tipCap, feeCap - baseFee)`를 검증할 때 쓴다.
+
+`regexpCount`는 `of`에 캡처 문자열 하나와 `pattern`에 Go 정규식을 받아 일치 수를 10진 문자열로 돌려준다.
+선택 `since`는 이전 로그 캡처의 정확한 접두를 제거한다. 캡처 경계는 줄 끝이어야 하며, 마지막 개행이 정규화돼 빠졌다면 다음 문자가 개행이어야 한다.
+접두가 사라졌거나 줄 중간에서 잘린 경계·입력 형식·정규식이 잘못되면 실패한다.
+`readNodeLog`의 `requireComplete: true`는 빈 캡처와 `maxBytes` 한도에 닿은 캡처를 거절한다.
+다음은 완전한 두 로그에서 재시작 이후의 서명 오류가 없음을 검증하는 예다.
+
+```json
+{"expect":"derive","op":"regexpCount","of":["$logAfter"],"since":"$logBefore","pattern":"(?i)invalid.*signature","is":"0"}
+```
+로그 읽기의 기본값은 기존처럼 꼬리 캡처다. 오류 부재를 판정할 때는 두 읽기 모두 `requireComplete`를 사용한다.
 
 ---
 
@@ -349,7 +362,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `load` | `blocks`, `fillPercent`, `from`, `gas`, `on`, `pollInterval`, `timeout`, 수수료 인자 | 4 | `internal/testhelper/load.go` |
 | `newAccount` | `saveKey` | 52 | `internal/testhelper/builtins.go` |
 | `partition` | `groups`, `method` | 1 | `internal/testhelper/partition.go` |
-| `readNodeLog` | `maxBytes`, `on` | 5 | `internal/testhelper/fault.go` |
+| `readNodeLog` | `maxBytes`, `on`, `requireComplete` | 5 | `internal/testhelper/fault.go` |
 | `registerContract` | `data`, `from`, `gas`, `on`, `pollInterval`, `timeout`, `to`, `value`, 수수료 인자 | 1 | `internal/testhelper/assets.go` |
 | `resetNode` | `on` | 3 | `internal/testhelper/fault.go` |
 | `restartNode` | `on` | 6 | `internal/testhelper/fault.go` |
@@ -384,7 +397,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `callError` | `data`, `on`, `reason`, `to` | 1 | `internal/testhelper/txprobe.go` |
 | `gasPriceIsBaseFeePlusTip` | `on` | 1 | `internal/testhelper/derived.go` |
 | `methodPresent` | `method`, `on`, `params` | 1 | `internal/testhelper/txprobe.go` |
-| `metric` | `compare`, `expected`, `name`, `on` | 6 | `internal/testhelper/metric.go` |
+| `metric` | `alternatives`, `compare`, `expected`, `name`, `on`, `onEach` | 6 | `internal/testhelper/metric.go` |
 | `rpcError` | `method`, `on`, `params`, `reason` | 1 | `internal/testhelper/txprobe.go` |
 | `sameBlockHash` | `block`, `on` | 13 | `internal/testhelper/blockassert.go` |
 | `txMined` | `expected`, `hash`, `on` | 1 | `internal/testhelper/txprobe.go` |
@@ -407,7 +420,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `codeAt` | `address` | `Equal` | 15 | `internal/testhelper/read.go` |
 | `contractChecksum` | `address`, `bytecode`, `data` | `Equal` | 1 | `internal/testhelper/read.go` |
 | `createAddress` | `deployer`, `from`, `nonce` | `Equal` | 1 | `internal/testhelper/read.go` |
-| `derive` | `format`, `index`, `of`, `op`, `selector` | `Equal` | 79 | `internal/testhelper/derived.go` |
+| `derive` | `format`, `index`, `of`, `op`, `pattern`, `selector`, `since` | `Equal` | 79 | `internal/testhelper/derived.go` |
 | `estimateGas` | `data`, `from`, `to` | `GreaterOrEqual` | 2 | `internal/testhelper/read.go` |
 | `gasPrice` | — | `GreaterOrEqual` | 5 | `internal/testhelper/derived.go` |
 | `logs` | `address`, `fromBlock`, `index`, `select`, `toBlock`, `topics` | `Equal` | 13 | `internal/testhelper/logs.go` |
@@ -436,7 +449,7 @@ chainbench validate tests/tc/<path>.json
 
 `IGNORED ARGUMENT: chainId.timeout` 처럼 나오면 그 어휘가 읽지 않는 인자를 적은 것이다. 읽지 않는 인자는 아무 효과가 없어서, 받아 주면 케이스가 갖지 않은 제한 시간이나 노드나 저장값을 가진 것처럼 읽힌다. 그래서 `validate` 와 실행 전 검사, Web 편집기가 모두 거절한다. 어휘마다 읽는 인자는 `internal/testhelper/arguments.go` 의 `builtinArguments` 에 적혀 있고, 테스트가 구현 코드에서 같은 목록을 뽑아 대조하므로 코드와 어긋나면 빌드가 깨진다. 이 목록은 해석기가 대신 읽는 것까지 포함한다. `save` 는 값을 돌려주는 동작에만 붙는다. `onEach` 는 동작에는 노드마다 한 번씩 돌리는 뜻으로 붙고, 판정에는 고른 노드를 모두 보는 것에만 붙는다. `blockStalled`·`blockInterval`·`txMined`·`callError`·`rpcError`·`methodPresent`·`gasPriceIsBaseFeePlusTip`·`wsSubscribe` 는 첫 노드만 보므로 `on` 만 받는다.
 
-어떤 인자는 정해진 경로에서만 읽힌다. 그 경로를 타지 않는 문장에 적으면 같은 이유로 거절하고, 괄호 안에 이유를 붙인다. `delta`·`tol` 은 `compare: "InDelta"` 일 때만 읽고, 둘을 함께 쓰면 `delta` 만 읽는다. `sendTx` 의 `reason` 은 거절이나 `keptOut` 을 기대할 때만, `blocks` 는 `keptOut` 일 때만 읽는다. `expectPerChain` 으로 체인마다 결과가 갈리면 어느 한 체인에서라도 읽히는 인자는 받는다. `startNode`·`swapNode` 의 `reason` 은 노드가 뜨지 않기를 기대할 때만 읽는다. `derive` 의 `selector` 는 `abiCall`, `index` 는 `word`, `format` 은 `sum`·`diff`·`mul` 에서만 읽는다. `key` 로 서명하는 `sendTx` 는 `from` 을, `deployContract` 는 `from`·`gas`·수수료 인자·`nonce` 를 읽지 않는다. `swapNode` 의 `purpose` 는 `config` 를 바꿀 때 그 기록 이름으로만 쓰인다. `blockInterval` 은 `maxMillis`·`minMillis` 가 있으면 초 단위 경계를 읽지 않는다. `contractChecksum` 과 `validators` 의 값은 수가 아니어서 `InDelta` 로 비교할 수 없다. `bytecode` 와 `data`, `deployer` 와 `from`, `gas` 와 `fillPercent` 처럼 앞의 것만 읽는 짝은 하나만 쓴다. `on` 과 `onEach` 도 하나만 쓴다.
+어떤 인자는 정해진 경로에서만 읽힌다. 그 경로를 타지 않는 문장에 적으면 같은 이유로 거절하고, 괄호 안에 이유를 붙인다. `delta`·`tol` 은 `compare: "InDelta"` 일 때만 읽고, 둘을 함께 쓰면 `delta` 만 읽는다. `sendTx` 의 `reason` 은 거절이나 `keptOut` 을 기대할 때만, `blocks` 는 `keptOut` 일 때만 읽는다. `expectPerChain` 으로 체인마다 결과가 갈리면 어느 한 체인에서라도 읽히는 인자는 받는다. `startNode`·`swapNode` 의 `reason` 은 노드가 뜨지 않기를 기대할 때만 읽는다. `derive` 의 `pattern`·`since`는 `regexpCount`, `selector` 는 `abiCall`, `index` 는 `word`, `format` 은 `sum`·`diff`·`mul`·`min` 에서만 읽는다. `key` 로 서명하는 `sendTx` 는 `from` 을, `deployContract` 는 `from`·`gas`·수수료 인자·`nonce` 를 읽지 않는다. `swapNode` 의 `purpose` 는 `config` 를 바꿀 때 그 기록 이름으로만 쓰인다. `blockInterval` 은 `maxMillis`·`minMillis` 가 있으면 초 단위 경계를 읽지 않는다. `contractChecksum` 과 `validators` 의 값은 수가 아니어서 `InDelta` 로 비교할 수 없다. `bytecode` 와 `data`, `deployer` 와 `from`, `gas` 와 `fillPercent` 처럼 앞의 것만 읽는 짝은 하나만 쓴다. `on` 과 `onEach` 도 하나만 쓴다.
 
 `is` 와 `expected` 를 한 문장에 함께 쓰면 거절한다. 낮추는 단계가 `is` 를 `expected` 로 옮기면서 하나를 덮어쓰기 때문이다.
 
@@ -507,3 +520,73 @@ tests/tc/common/node/CT-NODE-009-head-hash-agreement.json
 ### 쓸 수 없는 것은 쓸 수 없다고 적는다
 
 어떤 주장은 지금 어휘로 단정할 수 없다. 그때는 **단정하는 척하는 대신 스펙 설명에 무엇을 못 보는지 적는다.** 한 사이클 안의 제안 차례 수 동등성이 그런 경우다 — DSL 이 런타임에 알게 된 높이 기준 상대 블록을 주소지정하지 못한다. 못 보는 것을 적어 둔 케이스는 다음 사람이 채울 수 있고, 보는 척하는 케이스는 아무도 다시 열지 않는다.
+
+
+## 같은 스위트를 여러 chain preset에서 실행
+
+케이스의 `chainPreset`을 참조 문자열 또는 `extends` 객체로 선언하면, 파일을 수정하지 않고 다른 preset에 올릴 수 있다.
+`--chain-presets`를 반복하면 모든 케이스를 대상별 한 스위트로 직렬 실행한다. 케이스가 선언한 override는 보존한다.
+고정된 inline preset과 v1 케이스는 자동 교체하지 않으며 명시 오류로 거절한다.
+
+```sh
+chainbench run --json --workspace-dir ./matrix-workspace \
+  --chain-presets ./chain-a.json --chain-presets ./chain-b.json \
+  --artifact-root ./matrix-results ./case-1.json ./case-2.json
+```
+
+각 선택 대상은 `matrix/preset-001` 같은 별도 workspace와 독립 세션을 사용한다. 기본값은 대상 종료 뒤 다음 대상으로
+진행한다. `--keep-up`을 명시하면 각 소유 망을 남긴다. 선언형 attach preset은 기존 망을 읽으며 노드를 제어하지 않는다.
+사전 검사 오류는 첫 실행 전에 거절한다. 실행 중 대상 실패는 다음 결과를 가리지 않지만, 취소나 소유 망의 정리 실패는
+후속 대상을 시작하지 않고 이유와 `attempted: false`를 남긴다.
+
+JSON의 `runs`는 선택 순서대로 `preset`, `presetId`, `chain`, `session`, `tests`, `summary`를 기록한다. 케이스가 preset ID를
+override한 경우 선택 행의 ID와 케이스의 실제 ID가 다를 수 있다. 실제 ID는 `session.json`, `status.json`, `report.json`에도
+남는다. 이름은 실행 지문을 바꾸지 않는다. 기존 v1 결과에는 이 선택 필드가 없다.
+
+MCP `chainbench_run`은 같은 의미의 `chainPresets` 배열을 받는다. `specs`의 원본 참조를 대상별로 교체한 뒤 `baseDir`에서
+preset ID를 조회한다. JSON 파일 경로는 CLI처럼 호출 프로세스의 작업 디렉터리에서 해석하며 절대 경로도 받을 수 있다.
+`dataDir`, `artifactRoot`, `binaryFor`, `readOnlyKeys`, `workspaceConfig`, `serverLogins`는 기존 구성 입력을 사용한다.
+MCP `chainId`는 CLI `--chain-id`와 대응하며, JSON 안전 범위를 넘는 정수는 정확한 decimal/hex 문자열로 보낸다.
+
+구성 대상에 `--plan` 또는 MCP `plan: true`를 쓰면 대상별 계획만 반환한다. 기존과 같이 attach 대상의 계획은 거절한다.
+CLI 종료 코드는 테스트 실패 1, 셋업/blocked 또는 `--no-skips` 아래 skip 2, 그 외 0이다. MCP는 대응하는 `noSkips`를 받고,
+실패해도 `isError: true`와 함께 대상별 JSON을 보존한다. Web의 현재 실행 폼은 단일 대상이며, 이 배열은 CLI/MCP 입력이다.
+
+
+## 케이스 파일 사이에서 준비물 공유
+
+한 번 준비한 주소·거래 hash·영수증을 같은 실행의 다음 케이스에서 읽는다. 공급자는 공개 이름에 기존 binding을 연결한다.
+
+```json
+"prepared": {"exports": {"contract": "$deployed", "receipt": "$receipt"}}
+```
+
+소비자는 자기 binding 이름에 공급 케이스의 ID와 공개 이름을 연결하고 기존 `$name` 참조를 사용한다.
+
+```json
+"prepared": {"imports": {"contract": {"case": "prepare-assets", "name": "contract"}}},
+"steps": [{"expect": "codeAt", "on": "node1", "address": "$contract", "is": "0x602a60005260206000f3"}]
+```
+
+공급 케이스를 먼저 나열한다. 구성 실행은 `chainbench run --suite --workspace-dir <작업 폴더> prepare.json consume.json`을
+사용하고 MCP `chainbench_run`은 `specs` 배열과 `suite: true`를 사용한다. attach의 여러 케이스는 이미 한 실행으로 처리한다.
+Web의 실행 목록은 공급자 문서를 먼저 선택하며 계획에서 고정한 리비전을 사용한다.
+
+공급자가 PASS여야 공개된다. 실패·미실행·누락 결과는 소비자를 BLOCKED로 남기며 새 환경을 만들거나 소비자 훅을 실행하지 않는다.
+값은 실행별로 폐기하고 다른 환경·명령·독립 정의로 넘기지 않는다. 중첩 객체·배열·큰 정수는 복사하며 사적인 byte buffer,
+살아 있는 handle, scrub 대상 비밀 필드와 saveKey binding은 공개할 수 없다. 설정 파일에는 실제 결과를 저장하지 않는다.
+개별 케이스를 편집할 때는 공급자를 동시에 제출하지 않아도 된다. 전체 실행 계획에서 순서와 공개 이름을 검사한다.
+
+[실제 주소·영수증 공유와 실패 소비자 차단 증거](../dev/prepared-sharing-evidence.json).
+
+## 동기화 경로 metric의 출처와 대체 경로
+
+`metric`은 선택한 노드의 Prometheus 표본을 비교한다. 결과의 `metricSamples`에는 노드 번호·역할·현재 PID·조회 시각·출처(`node-machine`, `recorded-endpoint`, `derived-endpoint`)·지표 이름·값·관측 상태가 남는다. 원격 머신 조회가 실패하면 다른 로컬 HTTP 서버의 값으로 대체하지 않는다. HTTP 실패·누락 지표·무한대·NaN은 성공으로 판정하지 않는다. 직접 HTTP 클라이언트는 크기 제한을 넘는 응답도 거절한다.
+
+서로 다른 전달 경로가 유효하다면 선택 항목 `alternatives`에 추가 지표 이름을 적는다. 같은 노드에서 선언한 모든 지표를 유한값으로 읽고, 하나 이상이 같은 `compare`·`is` 조건을 만족해야 한다. 목록은 서로 다른 비어 있지 않은 이름 1~31개이며 `name`을 다시 넣을 수 없다. Web 편집기는 어휘 계약에서 이 목록 필드를 생성한다.
+
+```json
+{"expect":"metric","on":"en1","name":"eth_fetcher_block_broadcasts_in","alternatives":["eth_fetcher_block_announces_in"],"compare":"GreaterOrEqual","is":1}
+```
+
+이 예는 전체 블록 전파와 해시 통지 후 fetcher 조회를 각각 기록한다. downloader의 header·receipt 수신량도 받은 항목 수를 뜻하며 블록의 검증·상태 반영 완료를 뜻하지 않는다. 공통 동기화 케이스는 같은 높이의 블록 해시·state root, 잔액 또는 receipt 내용을 함께 검증한다. 노드를 초기화·재시작하는 케이스는 새 PID에서 읽어 이전 프로세스의 누적값과 구분한다.

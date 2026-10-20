@@ -1,0 +1,704 @@
+{
+  "date": "2026-10-20",
+  "status": "scoped_original_budgets_and_current_head_polling_verified",
+  "scope": "Public two fault cases use original progress60/90s and recovery90/120s; each recovery poll reads current heads. This closes these timing predicates, not full original fixture equivalence or whole legacy254/L1/Web.",
+  "headAtProof": "0ee009eb9d14905f15ec4d861eeb6927aeb25e04",
+  "workingTreeModifiedAtProof": true,
+  "sourceAtNativeProof": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+  "implementationFiles": [
+    "docs/dev/architecture/package-tree.md",
+    "docs/dev/wemix4-tc-sufficiency-review.json",
+    "internal/app/duration_controls_schema_test.go",
+    "internal/dashboard/spa/assets/index-xrsxK8gl.js",
+    "internal/dashboard/spa/assets/index-CTu-hxE6.js",
+    "internal/dashboard/spa/index.html",
+    "internal/testengine/legacy_fault_native_test.go",
+    "internal/testhelper/arguments.go",
+    "internal/testhelper/builtins.go",
+    "internal/testhelper/duration_controls_test.go",
+    "internal/testhelper/editor_contract.go",
+    "internal/testhelper/unsigned_controls.go",
+    "internal/testhelper/unsigned_controls_test.go",
+    "internal/testhelper/blocklag.go",
+    "internal/testhelper/block_lag_test.go",
+    "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+    "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+    "tests/tc/go-stablenet/vocabulary/16-arguments-node-control.json",
+    "tests/webui/dsl-form.test.mjs",
+    "web/src/DSLField.svelte",
+    "web/src/dsl-form.js"
+  ],
+  "behavior": {
+    "progressBlocks": [
+      10,
+      20
+    ],
+    "progressTimeoutSeconds": [
+      60,
+      90
+    ],
+    "recoveryTimeoutSeconds": [
+      90,
+      120
+    ],
+    "pollSeconds": 2,
+    "maxLag": 2,
+    "directionalAheadAllowed": true,
+    "missingOrZeroHeadAccepted": false,
+    "diagnosticsBoundedSamples": 128,
+    "truncationExplicit": true
+  },
+  "testLogs": [
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-red-20261020.log",
+      "sha256": "5f0de2005ce096562d560f4e62b4558c1b8c54b27026a8415574f4482be35be6",
+      "bytes": 642,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425337214595129
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-green-20261020.log",
+      "sha256": "300b2f3a9b7439a428c1d88fbd559689f3441c01dde39ae4b861e8f5e58abff8",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425519605360481
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-reference-alias-red-20261020.log",
+      "sha256": "d176cf9cb8e7b8ecbc7e5c3809d5b82c133bf3c05f401985aef9b8ad1fef61e3",
+      "bytes": 485,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425645015913310
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-reference-green-20261020.log",
+      "sha256": "39d39eda5ad9a506bf1804254f3ddf75fd6aced2c2413620d01404eef9c64342",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425706665048731
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-ui-selector-red-20261020.log",
+      "sha256": "63425739528859ec855973d10239aab74a249596b1e03bb588bd1d9cb64b7276",
+      "bytes": 3108,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425640516773623
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-ui-selector-green-20261020.log",
+      "sha256": "963b8138de6264cf107828e4759ec903d813051e128666e111c39e6f308b5a61",
+      "bytes": 2387,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425702414025422
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-diagnostic-red-20261020.log",
+      "sha256": "4397f8dd60c95764068774fd1166110572c935446f5ed56f12f6206a117f5ae8",
+      "bytes": 3334,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425949704861173
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-web05-fixture-red-20261020.log",
+      "sha256": "bd2968e84878d78ed3f9ac9fbd73d834ea1178264353dc6df9dddf78540e779c",
+      "bytes": 356,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425889266091443
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-contracts-green-v2-20261020.log",
+      "sha256": "34fa6b64b1d1bd911ac5127d13d425d1a91fb9dcba5887272684269d4ae632ec",
+      "bytes": 115,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426274566512270
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-focused-green-v2-20261020.log",
+      "sha256": "0d45c9bd19d554d13ecc689dafa80aa5a2a0dd29be75b67c342176c5a04b0f5c",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426612794548309
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-related-race-20261020.log",
+      "sha256": "fdd25f6355affa1f86883bcbc0c9cead93af5e1673a0d8a653111c4d7b85d174",
+      "bytes": 408,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426562106492308
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-tc-review-green-20261020.log",
+      "sha256": "5969cf636529d01b8742ea52179ab84813bff0cc0930da5ffaf72f11c59d9d57",
+      "bytes": 105,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427136061396522
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-make-check-20261020.log",
+      "sha256": "05088152621cb109142e9d9ddef0b7a16a4f9170297a314bacff7c3d4894860d",
+      "bytes": 8628,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426939640250691
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-make-check-v2-20261020.log",
+      "sha256": "aca901d0890eb55d716daa651233eb6fa60830f1915ea1fc95943638f142cbcb",
+      "bytes": 8634,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427319287990931
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-render-red-20261020.log",
+      "sha256": "1efb54c29c935d9e076b22976b5e6bdb425628a73749bc61e6ad80bbece98e85",
+      "bytes": 1703,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426326262262666
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-render-green-20261020.log",
+      "sha256": "125f0bbc2630ec421618c5994c31264b5ecfea5eca3afedff4ac195ea59610f6",
+      "bytes": 1522,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426351520983654
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-spa-build-20261020.log",
+      "sha256": "5bc4debe5861ac82018e2ce15cfe09af22324b140a161b77a77d5a39f4243981",
+      "bytes": 415,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426611912410443
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-spa-rebuild-20261020.log",
+      "sha256": "a606cd99e8114950410984ea444809602b045669f4002c5a01b8934df26fb08a",
+      "bytes": 415,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792426669997608082
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-independent-20261020.log",
+      "sha256": "2a7cd60cf9309233f89921c5af74534b74cf4fd44ceb06a6acb74580298c8fd0",
+      "bytes": 831,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428297602948389
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-independent-v2-20261020.log",
+      "sha256": "5529faef6b776a18daf5e37381edaa257ffe39c42edb2eeebc7eaa0f14bffba6",
+      "bytes": 3077,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428426449542345
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-auditor-unit-v2-20261020.log",
+      "sha256": "94e3efd89bac979294b6eeca2ad44f383dac66297ff6509d1b0dcb15178f7e8f",
+      "bytes": 337,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428414524804765
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-participation-native-independent-20261020.log",
+      "sha256": "01b68df079b4366ef56e51737f6064f4a66946d61451611567dc8d4f4020f4db",
+      "bytes": 598,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428853940879619
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-participation-native-independent-v2-20261020.log",
+      "sha256": "4a468c34efe6e4416d083b094d5a88a6f4977f9e7d9a6d010ae688367ba4fbc0",
+      "bytes": 1018,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428877935224091
+    }
+  ],
+  "native": {
+    "exitCode": 0,
+    "actualProofPassed": true,
+    "sourceBefore": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "sourceAfter": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "runtimes": [
+      "/private/tmp/cbui/txfail-8di4htsq",
+      "/private/tmp/cbui/txfail-_i5aqs9v",
+      "/private/tmp/cbui/txfail-ggjsyw80",
+      "/private/tmp/cbui/txfail-pjf0dmuy",
+      "/private/tmp/cbui/txfail-qgnc5b2e",
+      "/private/tmp/cbui/txfail-yvw9opus"
+    ],
+    "runtimeCount": 6,
+    "testPasses": [
+      "TestNativeLegacyFaultRecovery/stablenet/fault-node-crash",
+      "TestNativeLegacyFaultRecovery/stablenet/fault-node-recover",
+      "TestNativeLegacyFaultRecovery/wbft/fault-node-crash",
+      "TestNativeLegacyFaultRecovery/wbft/fault-node-recover",
+      "TestNativeLegacyFaultRecovery/wemix/fault-node-crash",
+      "TestNativeLegacyFaultRecovery/wemix/fault-node-recover",
+      "TestNativeLegacyFaultRecovery"
+    ],
+    "testFailures": [],
+    "testSkips": [],
+    "eventLog": {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-20261020-events.jsonl",
+      "sha256": "34d265218100d68a7b592b9d2d84625d612ac6c61aeed1a08bbf5d6b7f704c3b",
+      "bytes": 8552,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428192229597375
+    },
+    "stderr": {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-20261020-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427748378353830
+    },
+    "elapsedSeconds": 445.1583001613617,
+    "freeBytesAfter": 24881147904,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "freeBytesAfterAudit": 24870522880,
+    "acceptedPreservationScope": true,
+    "acceptedOriginalFaultTimingScope": true,
+    "sourceDigest": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+    "partial": false,
+    "outcomes": [
+      {
+        "chain": "stablenet",
+        "case": "CT-FAULT-001-producer-crash-and-restart.json",
+        "assertions": 9,
+        "progress": "10",
+        "recovery": {
+          "attempts": 7,
+          "elapsedMillis": 12005,
+          "reference": "",
+          "finalHeads": {
+            "node1": 27,
+            "node2": 27,
+            "node3": 27,
+            "node4": 27
+          },
+          "finalLag": "0"
+        }
+      },
+      {
+        "chain": "stablenet",
+        "case": "CT-FAULT-002-node-recover-and-sync.json",
+        "assertions": 4,
+        "progress": "20",
+        "recovery": {
+          "attempts": 7,
+          "elapsedMillis": 12003,
+          "reference": "node1",
+          "finalHeads": {
+            "node1": 38,
+            "node3": 38
+          },
+          "finalLag": "0"
+        }
+      },
+      {
+        "chain": "wbft",
+        "case": "CT-FAULT-001-producer-crash-and-restart.json",
+        "assertions": 9,
+        "progress": "10",
+        "recovery": {
+          "attempts": 7,
+          "elapsedMillis": 12006,
+          "reference": "",
+          "finalHeads": {
+            "node1": 63,
+            "node2": 63,
+            "node3": 63,
+            "node4": 63
+          },
+          "finalLag": "0"
+        }
+      },
+      {
+        "chain": "wbft",
+        "case": "CT-FAULT-002-node-recover-and-sync.json",
+        "assertions": 4,
+        "progress": "20",
+        "recovery": {
+          "attempts": 7,
+          "elapsedMillis": 12004,
+          "reference": "node1",
+          "finalHeads": {
+            "node1": 74,
+            "node3": 74
+          },
+          "finalLag": "0"
+        }
+      },
+      {
+        "chain": "wemix",
+        "case": "CT-FAULT-001-producer-crash-and-restart.json",
+        "assertions": 9,
+        "progress": "10",
+        "recovery": {
+          "attempts": 7,
+          "elapsedMillis": 12004,
+          "reference": "",
+          "finalHeads": {
+            "node1": 62,
+            "node2": 62,
+            "node3": 62,
+            "node4": 62
+          },
+          "finalLag": "0"
+        }
+      },
+      {
+        "chain": "wemix",
+        "case": "CT-FAULT-002-node-recover-and-sync.json",
+        "assertions": 4,
+        "progress": "20",
+        "recovery": {
+          "attempts": 7,
+          "elapsedMillis": 12004,
+          "reference": "node1",
+          "finalHeads": {
+            "node1": 72,
+            "node3": 72
+          },
+          "finalLag": "0"
+        }
+      }
+    ],
+    "retainedFiles": 1072,
+    "closedRuntimes": [
+      {
+        "runtime": "/private/tmp/cbui/txfail-_i5aqs9v",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-8di4htsq",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-yvw9opus",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-qgnc5b2e",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-ggjsyw80",
+        "reclaimedDatabases": 16,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-pjf0dmuy",
+        "reclaimedDatabases": 16,
+        "remainingDatabases": 0
+      }
+    ],
+    "freshInventories": [
+      {
+        "attempt": 1,
+        "processes": 392,
+        "openedNames": 11276,
+        "allInactive": true
+      },
+      {
+        "attempt": 2,
+        "processes": 392,
+        "openedNames": 11276,
+        "allInactive": true
+      },
+      {
+        "attempt": 3,
+        "processes": 392,
+        "openedNames": 11276,
+        "allInactive": true
+      }
+    ],
+    "independentControlsRejected": [
+      "progress not achieved",
+      "stale live head",
+      "wrong common hash",
+      "original progress budget widened",
+      "recovery budget widened",
+      "reference node omitted",
+      "forged sampled lag",
+      "hidden trajectory truncation",
+      "whole scope forged"
+    ],
+    "sourceKeysAndBinariesUnchanged": true,
+    "remainingDatabases": 0,
+    "fullTemporalLegacyEquivalenceAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "restartRegression": {
+    "native": {
+      "exitCode": 0,
+      "actualProofPassed": true,
+      "sourceBefore": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+      "sourceAfter": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+      "sourceUnchanged": true,
+      "binaryInputsUnchanged": true,
+      "keysUnchanged": true,
+      "runtimes": [
+        "/private/tmp/cbui/txfail-u_wtb3bw"
+      ],
+      "runtimeCount": 1,
+      "testPasses": [
+        "TestNativeValidatorRestartParticipation"
+      ],
+      "testFailures": [],
+      "testSkips": [],
+      "eventLog": {
+        "path": "/private/tmp/chainbench-fault-lag-participation-native-20261020-events.jsonl",
+        "sha256": "15c69188c4a0bae0ee9394eb22a5659d3a1df28e99a128c6ccc5e01d4eb5a631",
+        "bytes": 1531,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792428620803821845
+      },
+      "stderr": {
+        "path": "/private/tmp/chainbench-fault-lag-participation-native-20261020-stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792428551274332673
+      },
+      "elapsedSeconds": 70.99063420295715,
+      "freeBytesAfter": 23785664512,
+      "fullL1Accepted": false,
+      "all14Accepted": false
+    },
+    "independent": {
+      "acceptedPreservationScope": true,
+      "acceptedRestartParticipationRegression": true,
+      "sourceDigest": "ebd3212c83e706fc571c72c1465ac8913ab60485354cbf376e0e53a3fa9b434e",
+      "partial": false,
+      "outcomes": [
+        {
+          "headers": 6,
+          "healthyOneSecondLinks": 5,
+          "committerIdentity": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+          "actualPidChanged": true
+        }
+      ],
+      "priorSixFilesPreserved": 1072,
+      "retainedFiles": 199,
+      "closedRuntimes": [
+        {
+          "runtime": "/private/tmp/cbui/txfail-u_wtb3bw",
+          "reclaimedDatabases": 8,
+          "remainingDatabases": 0
+        }
+      ],
+      "freshInventories": [
+        {
+          "attempt": 1,
+          "processes": 465,
+          "openedNames": 12040,
+          "allInactive": true
+        },
+        {
+          "attempt": 2,
+          "processes": 465,
+          "openedNames": 12040,
+          "allInactive": true
+        },
+        {
+          "attempt": 3,
+          "processes": 465,
+          "openedNames": 12040,
+          "allInactive": true
+        }
+      ],
+      "independentControlsRejected": [
+        "wrong healthy spacing",
+        "round change hidden",
+        "same PID",
+        "revision did not advance",
+        "unrelated committer"
+      ],
+      "freeBytesAfterAudit": 24860020736,
+      "remainingDatabases": 0,
+      "fullL1Accepted": false,
+      "all14Accepted": false
+    }
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-20261020-start.json",
+      "sha256": "fa647c815f4103ce23114554c3676fbd35d674f5540f3b3941006d37975a1ebd",
+      "bytes": 49877,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427748378215036
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-20261020-summary.json",
+      "sha256": "742877aedb4480ee320ab276d579b172a1bfaf15fb00dc53df552c2ccdce91a0",
+      "bytes": 1778,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428193536962954
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-20261020-independent.json",
+      "sha256": "1d0204d530c5ffc1ffd10a4707e093a5f07a08ef720829fc2e2aece58524e61d",
+      "bytes": 329530,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428426449245508
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-participation-native-20261020-start.json",
+      "sha256": "d15c8c0642c8a314b83d2edcf28e09a993371609f973ab4ad05251adf70144b0",
+      "bytes": 49891,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428551274152129
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-participation-native-20261020-summary.json",
+      "sha256": "877b7b900550709a9ea4ba60e4e8a135fa4628da6d2346b45f365944dd094958",
+      "bytes": 1215,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428622264314461
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-lag-participation-native-20261020-independent.json",
+      "sha256": "e5e51af8da86b35770db51529b089fe7a4afea96b4a6ced72073f53d12e808ea",
+      "bytes": 61876,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792428877934950590
+    },
+    {
+      "path": "/private/tmp/chainbench-fault-original-timing-native-build-20261020.json",
+      "sha256": "0de380d500980455f7f288be0b78293bca5ba9e61d28e84d2566fe8bb779f21e",
+      "bytes": 388,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792427268865712883
+    }
+  ],
+  "serverRender": {
+    "acceptedServerRenderScope": true,
+    "baselineSemanticFailure": true,
+    "currentRenderPassed": true,
+    "sharedContractNodeHintVerified": true,
+    "sourceUnchanged": true,
+    "retainedFiles": 11,
+    "negativeControlsRejected": [
+      "missing node option",
+      "unrelated added option"
+    ],
+    "browserHydrationAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "spaRebuild": {
+    "acceptedCorrectRootRebuild": true,
+    "sourceInputsUnchanged": {
+      "web/src/DSLField.svelte": "87c42a9604afee4c7a9303da052b3b776b84d6f428113f9b58e4daa54360e173",
+      "web/src/dsl-form.js": "b81ebfe896619c06cf085e6a4f90e314e4cac0548efeff4d60e43e2999a57490",
+      "web/vite.config.js": "7ef82f5d05a4c0d51d27008abecf8ca5af80137bb004007e3788de241a19dd72",
+      "web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979"
+    },
+    "generatedOutputHashes": {
+      "assets/index-B_5GzF9v.css": "364645a059da6017367942cba331511d098f440ee4f9bb257c6b007294d05c4a",
+      "assets/index-CTu-hxE6.js": "a32105b24041294de544f0c1d36f2a130d667ba78dd99a0c30c4050338c99ec9",
+      "index.html": "510a56a803d185595a9ca933b02b00434d72af62a8a2a018bbd64009fa8ba08a"
+    },
+    "exactlyIndexReferencedOutputs": true,
+    "scope": "Correct-root repeated build and byte agreement. Initial shell preflight used web cwd and checked an empty relative path; that check is not accepted as an original pre-build inventory."
+  },
+  "preparationFailures": {
+    "firstMainAuditor": "Python3.10 fromisoformat rejected valid RFC3339Nano fractional width; v1 preserved, v2 integer-nanosecond parser and positive/negative unit controls passed.",
+    "firstRestartAuditor": "Initial Revision0 is omitted by process JSON; v1 preserved, v2 applies Go zero-value semantics and additionally rejects non-incrementing revisions.",
+    "firstAST": "Tracked previous generated JS had been removed by successful build; first capture refused missing indexed source. Explicitly staging only intended three output paths fixed current inventory before new capture.",
+    "firstSPAInventory": "Initial relative preflight ran from web cwd and is not accepted as original output inventory; correct-root reproducible output check passed."
+  },
+  "retention": {
+    "nativeFiles": 1271,
+    "reclaimedDatabases": 72,
+    "remainingDatabases": 0,
+    "keys": "First six use generated private keys; restart regression uses preserved preset keys read-only."
+  },
+  "limitations": [
+    "Original temporal fixture equivalence beyond explicit budgets remains unaccepted.",
+    "Server rendering is not browser hydration or fresh WEB-05 acceptance.",
+    "Whole legacy254, original87, Linux358, actual testnet and final fourteen Web acceptance remain separate."
+  ],
+  "fullTemporalLegacyEquivalenceAccepted": false,
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false
+}

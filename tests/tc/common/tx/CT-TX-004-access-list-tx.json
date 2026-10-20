@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "access-list-tx",
-  "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다. 가스 가격은 계산하지 않고 노드에게 묻는다. 기본 수수료의 두 배로 잡던 것이 2026-09-28 go-wemix 에서 'transaction underpriced' 로 거부됐다. go-wemix 는 풀의 최소 가격을 거버넌스에서 받아 설정하고(wemix/admin.go:648) 기본값이 100 Gwei 인데, 그 체인의 기본 수수료는 1 wei 까지 내려가 있어 두 배가 2 wei 였다. eth_gasPrice 는 세 체인 모두 '거버넌스 팁 + 기본 수수료' 를 돌려주므로 풀이 요구하는 값과 맞는다. 이 케이스가 묻는 것은 접근 목록 트랜잭션이 처리되고 형식이 0x1 인가이지 가스 가격이 아니다. 목록이 비어 있지 않아야 붙였다고 할 수 있다. 단순 송금이면 노드가 만든 목록은 비고, 호출 대상 자신과 보낸 이는 목록에서 빠진다. 그래서 0x00000000000000000000000000000000C0FFEE0D 의 BALANCE 를 읽는 컨트랙트(런타임 PUSH20 주소, BALANCE, POP, STOP)를 배포해 그것을 호출하고, 붙은 목록의 첫 주소가 그 주소인지 본다.",
+  "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다. 가스 가격은 계산하지 않고 노드에게 묻는다. 기본 수수료의 두 배로 잡던 것이 2026-09-28 go-wemix 에서 'transaction underpriced' 로 거부됐다. go-wemix 는 풀의 최소 가격을 거버넌스에서 받아 설정하고(wemix/admin.go:648) 기본값이 100 Gwei 인데, 그 체인의 기본 수수료는 1 wei 까지 내려가 있어 두 배가 2 wei 였다. eth_gasPrice 는 세 체인 모두 '거버넌스 팁 + 기본 수수료' 를 돌려주므로 풀이 요구하는 값과 맞는다. 이 케이스가 묻는 것은 접근 목록 트랜잭션이 처리되고 형식이 0x1 인가이지 가스 가격이 아니다. 목록이 비어 있지 않아야 붙였다고 할 수 있다. 단순 송금이면 노드가 만든 목록은 비고, 호출 대상 자신과 보낸 이는 목록에서 빠진다. 그래서 0x00000000000000000000000000000000C0FFEE0D 의 BALANCE 를 읽는 컨트랙트(런타임 PUSH20 주소, BALANCE, POP, STOP)를 배포해 그것을 호출하고, 붙은 목록의 첫 주소가 그 주소인지 본다. TX-007 원문 입력도 별도로 확인한다: 자금 있는 새 계정이 slot0을 쓰는 실제 컨트랙트를 배포하고 생성된 contractAddr/slot0 접근 목록으로 type1 거래를 직접 서명한다. 기존 BALANCE 기반 eth_createAccessList 회귀는 유지한다.",
   "requires": [
     "rpc"
   ],
@@ -86,6 +86,195 @@
         "$hash"
       ],
       "select": "accessList.0.address"
+    },
+    {
+      "do": "newAccount",
+      "save": "slotSender",
+      "saveKey": "slotSenderKey"
+    },
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "save": "slotGP"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$slotGP",
+        "500000"
+      ],
+      "save": "slotFundingGas"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$slotFundingGas",
+        "1000000000000000000"
+      ],
+      "save": "slotBudget"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "to": "$slotSender",
+      "value": "$slotBudget",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "deployContract",
+      "key": "$slotSenderKey",
+      "gas": "200000",
+      "bytecode": "0x6007600c60003960076000f360003560005500",
+      "save": "slotBox",
+      "timeout": "120s",
+      "gasPrice": "$slotGP"
+    },
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "save": "slotGP"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$slotGP"
+      ],
+      "format": "hex",
+      "save": "slotGPHex"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_createAccessList",
+      "params": [
+        {
+          "from": "$slotSender",
+          "to": "$slotBox",
+          "data": "0x000000000000000000000000000000000000000000000000000000000000002a",
+          "value": "0x0",
+          "gas": "0x186a0",
+          "gasPrice": "$slotGPHex"
+        },
+        "latest"
+      ],
+      "select": "accessList",
+      "save": "slotList"
+    },
+    {
+      "do": "sendTx",
+      "key": "$slotSenderKey",
+      "to": "$slotBox",
+      "data": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "accessList": "$slotList",
+      "gas": "100000",
+      "gasPrice": "$slotGP",
+      "value": "0",
+      "save": "slotHash",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$slotHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$slotBox"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "input",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "accessList.#",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "accessList.0.address",
+      "compare": "EqualCI",
+      "is": "$slotBox"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "accessList.0.storageKeys.#",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$slotHash"
+      ],
+      "select": "accessList.0.storageKeys.0",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$slotBox",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "latest"
+      ],
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
     }
   ]
 }

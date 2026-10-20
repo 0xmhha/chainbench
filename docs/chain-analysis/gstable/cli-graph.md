@@ -1,5 +1,7 @@
 # gstable — CLI subcommand + flag graph
 
+> Source-reference snapshot: `0937ac5c93d4f56ded5b24899f381d3d1f208c02`. The live CLI/help capture is now pinned to `4d17eea018c8dd579409db30bfd27de79c4f4121` (2026-10-18); documented visible, hidden and not-accepted flag names were rechecked against that binary. Source line references and code-level explanations below remain the earlier snapshot and require re-audit before citing them as current source behavior.
+
 Code-level extraction of the `gstable` binary (a `github.com/ethereum/go-ethereum` fork, urfave/cli/v2). Binary built from `cmd/gstable`. All `path:line` references are relative to the repo root `chain/go-stablenet/`.
 
 - App constructed: `cmd/gstable/main.go:203` (`flags.NewApp`), commands wired in `init()` at `cmd/gstable/main.go:205-269`.

@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "dynamic-fee-transfer",
-  "description": "CT-TX-003 — 동적 수수료(EIP-1559, 0x2) 송금이 처리되고 실제 적용 가스 가격이 규칙대로 계산된다 (기존 명세 RT-A-2-02, TX-003, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-003). go-stablenet 전용인 regression/ethereum/09-dynamic-fee-tx 는 팁을 istanbul_getWbftExtraInfo.gasTip 에서 읽어 다른 두 체인에서 돌지 않는다. 여기서는 팁을 eth_maxPriorityFeePerGas 로 읽는다. 세 체인 모두 이 값을 트랜잭션 팁으로 쓰면 적용 가격이 '포함 블록의 기본 수수료 + 팁' 이 된다. go-stablenet 은 일반 계정의 팁을 헤더 gasTip 으로 바꾸는데 eth_maxPriorityFeePerGas 가 그 gasTip 을 돌려주므로 결과가 같고, go-wemix 는 거버넌스 팁, go-wbft 는 표준 규칙이다. 최대 수수료는 최신 기본 수수료의 두 배에 팁을 더해 넉넉히 둔다. 새 계정이 자기 키로 보내고, 형식 0x2 와 성공 상태, 적용 가격, 그리고 보낸 쪽 잔액이 송금액과 수수료(gasUsed × effectiveGasPrice)만큼 줄었는지 본다.",
+  "description": "CT-TX-003 / TX-003 — 최신 baseFee+tip을 cap으로 제출하고 포함 블록의 baseFee와 실제 거래의 cap/tip을 읽는다. 선언 입력과 실제 서명 필드를 대조하며, cap>=mined baseFee와 effectiveGasPrice=baseFee+min(actual tipCap,actual feeCap-baseFee)를 검증한다. type2의 거래·영수증과 실제 송신·수신 잔액도 대조한다. 임의의 큰 cap이나 baseFee+tip으로 min 분기를 대신하지 않는다.",
   "requires": [
     "rpc"
   ],
@@ -62,7 +62,6 @@
       "op": "sum",
       "of": [
         "$base",
-        "$base",
         "$tip"
       ],
       "save": "feeCap"
@@ -118,11 +117,78 @@
     },
     {
       "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$h"
+      ],
+      "select": "maxFeePerGas",
+      "save": "txCap"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$h"
+      ],
+      "select": "maxPriorityFeePerGas",
+      "save": "txTip"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$txCap"
+      ],
+      "compare": "Equal",
+      "is": "$feeCap"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$txTip"
+      ],
+      "compare": "Equal",
+      "is": "$tip"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$txCap"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "$blockBase"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$txCap",
+        "$blockBase"
+      ],
+      "save": "headroom"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "min",
+      "of": [
+        "$txTip",
+        "$headroom"
+      ],
+      "save": "effectiveTip"
+    },
+    {
+      "do": "read",
       "source": "derive",
       "op": "sum",
       "of": [
         "$blockBase",
-        "$tip"
+        "$effectiveTip"
       ],
       "save": "wantPrice"
     },
@@ -188,6 +254,16 @@
       "address": "$recipient",
       "compare": "Equal",
       "is": "1000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x2"
     }
   ]
 }

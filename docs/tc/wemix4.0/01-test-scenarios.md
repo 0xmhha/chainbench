@@ -257,6 +257,14 @@
 
 ### TX-002 — BaseFee 미달 트랜잭션 거부
 
+> **사용자 승인 기준 조정 (2026-10-15):** 조회 시점과 채굴 시점의 BaseFee를 구분한다.
+> 원래 `latest BaseFee - 1` 입력의 실제 제출·채굴 결과는 그대로 기록한다. 실제 대상 블록의
+> BaseFee보다 낮은 cap은 별도 유효 서명 거래로 검증하며, 연속 다섯 실제 블록의 BaseFee·
+> 미포함·영수증 부재·계정 상태 불변을 확인한다. 풀에서 받았다는 이유만으로 채굴 가능으로
+> 판단하지 않는다. 원문의 즉시 제출 거부가 모든 latest-minus-one 입력에서 발생한다는 기대는
+> 현행 관찰과 다르며, 아래 원래 절차·기대는 이 차이의 기록으로 유지한다.
+
+
 **목적**: `maxFeePerGas < BaseFee`인 트랜잭션이 txpool에서 거부되는지 확인
 
 **사전 조건**: Croissant 이후 블록, `eth_getBlockByNumber("latest").baseFeePerGas`로 현재 BaseFee 확인
@@ -618,6 +626,14 @@
 
 ### TX-016 — Fee Delegation FeePayer 잔액 부족 시 거부
 
+> **사용자 승인 기준 조정 (2026-10-15):** 현행 노드의 정확한 제출 거부를 검증한다.
+> 유효한 이중 서명·대납자 잔액0에서 `eth_sendRawTransaction`의 코드 `-32000`과
+> `fee delegation: insufficient feePayer's funds for gas * price` 사유, 거래/영수증 부재와
+> 계정 상태 불변을 확인한다. 대납자 자금 충전 뒤 같은 서명 바이트의 성공·정확한 수수료·
+> 송신자 값과 대납자 가스의 분리도 확인한다. 아래 원문 채굴 실패/status0 기대는 현행
+> 제출 거부와의 차이 기록이며, 존재하지 않는 실패 영수증을 만들거나 성공으로 간주하지 않는다.
+
+
 **목적**: Fee Delegation tx에서 FeePayer 잔액이 가스비보다 부족한 경우 실행이 거부되는지 확인
 
 **사전 조건**: FeePayer 계정 잔액 \< 가스비, Sender·FeePayer 서명 모두 유효
@@ -669,25 +685,37 @@
 
 **목적**: `gasLimit`을 실제 소비보다 부족하게 설정한 tx 실행 시 가스를 전량 소비하고 상태가 롤백되는지 확인
 
-**사전 조건**: TX-002 통과, `eth_estimateGas`로 실제 소비 가스 확인
+> **2026-10-15 사용자 승인:** 추정치는 성공에 충분한 상한으로 별도 검증한다.
+> 기존 `eth_estimateGas - 1` 실패 전제는 실제 WBFT·StableNet에서 성립하지 않았다
+> (추정 31,513·한도 31,512·소비 31,160·status 1). 이 진단을 숨기거나 실패로 바꾸지 않는다.
+> [실측과 승인 기준 검증](../../dev/estimate-boundary-evidence.json).
 
-**입력값**: `gasLimit = 실제 소비 가스 - 1`
+**사전 조건**: 동일 runtime·동일 초기 저장 값 42를 가진 유한한 쓰기 계약 두 개 배포,
+별도 호출자 자금 확보. 호출은 SSTORE 뒤 유한한 연산을 수행하고 종료하며 저장소 환불이 없다.
+
+**입력값**: 같은 sender·calldata로 성공한 기준 거래의 `receipt.gasUsed - 1`.
+한도는 intrinsic gas 이상이며 실행 부족으로 실패하도록 선택한다.
 
 **실행 절차**:
 
-1. `eth_estimateGas` 로 예상 가스 조회
-2. `gasLimit = 예상 가스 - 1` 로 tx 전송
-3. receipt 확인
+1. `eth_estimateGas`로 첫 계약의 유한한 호출을 추정하고, 추정 한도로 전송한다.
+2. 성공 영수증과 `gasUsed <= estimate`를 확인하며 저장 값이 42→1로 바뀌었는지 확인한다.
+3. 같은 초기 상태의 두 번째 계약에 동일 호출을 `gasLimit = 성공 gasUsed - 1`로 전송한다.
+4. 실제 채굴된 거래의 calldata·가스 한도와 영수증, 실패 전후 상태·정확한 수수료를 대조한다.
+5. trace에서 실패 전에 SSTORE가 완료됐는지 확인한다. 쓰기 없이 실패한 fixture는 롤백 증거로 세지 않는다.
 
-**기대 결과**: `receipt.status == 0`, `gasUsed == gasLimit` (가스 전량 소비), 상태 롤백
+**기대 결과**: 실패 거래는 `receipt.status == 0`, `gasUsed == gasLimit`, 저장 값 42 유지.
+추정치는 실제 소비보다 클 수 있고 `estimate - 1`의 성공 여부는 별도 진단이다.
 
 **검증 포인트**:
 
-- `receipt.status == 0`
-- `receipt.gasUsed == gasLimit` (환불 없음)
-- 상태 변경 없음
+- 성공 기준 거래의 status 1·유한한 실제 소비와 추정 상한
+- 실패 거래의 status 0·가스 전량 소비·완료된 쓰기 뒤 롤백
+- `eth_call` 및 `eth_getStorageAt`의 실패 전후 값 일치
+- 호출자 잔액에서 `gasUsed × effectiveGasPrice`만 차감, 후속 블록 전진
 
-**회귀 테스트 참조**: RT-A-3-07
+**회귀 테스트 참조**: `CT-CONTRACT-008-finite-gas-boundary`.
+기존 RT-A-3-07의 무한 반복 가스 소진은 `CT-CONTRACT-007`로 별도 유지한다.
 
 ---
 
@@ -953,7 +981,12 @@
 
 ### WBFT-010 — RandaoReveal / MixDigest 검증
 
-**목적**: 각 블록의 `RandaoReveal`이 Proposer의 ECDSA 서명이고, `MixDigest = XOR(이전 MixDigest, RandaoReveal)` 규칙이 연속 블록에서 올바르게 유지되는지 확인
+**목적**: 각 블록의 `RandaoReveal`이 Proposer의 ECDSA 서명이고, `MixDigest = XOR(이전 MixDigest, Keccak256(RandaoReveal))` 규칙이 연속 블록에서 올바르게 유지되는지 확인
+
+> **2026-10-15 검증식 명확화:** 65바이트 ECDSA reveal을 32바이트 mix에 직접 XOR하지 않는다.
+> 현행 WBFT는 reveal의 Keccak256을 XOR하며, 서명 메시지는 Croissant-v1의
+> `Keccak256(Keccak256(chainID 최소 bytes || version 최소 bytes || blockNumber 최소 bytes))`다.
+> 실제 바이너리에서 복구 주소·연쇄를 검증하며 존재 여부만으로 통과시키지 않는다.
 
 **사전 조건**: Croissant 이후 블록 3개 이상 존재
 
@@ -963,14 +996,14 @@
 
 1. `istanbul_getWbftExtraInfo(N)` 에서 `RandaoReveal` 추출
 2. `eth_getBlockByNumber(N).mixHash` 조회
-3. `eth_getBlockByNumber(N+1).mixHash == XOR(block[N].mixHash, block[N+1].RandaoReveal)` 검증
+3. `eth_getBlockByNumber(N+1).mixHash == XOR(block[N].mixHash, Keccak256(block[N+1].RandaoReveal))` 검증
 4. `RandaoReveal` 이 해당 블록 Proposer의 서명인지 확인 (`eth_getBlockByNumber(N+1).miner`)
 
 **기대 결과**: MixDigest 연쇄가 XOR 규칙 준수, RandaoReveal은 Proposer ECDSA 서명으로 검증 가능
 
 **검증 포인트**:
 
-- `block[N+1].mixHash == XOR(block[N].mixHash, block[N+1].RandaoReveal)`
+- `block[N+1].mixHash == XOR(block[N].mixHash, Keccak256(block[N+1].RandaoReveal))`
 - `RandaoReveal` 서명 복구 주소 = `block[N+1].miner`
 
 ---
@@ -1152,6 +1185,12 @@
 - `isStaker(staker) == false`
 - 기간 내 `withdraw(0)` 실패 (`"withdrawal time not reached"` revert)
 - 기간 후 `withdraw(0)` 성공, `Withdrawn(requester, withdrawalIndex, amount)` 이벤트
+
+> **승인된 현행 계약 기준 (2026-10-16 실행 검증):** 원문의 조기 revert 기대는 위에 보존한다.
+> 사용자는 현행 v1의 조기 `withdraw(0)` 성공·무출금·이벤트 없음·자격/포인터 보존·정확한 가스비와
+> 만기 후 같은 입력의 원금·이벤트·출금 검증을 승인했다. 실제 70초 fixture와 원문 7일 설정의 별도 조회를
+> 검증했으며, 7일을 실제 대기하거나 메인넷 설정을 조회했다고 주장하지 않는다.
+> [승인 범위의 실제 거래·독립 대조](../../dev/approved-unbonding-evidence.json).
 
 ---
 
@@ -1345,6 +1384,13 @@
 - `unbondingPeriodDelegator`(72시간) \< `unbondingPeriodStaker`(7일) 임을 확인
 - `withdraw(0)` 성공 후 `Withdrawn` 이벤트
 
+> **승인된 축약 시간 검증 (2026-10-16):** 사용자는 실제 30초·70초 fixture에서 조기 원금 미출금과
+> 만기 환급·정확한 이벤트/수수료를 검증하고 원문 72시간·7일 설정을 별도로 대조하도록 승인했다.
+> 위임자와 운영자를 분리해 위임/언위임 입력·이벤트·staking power, 조기/만기 `withdraw(0)`을 실제 검증했다.
+> 원문 값 259,200초·604,800초를 명시한 별도 fixture의 getter와 저장 슬롯도 읽었다.
+> 이 별도 설정 조회는 실제 메인넷 파라미터 조회나 72시간·7일 대기 증명이 아니다.
+> [거래·시간·원금·가스 장부](../../dev/approved-unbonding-evidence.json).
+
 ---
 
 ### GOV-012 — 블록 리워드 누적 검증 (엔진 → GovRewardee)
@@ -1395,6 +1441,13 @@
 - GovRewardee 컨트랙트 잔액 감소 (보상 출금)
 - OP\_A 잔액 증가 (보상 수령)
 - `previewReward` 예상값과 실제 amount 일치
+
+> **승인된 현행 v1 기준 (2026-10-15):** 원문의 `previewReward(staker, operator)`는
+> 운영자를 스테이커로 변환하지 않아 보상0을 반환한다. 이 원문 입력과 차이를 기록하고,
+> 동일한 claim 실행 직전 블록에서 `previewReward(staker, staker)`의 실제 지분 보상을
+> 조회해 청구 금액과 대조한다. 위임자가 없는 상태에서 정확한 `Claimed`·`RewardPaid`
+> 이벤트, GovRewardee 출금, 운영자 수령액에서 실제 영수증 가스비를 뺀 변화와 nonce를
+> 거래 단위로 검증한다. 블록 확정 보상과 청구 출금을 섞지 않는다.
 
 ---
 
@@ -1547,11 +1600,18 @@
 - 재활성화 후 `isStaker(staker) == true`
 - `Staked(staker, amount)` 이벤트
 - `stakers()` 목록 포함 확인
-- 재활성화 금액 \< minimumStaking 시 여전히 INACTIVE (revert 없이 단순 stake만 추가)
+- 재활성화 금액 \< minimumStaking 거래는 채굴 status 0·정확한 minimum-staking revert 사유·INACTIVE/금액 불변을 확인한다.
+
+> **2026-10-15 사용자 승인:** 기존 "revert 없이 단순 stake만 추가" 기대를 현행 v1 계약의
+> 거절 계약에 맞췄다. 기존 eth_call 거절은 실제 채굴 실패의 대체 증거가 아니며,
+> 이 미달 거래의 채굴·사유·상태를 독립 trace와 실제 영수증으로 보강한다. 이전 eth_call 전용 증거와 구분한다.
 
 ---
 
 ### GOV-020 — 수수료율 변경 — 위임자 없음 (즉시 적용)
+
+> **2026-10-15 사용자 승인:** 현행 v1의 즉시 요율 변경·Requested 이벤트·지연 요청 없음으로 검증한다.
+> 기존 Executed만 발생한다는 기대와의 차이는 보존하며 외부 계약은 수정하지 않는다.
 
 **목적**: 위임자가 없는 Staker의 수수료율 변경 시 `changeFeeDelay` 없이 즉시 적용되는지 확인
 
@@ -1562,15 +1622,15 @@
 **실행 절차**:
 
 1. 위임자 없는 상태에서 Operator가 `requestChangingFee(newFeeRate)` 전송
-2. 동일 트랜잭션에서 `ChangingFeeRateExecuted(staker, newFeeRate)` 이벤트 확인 (즉시 적용)
+2. 동일 트랜잭션에서 `ChangingFeeRateRequested(staker, oldFeeRate, newFeeRate)` 이벤트의 emitter·staker·두 요율을 확인
 3. `stakerInfo(staker).feeRate == newFeeRate` 확인
 
 **기대 결과**: 위임자 없으면 `requestChangingFee()` 단일 호출로 즉시 변경
 
 **검증 포인트**:
 
-- `ChangingFeeRateExecuted(staker, newFeeRate)` 이벤트 즉시 발생
-- `ChangingFeeRateRequested` 이벤트 없음
+- 정확한 `ChangingFeeRateRequested` 이벤트, `ChangingFeeRateExecuted` 이벤트 없음
+- 위임량 0 및 `changingFeeRequests(staker)`가 비어 있음
 - `stakerInfo.feeRate` 변경 확인
 
 ---
@@ -1578,6 +1638,9 @@
 ### GOV-021 — 수수료율 변경 — 위임자 있음 (지연 적용)
 
 **목적**: 위임자가 있는 Staker의 수수료율 변경 시 `changeFeeDelay` 경과 후에만 `executeChangingFee()` 로 적용 가능한지 확인
+
+> **2026-10-15 사용자 승인:** 실제 행동 검증에는 30초 축약 fixture를 허용한다.
+> 원문의 604,800초 메인넷 설정과 범위를 구분하며, 7일 실제 경과를 검증했다고 주장하지 않는다.
 
 **사전 조건**: GOV-011 통과 (위임자 있는 Staker 상태), `changeFeeDelay = 604,800초` (GovConfig)
 

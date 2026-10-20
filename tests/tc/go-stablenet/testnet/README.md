@@ -102,3 +102,37 @@ itself needs no change.
 
 What is not known: how that network behaves under latency or a rate limit. Five
 cases passed in a row; nothing here says what happens when it is busy.
+
+## Legacy remote predicates added on 2026-10-20
+
+Cases06–09 preserve the four recovered `remote/*.sh` purposes separately from the five existing testnet cases.
+They still require an explicit `GSTABLE_TESTNET_RPC`; none starts or defaults to a local endpoint.
+
+| File | Contract |
+|---|---|
+| `06-remote-balance-query` | Query `chainPreset.values.queryAddress`, default zero address; any balance is allowed |
+| `07-remote-chain-info` | Positive chain ID, valid syncing response, positive first head and no regression after five seconds |
+| `08-remote-rpc-health` | Valid block quantity; available/unsupported classification for optional peer count and client version |
+| `09-remote-unlocked-transfer` | One wei through the node's `eth_sendTransaction`, its successful receipt and exact sender/recipient/value |
+
+Edit the values in the structured editor or import a custom case/preset. For09 both `remoteSender` and
+`remoteRecipient` start empty and must be set to approved addresses. The sender must be funded and unlocked
+on that node. This case does not read a local private key and does not silently skip an unprepared transfer.
+When the endpoint allows `personal_unlockAccount`, its optional preparation can be added explicitly as an
+RPC step before the case; the native fixture exercises import and unlock only inside its generated keystore.
+The existing05 continues to exercise a local signer and1Gwei, independently of this1wei node-signing path.
+
+`chainInfo` deliberately permits an unchanged head as the recovered original did. Existing02 still requires
+actual progress. An optional RPC method is unsupported only for a typed method-not-found response;
+transport failures, malformed responses, internal errors and permission failures remain failures.
+These new cases have unit contracts; fresh owned attach evidence and actual external testnet acceptance
+are tracked separately in the worklist. The historical2026-10-01 verification above covers only01–05.
+
+### Owned attach verification on 2026-10-20
+
+Cases06–09 passed on a newly generated local BP4 fixture: four cases, 11 assertions,
+a 5.002-second 16→21 height observation and an actual 1wei node-signed transaction.
+Independent decoding matched the signed sender/hash and receipt/block; 259 files were preserved,
+eight closed databases reclaimed and none remained. This is not a run against an external testnet.
+Actual external endpoint/account inputs and final browser acceptance remain pending.
+See [scoped evidence](../../../../docs/dev/legacy-remote-predicates-evidence.json).

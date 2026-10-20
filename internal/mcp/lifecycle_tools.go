@@ -16,7 +16,7 @@ func stopTool() Tool {
 		Description: "Stop a composed network's nodes (by the pids its workspace records). Args: workspaceDir.",
 		InputSchema: map[string]any{
 			"type":       "object",
-			"properties": map[string]any{"workspaceDir": map[string]any{"type": "string"}},
+			"properties": map[string]any{"workspaceDir": commonProperty("workspaceDir", nil)},
 			"required":   []string{"workspaceDir"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -24,7 +24,7 @@ func stopTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			res, err := app.NetworkStop(ctx, app.Deps{}, app.NetworkStopIn{DataDir: dir})
+			res, err := invokeFeature[app.NetworkStopIn, app.NetworkStopOut](ctx, app.Deps{}, "network.stop", app.NetworkStopIn{DataDir: dir})
 			if err != nil {
 				return "", err
 			}

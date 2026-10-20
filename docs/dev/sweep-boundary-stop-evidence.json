@@ -1,0 +1,329 @@
+{
+  "scope": "Optional sweep stop marker drains the current case before starting the next, preserving failures and reporting every unattempted run as NOTRUN with exit130. A real full358-run plan was stopped after one case; not full L1 acceptance.",
+  "headAtProof": "aecfee98316b7f75f67cb40a246a52144e0e84a4",
+  "sourceDigestAtProof": "ce0f7cad865963de708456b2c96f34a3f49bcb80390e2ccc49e3290c42813377",
+  "implementation": {
+    "setting": "TCSWEEP_STOP_FILE",
+    "checkedOnlyBetweenCases": true,
+    "stopAndConfiguredRetentionCompleteBeforeBoundary": true,
+    "stopOrRetentionFailureKeepsExit2": true,
+    "operatorBoundaryStopExitCode": 130,
+    "unattemptedCountsAddedToNotrun": true,
+    "completedFinalCaseStillNormalResult": true,
+    "markerContentReadOrWrittenOrDeletedBySweep": false,
+    "brokenSymlinkPresenceRequestsStop": true,
+    "defaultWithoutMarkerUnchanged": true
+  },
+  "tdd": {
+    "baselineCommit": "aecfee98316b7f75f67cb40a246a52144e0e84a4",
+    "baselineScriptSHA256": "510faa9790cabb003117d65e9769ecb7acef299d30105ef121958b62854c81a5",
+    "meaningfulREDFailures": 5,
+    "REDTestsRun": 7,
+    "GREENContracts": 19,
+    "nextAttachHostRegressionIncluded": true,
+    "shellSyntaxCheckPassed": true,
+    "makeCheckBeforeActualPassed": true
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/tcsweep.sh",
+      "sha256": "db26a5a917e37dfafbfa0822daab1a677b407a9023e56329b02b8b75c4b8bcf7",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792137413103735706
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_tcsweep_retention.py",
+      "sha256": "9943a6b238ce85a7c86f3abd131d5fa18126003c9bdc3163b8189b00812725a5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792137457750684031
+    }
+  ],
+  "pilotSetupMismatch": {
+    "intendedSelectedFiles": 2,
+    "intendedSelectedRuns": 2,
+    "selectionPatternWasOmittedByAgent": true,
+    "actualSelectedFiles": 216,
+    "actualSelectedRuns": 358,
+    "originalProducerExitCode": 1,
+    "originalProducerBoundaryScopeAccepted": false,
+    "originalProducerReportedRows": 0,
+    "originalIndependentVerifierExitCode": 1,
+    "originalFailureArtifactsPreserved": true,
+    "originalReportsNotModified": true,
+    "correctedReadOnlyAuditUsesActualFullPlan": true,
+    "productImplementationWasNotChangedDuringProofOrAudit": true
+  },
+  "actualObservedOutcome": {
+    "runtime": "/private/tmp/cbui/l1i-otbfv80b",
+    "sweepExitCode": 130,
+    "attemptedRuns": 1,
+    "totals": {
+      "pass": 1,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0,
+      "notrun": 357
+    },
+    "nativePassingAssertions": 2,
+    "nextAttachHostNotStarted": true,
+    "nextRemoteScopeContainsOnlyInitialOwnershipMarker": true,
+    "stopRequestCreatedAfterVerifiedRetention": true,
+    "audit": {
+      "acceptedPreservationScope": true,
+      "sourceDigest": "ce0f7cad865963de708456b2c96f34a3f49bcb80390e2ccc49e3290c42813377",
+      "runtime": "/private/tmp/cbui/l1i-otbfv80b",
+      "executionCompleted": false,
+      "reportedRows": 1,
+      "totalsObserved": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0,
+        "notrun": 0
+      },
+      "sourceAndInputsUnchanged": true,
+      "retainedWorkspaces": 1,
+      "archiveCount": 5,
+      "archiveEntries": 300,
+      "localFilesPreserved": 156,
+      "freshIndependentProcessInventories": 30,
+      "sharedKeysUnchanged": true,
+      "remainingDatabasePaths": 0,
+      "boundaryStopAccepted": true,
+      "boundaryNegativeControlsRejected": [
+        "false successful exit",
+        "full acceptance hidden",
+        "next workspace hidden",
+        "unattempted omitted",
+        "next attach host started",
+        "stop call omitted"
+      ],
+      "nativeAssertionsOnPassingCase": 2,
+      "nextAttachHostNotStarted": true,
+      "unattemptedRuns": 357,
+      "actualSelectedRuns": 358,
+      "actualSelectedFiles": 216,
+      "declaredPilotRuns": 2,
+      "producerScopeAccepted": false,
+      "producerReportedRows": 0,
+      "originalScopeMismatchPreserved": true,
+      "actualPlan": {
+        "path": "/private/tmp/chainbench-sweep-boundary-20261016-independent2/actual-full-plan.json",
+        "sha256": "2f209a224c011a09984258af8eab5f23d5dee7600593451c863b8475c7664d17",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138204612315427
+      },
+      "totalsWithUnattempted": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0,
+        "notrun": 357
+      },
+      "fullL1Accepted": false,
+      "finalWebAccepted": false,
+      "archives": [
+        {
+          "path": "/private/tmp/cbui/l1i-otbfv80b/reports/retention-c1/server1-metadata.tar.gz",
+          "sha256": "420e07f9f62a6b827e50221aab8b1e354658be34e188a6093468e31fecc2a524",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792137926452897812
+        },
+        {
+          "path": "/private/tmp/cbui/l1i-otbfv80b/reports/retention-c1/server2-metadata.tar.gz",
+          "sha256": "376c5daa0002bcf6debeb146908ea71f42873f3326a0fe545c98dde187417a47",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792137927717919270
+        },
+        {
+          "path": "/private/tmp/cbui/l1i-otbfv80b/reports/retention-c1/server3-metadata.tar.gz",
+          "sha256": "1988524d29af06c65299bc16265aeca45c1a75f6c7ccf9253251b7219bea0089",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792137929235781686
+        },
+        {
+          "path": "/private/tmp/cbui/l1i-otbfv80b/reports/retention-c1/server4-metadata.tar.gz",
+          "sha256": "f4ac93b730b82667804e1bd7a27d6e59ded8f534092786f2a34ee3b1c4deafb8",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792137930233115022
+        },
+        {
+          "path": "/private/tmp/cbui/l1i-otbfv80b/reports/retention-c1/server5-metadata.tar.gz",
+          "sha256": "f8bb69771f8e4878c374d556e2bd73f8b164098be97c125fcd2190442b8d635f",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792137931106718585
+        }
+      ]
+    },
+    "fullL1Accepted": false
+  },
+  "binaryPins": {
+    "gstable": "9ca995c38dc9fc3c0921577c7f91860f956189c9e34618d9004797337e863a47",
+    "gwbft": "cb9bc31632a852c27e9dddaeb24911aea32c8c0f5ea78bfbcb1df644b54235c2",
+    "gwemix": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c",
+    "gstable-prefork": "39cf9101357b1e6caa5626c5537a95524816975d635f5361be89700ac5f90856",
+    "gstable-boho-v101": "89e62a36028ef44302f119b44347f70b12fd074b162af9c89c7224052de7d83f"
+  },
+  "cli": {
+    "path": "/private/tmp/cbui/l1i-otbfv80b/bin/chainbench",
+    "sha256": "ead926162fe1bb1ebb614eb7a118921a83a78d5bdd47f728daa6235f7d3ef789",
+    "buildInfo": "/private/tmp/cbui/l1i-otbfv80b/bin/chainbench: go1.26.8\n\tpath\tgithub.com/0xmhha/chainbench/cmd/chainbench\n\tmod\tgithub.com/0xmhha/chainbench\tv0.0.0-20261016075414-aecfee98316b+dirty\t\n\tdep\tgithub.com/0xmhha/accounts\tv0.1.0\th1:wzaTpRrgg5gSsLDbF/BnV4SpwABWmZQJDzfoyr4oh5U=\n\tdep\tgithub.com/decred/dcrd/dcrec/secp256k1/v4\tv4.0.1\th1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1m5sE92cU+pd5Mcc=\n\tdep\tgithub.com/gorilla/websocket\tv1.5.3\th1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=\n\tdep\tgithub.com/kilic/bls12-381\tv0.1.0\th1:encrdjqKMEvabVQ7qYOKu1OvhqpK4s47wDYtNiPtlp4=\n\tdep\tgithub.com/spf13/cobra\tv1.10.2\th1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=\n\tdep\tgithub.com/spf13/pflag\tv1.0.9\th1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.1.0\th1:5eUemwrMargf3BSLRRCalXT93Ns6pQJIjYQN2nyfOP8=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.4\th1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=\n\tdep\tgolang.org/x/crypto\tv0.52.0\th1:RMs7fP2rXdep0CftQlK8Uf+kibLm7qkCcradZWYz988=\n\tdep\tgolang.org/x/sys\tv0.45.0\th1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=\n\tdep\tgolang.org/x/term\tv0.43.0\th1:S4RLU2sB31O/NCl+zFN9Aru9A/Cq2aqKpTZJ6B+DwT4=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=aecfee98316b7f75f67cb40a246a52144e0e84a4\n\tbuild\tvcs.time=2026-10-16T07:54:14Z\n\tbuild\tvcs.modified=true\n"
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-20261016-checkpoint.json",
+      "sha256": "f87c7ebfdf884ec32d0d79b838789a9a3f0cae10017491b7854f19e6423d0845",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137790631788351
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-20261016-summary.json",
+      "sha256": "dc66cb0eed836615c755a1d0c8ea54710c3c270599425191eeacb3781cb54aa8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137932144805001
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-20261016-independent2.json",
+      "sha256": "fee01ab0e0f621f38b6ab3ff6d516409ebfd6a06ecf112964d1a00ffcc04f397",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792138205301302670
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-red-20261016.log",
+      "sha256": "efa8b067feb231ac64591c8145a4196c0a4b922991f94f8c0fe96c854201cc6b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137359640093190
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-green2-20261016.log",
+      "sha256": "4745b6ad24c0973b87aa587b2d60abd76a0b87664a674c7ebac0209dd5658fba",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137468147022302
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-ready-check-20261016.log",
+      "sha256": "d80906085a6b2812642f86936f4ea2d57b3bd8b3046b8a5db64ffa7d0ef5f92c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137655236962644
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-run-20261016.log",
+      "sha256": "e6e7db4aefd7731d188901dc849177fac224b120b08ebf83cd51ee043e610177",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137932145040556
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-independent-20261016.log",
+      "sha256": "9554fc5697e722ec66e1bafea11e6a9b6e035823dda2d681f8bca1d28de7b756",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792138067153332719
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-independent2-20261016.log",
+      "sha256": "5e010b7027051c1bdd72a730f047e5b69231cca66b52e7564cb706ef1d2e5fef",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792138205302379795
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-prepare-20261016.py",
+      "sha256": "69cd1c9ee7eeb1af552e490edc5f2d94f64b3ffe010b79a3f939019044cf0793",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137646496719169
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-run-20261016.py",
+      "sha256": "96099d4a56f9647cc3820b3a800896431abb6de98d6769152e91f4a79c71a601",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137747906901666
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-cli-20261016.py",
+      "sha256": "9308be6a43f18d9e6f99b5e6f148cc7c048c81af4408c0fa0602a85fc59b3d25",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137646498563250
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-hook-20261016.py",
+      "sha256": "09286210d9faf5f301575455b82ad82066b535b95b0f73a160bbf9e622748d97",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137646499135944
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-retention-20261016.py",
+      "sha256": "d9e723a7c30e11303c36111b6de1431655550e179815c57467eb2808ec1ae66c",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137646497795643
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-independent-20261016.py",
+      "sha256": "ba411d91ef580cc211d7d82c252a82bb228147238453d9c44c274fba7185d980",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137747908969157
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-boundary-independent2-20261016.py",
+      "sha256": "f86c95b49e934cc03d7dc4dcf787e89e80ada0d2ebbea86e59524354192a7b08",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792138158370681361
+    }
+  ],
+  "limitations": [
+    "The intended two-case restriction was missing. The original producer and original /2 verifier remain failed; they are not relabelled as a successful two-case pilot.",
+    "A separate read-only audit reconstructs the actual216-file/358-run plan and verifies the1PASS/357NOTRUN boundary outcome, storage and absence of the next attach host.",
+    "Only the first case executed; the other357 were not run. Neither a full L1 pass nor a full L1 execution is claimed.",
+    "No external chain source, gate requirement, timeout or binary was changed for this scope. Prior seal/RPC/timing failures remain open.",
+    "Archive auditing covers POSIX bytes/type/mode/uid/gid/nsmtime/link target, not Linux ACL/xattr.",
+    "Publishing evidence changes the full source fingerprint. The exact sweep and test sources at proof remain bound.",
+    "The shell change needs a final AST refresh; WEB01-14 and other product remainders remain open."
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

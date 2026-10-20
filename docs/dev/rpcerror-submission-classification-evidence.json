@@ -1,0 +1,262 @@
+{
+  "scope": "rpcError transaction-submission classification only: reject standard JSON-RPC protocol failures while retaining generic API argument-error use and the existing missing-method guard. Native positive regression uses four unchanged public StableNet personal delegation cases. Not actual injection of protocol failures into a real node, both-method native coverage, whole R5/L1/legacy/87 or final Web acceptance.",
+  "sourceDigest": "6c45176304d440719979d470447ce21cc9afc28c1992a806400ce17665beae0c",
+  "headAtProof": "25f5bfc4b4511e40b3c113eba64eccebc89cc703",
+  "implementation": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/txprobe.go",
+      "sha256": "d707c0c4bce0b259641b95fb870e0d3b71e1750753c930ddcebf74d24c68433e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792108089830030172
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/rpcerror_submission_test.go",
+      "sha256": "81aabcb0384ccf76a547d835601d831c41ee60cb13626ca44d350683e0945ce6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792108064266705568
+    }
+  ],
+  "redGreen": {
+    "originalFalsePasses": 8,
+    "protocolCodesRejected": [
+      -32700,
+      -32600,
+      -32601,
+      -32602,
+      -32603
+    ],
+    "methods": [
+      "eth_sendTransaction",
+      "eth_sendRawTransaction"
+    ],
+    "focusedControls": 17,
+    "genericSigningArgumentErrorPreserved": true,
+    "missingMethodMessageControls": 2,
+    "intermediateRegression": "Initial classifier reuse bypassed the existing missing-method message guard. Two additional RED controls exposed this regression before acceptance; the guard remains shared by generic and submission assertions.",
+    "allControlsGreen": true,
+    "wholeCheckPassed": true,
+    "relatedWholeRacePackages": [
+      "internal/testhelper",
+      "internal/testengine",
+      "internal/app",
+      "internal/mcp"
+    ],
+    "productionNetLinesAdded": 11,
+    "publicCaseInputsChanged": false
+  },
+  "native": {
+    "exitCode": 0,
+    "passed": [
+      "TestNativeLegacyPersonalDelegation"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-rj6cmm8j"
+    ],
+    "elapsedSeconds": 101.52148120797938,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "presetFilesUnchanged": true
+  },
+  "independent": {
+    "acceptedScope": true,
+    "publicCases": 4,
+    "publicAssertions": 46,
+    "retainedFiles": 254,
+    "remainingDatabases": 0,
+    "trieCacheBytesKept": 0,
+    "ownedImportedKeys": 8,
+    "presetFilesChecked": 45,
+    "cases": [
+      {
+        "id": "legacy-personal-fd-normal",
+        "assertions": 12,
+        "nodePersonalSigningFlow": true,
+        "senderHash": "0x5772c9859f30a9e6abee3fff7610255f6f601f8933d2593f207528f0993f1109",
+        "payerHash": "0x296f420d82fe5176feb2bc2cef513e2d7f259346e348ceda4bf2b790957b53e5",
+        "wireSenderPreserved": true
+      },
+      {
+        "id": "legacy-personal-fd-sender",
+        "assertions": 8,
+        "nodePersonalSigningFlow": true,
+        "senderHash": "0x6ef3ecc86b25db397d056247c07a1422b6bce5521ecc02d75d9b4743afbcc1ef",
+        "payerHash": "0xff5d0ad0e35722ffdacdef2a3440531935a40a0afd5255156e0bf7d69e49df08",
+        "wireSenderPreserved": true
+      },
+      {
+        "id": "legacy-personal-fd-feepayer",
+        "assertions": 8,
+        "nodePersonalSigningFlow": true,
+        "senderHash": "0x10ea1c8c99767ca84909b5ab211f71404bf16cd32640d4c3379092466f1d77bc",
+        "payerHash": "0xdcd451a122ece3e741fb183c9eb02583db82082b0452dcc0910213181100ea17",
+        "wireSenderPreserved": true
+      },
+      {
+        "id": "legacy-personal-fd-insufficient",
+        "assertions": 18,
+        "nodePersonalSigningFlow": true,
+        "senderHash": "0x09edd8086901b0b120152c2b80189206d101ceb53d581063cdb2d7675dc858a4",
+        "payerHash": "0x74e709440563c06160de3da013a74b873b222682056d788fde05dc991deb3b8b",
+        "wireSenderPreserved": true
+      }
+    ],
+    "checks": [
+      "Actual personal import/unlock/sign/sign-fee-delegate flows",
+      "Sender0x02 bytes preserved inside payer0x16 envelope",
+      "Exact mined transaction/receipt/value and sender/payer/recipient fee ledger",
+      "Insufficient-payer public rpcError assertion, then identical signed bytes accepted after funding",
+      "Two direct repeated signature refusals and three-block absence/state invariance",
+      "Raw Keccak independently recomputed; no independent signature cryptography claim",
+      "Two fresh complete host process/FD inventories",
+      "Exact retained file set/SHA256/mode/uid/gid/nsmtime",
+      "Earlier aborted and failed personal-trial files unchanged"
+    ]
+  },
+  "limitations": [
+    "The insufficient-payer public assertion stores the node message, not its numeric RPC error code. No independent numeric-code claim is made for that particular observed refusal.",
+    "Submission methods are covered by faulted HTTP unit controls; this native regression executes eth_sendRawTransaction only.",
+    "Generic rpcError onEach behavior, contradictory result/error envelopes, wider R5 combinations and source provenance acceptance remain separate work.",
+    "No all-legacy or all87/full-L1/final-Web acceptance follows from this stage."
+  ],
+  "evidence": [
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-20261016-start.json",
+      "sha256": "3f7fa17bac7d24f91a36a55c7cac9ab9f5e1be21c32223dad049c0eb18bff92e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108390820981827
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-20261016-native.jsonl",
+      "sha256": "93a6709cfbb9074d9c6307ed4d7474d19a7b2ee7f19c3cc245a22ec163cb4e26",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108490119051395
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-20261016-summary.json",
+      "sha256": "bd41509e5255dc9ae161ec5d60bc3d3116e4722e53522cfb2f0d5b0e6d95f668",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108492517364512
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-20261016-independent.json",
+      "sha256": "62469e6d4ce92e4f8abfe0c2ee72de79267c8b2db2b8a705cdf404355b1b301b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108505343736324
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-red-20261016.log",
+      "sha256": "9872a3ea2a61bd5aa2615938bb438919c72086db3f45b63091506346b9c363ed",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107970806018298
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-green-20261016.log",
+      "sha256": "7b6b8acd06608ae9262c5fc04239b48d985aa48131873192437b7b02be13b8fa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107992797680762
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-green2-20261016.log",
+      "sha256": "97d05ed191da3f46651bcb2086b1d51450b0feb552ac8f60b385f5f3b30f7839",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108085363169607
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-race-20261016.log",
+      "sha256": "7f76bb5da1dfd3349f56f8c4b69f6e153a8b7b581be8ff514a89aafdcb90afe6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108086756472453
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-race-final-20261016.log",
+      "sha256": "eb60a450693150249784b8b6d6931ea6e00f1fc5c6713fa63ab33e861ca8c77d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108201660285259
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-check-20261016.log",
+      "sha256": "ba145e898e47d8f7e1f312ce51f908a3a1eb36351c979a95ccd5faaf51bfbeae",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108190173767104
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-check-final-20261016.log",
+      "sha256": "f00201375bb971272d79eaae7f3382e2347c6fe934d95be825b60d2344128add",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108368955957018
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-driver-20261016.log",
+      "sha256": "d3a7240ff8e851b6f05f5990d2914476a89cebfe7d4c07ad5e66603c9edaebd1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108492518181541
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-independent-20261016.log",
+      "sha256": "395b41f5327bc8cd87721d9731cee7bb35b5ad688dc1392a891269ae1d8d6ebf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108505344040236
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-missing-method-red-20261016.log",
+      "sha256": "7920c02623754a5fb4b1d861864bad65a83795ccea2310dd773e25325da3cffb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108071277816831
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-run-20261016.py",
+      "sha256": "d2328b9e8a2501a63dc09027e0492440b61364492e7dda68db21dbee8ece199e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108036158271209
+    },
+    {
+      "path": "/private/tmp/chainbench-rpcerror-submission-independent-20261016.py",
+      "sha256": "5d3d1de982f88955f40860b64e21cba654fcf18f864960e72b48efa7bde41eef",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792108036158713160
+    }
+  ],
+  "allR5Accepted": false,
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

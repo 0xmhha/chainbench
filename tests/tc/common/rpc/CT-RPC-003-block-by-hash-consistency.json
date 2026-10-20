@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "block-by-hash-consistency",
-  "description": "RT-G-1-02 — eth_getBlockByHash (원본 regression/api/02-test-get-block-by-hash)",
+  "description": "RPC-002 / RT-G-1-02 — 실제 거래가 포함된 번호 N을 고정하고 전체 트랜잭션을 반환하는 번호/해시 조회의 hash·number·extraData·miner·transactions를 대조한다.",
   "requires": [
     "rpc"
   ],
@@ -15,46 +15,178 @@
   },
   "steps": [
     {
+      "do": "newAccount",
+      "save": "probeRecipient",
+      "saveKey": "probeRecipientKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "to": "$probeRecipient",
+      "value": "1",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s",
+      "save": "probeHash"
+    },
+    {
       "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$probeHash"
+      ],
+      "select": "blockNumber",
+      "save": "number"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
       "method": "eth_getBlockByNumber",
       "params": [
-        "latest",
-        false
+        "$number",
+        true
       ],
-      "save": "hash",
       "select": "hash",
-      "source": "rpcCall"
+      "save": "hash"
     },
     {
       "do": "read",
+      "source": "rpcCall",
       "method": "eth_getBlockByNumber",
       "params": [
-        "latest",
-        false
+        "$number",
+        true
       ],
-      "save": "number",
+      "select": "extraData",
+      "save": "extraData"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$number",
+        true
+      ],
+      "select": "miner",
+      "save": "miner"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$number",
+        true
+      ],
+      "select": "transactions",
+      "save": "transactions"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$number",
+        true
+      ],
+      "select": "hash",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$number",
+        true
+      ],
+      "select": "extraData",
+      "compare": "Regexp",
+      "is": "^0x([0-9a-fA-F]{2})+$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$number",
+        true
+      ],
+      "select": "miner",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{40}$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$number",
+        true
+      ],
+      "select": "transactions.0.hash",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$hash",
+        true
+      ],
+      "select": "hash",
+      "is": "$hash"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$hash",
+        true
+      ],
       "select": "number",
-      "source": "rpcCall"
+      "is": "$number"
     },
     {
       "expect": "rpcCall",
-      "is": "$hash",
       "method": "eth_getBlockByHash",
       "params": [
         "$hash",
-        false
+        true
       ],
-      "select": "hash"
+      "select": "extraData",
+      "is": "$extraData"
     },
     {
       "expect": "rpcCall",
-      "is": "$number",
       "method": "eth_getBlockByHash",
       "params": [
         "$hash",
-        false
+        true
       ],
-      "select": "number"
+      "select": "miner",
+      "is": "$miner"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$hash",
+        true
+      ],
+      "select": "transactions",
+      "is": "$transactions"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$hash",
+        true
+      ],
+      "select": "transactions.0.hash",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
     }
   ]
 }

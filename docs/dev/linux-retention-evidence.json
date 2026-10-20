@@ -1,0 +1,159 @@
+{
+  "scope": "Actual original basic07 on owned Linux fleet; current-composition archive matches independent filesystem bytes/mode/uid/gid/nanosecond mtime before and after archive, then two process inventories and inactive DB reclamation. Not fullL1.",
+  "acceptedScope": true,
+  "fullL1Accepted": false,
+  "sourceDigest": "677ca507d64834568ccf83055a7d76143219dfa3edd21ed6d24ab2ac387aba27",
+  "elapsedSeconds": 101.75174512498779,
+  "nativeProof": {
+    "path": "/private/tmp/cbui/rv-ak0l8bpu/reports/proof.json",
+    "sha256": "e9012f2bc1b16b77c0a2b3174c43b142d90cad0475a360ecbdcdd0cba3208c6c",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060801016273100
+  },
+  "nativeSummary": {
+    "path": "/private/tmp/chainbench-linux-retention-v2-native-summary.json",
+    "sha256": "e9012f2bc1b16b77c0a2b3174c43b142d90cad0475a360ecbdcdd0cba3208c6c",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060801016401476
+  },
+  "preArchiveFilesystemCompared": true,
+  "postArchiveFilesystemCompared": true,
+  "postReclamationRetainedFilesCompared": true,
+  "metadataFields": [
+    "relative path",
+    "entry type",
+    "file bytes/SHA256",
+    "mode",
+    "uid",
+    "gid",
+    "mtime nanoseconds",
+    "file size",
+    "symlink target"
+  ],
+  "xattrOrACLClaimed": false,
+  "rootSelection": "Current composition node directories, runtime and logs, plus bounded shared keys; no unrelated historical compositions. Baseline ELF bytes omitted only after exact hash checks against retained provenance.",
+  "servers": 5,
+  "archives": 5,
+  "archiveBytes": 75641,
+  "remainingDatabasePaths": 0,
+  "retainedFiles": 67,
+  "inventory": {
+    "path": "/private/tmp/cbui/rv-ak0l8bpu/reports/inventory.json",
+    "sha256": "42eb23d9f664b3171515c618f7e1f969d6f758f7139dee4676c7d0feea6faf46",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060882183451944
+  },
+  "independentAudit": {
+    "path": "/private/tmp/cbui/rv-ak0l8bpu/reports/independent-audit.json",
+    "sha256": "6083767be8f4fe54fbd4bbc1c59d411f371841e6ebe468d7bffa651f07c26a40",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060882153146955
+  },
+  "unitRed": "Legacy global-root/index-only hypothesis fails current-only selection and nine independent metadata mutation controls. New decoder also initially accepted dot root; its actual negative test failed and canonical path validation was corrected.",
+  "unitGreen": "Seven tests cover selection ownership, metadata mutation/missing/extra/duplicate rejection, independent GNU find/PAX decode with exact timestamp precision, unsupported paths and truncated inventory. Related runtime-storage27 and sweep9 tests pass.",
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-red.log",
+      "sha256": "7162b59aad2ab67eb3a466a7b4fb2dfd85b0060f64ae2219b566816e1b85bcdd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060379104721103
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-green.log",
+      "sha256": "888a0c0ed615e57d32cf72be501b0c355f33b8613c81dfdaa99db33d7959487e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060406056096146
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-green2.log",
+      "sha256": "c545b8f5814e7812add1a103c70d83395e6574e3ee8f93c06f89c59a090a095b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060454168464377
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-green3.log",
+      "sha256": "21c7e48d0b1ec908feef784bbce1fa55f2c9a7acf76382fa7578754a78bd1ed8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060466767462461
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-storage-regression.log",
+      "sha256": "291eaae68f24c0ae3e2f0a01ae87f3424f5ef805945e11ee17591b231e9f2e89",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060562408285082
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-check.log",
+      "sha256": "03cde4f0b0589a3f3eb09bcdf8bcb7969cc718bf9ccb433e30dae8bb7909e33b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060662930494469
+    }
+  ],
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-prepare.py",
+      "sha256": "a4faa8b6b8da88c61138f01ed294f12c2b233004fba6d7638b0451e42babf83c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060585241062638
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-reclaim-v2.py",
+      "sha256": "61dd6c577023217998621ca0a1c5345eccff21b507007623b52d5fb7bda08ce8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060560868465163
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-run.py",
+      "sha256": "0b4befa1c4fc0915e6cbf756131a4979482551705219112c61d48da4148a0404",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060610388833819
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retain-v2-hook",
+      "sha256": "793b41b5cf6f111ed352e240d621a73f1d2be3666bfa794d5a38e2d821f4d613",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060610388454782
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-retention-v2-evidence.py",
+      "sha256": "67997f7269c29ee0e74ffea1889f320fff57a2bb7bcfe00fd1a64f324b1e1966",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060879602810985
+    }
+  ],
+  "publicationCheck": {
+    "passed": true,
+    "path": "/private/tmp/chainbench-linux-retention-v2-publication-check.log",
+    "sha256": "0c589e05c8ae323a95c7379d576b5223eb45dee2c4fe501f25961c9c5bd3f518"
+  }
+}

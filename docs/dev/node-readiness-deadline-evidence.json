@@ -1,0 +1,146 @@
+{
+  "scope": "Readiness deadline includes observations, recovery and waits. Parent cancellation stays an error; internal budget is an explicit non-ready result; late READY is refused. Actual4-BP Linux positive control and RPC-stopped mining, native CLI reuse deadline, archival and independent15-server audit. Not fullL1 or a fix for invalid prepared seals.",
+  "acceptedScope": true,
+  "fullL1Accepted": false,
+  "externalSealIssueResolved": false,
+  "redControls": [
+    "observer receives only parent deadline",
+    "slow restart misclassified as restart failure",
+    "READY returned after readiness budget",
+    "wait receives only parent deadline"
+  ],
+  "parentDeadlineErrorPreserved": true,
+  "redOverlayOriginalSource": {
+    "path": "/private/tmp/chainbench-node-deadline-original.go",
+    "sha256": "3fe53e5f0b3daa492385dddf1017faae65b63ee604dd9ba0fcda98c696c3a6b4",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792075371888616808
+  },
+  "logs": {
+    "all-red": {
+      "path": "/private/tmp/chainbench-node-deadline-all-red.log",
+      "sha256": "6f7931bd2898a737daea7419ddcdeea43e1234fedfcff8d6845e7c6a406f557a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075375743255700
+    },
+    "all-green": {
+      "path": "/private/tmp/chainbench-node-deadline-all-green.log",
+      "sha256": "98d8ce98a231778c02bc4735c2b10a3e08fee86f73a342b485202b6cc43f2649",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075418460584557
+    },
+    "race": {
+      "path": "/private/tmp/chainbench-node-deadline-race.log",
+      "sha256": "3ea6f80b3059c15fd29359d67c09c57a9a8810760def4c3f4adb4dbb2f5890ff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075423030868978
+    },
+    "check": {
+      "path": "/private/tmp/chainbench-node-deadline-check.log",
+      "sha256": "a9f072b7c04bb78a352aa176151fb5dba9cccebe13243fb5de5159a99f39ea7e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075616262185881
+    },
+    "native2": {
+      "path": "/private/tmp/chainbench-node-deadline-native2.log",
+      "sha256": "940f1176951ea3657030c0df9396b84168292140d207d5b6c9ffa9716becdef3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075924182400082
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-node-deadline-independent.log",
+      "sha256": "0fadc143cc188e35175ab6deb654e47c1e190d6b6fb336eef2b4b8d4a8cbf16a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792076027217355514
+    }
+  },
+  "nativeProof": {
+    "path": "/private/tmp/cbui/nd2-5xas_i79/reports/proof.json",
+    "sha256": "8fcc32da9828ee7d4af4cd535cca645c690c85a7ae628caeb3694a6c91bd3bcc",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792075924182036086
+  },
+  "independentProof": {
+    "path": "/private/tmp/cbui/nd2-5xas_i79/reports/independent.json",
+    "sha256": "e4a4ee8c569717e6f39d2d7b249f86067a18249357c0020c259858719a32c2d5",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792076027217063434
+  },
+  "sourceDigest": "ef85c60f513251e405ffd7b7cf473d81efbc1de7c7bf3a0ca3f399c2f7256995",
+  "sourceAndHelpersUnchangedDuringProof": true,
+  "nativeElapsedSeconds": 102.42782129102852,
+  "healthyControl": {
+    "exitCode": 0,
+    "elapsedSeconds": 55.85347445803927,
+    "case": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/rpc/CT-RPC-002-block-transactions-field.json"
+  },
+  "stalledControl": {
+    "readinessDeadlineSeconds": 8,
+    "wholeCLIElapsedSeconds": 12.019794958992861,
+    "exitCode": 2,
+    "gateReason": "node readiness deadline reached after 8s",
+    "miningStoppedOn": 4,
+    "headUnchangedForSeconds": 4,
+    "actualRPCWitness": {
+      "path": "/private/tmp/cbui/nd2-5xas_i79/reports/actual-rpc-control.json",
+      "sha256": "1c700e0aa036890228dbeedd77a80e5b67e8ee4c73ed1a166ca93b4cd8499f32",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075888063412881
+    },
+    "wholeCLINote": "Whole CLI time includes preflight and workspace processing; it is not the isolated gate duration."
+  },
+  "retention": {
+    "archives": 4,
+    "freshFleetAudits": 15,
+    "remainingDatabasePaths": 0,
+    "archiveComparedToIndependentFilesystemMetadata": true,
+    "fields": [
+      "bytes",
+      "mode",
+      "uid",
+      "gid",
+      "nanosecond mtime",
+      "type",
+      "link target"
+    ],
+    "ACLAndXattrsClaimed": false
+  },
+  "retainedPreparationFailure": {
+    "runtime": "/private/tmp/cbui/nd-rd_u0ran",
+    "proof": {
+      "path": "/private/tmp/cbui/nd-rd_u0ran/reports/proof.json",
+      "sha256": "4dd72c83b6c649b9e72b9b86551e156c97edbe4ac3497189a09ca261176fcf40",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792075648815445404
+    },
+    "failedBeforeNativeChainSetup": true,
+    "cause": "An external temporary definition could not resolve its relative named preset. Corrected fixture uses the unchanged original repository case. Not a product RED."
+  },
+  "sources": {
+    "internal/nodemonitor/gate.go": "e690b19ee47bbee91c452ab8c2c5d7cd92be5d7c52915a24430bf70f15071f4f",
+    "internal/nodemonitor/deadline_test.go": "f75be10158f73cf1e1ec12165192eaba0dfae563ce12817bc75620c5ed933584"
+  },
+  "cliSHA256": "83095386f3a68bb3aba963a5f468a15b347f39d0fd9cc4a1dc50ed22eb207f89"
+}

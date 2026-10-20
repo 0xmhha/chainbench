@@ -1,4 +1,7 @@
 """Real browser/engine test job proof; does not award a Seed criterion."""
+from runtime_storage import reclaim_after_shutdown
+from runtime_storage import clone_file
+from runtime_storage import create_runtime
 import importlib.util
 import json
 import os
@@ -23,8 +26,7 @@ def publish_restart_response(runtime, payload):
 def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart=False, fixture_inputs=None, browser_timeout=300):
     output=Path('chainbench-out/web-ui-development')/proof_name
     output.mkdir(parents=True,exist_ok=True)
-    runtime=runtime_root()/str(uuid.uuid4())
-    runtime.mkdir(parents=True,mode=0o700)
+    runtime = create_runtime()
     spec=importlib.util.spec_from_file_location('native_fixture','tests/webui/fixtures/prepare_web04.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     provenance=module.prepare(runtime,output)
@@ -35,7 +37,7 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
         # WEBUI_DASHBOARD_BINARY records the same proof against another build,
         # for example the previous commit, as RED evidence.
         if os.environ.get('WEBUI_DASHBOARD_BINARY'):
-            shutil.copy2(Path(os.environ['WEBUI_DASHBOARD_BINARY']).resolve(strict=True),runtime/'dashboard')
+            clone_file(Path(os.environ['WEBUI_DASHBOARD_BINARY']).resolve(strict=True),runtime/'dashboard')
         else:
             subprocess.run(['go','build','-o',str(runtime/'dashboard'),'./cmd/chainbench-dashboard'],stdout=log,stderr=log,check=True)
             subprocess.run(['go','build','-o',str(runtime/'chainbench'),'./cmd/chainbench'],stdout=log,stderr=log,check=True)
@@ -106,5 +108,6 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
         try:server.wait(timeout=10)
         except subprocess.TimeoutExpired:server.kill();server.wait()
         log.close()
+        reclaim_after_shutdown(runtime, output)
 
 if __name__=='__main__':main()

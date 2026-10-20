@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "burn-expire-refundable",
-  "description": "TC-1-1-03: 소각 제안이 만료되면 GovMinter 로 옮겨진 예치금이 환불 가능 잔액이 된다. proposeBurn 직후 GovMinter 잔액 증가, 만료 후 상태 Expired(5), refundableBalance 증가분, BurnDepositRefunded 이벤트를 확인한다.",
+  "description": "v2 burn/refund predicates: actual generated-key proposer, deposit and burn/refund ledgers, native custody/outflow and exact receipt event identity. Original fixture/topology/timing differences remain separately recorded. TC-1-1-03: 소각 제안이 만료되면 GovMinter 로 옮겨진 예치금이 환불 가능 잔액이 된다. proposeBurn 직후 GovMinter 잔액 증가, 만료 후 상태 Expired(5), refundableBalance 증가분, BurnDepositRefunded 이벤트를 확인한다.",
   "requires": [
     "rpc",
     "short-expiry",
@@ -34,7 +34,70 @@
       "source": "balanceAt"
     },
     {
-      "data": "0x64e2a8fc000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001800000000000000000000000008c4a10b9108d49b9d23f764464090831d9c177640000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000006553f20000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000000977642d6578706972650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a7265662d6578706972650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000106275726e2d6578706972652d7465737400000000000000000000000000000000",
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x64e2a8fc",
+      "of": [
+        "0x0000000000000000000000000000000000000000000000000000000000000020",
+        "0x0000000000000000000000000000000000000000000000000000000000000180",
+        "node3",
+        "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000",
+        "0x000000000000000000000000000000000000000000000000000000006553f200",
+        "0x00000000000000000000000000000000000000000000000000000000000000c0",
+        "0x0000000000000000000000000000000000000000000000000000000000000100",
+        "0x0000000000000000000000000000000000000000000000000000000000000140",
+        "0x0000000000000000000000000000000000000000000000000000000000000009",
+        "0x77642d6578706972650000000000000000000000000000000000000000000000",
+        "0x000000000000000000000000000000000000000000000000000000000000000a",
+        "0x7265662d65787069726500000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000010",
+        "0x6275726e2d6578706972652d7465737400000000000000000000000000000000"
+      ],
+      "save": "burnProposalData"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x98179c41",
+      "of": [
+        "node3"
+      ],
+      "save": "burnBalanceCall"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "node3",
+        "0"
+      ],
+      "save": "requesterNumber"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "node3",
+      "save": "requesterBefore"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$refBalCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$burnBalanceCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "data": "$burnProposalData",
       "do": "sendTx",
       "from": "node3",
       "gas": "0xb71b0",
@@ -44,10 +107,43 @@
       "value": "0xde0b6b3a7640000"
     },
     {
-      "address": "govMinter",
       "do": "read",
-      "save": "govAfterBurn",
-      "source": "balanceAt"
+      "source": "balanceAt",
+      "address": "govMinter",
+      "save": "govAfterBurn"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "node3",
+      "save": "requesterAfterBurn"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$govAfterBurn",
+        "$govBefore"
+      ],
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$requesterBefore",
+        "$requesterAfterBurn"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$burnBalanceCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     },
     {
       "do": "read",
@@ -55,7 +151,8 @@
       "save": "burnPid",
       "source": "receiptLog",
       "topic": 1,
-      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+      "address": "govMinter"
     },
     {
       "do": "read",
@@ -110,6 +207,83 @@
       "on": "node1",
       "save": "expHash",
       "to": "govMinter"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "govMinter",
+      "save": "govAfterFinalize"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$burnBalanceCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$refBalCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$govAfterFinalize",
+        "$govAfterBurn"
+      ],
+      "compare": "Equal",
+      "is": "0"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$expHash",
+      "address": "govMinter",
+      "topic0": "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062",
+      "topic": 1,
+      "compare": "Equal",
+      "is": "$burnPid"
+    },
+    {
+      "do": "read",
+      "source": "receiptLog",
+      "hash": "$expHash",
+      "address": "govMinter",
+      "topic0": "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062",
+      "topic": 2,
+      "save": "eventRequesterTopic"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$eventRequesterTopic"
+      ],
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$eventRequesterTopic",
+        "0"
+      ],
+      "compare": "Equal",
+      "is": "$requesterNumber"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$expHash",
+      "address": "govMinter",
+      "topic0": "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062",
+      "select": "data",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     },
     {
       "do": "read",
@@ -196,6 +370,82 @@
       "topics": [
         "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062"
       ]
+    },
+    {
+      "do": "sendTx",
+      "from": "node3",
+      "on": "node3",
+      "to": "govMinter",
+      "data": "0x936834b9",
+      "gas": "0xb71b0",
+      "save": "cleanupClaimHash"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$cleanupClaimHash",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$refBalCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "govMinter",
+      "save": "govAfterClaim"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$govAfterFinalize",
+        "$govAfterClaim"
+      ],
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "receiptLog",
+      "hash": "$cleanupClaimHash",
+      "address": "govMinter",
+      "topic0": "0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24",
+      "topic": 1,
+      "save": "eventRequesterTopic"
+    },
+    {
+      "expect": "derive",
+      "op": "regexpCount",
+      "of": [
+        "$eventRequesterTopic"
+      ],
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$eventRequesterTopic",
+        "0"
+      ],
+      "compare": "Equal",
+      "is": "$requesterNumber"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$cleanupClaimHash",
+      "address": "govMinter",
+      "topic0": "0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24",
+      "select": "data",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     }
   ]
 }

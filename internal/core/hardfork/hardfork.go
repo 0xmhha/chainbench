@@ -38,11 +38,12 @@ type NodeSwap struct {
 // SwapPlan is which nodes to stop and relaunch on a different binary, and at
 // which block the fork activates.
 //
-// Named SwapPlan rather than Plan because upgrade.Plan is a different thing and
-// the shared word said otherwise (A7, A7b). This one acts on a network that is
-// already composed: the genesis is untouched, the data directories are kept,
-// and each node comes back on a new executable. upgrade.Plan builds a genesis
-// and composes a network from scratch, running two binaries at once.
+// Named SwapPlan because it acts on an already-composed network: the genesis
+// is untouched, data directories are kept, and nodes restart on a new binary.
+// The DSL UpgradeV2 declaration instead schedules a fork while composing a
+// network; its concurrent style runs both builds with disjoint node roles.
+// Both flows use the current chainsetup core (A7b); no retired upgrade.Plan
+// implementation is involved.
 type SwapPlan struct {
 	FromChain  string
 	ToChain    string

@@ -119,10 +119,12 @@ func New(baseDir, command string, startedAt time.Time) (Session, error) {
 // the session's keys/ path so the ring can be rooted there without the layout
 // leaking to callers.
 func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) *store.KeySet) (Session, error) {
-	id := SessionID(startedAt)
 	// Under this process's own directory: the artifact root is shared, and
 	// several agents write into it at the same time.
-	root := filepath.Join(ProcessDir(baseDir), id)
+	id, root, err := reserveSessionRoot(baseDir, startedAt)
+	if err != nil {
+		return nil, err
+	}
 	dirs := []struct {
 		path string
 		perm fs.FileMode
@@ -145,6 +147,31 @@ func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysD
 		keys:      newKeys(filepath.Join(root, dirKeys)),
 		envs:      make(map[Fingerprint]*env),
 	}, nil
+}
+
+// reserveSessionRoot claims a unique run directory with an atomic mkdir.
+// A process can run several short definitions in the same UTC second; their
+// timestamps remain equal, but their evidence and verdicts must never overlap.
+func reserveSessionRoot(baseDir string, startedAt time.Time) (string, string, error) {
+	parent := ProcessDir(baseDir)
+	if err := os.MkdirAll(parent, dirPerm); err != nil {
+		return "", "", fmt.Errorf("session: create process directory: %w", err)
+	}
+	base := SessionID(startedAt)
+	for sequence := 0; ; sequence++ {
+		id := base
+		if sequence > 0 {
+			id = fmt.Sprintf("%s-%06d", base, sequence)
+		}
+		root := filepath.Join(parent, id)
+		err := os.Mkdir(root, dirPerm)
+		if err == nil {
+			return id, root, nil
+		}
+		if !os.IsExist(err) {
+			return "", "", fmt.Errorf("session: reserve run directory: %w", err)
+		}
+	}
 }
 
 func (s *sess) ID() string          { return s.id }
@@ -208,7 +235,7 @@ func (s *sess) Save() error {
 	}
 	var writeErrs []error
 	for _, r := range s.tests {
-		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.presetRef, Status: string(r.status)})
+		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.presetRef, Status: string(r.status), PresetID: r.presetID})
 		switch r.status {
 		case StatusPass:
 			doc.Summary.Pass++

@@ -23,9 +23,9 @@ func chainNewTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir":    map[string]any{"type": "string", "description": "workspace directory (where the composition is set up)"},
+				"workspaceDir":    commonProperty("workspaceDir", map[string]any{"description": "workspace directory (where the composition is set up)"}),
 				"workspaceConfig": map[string]any{"type": "string", "description": "environment file owning the target dataRoot and its purpose directories"},
-				"chain":           map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix)"},
+				"chain":           commonProperty("chain", map[string]any{"description": "chain id (stablenet|wbft|wemix)"}),
 				"binary":          map[string]any{"type": "string", "description": "node binary path (may also be set at start)"},
 				"keys":            map[string]any{"type": "string", "description": "key set directory (default presets/keys)"},
 				"target":          map[string]any{"type": "string", "description": "data plane as one path: /local/path | user@host:/path | ssh://user@host:port/path"},
@@ -47,7 +47,7 @@ func chainNewTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			out, err := app.ChainNew(ctx, app.Deps{}, app.ChainNewIn{
+			out, err := invokeFeature[app.ChainNewIn, app.ChainNewOut](ctx, app.Deps{}, "chain.new", app.ChainNewIn{
 				DataDir:             argString(args, "workspaceDir", ""),
 				Chain:               argString(args, "chain", ""),
 				Binary:              argString(args, "binary", ""),
@@ -73,12 +73,12 @@ func chainStatusTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string", "description": "workspace directory (where the composition is set up)"},
+				"workspaceDir": commonProperty("workspaceDir", map[string]any{"description": "workspace directory (where the composition is set up)"}),
 			},
 			"required": []string{"workspaceDir"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.ChainStatus(ctx, app.Deps{}, app.ChainStatusIn{
+			res, err := invokeFeature[app.ChainStatusIn, app.ChainStatusOut](ctx, app.Deps{}, "chain.status", app.ChainStatusIn{
 				DataDir: argString(args, "workspaceDir", ""),
 			})
 			if err != nil {
@@ -101,7 +101,7 @@ func chainObserveTool() Tool {
 		Description: "Observe each recorded node of a composed network on its machine, changing nothing: whether its recorded launch is running, its pid runs something else, it has no process, or the record lost it; and whether its binary can launch. Args: workspaceDir.",
 		InputSchema: workspaceDirSchema(map[string]any{"serverLogins": map[string]any{"type": "string"}}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.ChainObserve(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), app.ChainObserveIn{DataDir: argString(args, "workspaceDir", "")})
+			res, err := invokeFeature[app.ChainObserveIn, app.ChainObserveOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "chain.observe", app.ChainObserveIn{DataDir: argString(args, "workspaceDir", "")})
 			if err != nil {
 				return "", err
 			}
@@ -117,7 +117,7 @@ func chainObserveTool() Tool {
 // workspaceDirSchema is the one argument every step shares.
 func workspaceDirSchema(extra map[string]any) map[string]any {
 	props := map[string]any{
-		"workspaceDir": map[string]any{"type": "string", "description": "workspace directory (where the composition is set up)"},
+		"workspaceDir": commonProperty("workspaceDir", map[string]any{"description": "workspace directory (where the composition is set up)"}),
 	}
 	maps.Copy(props, extra)
 	return map[string]any{"type": "object", "properties": props, "required": []string{"workspaceDir"}}
@@ -134,7 +134,7 @@ func chainKeysTool() Tool {
 			"validators": map[string]any{"type": "number", "description": "identities joining the validator set (generate; 0 = all)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainKeys(ctx, app.Deps{}, app.ChainKeysIn{
+			out, err := invokeFeature[app.ChainKeysIn, app.StepOut](ctx, app.Deps{}, "chain.keys", app.ChainKeysIn{
 				DataDir: argString(args, "workspaceDir", ""), Source: argString(args, "source", ""),
 				Nodes: argInt(args, "nodes", 0), Validators: argInt(args, "validators", 0),
 			})
@@ -158,7 +158,7 @@ func chainPlaceTool() Tool {
 			},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainAllocate(ctx, app.Deps{}, app.ChainAllocateIn{
+			out, err := invokeFeature[app.ChainAllocateIn, app.StepOut](ctx, app.Deps{}, "chain.place", app.ChainAllocateIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				BPCount: argInt(args, "bp", 4), ENCount: argInt(args, "en", 0),
 				Peering: argString(args, "peering", ""),
@@ -177,7 +177,7 @@ func chainGenesisTool() Tool {
 			"chainId": map[string]any{"type": "number", "description": "override the manifest chain id (0 = manifest)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainGenesis(ctx, app.Deps{}, app.ChainGenesisIn{
+			out, err := invokeFeature[app.ChainGenesisIn, app.StepOut](ctx, app.Deps{}, "chain.genesis", app.ChainGenesisIn{
 				DataDir: argString(args, "workspaceDir", ""), ChainID: int64(argInt(args, "chainId", 0)),
 			})
 			return out.Detail, err
@@ -192,7 +192,7 @@ func chainConfigTool() Tool {
 		Description: "Render and write each node's TOML config to the target.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainConfig(ctx, app.Deps{}, app.ChainConfigIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := invokeFeature[app.ChainConfigIn, app.StepOut](ctx, app.Deps{}, "chain.config", app.ChainConfigIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -208,7 +208,7 @@ func chainBuildTool() Tool {
 				"description": "high-precedence launch knobs key=value (bare key for booleans)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainLaunchOpts(ctx, app.Deps{}, app.ChainLaunchOptsIn{
+			out, err := invokeFeature[app.ChainLaunchOptsIn, app.ChainLaunchOptsOut](ctx, app.Deps{}, "chain.build", app.ChainLaunchOptsIn{
 				DataDir: argString(args, "workspaceDir", ""), Set: argStrings(args, "set"),
 			})
 			if err != nil {
@@ -231,7 +231,7 @@ func chainDeployTool() Tool {
 		Description: "Verify the launch inputs (genesis, configs) are present on the target; present files are reused, missing ones are named.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainProvision(ctx, app.Deps{}, app.ChainProvisionIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := invokeFeature[app.ChainProvisionIn, app.StepOut](ctx, app.Deps{}, "chain.deploy", app.ChainProvisionIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -246,7 +246,7 @@ func chainInitTool() Tool {
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the workspace's)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainInit(ctx, app.Deps{}, app.ChainInitIn{
+			out, err := invokeFeature[app.ChainInitIn, app.StepOut](ctx, app.Deps{}, "chain.init", app.ChainInitIn{
 				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
 			})
 			return out.Detail, err
@@ -263,7 +263,7 @@ func chainStartTool() Tool {
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the workspace's)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainStart(ctx, app.Deps{}, app.ChainStartIn{
+			out, err := invokeFeature[app.ChainStartIn, app.StepOut](ctx, app.Deps{}, "chain.start", app.ChainStartIn{
 				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
 			})
 			return out.Detail, err
@@ -278,7 +278,7 @@ func chainStopTool() Tool {
 		Description: "Stop every running node by its recorded PID.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainStop(ctx, app.Deps{}, app.ChainStopIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := invokeFeature[app.ChainStopIn, app.StepOut](ctx, app.Deps{}, "chain.stop", app.ChainStopIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -293,7 +293,7 @@ func chainRestartTool() Tool {
 			"node": map[string]any{"type": "number", "description": "node index (1-based)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainRestart(ctx, app.Deps{}, app.ChainRestartIn{
+			out, err := invokeFeature[app.ChainRestartIn, app.StepOut](ctx, app.Deps{}, "node.restart", app.ChainRestartIn{
 				DataDir: argString(args, "workspaceDir", ""), Node: argInt(args, "node", 0),
 			})
 			return out.Detail, err
@@ -308,7 +308,7 @@ func chainRmTool() Tool {
 		Description: "Remove the composed data plane (node datadirs, configs, genesis). Running nodes must be stopped first.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainRm(ctx, app.Deps{}, app.ChainRmIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := invokeFeature[app.ChainRmIn, app.StepOut](ctx, app.Deps{}, "chain.rm", app.ChainRmIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -325,7 +325,7 @@ func chainLogsTool() Tool {
 			"lines": map[string]any{"type": "number", "description": "lines from the end (default 50)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainLogs(ctx, app.Deps{}, app.ChainLogsIn{
+			out, err := invokeFeature[app.ChainLogsIn, app.ChainLogsOut](ctx, app.Deps{}, "chain.logs", app.ChainLogsIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				Node:    argInt(args, "node", 0), Lines: argInt(args, "lines", 50),
 			})
@@ -342,7 +342,7 @@ func chainHealthTool() Tool {
 		Description: "Probe every node's HTTP RPC for its latest block height; returns a JSON table.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainHealth(ctx, app.Deps{}, app.ChainHealthIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := invokeFeature[app.ChainHealthIn, app.ChainHealthOut](ctx, app.Deps{}, "chain.health", app.ChainHealthIn{DataDir: argString(args, "workspaceDir", "")})
 			if err != nil {
 				return "", err
 			}
@@ -387,7 +387,7 @@ func chainResumeTool() Tool {
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the one the workspace recorded)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ChainResume(ctx, app.Deps{}, app.ChainResumeIn{
+			out, err := invokeFeature[app.ChainResumeIn, app.ChainResumeOut](ctx, app.Deps{}, "chain.resume", app.ChainResumeIn{
 				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
 			})
 			var b strings.Builder
@@ -428,7 +428,7 @@ func chainUpTool() Tool {
 			"chainPreset":      map[string]any{"type": "string", "description": "chain-preset file; defines layout and scoped options"},
 			"stage":            map[string]any{"type": "string", "enum": []string{"deploy", "init", "start"}},
 			"serverLogins":     map[string]any{"type": "string", "description": "private run logins apart from the server set recorded by the network"},
-			"chain":            map[string]any{"type": "string"},
+			"chain":            commonProperty("chain", nil),
 			"binary":           map[string]any{"type": "string"},
 			"bp":               map[string]any{"type": "integer", "description": "bp (block-producing) node count"},
 			"en":               map[string]any{"type": "integer", "description": "en (endpoint, non-producing) node count"},
@@ -496,7 +496,7 @@ func chainUpTool() Tool {
 			} else if argBool(args, "plan", false) {
 				return "", fmt.Errorf("plan requires chainPreset")
 			}
-			out, err := app.ChainUp(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), in)
+			out, err := invokeFeature[app.ChainUpIn, app.ChainUpOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "chain.up", in)
 			if err != nil {
 				return "", err
 			}

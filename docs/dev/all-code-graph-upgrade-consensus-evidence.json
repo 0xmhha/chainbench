@@ -1,0 +1,1062 @@
+{
+  "date": "2026-10-18",
+  "scope": "Owned source syntax inventory after the concurrent pre-fork consensus fix. Not type-resolved call coverage, native runtime coverage, full L1, full e2e/race or final Web acceptance.",
+  "headAtProof": "f1428f6a",
+  "green": {
+    "parserContracts": 21,
+    "precedingImplementationMakeCheckPassed": true,
+    "relatedRacePackagesPassed": 7
+  },
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "b492072a5ca8387b8205251fe1f9c2ec19b812b0a34255a2280018d82203ffee",
+    "sourceAfter": "b492072a5ca8387b8205251fe1f9c2ec19b812b0a34255a2280018d82203ffee",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-upgrade-consensus-run-20261018.py": "1deb5decd6f9c5ec8e5cc73d371ce5202bd9e7bfc15b457fc2c1d9c106e24d11",
+      "/private/tmp/chainbench-ast-upgrade-consensus-specific-20261018.py": "0f1d15a5a554d6a85433975234d27ac46ea96d6a3d83e42560b4866a2e49ab46",
+      "/private/tmp/chainbench-ast-upgrade-consensus-independent-20261018.py": "037aac0b94a1f2e5587ca236e892a36a6723741fdc2b9f2f60bff9000e5ddf50",
+      "/private/tmp/chainbench-ast-upgrade-consensus-parser-contracts-20261018.log": "a0a80efef2402ccdd2ba3ae87625538effec9b41053c058e5903628499698752",
+      "/private/tmp/chainbench-upgrade-consensus-native-20261018.json": "693679d9b4501c9eafd19fb2e03fa155cdb03d72b1a44ad2398a59a1cf2140ac",
+      "/private/tmp/chainbench-upgrade-consensus-independent-20261018.json": "1e16edd1499930f478b552f78299da6a8071610643e53d44657168d4f29c66eb",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-upgrade-consensus-run-20261018.py": "1deb5decd6f9c5ec8e5cc73d371ce5202bd9e7bfc15b457fc2c1d9c106e24d11",
+      "/private/tmp/chainbench-ast-upgrade-consensus-specific-20261018.py": "0f1d15a5a554d6a85433975234d27ac46ea96d6a3d83e42560b4866a2e49ab46",
+      "/private/tmp/chainbench-ast-upgrade-consensus-independent-20261018.py": "037aac0b94a1f2e5587ca236e892a36a6723741fdc2b9f2f60bff9000e5ddf50",
+      "/private/tmp/chainbench-ast-upgrade-consensus-parser-contracts-20261018.log": "a0a80efef2402ccdd2ba3ae87625538effec9b41053c058e5903628499698752",
+      "/private/tmp/chainbench-upgrade-consensus-native-20261018.json": "693679d9b4501c9eafd19fb2e03fa155cdb03d72b1a44ad2398a59a1cf2140ac",
+      "/private/tmp/chainbench-upgrade-consensus-independent-20261018.json": "1e16edd1499930f478b552f78299da6a8071610643e53d44657168d4f29c66eb",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-capture.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278880780083910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885184994311
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885962118588
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278886574606998
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-capture.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138728191556278
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-independent.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138732584954949
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733279929901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733858826845
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-capture.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256047559989444
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-independent.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256052213855427
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256054193014048
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256055161286677
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-capture.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260738390205874
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-independent.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260742921095712
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260743646057877
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260744252072557
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-capture.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268269240845841
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274154302635
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274866457837
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268275462092118
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-capture.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271163296884178
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-independent.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271168224653793
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169184135951
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169870775257
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-capture.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271720905095693
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-independent.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271725960577399
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271727377214282
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271728103754763
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-capture.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275273257659028
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-independent.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275277868420622
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275278705057632
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275279415672506
+      }
+    ],
+    "elapsedSeconds": 11.902974541997537,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independent": {
+    "accepted": true,
+    "sourceDigest": "b492072a5ca8387b8205251fe1f9c2ec19b812b0a34255a2280018d82203ffee",
+    "graphReproduced": true,
+    "counts": {
+      "parsedFiles": 2090,
+      "languages": {
+        "toml": 1,
+        "yaml": 11,
+        "make": 1,
+        "go": 1409,
+        "json": 352,
+        "python": 131,
+        "gomod": 2,
+        "bash": 63,
+        "dockerfile": 1,
+        "gosum": 1,
+        "html": 3,
+        "css": 1,
+        "javascript": 89,
+        "svelte": 25
+      },
+      "nodes": 137815,
+      "edges": 147121,
+      "excluded": 437,
+      "missing": 0
+    },
+    "ownedPaths": 2527,
+    "goTestFilesParsed": 800,
+    "embeddedASTs": 41,
+    "dynamicProgramInputs": 25,
+    "areas": {
+      ".betterleaks.toml": 1,
+      ".github": 1,
+      ".golangci.yml": 1,
+      "Makefile": 1,
+      "cmd": 180,
+      "docs": 109,
+      "env": 5,
+      "examples": 23,
+      "go.mod": 1,
+      "go.sum": 1,
+      "install.sh": 1,
+      "accounts": 31,
+      "app": 196,
+      "internal": 41,
+      "chains": 24,
+      "chainsetup": 149,
+      "consensus": 29,
+      "core": 287,
+      "dashboard": 47,
+      "dsl": 48,
+      "feature": 18,
+      "mcp": 47,
+      "preset": 3,
+      "resource": 46,
+      "testengine": 153,
+      "testhelper": 95,
+      "webcli": 2,
+      "presets": 42,
+      "scripts": 28,
+      "server-set.sample.yaml": 1,
+      "setup.sh": 1,
+      "tests": 427,
+      "uninstall.sh": 1,
+      "web": 49,
+      "workspace-config.sample.yaml": 1
+    },
+    "nodeKinds": {
+      "file": 2090,
+      "call": 101161,
+      "dynamic-program-input": 25,
+      "target": 21,
+      "function": 6584,
+      "import": 10250,
+      "binding": 11151,
+      "type": 1381,
+      "method": 1663,
+      "dsl-operation": 2798,
+      "template-parameter": 7,
+      "selector": 421,
+      "package": 83,
+      "dependency": 180
+    },
+    "exclusionReasons": {
+      "documentation or non-executable data": 221,
+      "generated proof metadata, not executable source": 169,
+      "test data, not executable source": 47
+    },
+    "auditNegativeControlsRejected": [
+      "omitted owned source",
+      "stale source digest",
+      "duplicate graph node",
+      "dangling edge",
+      "parser failure hidden by success count",
+      "zero parsed syntax",
+      "embedded identity absent",
+      "false summary count",
+      "nested input origin forged",
+      "unclassified exclusion",
+      "Docker capture program omitted",
+      "nested deletion call omitted"
+    ],
+    "a8": {
+      "nonMethodExportedSymbols": 1891,
+      "uses": {
+        "inside": 451,
+        "outside": 1174,
+        "test": 177,
+        "signature": 80,
+        "set": 9
+      },
+      "nowhere": 0,
+      "methodsNotMeasuredByThisReachabilityRule": true
+    },
+    "criticalRuntimeScript": {
+      "path": "internal/testengine/transaction_failure_native_test.go",
+      "language": "python",
+      "sha256": "1c64d0ce637f45c4100f15694cf494b6e59a2b8530e1346083671c7af85c8deb",
+      "reclaimCallObserved": true
+    },
+    "transportPrograms": {
+      "CAPTURE": "cfe0850187fa74fc08796ba810314bff58ae452ce8292ca5b85e0bf64d69ccb3",
+      "DELETE": "179f8a462a134802d62891712aace0bb63d2447b4e110ae06cb72fb0cc8317ee",
+      "NESTED_DELETE": "48033bd685a9cf1022e5800f81af65e7e1ca2b50692e3333b7a2a36719ec7bbe"
+    },
+    "transportProgramCount": 3,
+    "historicalGraphsPreserved": true,
+    "historicalSourceDigest": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "parserVersions": {
+      "go": "go version go1.26.8 darwin/arm64",
+      "python": "3.10.11",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter": "0.25.2",
+      "PyYAML": "6.0.3",
+      "shfmt": "v3.12.0",
+      "frontend": {
+        "node": "v24.17.0",
+        "acorn": "8.17.0",
+        "svelte": "5.56.8",
+        "postcss": "8.5.23"
+      }
+    },
+    "fullDynamicCoverageAccepted": false,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "specific": {
+    "accepted": true,
+    "sourceDigest": "b492072a5ca8387b8205251fe1f9c2ec19b812b0a34255a2280018d82203ffee",
+    "targetCount": 45,
+    "specificOmissionCount": 90,
+    "targets": [
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "plugin",
+        "kind": "type",
+        "line": 10,
+        "start": 105,
+        "end": 143
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "plugin.PreForkValidators",
+        "kind": "method",
+        "line": 15,
+        "start": 370,
+        "end": 806
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "anonymous.ID",
+        "kind": "call",
+        "line": 16,
+        "start": 544,
+        "end": 569
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "predecessor.Family",
+        "kind": "call",
+        "line": 16,
+        "start": 544,
+        "end": 564
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "fmt.Errorf",
+        "kind": "call",
+        "line": 17,
+        "start": 599,
+        "end": 656
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "registry.RunningValidators",
+        "kind": "call",
+        "line": 19,
+        "start": 687,
+        "end": 750
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "predecessorRPC",
+        "kind": "type",
+        "line": 23,
+        "start": 813,
+        "end": 853
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "predecessorRPC.Call",
+        "kind": "method",
+        "line": 25,
+        "start": 855,
+        "end": 1068
+      },
+      {
+        "file": "internal/chains/wbft/consensus.go",
+        "name": "c.Caller.Call",
+        "kind": "call",
+        "line": 29,
+        "start": 1024,
+        "end": 1066
+      },
+      {
+        "file": "internal/chains/wbft/wbft.go",
+        "name": "registry.Register",
+        "kind": "call",
+        "line": 46,
+        "start": 2011,
+        "end": 2186
+      },
+      {
+        "file": "internal/core/registry/registry.go",
+        "name": "PreForkValidatorReader",
+        "kind": "type",
+        "line": 211,
+        "start": 10569,
+        "end": 10740
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "capabilityNodeProbe",
+        "kind": "type",
+        "line": 20,
+        "start": 369,
+        "end": 982
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "consensusCapabilityGate",
+        "kind": "function",
+        "line": 37,
+        "start": 1139,
+        "end": 3633
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "probeConsensusForSpec",
+        "kind": "call",
+        "line": 65,
+        "start": 2576,
+        "end": 2634
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "probeConsensusNode",
+        "kind": "function",
+        "line": 98,
+        "start": 3635,
+        "end": 4183
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "consensusProbeResult",
+        "kind": "call",
+        "line": 106,
+        "start": 4129,
+        "end": 4181
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "consensusProbeResult",
+        "kind": "function",
+        "line": 109,
+        "start": 4185,
+        "end": 4855
+      },
+      {
+        "file": "internal/testengine/capability_probe.go",
+        "name": "consensusProbeFailure",
+        "kind": "function",
+        "line": 130,
+        "start": 5018,
+        "end": 5794
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "probeConsensusForSpec",
+        "kind": "function",
+        "line": 17,
+        "start": 505,
+        "end": 2575
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "probeConsensusNode",
+        "kind": "call",
+        "line": 20,
+        "start": 827,
+        "end": 869
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "selected.Manifest",
+        "kind": "call",
+        "line": 36,
+        "start": 1165,
+        "end": 1184
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "probeConsensusNode",
+        "kind": "call",
+        "line": 37,
+        "start": 1240,
+        "end": 1282
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "selected.Manifest",
+        "kind": "call",
+        "line": 39,
+        "start": 1324,
+        "end": 1343
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "string",
+        "kind": "call",
+        "line": 39,
+        "start": 1369,
+        "end": 1383
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "registry.Get",
+        "kind": "call",
+        "line": 40,
+        "start": 1457,
+        "end": 1482
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "anonymous.ID",
+        "kind": "call",
+        "line": 44,
+        "start": 1523,
+        "end": 1542
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "prior.Family",
+        "kind": "call",
+        "line": 44,
+        "start": 1523,
+        "end": 1537
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "anonymous.ID",
+        "kind": "call",
+        "line": 44,
+        "start": 1546,
+        "end": 1568
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "selected.Family",
+        "kind": "call",
+        "line": 44,
+        "start": 1546,
+        "end": 1563
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "probeConsensusNode",
+        "kind": "call",
+        "line": 45,
+        "start": 1580,
+        "end": 1622
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "context.WithTimeout",
+        "kind": "call",
+        "line": 47,
+        "start": 1646,
+        "end": 1685
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "cancel",
+        "kind": "call",
+        "line": 48,
+        "start": 1693,
+        "end": 1701
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "anonymous.BlockNumber",
+        "kind": "call",
+        "line": 49,
+        "start": 1718,
+        "end": 1753
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "dial",
+        "kind": "call",
+        "line": 49,
+        "start": 1718,
+        "end": 1732
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "consensusProbeFailure",
+        "kind": "call",
+        "line": 52,
+        "start": 1891,
+        "end": 1917
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "uint64",
+        "kind": "call",
+        "line": 56,
+        "start": 1970,
+        "end": 1983
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "reader.PreForkValidators",
+        "kind": "call",
+        "line": 59,
+        "start": 2100,
+        "end": 2164
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "dial",
+        "kind": "call",
+        "line": 59,
+        "start": 2149,
+        "end": 2163
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "consensusProbeResult",
+        "kind": "call",
+        "line": 60,
+        "start": 2177,
+        "end": 2229
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "probeConsensusNode",
+        "kind": "call",
+        "line": 65,
+        "start": 2355,
+        "end": 2399
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "selected.Manifest",
+        "kind": "call",
+        "line": 67,
+        "start": 2419,
+        "end": 2438
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "active.Manifest",
+        "kind": "call",
+        "line": 68,
+        "start": 2500,
+        "end": 2517
+      },
+      {
+        "file": "internal/testengine/capability_upgrade.go",
+        "name": "strconv.FormatUint",
+        "kind": "call",
+        "line": 68,
+        "start": 2522,
+        "end": 2552
+      },
+      {
+        "file": "internal/testengine/capability_upgrade_test.go",
+        "name": "TestConsensusGateSelectsDeclaredUpgradePhase",
+        "kind": "function",
+        "line": 23,
+        "start": 416,
+        "end": 7537
+      },
+      {
+        "file": "internal/testengine/capability_upgrade_test.go",
+        "name": "consensusCapabilityGate",
+        "kind": "call",
+        "line": 119,
+        "start": 6086,
+        "end": 6126
+      }
+    ],
+    "oldGraphRejected": true,
+    "graphsPreserved": {
+      "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-capture.json": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+      "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent.json": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4"
+    },
+    "runtimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "firstAuxiliaryAudit": {
+    "accepted": false,
+    "failure": "Two anonymous.ID calls on the same Go line are distinct AST nodes. A line/name-only uniqueness key rejected the correct graph.",
+    "correction": "Use source file, kind, name, line, start and end byte offsets. Both original and corrected Go AST target captures are identical. No graph or source was rewritten.",
+    "originalProducerPinnedHelperPreserved": true,
+    "correctedHelperIsSeparateAdditionalInput": true,
+    "targetCaptures": [
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-go-target-declarations.json",
+        "sha256": "7fea0bb22601878a119c159e651f24be6bd50dbbe9f24c31729146c0b6012d04",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278939359272335
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-go-target-declarations-corrected.json",
+        "sha256": "7fea0bb22601878a119c159e651f24be6bd50dbbe9f24c31729146c0b6012d04",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278980832896323
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-specific-20261018.py",
+        "sha256": "0f1d15a5a554d6a85433975234d27ac46ea96d6a3d83e42560b4866a2e49ab46",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278847269855612
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-specific-20261018.log",
+        "sha256": "9c9911f8cff89f4af4bd7f7ee6f98882463baa505a6ef6d39e8b4513d8d7223e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278939643344833
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-specific-corrected-20261018.py",
+        "sha256": "27c3fabb1b95839153bc988ffc0b362140ba6b9b067b13cc93f1b7ecd13a5ca8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278979939780662
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-specific-corrected-20261018.log",
+        "sha256": "242e43a0ebbef7ae1223434b98d376fa4c38645ea2ec373214a4d95983f84b4e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278992762636916
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-ast-upgrade-consensus-parser-contracts-20261018.log",
+      "sha256": "a0a80efef2402ccdd2ba3ae87625538effec9b41053c058e5903628499698752",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278854709300432
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent-audit.json",
+      "sha256": "66fd59dc760009b8360e0d99effdcd375c62ebb1b9c570de875eb13bbfc89065",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278922172907257
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-specific-corrected-audit.json",
+      "sha256": "7034b9d0580ffd45afbf55e9676b13d2438f6bd914f908f0376b478b9e157f66",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792278992762509793
+    }
+  ],
+  "remaining": [
+    "All final-source WEB01..14 captures and independent reproductions.",
+    "Whole L1, mandatory full race/e2e and open backlog criteria remain."
+  ]
+}

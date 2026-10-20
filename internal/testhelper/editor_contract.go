@@ -93,6 +93,10 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 		if e.Name == "read" || e.Name == "waitFor" {
 			props["source"] = map[string]any{"enum": readers}
 		}
+		for field, rule := range unsignedControlRules(e.Kind, e.Name) {
+			props[field] = unsignedControlSchema(rule)
+		}
+
 		required := append([]string{}, editorRequired[e.Name]...)
 		if e.Kind == "action" {
 			required = append(required, "do")
@@ -127,8 +131,22 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 			parameterSchema["allOf"] = []any{map[string]any{"anyOf": editorAlternatives("on", "onEach")}}
 		}
 		switch e.Name {
+		case actionSendRawTampered:
+			props["raw"] = map[string]any{"type": "string", "minLength": 1, "pattern": `^(0x16(?:[0-9a-fA-F]{2})+|\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\}))$`, "description": "Signed 0x16 transaction from a node or a prior binding; excludes key-based builder arguments."}
+			for _, field := range []string{"senderKey", "feePayerKey", "to"} {
+				props[field].(map[string]any)["minLength"] = 1
+			}
+			rawOnly := map[string]any{"required": []string{"raw"}, "title": "Existing signed transaction"}
+			rules := []any{}
+			for _, field := range []string{"senderKey", "feePayerKey", "to", "value"} {
+				rules = append(rules, map[string]any{"not": map[string]any{"required": []string{field}}})
+			}
+			rawOnly["allOf"] = rules
+			parameterSchema["anyOf"] = []any{rawOnly, map[string]any{"title": "Build with keys", "required": []string{"senderKey", "feePayerKey", "to"}, "not": map[string]any{"required": []string{"raw"}}}}
 		case actionDeployContract:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data")
+		case assertBlockLag:
+			props["reference"] = map[string]any{"type": "string", "minLength": 1, "x-suggestions": "nodes", "description": "Node selector read again on every poll. Targets may be ahead of it; omit to compare all selected heads by spread."}
 		case assertContractChecksum:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data", "address")
 		case assertCreateAddress:
@@ -139,6 +157,22 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 			parameterSchema["anyOf"] = editorAlternatives("binary", "config", "genesisOverlay", "args")
 		case assertDerive:
 			parameterSchema["anyOf"] = []any{map[string]any{"required": []string{"selector"}, "properties": map[string]any{"op": map[string]any{"const": "abiCall"}}}, map[string]any{"required": []string{"of"}}}
+		}
+		if e.Kind == "action" && (e.Name == actionSendTx || e.Name == actionDeployContract) {
+			rules := []any{}
+			for _, fields := range [][]string{{"feePayer", "feePayerKey"}, {"feePayer", "gasPrice"}, {"feePayerKey", "gasPrice"}, {"gasPrice", "maxFeePerGas"}, {"gasPrice", "maxPriorityFeePerGas"}} {
+				rules = append(rules, map[string]any{"not": map[string]any{"required": fields}})
+			}
+			for _, payer := range []string{"feePayer", "feePayerKey"} {
+				for _, caps := range [][]string{{"maxFeePerGas", "maxPriorityFeePerGas"}, {"maxPriorityFeePerGas", "maxFeePerGas"}} {
+					rules = append(rules, map[string]any{"anyOf": []any{
+						map[string]any{"not": map[string]any{"required": []string{payer}}},
+						map[string]any{"not": map[string]any{"required": []string{caps[0]}}},
+						map[string]any{"required": []string{caps[1]}},
+					}})
+				}
+			}
+			parameterSchema["allOf"] = rules
 		}
 		schemas[e.Kind+"-"+e.Name] = parameterSchema
 		if strings.Contains(" stopNode startNode restartNode resetNode swapNode crossFork readNodeLog ", " "+e.Name+" ") {
@@ -153,11 +187,11 @@ var nodeTargeted = map[string]bool{actionStopNode: true, actionStartNode: true, 
 
 var editorRequired = map[string][]string{
 	"waitBlock": {"target"}, "read": {"source"}, "waitFor": {"source"}, "newAccount": {"saveKey"},
-	"sendRawTampered": {"which", "senderKey", "feePayerKey", "to"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
+	"sendRawTampered": {"which"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
 	"partition": {"groups"},
 	"faucet":    {"to", "amount"}, "registerContract": {"to", "data"}, "metric": {"name"},
-	"balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},
-	"txStatus": {"hash"}, "receiptLog": {"hash"}, "txMined": {"hash"}, "rpcCall": {"method"}, "rpcError": {"method"}, "methodPresent": {"method"}, "derive": {"op"}, "wsCollected": {"sub"},
+	"remoteBalance": {"address"}, "balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},
+	"txStatus": {"hash"}, "receiptLog": {"hash"}, "txMined": {"hash"}, "rpcCall": {"method"}, "rpcError": {"method", "reason"}, "methodPresent": {"method"}, "derive": {"op"}, "wsCollected": {"sub"},
 }
 
 func editorParameter(field string) map[string]any {
@@ -166,27 +200,45 @@ func editorParameter(field string) map[string]any {
 		s["format"] = "duration"
 	}
 	switch field {
+	case "errorData":
+		return map[string]any{"type": "string", "pattern": `^(?:0x(?:[0-9a-fA-F]{2})*|\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\}))$`, "description": "Exact JSON-RPC error data bytes, or a saved binding. Missing or structured data does not match a byte string."}
+	case "feePayer":
+		return map[string]any{"type": "string", "minLength": 1, "description": "Declared local account that signs and pays transaction fees."}
 	case "key", "feePayerKey", "senderKey", "authorityKey":
 		return map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`, "description": "Private key binding from an earlier step. Literal private key material cannot be shared through the Web document API."}
 	case "is", "expected", "delta", "tol":
 		return map[string]any{}
-	case "params", "of", "accessList", "topics":
+	case "accessList":
+		binding := `\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})`
+		item := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"address", "storageKeys"}, "properties": map[string]any{
+			"address":     map[string]any{"type": "string", "pattern": `^(?:0x[0-9a-fA-F]{40}|[A-Za-z_][A-Za-z0-9_.:-]*|` + binding + `)$`, "description": "Account label, declared contract, literal address or saved address reference."},
+			"storageKeys": map[string]any{"type": "array", "items": map[string]any{"type": "string", "pattern": `^(?:0x[0-9a-fA-F]{64}|` + binding + `)$`}},
+		}}
+		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": item}, map[string]any{"type": "string", "pattern": "^" + binding + "$"}}}
+	case "params", "of", "topics":
 		// A list may also come whole from an earlier step's saved value.
 		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": map[string]any{}}, map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`}}}
 	case "groups":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}
+	case "alternatives":
+		return map[string]any{"type": "array", "minItems": 1, "maxItems": 31, "uniqueItems": true, "items": map[string]any{"type": "string", "minLength": 1}, "description": "Additional metric names on the same node. Every name must expose a finite value; at least one sample must satisfy compare."}
 	case "onEach", "args":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
 	case "genesisOverlay":
 		return map[string]any{"type": "object"}
 	case "config":
 		return map[string]any{"anyOf": []any{map[string]any{"type": "object"}, map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}}
-	case "wait", "expectRevert", "expectReject", "expectFail":
+	case "wait", "expectRevert", "expectReject", "expectFail", "requireComplete":
 		s["type"] = "boolean"
-	case "target", "value", "gas", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "amount", "blocks", "count", "index", "topic", "maxBytes", "maxAdvance", "maxMillis", "maxSeconds", "minMillis", "minSeconds", "fillPercent":
+	case "value", "gas", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "amount":
+		if field == "gas" || field == "nonce" {
+			return unsignedControlSchema(unsignedRule(0, ^uint64(0)))
+		}
+		return map[string]any{"anyOf": []any{map[string]any{"type": "integer", "minimum": 0, "maximum": 9007199254740991}, map[string]any{"type": "string", "pattern": "^(\\$[A-Za-z_][A-Za-z0-9_]*|.*\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}.*|0[xX][0-9a-fA-F]+|[0-9]+)$"}}}
+	case "target", "blocks", "count", "index", "topic", "maxBytes", "maxAdvance", "maxMillis", "maxSeconds", "minMillis", "minSeconds", "fillPercent":
 		return map[string]any{"anyOf": []any{map[string]any{"type": "number", "minimum": 0}, map[string]any{"type": "string", "pattern": "^(\\$[A-Za-z_][A-Za-z0-9_]*|.*\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}.*|0x[0-9a-fA-F]+|[0-9]+)$"}}}
 	case "op":
-		return map[string]any{"enum": []string{"sum", "diff", "mul", "abiCall", "word", "quorum"}}
+		return map[string]any{"enum": []string{"sum", "diff", "mul", "min", "abiCall", "word", "quorum", "regexpCount"}}
 	case "format":
 		return map[string]any{"enum": []string{"dec", "hex"}}
 	case "which":
@@ -205,8 +257,12 @@ func editorDefaults(name string) map[string]any {
 		return map[string]any{"timeout": defaultWaitBlockTimeout.String(), "pollInterval": defaultWaitBlockPoll.String()}
 	case actionWaitFor:
 		return map[string]any{"timeout": defaultWaitForTimeout.String(), "pollInterval": defaultWaitForPoll.String(), "compare": "Equal"}
-	case assertBlockAdvance, assertBlockStalled:
+	case assertBlockAdvance, assertBlockStalled, assertBlockLag:
 		return map[string]any{"timeout": defaultBlockAdvanceTimeout.String(), "pollInterval": defaultBlockAdvancePoll.String()}
+	case assertBlockHalt:
+		return map[string]any{"within": defaultBlockHaltWindow.String()}
+	case "crossFork":
+		return map[string]any{"timeout": crossForkStepTimeout.String()}
 	case assertWSSubscribe, assertWSCollected:
 		return map[string]any{"timeout": defaultSubscribeTimeout.String(), "count": 1}
 	case actionReadNodeLog:

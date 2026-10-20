@@ -106,6 +106,9 @@ type forkGate struct {
 	// treating them all as retired would report a network where nothing runs
 	// as ready.
 	restart bool
+	// handedOver prevents a freshly relaunched successor parked at fork-1
+	// from satisfying readiness before it has produced the fork block.
+	handedOver bool
 }
 
 // parked reports whether every node stands at the block before the fork,
@@ -113,7 +116,7 @@ type forkGate struct {
 // syncing is a network that has not arrived, and it is exactly the node the
 // handover would leave behind.
 func (g forkGate) parked(rep health.Report) bool {
-	if g.restart || g.at <= 0 || len(rep.Nodes) == 0 {
+	if g.restart || g.handedOver || g.at <= 0 || len(rep.Nodes) == 0 {
 		return false
 	}
 	want := uint64(g.at - 1) //nolint:gosec // a declared block height, checked positive above
@@ -220,21 +223,30 @@ func factsFromReport(rep health.Report, ns node.NodeSet, fork forkGate) []nodemo
 	advancing := rep.Producing || fork.parked(rep)
 	facts := make([]nodemonitor.Facts, 0, len(rep.Nodes))
 	for _, ni := range rep.Nodes {
+		var minimumHeight uint64
+		// A post-handover successor must have executed the activation block.
+		// Ordinary two-block sampling skew cannot excuse a node still on the
+		// pre-fork engine. Restart-style upgrades happen before activation and
+		// pre-fork producers remain retired, so neither receives this floor.
+		if fork.handedOver && !fork.restart && fork.at > 0 && !fork.preFork[ni.Index] {
+			minimumHeight = uint64(fork.at) //nolint:gosec // positive declared height
+		}
 		facts = append(facts, nodemonitor.Facts{
-			Node:       ni.Index,
-			Label:      "node" + strconv.Itoa(ni.Index),
-			Wanted:     true,
-			Retired:    fork.retired(ni.Index, head),
-			PIDAlive:   pid[ni.Index] > 0,
-			RPCUp:      ni.OK,
-			ChainID:    ni.ChainID,
-			Height:     ni.BlockNumber,
-			Advancing:  advancing,
-			WantHeight: head,
-			WantPeers:  wantPeers,
-			Forked:     forked,
-			Syncing:    ni.Syncing,
-			Peers:      clampCount(ni.PeerCount),
+			Node:          ni.Index,
+			Label:         "node" + strconv.Itoa(ni.Index),
+			Wanted:        true,
+			Retired:       fork.retired(ni.Index, head),
+			PIDAlive:      pid[ni.Index] > 0,
+			RPCUp:         ni.OK,
+			ChainID:       ni.ChainID,
+			Height:        ni.BlockNumber,
+			Advancing:     advancing,
+			WantHeight:    head,
+			WantMinHeight: minimumHeight,
+			WantPeers:     wantPeers,
+			Forked:        forked,
+			Syncing:       ni.Syncing,
+			Peers:         clampCount(ni.PeerCount),
 		})
 	}
 	return facts

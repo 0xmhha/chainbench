@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -38,6 +39,7 @@ func (s *Server) ReadOnlyTools() []string {
 // Register adds a tool (last registration of a name wins; order preserved on
 // first registration).
 func (s *Server) Register(t Tool) {
+	t = registrySchemas(t)
 	if _, exists := s.tools[t.Name]; !exists {
 		s.order = append(s.order, t.Name)
 	}
@@ -132,6 +134,10 @@ func (s *Server) callTool(ctx context.Context, req rpcRequest) []byte {
 	}
 	text, err := tool.Handler(ctx, params.Arguments)
 	if err != nil {
+		var structured *structuredToolError
+		if errors.As(err, &structured) {
+			return s.result(req.ID, toolContent(structured.text, true))
+		}
 		return s.result(req.ID, toolContent("error: "+err.Error(), true))
 	}
 	return s.result(req.ID, toolContent(text, false))

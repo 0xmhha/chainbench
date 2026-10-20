@@ -1,0 +1,133 @@
+{
+  "scope": "Finalization of successful and failed owned Web test runtimes. Preserve original failures, diagnostic JSON/JSONL, logs, configs, binaries, source and explicitly cited data; refuse activity or unreadable inventories.",
+  "contracts": 45,
+  "storageContracts": 39,
+  "runtimePathContracts": 6,
+  "redLogs": [
+    "/private/tmp/chainbench-storage-failure-red.log",
+    "/private/tmp/chainbench-storage-evidence-red.log",
+    "/private/tmp/chainbench-storage-lifecycle-red.log"
+  ],
+  "greenLogs": [
+    "/private/tmp/chainbench-storage-failure-green.log",
+    "/private/tmp/chainbench-storage-regression.log",
+    "/private/tmp/chainbench-storage-contracts.log"
+  ],
+  "sources": {
+    "tests/webui/runtime_storage.py": "0c11b92f6628345ec4aefdcae62cf63349d5b9ee14caea6374b4a73d12fd35d4",
+    "tests/webui/capture.py": "c7ae3892b3dee76874a1055c2fdec0b04544a5db6a92ecefda98d8b41d41fca2",
+    "tests/webui/recheck.py": "7c6090ee13430f67086f2f9aaf8937b4a59e9813f1e51b362be0562340338a86",
+    "tests/webui/run_test_jobs.py": "0751bd9f93a43fab8a5aadca8ac5e5fbc40569d7097ba8e3921aef4106c1fbf1",
+    "tests/webui/run_native_jobs.py": "33aee4911e0d42411715db4843869bb9bc6fe952212a95dd68dabac531fae4b9",
+    "tests/webui/run_ssh_jobs.py": "e1174a7d2690e2000b07ec0d261f5c58919d6a558d7e4d2128d045df95db45eb",
+    "tests/webui/runtime_storage_probe.py": "bce354b99486df56c5a1b313cfc212da3257ee790d51cb92253ba37387cfa6e6",
+    "tests/webui/test_runtime_storage.py": "21d3d5dc7c97290420fbea9744a6e72f1292eb3cca9491475daca15b4b93115c",
+    "tests/webui/browser_storage_failure.mjs": "bc0b3ea4abf864a53998b62920ba3e4b6c1d02c40a22d6c4ec6bf50df1713600",
+    "tests/webui/run_storage_failure.py": "f922cf65d5cfc02b07a7f30bdc6e24f53a4936b24c3108561f7e106650f9d378"
+  },
+  "repeatedFailureProof": "/private/tmp/chainbench-runtime-storage-failure-proof.json",
+  "repeatedFailureProofSHA256": "ef56b334f67cd615d9fb4033991b712ca06abbff55d42f85c6ff8e65c8f2c061",
+  "iterations": [
+    {
+      "runtime": "/private/tmp/cbui/storage-failure-probe-6j35b7be",
+      "beforeAllocatedBytes": 134234112,
+      "afterAllocatedBytes": 20480,
+      "reclaimed": [
+        {
+          "path": "/private/tmp/cbui/storage-failure-probe-6j35b7be/store/networks/owned/nodes/node1/etcd",
+          "event": "reclaimed",
+          "allocatedBytes": 134217728,
+          "finishedAt": "2026-10-13T12:34:24.253653+00:00"
+        }
+      ],
+      "openFileProtected": true,
+      "proofBytesModeMtimePreserved": true,
+      "copyOnWriteIsolation": true,
+      "failedTestPreserved": true
+    },
+    {
+      "runtime": "/private/tmp/cbui/storage-failure-probe-thyrw65_",
+      "beforeAllocatedBytes": 134234112,
+      "afterAllocatedBytes": 20480,
+      "reclaimed": [
+        {
+          "path": "/private/tmp/cbui/storage-failure-probe-thyrw65_/store/networks/owned/nodes/node1/etcd",
+          "event": "reclaimed",
+          "allocatedBytes": 134217728,
+          "finishedAt": "2026-10-13T12:34:25.020665+00:00"
+        }
+      ],
+      "openFileProtected": true,
+      "proofBytesModeMtimePreserved": true,
+      "copyOnWriteIsolation": true,
+      "failedTestPreserved": true
+    },
+    {
+      "runtime": "/private/tmp/cbui/storage-failure-probe-hq13h29f",
+      "beforeAllocatedBytes": 134234112,
+      "afterAllocatedBytes": 20480,
+      "reclaimed": [
+        {
+          "path": "/private/tmp/cbui/storage-failure-probe-hq13h29f/store/networks/owned/nodes/node1/etcd",
+          "event": "reclaimed",
+          "allocatedBytes": 134217728,
+          "finishedAt": "2026-10-13T12:34:25.888894+00:00"
+        }
+      ],
+      "openFileProtected": true,
+      "proofBytesModeMtimePreserved": true,
+      "copyOnWriteIsolation": true,
+      "failedTestPreserved": true
+    }
+  ],
+  "actualBrowserFailureProof": "chainbench-out/web-ui-development/storage-failure/proof.json",
+  "actualBrowserFailureProofSHA256": "f94422d6ade6e18d1a721e276cc54fb9b4ece6e7d847001808d39f874eaed73e",
+  "actualBrowserFailure": {
+    "scope": "deliberate failed native Web job cleanup; no Seed criterion awarded",
+    "runtime": "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3",
+    "sourceDigest": "1ceee99a2282812e58c131ba815f81bbe14d8ec8d35353edc2d34160c955b8a8",
+    "originalFailurePreserved": true,
+    "initializedNodeDatabases": 4,
+    "endedDatabasesRemaining": 0,
+    "artifacts": {
+      "chainbench-out/web-ui-development/storage-failure/partial.json": "e3f586329ddcb144868e8c10ace924d68c3ad1c17f0604e656d92b23147e7474",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/storage-audit.jsonl": "d9fc62e049750f6c82c93835f6172e296d72361ba4c8d09dd407adf4189662f9",
+      "chainbench-out/web-ui-development/storage-failure/browser.log": "84e80b030cc6f5e13012c9fa5bd130ed83aa443c062d79ca067cbf41f6b8643c",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/store/networks/8de95d25d1c8de632051db0af58f66c2/chain-record.json": "3335e8fd723baf6e0c42039631df1a0ba3a9b3a282fa65236f367fc1adec3f55",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/runtime/bd01b37441b8/configs/node1.toml": "8b96d587126f56909e606c3cfaab0cd043c5b6d072632dba5a11f52a1276a033",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/logs/bd01b37441b8/node1.log": "6a71670fc35ca01e2241839ead5317e3a86f89db3f7900a1df1c6d55e305672f",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/runtime/bd01b37441b8/configs/node2.toml": "cc8c03bfec2940043613da397093919931046be0e0f68aa842d0454c860ce92f",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/logs/bd01b37441b8/node2.log": "da28fdde0da1c785e9ac15e70f8ec4ab5c271c585e9341e2701ec5f44c7ff829",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/runtime/bd01b37441b8/configs/node3.toml": "eba9120e5f4f662c7e7974149480cee04a8014a47dbf830f3d3b898f5a4bde11",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/logs/bd01b37441b8/node3.log": "853f7936a7d3b112fce1e843375fba0364d20bad10e026e528be3084ecf693f1",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/runtime/bd01b37441b8/configs/node4.toml": "82dbeb8cf00d695105c308f7ed95a3b27b97fa87962792d720c2f9bde03fd726",
+      "/private/tmp/cbui/7bd94d77-84e7-4bb4-ba85-8dbfebdd98d3/data-wbft/logs/bd01b37441b8/node4.log": "7789fcd2b51463cfe9cb876af2f6611b5c5af0d27d0af7a2ae928039cb69d047"
+    },
+    "seedAcceptanceAwarded": false
+  },
+  "successfulRegressionProofs": [
+    {
+      "proof": "native-jobs",
+      "receipt": "chainbench-out/web-ui-development/native-jobs/receipt.json",
+      "receiptSHA256": "d6fc3f81ad7c2c01b4a7cc98f3471bb9e19ddf96e57bca93c6200b82aef5cb6b",
+      "runtime": "/private/tmp/cbui/6b9c0351-67a6-46ec-aaaf-802e175f2444",
+      "endedDatabasesRemaining": 0,
+      "auditSHA256": "8d8eb9af81f17147f01a89aed2b9994c108551b69563d050bb2d469a48e4427f"
+    },
+    {
+      "proof": "ssh-jobs",
+      "receipt": "chainbench-out/web-ui-development/ssh-jobs/receipt.json",
+      "receiptSHA256": "e7585a39e2296e4b9e8c88fedcbedc70983e5bdb4a161019a1244949012af0db",
+      "runtime": "/private/tmp/cbui/91334919-65f0-4aa0-aa6d-d17fc5b140c6",
+      "endedDatabasesRemaining": 0,
+      "auditSHA256": "de2780077985a2aecb5b6324ea10fb5147f6f9d0a0c8b4dd378701cf9a1e0f46"
+    }
+  ],
+  "limitations": [
+    "The full Python verifier suite still contains stale acceptance artifacts; the final frozen 14-criterion capture/recheck remains required.",
+    "Active or explicitly cited raw databases are retained; low space still refuses new runtimes below 20 GiB.",
+    "Abrupt process/OS termination cannot execute finally; interrupted runtime maintenance remains conservative and opt-in.",
+    "Diagnostic harness mistakes were corrected using recorded paths and the unary node-control contract; they were not product defects."
+  ],
+  "finalWeb14Acceptance": "pending"
+}

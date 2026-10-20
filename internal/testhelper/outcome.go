@@ -3,8 +3,8 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -64,16 +64,25 @@ func wantReject(args map[string]any) bool {
 }
 
 // checkSubmitRejected enforces an expect:"reject" step: the node must refuse the
-// transaction at submit time (SendTransaction returns an error and no hash). An
-// accepted submit fails the step. An optional "reason" (case-insensitive
+// transaction at submit time (a typed node error from the submission method and
+// no hash). Preparation, transport, HTTP and RPC protocol failures fail the step.
+// An accepted submit also fails the step. An optional "reason" (case-insensitive
 // substring) tightens the check to a specific rejection message, so a spec can
 // require e.g. an "insufficient funds" rejection rather than any error.
 func checkSubmitRejected(hash string, submitErr error, ac *interp.ActionCtx) error {
 	if submitErr == nil {
 		return fmt.Errorf("dsl: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
 	}
+	var rejection *rpc.ServerError
+	if hash != "" || !errors.As(submitErr, &rejection) || rejection == nil || (rejection.Method != "eth_sendTransaction" && rejection.Method != "eth_sendRawTransaction") {
+		return fmt.Errorf("dsl: sendTx expected node submission rejection; preparation or transport failed instead: %w", submitErr)
+	}
+	switch rejection.Code {
+	case -32700, -32600, -32601, -32602, -32603:
+		return fmt.Errorf("dsl: sendTx expected transaction rejection; RPC protocol failed instead: %w", submitErr)
+	}
 	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
-		if !strings.Contains(strings.ToLower(submitErr.Error()), strings.ToLower(reason)) {
+		if !strings.Contains(strings.ToLower(rejection.Message), strings.ToLower(reason)) {
 			return fmt.Errorf("dsl: sendTx was rejected but not for %q: %v", reason, submitErr)
 		}
 	}
@@ -126,11 +135,14 @@ func checkKeptOut(ctx context.Context, c *rpc.Client, hash string, submitErr err
 	defer t.Stop()
 	for {
 		raw, rerr := c.TxReceipt(ctx, hash)
-		if rerr == nil && raw != nil && strings.TrimSpace(string(raw)) != "null" {
+		if rerr != nil {
+			return fmt.Errorf("dsl: sendTx keptOut: receipt visibility is unknown: %w", rerr)
+		}
+		if raw != nil && strings.TrimSpace(string(raw)) != "null" {
 			return fmt.Errorf("dsl: sendTx %s was accepted and mined, but this chain must keep it out of a block", hash)
 		}
 		head, herr := c.BlockNumber(ctx)
-		if herr == nil && head >= start+blocks {
+		if herr == nil && head >= start && head-start >= blocks {
 			ac.Value = "kept out for " + strconv.FormatUint(blocks, 10) + " block(s)"
 			return nil
 		}
@@ -196,23 +208,6 @@ type assertTarget struct {
 	url  string
 }
 
-// allTargets is every node of the environment, for an assertion whose question
-// is about all of them rather than one.
-func allTargets(ac *interp.AssertCtx) []assertTarget {
-	if ac.Env == nil {
-		return nil
-	}
-	nodes := ac.Env.Nodes()
-	out := make([]assertTarget, 0, len(nodes))
-	for _, n := range nodes {
-		if n.RPCURL == "" {
-			continue
-		}
-		out = append(out, assertTarget{name: string(node.LabelFor(n.Index)), url: n.RPCURL})
-	}
-	return out
-}
-
 // assertTargets are the nodes an assertion checks: every resolved "on"/"onEach"
 // node, else the environment's primary node.
 func assertTargets(ac *interp.AssertCtx) []assertTarget {
@@ -252,61 +247,21 @@ func selectorTarget(env interp.NodeTable, args map[string]any) string {
 // hexQuantity normalizes a decimal/0x-hex/number value to a 0x-hex quantity.
 // ok is false when v is absent or unparseable.
 func hexQuantity(v any) (string, bool) {
-	switch x := v.(type) {
-	case string:
-		s := strings.TrimSpace(x)
-		if s == "" {
-			return "", false
-		}
-		if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
-			return s, true
-		}
-		bi, ok := new(big.Int).SetString(s, 10)
-		if !ok {
-			return "", false
-		}
-		return "0x" + bi.Text(16), true
-	case float64:
-		bi := new(big.Int)
-		big.NewFloat(x).Int(bi)
-		return "0x" + bi.Text(16), true
-	case int:
-		return "0x" + strconv.FormatInt(int64(x), 16), true
-	default:
+	n, ok := transactionNumber(v)
+	if !ok {
 		return "", false
 	}
+	return "0x" + n.Text(16), true
 }
 
 // uintArg normalizes a numeric arg (number or decimal string) to a uint64.
 // ok is false when v is absent, negative, or unparseable.
 func uintArg(v any) (uint64, bool) {
-	switch x := v.(type) {
-	case float64:
-		if x < 0 {
-			return 0, false
-		}
-		return uint64(x), true
-	case int:
-		if x < 0 {
-			return 0, false
-		}
-		return uint64(x), true
-	case string:
-		// Decimal or 0x-hex. Every block number, gas figure and nonce the chain
-		// hands back is 0x-hex, so decimal-only made a value read from the chain
-		// unusable in the very args that take one — waitBlock could not be given
-		// a receipt's block number. parseBigValue has always taken both; this is
-		// the same rule, not a new one.
-		t := strings.TrimSpace(x)
-		if h, ok := strings.CutPrefix(t, "0x"); ok {
-			n, err := strconv.ParseUint(h, 16, 64)
-			return n, err == nil
-		}
-		n, err := strconv.ParseUint(t, 10, 64)
-		return n, err == nil
-	default:
+	n, ok := transactionNumber(v)
+	if !ok || !n.IsUint64() {
 		return 0, false
 	}
+	return n.Uint64(), true
 }
 
 // durationArg reads a Go duration string arg, falling back to def.

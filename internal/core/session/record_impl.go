@@ -28,6 +28,7 @@ type record struct {
 
 	mu        sync.Mutex
 	presetRef string
+	presetID  string
 	status    TestStatus
 	steps     []StepResult
 	asserts   []AssertResult
@@ -37,6 +38,12 @@ type record struct {
 }
 
 func (r *record) Dir() string { return r.dir }
+
+func (r *record) SetPresetID(id string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.presetID = id
+}
 
 // SetEnvRef records which environment this test ran against.
 func (r *record) SetEnvRef(presetID string) {
@@ -85,11 +92,12 @@ func (r *record) Assert(res AssertResult) {
 
 // statusDoc is the status.json schema.
 type statusDoc struct {
-	ID     string `json:"id"`
-	Seq    int    `json:"seq"`
-	Result string `json:"result"`
-	Env    string `json:"env,omitempty"`
-	Reason string `json:"reason,omitempty"`
+	ID       string `json:"id"`
+	Seq      int    `json:"seq"`
+	Result   string `json:"result"`
+	Env      string `json:"env,omitempty"`
+	Reason   string `json:"reason,omitempty"`
+	PresetID string `json:"presetId,omitempty"`
 }
 
 // Status records the terminal verdict as status.json.
@@ -111,11 +119,12 @@ func (r *record) Reason(why string) {
 // writeStatus persists the verdict and its reason. The caller holds the lock.
 func (r *record) writeStatus() {
 	r.capture(writeJSON(filepath.Join(r.dir, fileStatus), statusDoc{
-		ID:     r.id,
-		Seq:    r.seq,
-		Result: string(r.status),
-		Env:    r.presetRef,
-		Reason: r.reason,
+		ID:       r.id,
+		Seq:      r.seq,
+		Result:   string(r.status),
+		Env:      r.presetRef,
+		Reason:   r.reason,
+		PresetID: r.presetID,
 	}))
 }
 

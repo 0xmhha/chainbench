@@ -93,6 +93,12 @@ chainbench-server1` 로 바로 볼 수 있다.
 `./setup.sh binaries` 가 이 절의 내용을 그대로 한다(체인 이름을 주면 하나만:
 `./setup.sh binaries go-wemix`). 아래는 그것이 무엇을 하는지와, 왜 그렇게 하는지다.
 
+스크립트는 매 빌드마다 별도 임시 출력 디렉터리를 사용한다. 빌드가 성공하고 새 ELF가
+호스트에서 확인된 뒤에만 기존 산출물을 교체하고 서버에 복사한다. 출력이 보이지 않거나
+빌드가 실패하면 이전 파일을 보존하고 중단하며, 해당 빌드의 임시 파일은 정리한다.
+컨테이너에도 `GOMAXPROCS`·`GOFLAGS`를 전달한다(기본값 `2`·`-p=2`). 작은 VM에서는
+`GOMAXPROCS=2 GOFLAGS=-p=1 ./setup.sh binaries`로 빌드 병렬도를 제한할 수 있다.
+
 컨테이너의 `/data/chainbench/bin/` 에 대상 체인의 **리눅스** 바이너리가 있어야 한다. 맥에서 만든 것은 Mach-O 라 돌지 않는다. 골랑 컨테이너에서 만들어 넣는다(2026-09-29 에 이렇게 만들었다).
 
 **산출물 디렉터리는 홈 아래에 둔다.** `/tmp` 는 쓰면 안 된다 — macOS 의 Docker
@@ -180,6 +186,21 @@ bin/chainbench run \
 bp 수(7)만 validator 로 선언한다.
 
 ### 전량 스위프를 이 15대에서
+
+attach 케이스의 접속 주소는 `chainbench chain show --dial-rpc --json`의 `rpcURL`을
+사용한다. 기록된 Docker 모드와 server-set 옆 localmap을 Go 엔진이 해석하므로 YAML의
+블록형·흐름형 표현과 IPv6를 같은 계약으로 처리한다. 일반 `chain show`의 배치 주소는 그대로이며
+`--dial-rpc`를 주면 호출자용 URL도 표시한다. MCP `chainbench_chain_show`의 `dialRPC: true`도
+같은 결과를 반환한다. 스위프와 같은 체크아웃에서 빌드한 CLI를 사용해야 한다.
+
+저장 공간과 증거 보존이 필요한 스위프는 `TCSWEEP_RETAIN_HOOK`에 검증된 실행 파일의
+경로를 지정한다. 셸 식이나 인자 문자열이 아니라 실행 파일 하나이며, 종료된 workspace 경로와
+통과 여부(`1`/`0`)를 인자로 받는다. 성공·실패 케이스 모두 호출하며 이 모드에서는
+`chain rm`이나 workspace 삭제를 하지 않는다. 훅은 설정·로그·결과를 보존하고 실제 프로세스·
+열린 파일·소유 경로를 확인한 뒤 비활성 DB만 회수해야 한다. 종료나 훅이 실패하면 스위프는
+code 2로 즉시 중단하며 다음 케이스를 시작하지 않는다. 기존 workspace도 덮어쓰지 않는다.
+훅 미지정 시 기존 통과 케이스 제거 정책이 유지된다. `TCSWEEP_BIN`으로 고정된 CLI 파일을
+지정할 수 있고, 생략하면 저장소의 `bin/chainbench`를 사용한다.
 
 `scripts/tcsweep.sh` 는 기본적으로 로컬 바이너리로 돈다. `TCSWEEP_FLAGS` 를 주면 같은
 스위프가 이 컨테이너들을 향한다 — 로컬에 체인 바이너리가 없는 기기에서는 이쪽이

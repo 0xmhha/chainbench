@@ -1,0 +1,206 @@
+{
+  "scope": "NODE007 actual verified WBFT init with useNCP=true and empty configured govNCP CSV: completed node exits nonzero with exact required no-initial-NCPs reason. Positive seven whitespace-padded NCP addresses init0 regression. NODE006 live ncpCount/isNCP/production remains unverified. Owned shared storage preflight, preserve input/command/binary SHA/exit/output before reclaiming completed databases. Not full87/Linux/mainnet/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Previous any-failure predicate accepted six unrelated/startup/signal/usage/partial-reason failures.",
+  "unitGreen": "Exact-refusal positive and seven negative controls, successful command also rejected.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "9f65ea8a600b16a904e06f881023b454d0f73f8676fa5aeb301dbde3b4ba3490",
+    "sourceAfter": "9f65ea8a600b16a904e06f881023b454d0f73f8676fa5aeb301dbde3b4ba3490",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestE2E_WbftGenesisNCPWhitespace",
+      "TestE2E_WbftGenesisEmptyNCP"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/ncpi-_e9fh35n",
+      "/private/tmp/cbui/ncpi-h8uge1ay"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/ncpi-_e9fh35n": [],
+      "/private/tmp/cbui/ncpi-h8uge1ay": []
+    },
+    "elapsedSeconds": 6.448,
+    "summary": {
+      "path": "/private/tmp/chainbench-ncp-init-native-summary.json",
+      "sha256": "314cd6f2f0756ec3d9ccdd65aa6586ab2be515fdbb772d03f11de7c879c57d79",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035024388459318
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-ncp-init-native-native.jsonl",
+      "sha256": "02ef947395be7988f6347585304dcb1e14fad576354ba04b39f22aa174dba233",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035023969153192
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-ncp-init-native-start.json",
+      "sha256": "12bbd04998641d2c1f04334fc8e54499b3213e8b7e318f4403cc089d9aae8c1f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792035015260353658
+    }
+  },
+  "results": [
+    {
+      "kind": "empty-refusal",
+      "exitCode": 1,
+      "result": {
+        "path": "/private/tmp/cbui/ncpi-_e9fh35n/reports/init-result.json",
+        "sha256": "5351451660ee35754456ce4506ab229e5a821ada6e1ac166d5c0d1e06e8bca4e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035022444058447
+      },
+      "output": {
+        "path": "/private/tmp/cbui/ncpi-_e9fh35n/reports/init-output.log",
+        "sha256": "a4fee40ca014273f05338f60ac6a9baa059787dc617822a21ed3cf61e674113c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035022443521190
+      },
+      "genesis": {
+        "path": "/private/tmp/cbui/ncpi-_e9fh35n/genesis.json",
+        "sha256": "abe667cbdcdc441d074935bc85ef58dc54f972a78cf737044ce44d601f98e99e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035022065928627
+      }
+    },
+    {
+      "kind": "whitespace-init-only",
+      "exitCode": 0,
+      "result": {
+        "path": "/private/tmp/cbui/ncpi-h8uge1ay/reports/init-result.json",
+        "sha256": "dde4766e846e930f562f758c0478499914373daece39b75e58e3f64ff44ad6f1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035020403613736
+      },
+      "output": {
+        "path": "/private/tmp/cbui/ncpi-h8uge1ay/reports/init-output.log",
+        "sha256": "82d7e6d7e27ef58cdf1391f2d20a0daaeab9d920a90541ff63447a28037f1d35",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035020403168271
+      },
+      "genesis": {
+        "path": "/private/tmp/cbui/ncpi-h8uge1ay/genesis.json",
+        "sha256": "19a71f6eb867cfd15726fb7575ca7c3e6a9797fe7d1b5f5be616dd1dafcec5b0",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035018686041931
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/ncpi-_e9fh35n",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 7,
+      "inventory": {
+        "path": "/private/tmp/cbui/ncpi-_e9fh35n/reports/ncp-init-inventory.json",
+        "sha256": "3a05b3894aa034598580a5c6b3f1924268d1723d2ce6b1f46fb135d9c89ec86c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035050996230175
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/ncpi-h8uge1ay",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 7,
+      "inventory": {
+        "path": "/private/tmp/cbui/ncpi-h8uge1ay/reports/ncp-init-inventory.json",
+        "sha256": "d87b777b3372d14dc08991db7471a153f9efec0ac54772fe58402f309697ab19",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792035050998885420
+      }
+    }
+  ],
+  "retainedFiles": 14,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-ncp-init-publication.json",
+    "sha256": "b5b1dee4c04fa13bf32b841ed5cb4d4d07df466077c52a96a24075db5c3369e6",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792034779876755903
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-ncp-init-red.log",
+      "sha256": "425b1d3047b50239ca1d771806e8681b1390ca079e22ca00a6f2e2c10e39aa7c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034680496839723
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-init-green.log",
+      "sha256": "9accec49bb194f81023b099f69ddfe87b7912164d4edf1ce3a51560f0222ac70",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034740113560604
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-init-related-race.log",
+      "sha256": "19578c48335a6694f6550a54abee7509e208677cc158575958eea66f277c9219",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034787715392380
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-init-check.log",
+      "sha256": "cbb51599f9a20d02e004dd89417257100e467e1f515f40758f1175ec8115e379",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034870070652015
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-init-check2.log",
+      "sha256": "f53b2d887cefa0bcfc5cc1b2b456445de26dc257f7bc5a58eb275403d3223d98",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034994274957856
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-init-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792034784182152652
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  }
+}

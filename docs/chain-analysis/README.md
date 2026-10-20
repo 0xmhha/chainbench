@@ -113,3 +113,14 @@ discovery.dns[+port]) · history 2(geth114) · `miner.extradata` · wemix 전용
 원칙은 하나다: **한 번 뽑은 분석은 재생성 가능한 형태로 남기고, 신선도를 스스로 말하게 한다.**
 검사로 만들 수 있으면 검사로(가장 강함), 아니면 스크립트 산출물로, 그것도 아니면 기준 커밋을
 적은 문서로.
+
+2026-10-18: the three CLI/help captures and visible flag lists were regenerated
+from the pinned StableNet4d17eea0, WBFTd535dd3d and WEMIX4538a9f5 native builds.
+All documented hidden/not-accepted flag names were rechecked with zero absent
+flags or wrong notes. The separate code-line and RPC/metrics analyses retain
+their explicit earlier source snapshots; updating help provenance does not
+claim those semantic analyses were re-audited.
+
+The checked-in help text removes trailing whitespace only. Original verbatim
+captures are retained in the referenced proof artifacts; the normalization does
+not change commands, options, defaults, provenance headers or observed values.

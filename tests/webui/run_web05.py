@@ -1,5 +1,7 @@
 """Fresh WEB-05 proof: browser editing, corpus round trip and a Web test job
 that executes every builtin argument path on native gstable."""
+from runtime_storage import create_runtime
+from prerequisite import run_check
 from runtime_contract import runtime_root, base_commit, source_digest, stage_sources
 
 import datetime
@@ -101,8 +103,7 @@ def main():
     invocation = str(uuid.uuid4())
     started = now()
     before = source_digest(Path.cwd())
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(invocation)
     evidence = {'criterion': 'WEB-05', 'invocationId': invocation, 'scenarios': [], 'checks': [], 'artifacts': [], 'sourceDigest': before}
     failures, server, handles = [], None, []
     source = stage_sources(Path.cwd(), runtime)
@@ -110,7 +111,7 @@ def main():
         for command in ('node --test tests/webui/dsl-form.test.mjs',
                         'go test ./internal/app ./internal/testhelper ./internal/testengine ./internal/dashboard ./internal/dsl/...',
                         'npm --prefix web run build'):
-            run = subprocess.run(command, shell=True, text=True, capture_output=True, cwd=source)
+            run = run_check(command, shell=True, text=True, capture_output=True)
             logfile = out / ('check-' + str(len(evidence['checks'])) + '.log')
             logfile.write_text(run.stdout + run.stderr)
             evidence['checks'].append({'command': command, 'exitCode': run.returncode, 'path': str(logfile), 'sha256': digest(logfile)})

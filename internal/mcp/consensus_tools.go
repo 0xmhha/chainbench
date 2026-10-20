@@ -21,8 +21,8 @@ func consensusStatusTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain": map[string]any{"type": "string"},
-				"rpc":   map[string]any{"type": "string"},
+				"chain": commonProperty("chain", nil),
+				"rpc":   commonProperty("rpc", nil),
 			},
 			"required": []string{"chain", "rpc"},
 		},
@@ -32,11 +32,11 @@ func consensusStatusTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			r, err := app.ReadNode(ctx, app.Deps{}, rpcURL)
+			r, err := invokeFeature[string, app.NodeReadings](ctx, app.Deps{}, "node.status", rpcURL)
 			if err != nil {
 				return "", err
 			}
-			vals, _ := app.Validators(ctx, app.Deps{}, chain, "", "", rpcURL)
+			vals, _ := invokeFeatureFields[app.ValidatorsOut](ctx, app.Deps{}, "chain.validators", map[string]any{"Chain": chain, "RPC": rpcURL})
 			return fmt.Sprintf("chain=%s head=%d chain_id=%d peers=%d syncing=%t validators=%d",
 				chain, r.BlockNumber, r.ChainID, r.PeerCount, r.Syncing, len(vals.Validators)), nil
 		},
@@ -53,7 +53,7 @@ func consensusHealthTool() Tool {
 		Description: "Quick consensus health verdict (not syncing + past genesis). Args: rpc.",
 		InputSchema: map[string]any{
 			"type":       "object",
-			"properties": map[string]any{"rpc": map[string]any{"type": "string"}},
+			"properties": map[string]any{"rpc": commonProperty("rpc", nil)},
 			"required":   []string{"rpc"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -61,7 +61,7 @@ func consensusHealthTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			r, err := app.ReadNode(ctx, app.Deps{}, rpcURL)
+			r, err := invokeFeature[string, app.NodeReadings](ctx, app.Deps{}, "node.status", rpcURL)
 			if err != nil {
 				return "", err
 			}
@@ -84,7 +84,7 @@ func consensusBlockInfoTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"rpc":   map[string]any{"type": "string"},
+				"rpc":   commonProperty("rpc", nil),
 				"block": map[string]any{"type": "string"},
 			},
 			"required": []string{"rpc"},
@@ -103,7 +103,7 @@ func consensusBlockInfoTool() Tool {
 				GasUsed      string   `json:"gasUsed"`
 				Transactions []string `json:"transactions"`
 			}
-			raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{
+			raw, err := invokeFeature[app.NodeCallIn, []byte](ctx, app.Deps{}, "node.rpc", app.NodeCallIn{
 				RPC: rpcURL, Method: "eth_getBlockByNumber", Params: []any{block, false},
 			})
 			if err != nil {

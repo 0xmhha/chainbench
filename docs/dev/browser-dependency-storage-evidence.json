@@ -1,0 +1,159 @@
+{
+  "scope": "Remove staged browser test dependency copies after successful and failed proof finalization. Preserve explicitly cited artifacts and refuse active runtimes.",
+  "redLog": "/private/tmp/chainbench-browser-dependency-red.log",
+  "greenLog": "/private/tmp/chainbench-browser-storage-regression.log",
+  "contracts": 47,
+  "nativeLog": "/private/tmp/chainbench-browser-dependency-native.log",
+  "nativeProof": "/private/tmp/chainbench-browser-dependency-proof.json",
+  "nativeProofSHA256": "f49d1d5d48e9737c03df0493e1d6b15c498ea6f85b047d262e5a98aee72402d5",
+  "native": {
+    "iterations": [
+      {
+        "runtime": "/private/tmp/cbui/dependency-storage-probe-rnjq_t74",
+        "beforeAllocatedBytes": 10104832,
+        "afterAllocatedBytes": 16384,
+        "reclaimed": [
+          {
+            "path": "/private/tmp/cbui/dependency-storage-probe-rnjq_t74/source/tests/webui/node_modules",
+            "event": "reclaimed",
+            "allocatedBytes": 10092544,
+            "finishedAt": "2026-10-13T15:05:39.643199+00:00"
+          }
+        ],
+        "openDependencyProtected": true,
+        "failurePreserved": true,
+        "lockBytesModeMtimePreserved": true
+      },
+      {
+        "runtime": "/private/tmp/cbui/dependency-storage-probe-56xmew79",
+        "beforeAllocatedBytes": 10104832,
+        "afterAllocatedBytes": 16384,
+        "reclaimed": [
+          {
+            "path": "/private/tmp/cbui/dependency-storage-probe-56xmew79/source/tests/webui/node_modules",
+            "event": "reclaimed",
+            "allocatedBytes": 10092544,
+            "finishedAt": "2026-10-13T15:05:40.366056+00:00"
+          }
+        ],
+        "openDependencyProtected": true,
+        "failurePreserved": true,
+        "lockBytesModeMtimePreserved": true
+      },
+      {
+        "runtime": "/private/tmp/cbui/dependency-storage-probe-0a8r5pj3",
+        "beforeAllocatedBytes": 10104832,
+        "afterAllocatedBytes": 16384,
+        "reclaimed": [
+          {
+            "path": "/private/tmp/cbui/dependency-storage-probe-0a8r5pj3/source/tests/webui/node_modules",
+            "event": "reclaimed",
+            "allocatedBytes": 10092544,
+            "finishedAt": "2026-10-13T15:05:41.132042+00:00"
+          }
+        ],
+        "openDependencyProtected": true,
+        "failurePreserved": true,
+        "lockBytesModeMtimePreserved": true
+      }
+    ],
+    "protectedJSONFiles": 1401,
+    "dependencyLockSHA256": "8f5d213cb80079eeae40e9137facf3ba40840a8751919e5d138d69cb468c9e57",
+    "sources": {
+      "tests/webui/runtime_storage.py": "a630238e7e6ad2cebc40c66899442a5eebc62a9f04bf6d965afeab5b05dd1d50",
+      "tests/webui/dependency_storage_probe.py": "b5d91d72efa851bd0eea8f568c29c3f6298f7b77e1d27d09619ceb3363867efa"
+    }
+  },
+  "existingRuntimeMaintenance": {
+    "scope": "explicit maintenance of three proof-bound completed test runtimes; no retrospective ownership marker was added",
+    "removed": [
+      {
+        "path": "/private/tmp/cbui/recheck-_nroyw_7/source/web/node_modules",
+        "kind": "dependency",
+        "allocatedBytes": 0
+      },
+      {
+        "path": "/private/tmp/cbui/recheck-_nroyw_7/source/tests/webui/node_modules",
+        "kind": "dependency",
+        "allocatedBytes": 0
+      },
+      {
+        "path": "/private/tmp/cbui/recheck-6ro42476/source/tests/webui/node_modules",
+        "kind": "dependency",
+        "allocatedBytes": 14364672
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/source/web/node_modules",
+        "kind": "dependency",
+        "allocatedBytes": 0
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/source/tests/webui/node_modules",
+        "kind": "dependency",
+        "allocatedBytes": 0
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node1/gstable/lightchaindata",
+        "kind": "database",
+        "allocatedBytes": 364544
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node4/gstable/lightchaindata",
+        "kind": "database",
+        "allocatedBytes": 364544
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node3/gstable/lightchaindata",
+        "kind": "database",
+        "allocatedBytes": 364544
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node2/gstable/lightchaindata",
+        "kind": "database",
+        "allocatedBytes": 364544
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node5/gstable/lightchaindata",
+        "kind": "database",
+        "allocatedBytes": 364544
+      }
+    ],
+    "kept": [
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node1/gstable/chaindata",
+        "reason": "explicit reference"
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node4/gstable/chaindata",
+        "reason": "explicit reference"
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node3/gstable/chaindata",
+        "reason": "explicit reference"
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node2/gstable/chaindata",
+        "reason": "explicit reference"
+      },
+      {
+        "path": "/private/tmp/cbui/03199907-6b25-4e41-85c5-cc23b6326ea6/attach/nodes/baee035cb11d/node5/gstable/chaindata",
+        "reason": "explicit reference"
+      }
+    ],
+    "protectedFiles": 7809,
+    "protectedBytesModeOwnerMtimeUnchanged": true,
+    "activeInventoriesRechecked": true,
+    "apparentAllocatedBytesRemoved": 16187392,
+    "note": "APFS clones share blocks; removed apparent allocation is not the actual free-space increase"
+  },
+  "maintenanceAudit": "/private/tmp/chainbench-test-cache-maintenance.json",
+  "maintenanceAuditSHA256": "1b7b9f0627564395f5a2abfdd7f4b154d3a7ae8a8dcac875d4cf72ef4dfea05a",
+  "limitations": [
+    "Historical unmarked runtimes are never automatically opted into reclamation.",
+    "Five explicitly cited historical chaindata folders remain protected.",
+    "Two unbound historical dependency copies remain untouched by this maintenance.",
+    "20 GiB preflight remains mandatory; retained provenance and native binaries still use storage.",
+    "Task 9\u201314 and final frozen Web14 acceptance remain open."
+  ],
+  "fullCheckLog": "/private/tmp/chainbench-browser-storage-check.log"
+}

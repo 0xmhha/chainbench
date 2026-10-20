@@ -592,8 +592,10 @@ func (s *collecting) Enter(ctx context.Context, m *statemachine.Machine) error {
 		if err := r.net.teardown(ctx); err == nil {
 			r.out.Stopped = true
 		} else if r.failure == nil {
+			r.out.CleanupFailed = true
 			r.failure = fmt.Errorf("engine: run suite: teardown: %w", err)
 		} else {
+			r.out.CleanupFailed = true
 			r.failure = fmt.Errorf("%w (and the network could not be taken down: %v)", r.failure, err)
 		}
 	}

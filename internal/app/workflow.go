@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -133,6 +136,7 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 		if in.Declared == nil {
 			return "", fmt.Errorf("app: attach run: %s carries no declaration", in.At)
 		}
+		in.Declared.expandEndpoints()
 		if in.Chain == "" {
 			in.Chain = in.Declared.Chain
 		}
@@ -141,6 +145,19 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 		}
 		if len(in.RPCURLs) == 0 {
 			in.RPCURLs = in.Declared.RPCURLs
+			if len(in.Declared.Endpoints) > 0 {
+				var err error
+				in.Nodes, err = node.AttachedSet(in.Chain, "attached", in.Declared.Endpoints)
+				if err != nil {
+					return "", err
+				}
+				for _, ep := range in.Declared.Endpoints {
+					if err := ep.Validate(); err != nil {
+						return "", fmt.Errorf("attach profile: %w", err)
+					}
+					in.RPCURLs = append(in.RPCURLs, ep.RPCURL)
+				}
+			}
 		}
 		if len(in.Caps) == 0 {
 			in.Caps = in.Declared.Provides
@@ -164,7 +181,11 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	}
 	// The declaration claims a chain; nothing composed this network, so the
 	// claim is only an assertion until the endpoint is asked.
-	if err := testengine.VerifyAttachedChain(ctx, in.Chain, in.RPCURLs[0], in.AllowChainMismatch); err != nil {
+	endpoint := node.Node{RPCURL: in.RPCURLs[0]}
+	if len(in.Nodes.Nodes) > 0 {
+		endpoint = in.Nodes.Nodes[0]
+	}
+	if err := testengine.VerifyAttachedNode(ctx, in.Chain, endpoint, in.AllowChainMismatch); err != nil {
 		return "", fmt.Errorf("app: attach run: %w", err)
 	}
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
@@ -223,10 +244,11 @@ func declaredAttachIn(specs [][]byte, labels []string) (*AttachDecl, error) {
 			continue
 		}
 		got := &AttachDecl{
-			Chain:    sp.Chain.Name,
-			RPCURLs:  sp.EnvAttach.RPC,
-			KeysDir:  sp.EnvAttach.KeysDir,
-			Provides: sp.EnvAttach.Provides,
+			Chain:     sp.Chain.Name,
+			RPCURLs:   sp.EnvAttach.RPC,
+			Endpoints: sp.EnvAttach.Endpoints,
+			KeysDir:   sp.EnvAttach.KeysDir,
+			Provides:  sp.EnvAttach.Provides,
 		}
 		if want == nil {
 			if i > 0 {
@@ -235,7 +257,7 @@ func declaredAttachIn(specs [][]byte, labels []string) (*AttachDecl, error) {
 			want, from = got, label
 			continue
 		}
-		if !slices.Equal(want.RPCURLs, got.RPCURLs) || want.Chain != got.Chain {
+		if !slices.Equal(want.RPCURLs, got.RPCURLs) || !reflect.DeepEqual(want.Endpoints, got.Endpoints) || want.Chain != got.Chain {
 			return nil, fmt.Errorf("app: %s and %s attach to different networks — split the run", from, label)
 		}
 	}
@@ -264,8 +286,9 @@ type AttachDecl struct {
 	// contract needs the chain's table before the first call.
 	Chain string
 	// RPCURLs are the endpoints, still as written — "${VAR:-default}" is
-	// expanded by the surface, which owns the process environment.
-	RPCURLs []string
+	// expanded by AttachRun, identically for both surfaces.
+	RPCURLs   []string
+	Endpoints []node.RPCEndpoint
 	// KeysDir is the key set the running network was composed from, empty when
 	// the declaration does not say.
 	KeysDir string
@@ -287,6 +310,12 @@ func ListSpecs(dir string) ([]SpecInfo, error) { return dsl.ListSpecs(dir) }
 // path or an env reference is settled; two surfaces settling it separately is
 // two answers to where a spec's environment lives.
 func ReadSpecFiles(paths []string) ([][]byte, error) { return dsl.ReadFiles(paths) }
+
+// ReadSpecContent resolves an inline declaration's preset in its source context.
+// It is the bytes counterpart of ReadSpecFiles for surfaces without a file.
+func ReadSpecContent(raw []byte, baseDir string) ([]byte, error) {
+	return dsl.ReadContent(raw, baseDir)
+}
 
 // SessionSummary reads a session's collected summary.
 func SessionSummary(root string) (RunSummary, error) {
@@ -410,4 +439,31 @@ func readReport(sessionDir string) (report.Report, error) {
 		return rep, nil
 	}
 	return report.Build(sessionDir)
+}
+
+// expandEndpoints resolves only addresses. Authentication remains an environment
+// reference and is resolved by each node's transport without entering reports.
+func (decl *AttachDecl) expandEndpoints() {
+	expand := func(value string) string {
+		return os.Expand(value, func(expression string) string {
+			name, fallback, hasDefault := strings.Cut(expression, ":-")
+			if value, ok := os.LookupEnv(name); ok && value != "" {
+				return value
+			}
+			if hasDefault {
+				return fallback
+			}
+			return ""
+		})
+	}
+	decl.RPCURLs = append([]string(nil), decl.RPCURLs...)
+	for i, endpoint := range decl.RPCURLs {
+		decl.RPCURLs[i] = expand(endpoint)
+	}
+	decl.Endpoints = append([]node.RPCEndpoint(nil), decl.Endpoints...)
+	for i := range decl.Endpoints {
+		decl.Endpoints[i].RPCURL = expand(decl.Endpoints[i].RPCURL)
+		decl.Endpoints[i].WSURL = expand(decl.Endpoints[i].WSURL)
+		decl.Endpoints[i].MetricsURL = expand(decl.Endpoints[i].MetricsURL)
+	}
 }

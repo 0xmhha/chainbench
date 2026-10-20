@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "out-of-gas-consumes-all",
-  "description": "RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 잔액 전량 차감 검증 (원본 regression/ethereum/25-test-out-of-gas)",
+  "description": "CT-CONTRACT-007 / RT-A-3-07 — 0번 슬롯을 42로 초기화한 London 호환 컨트랙트를 배포한다. 빈 calldata는 저장 값을 읽는다. 0x01은 SSTORE로 1을 쓴 뒤 무한 반복해 50000 gas를 모두 소진한다. 배포와 runtime, 실패 영수증, gasUsed == gasLimit, 실패 전후 eth_call/저장소의 42 유지와 새 호출자의 정확한 수수료 차감을 확인한다. Native 회귀는 실패 전에 SSTORE가 완료된 trace를 확인한다. 이 무한 반복 시나리오는 유한한 estimateGas - 1을 입력으로 요구하는 원문 TX-018과 같다고 주장하지 않는다.",
   "requires": [
     "rpc"
   ],
@@ -15,39 +15,21 @@
   },
   "steps": [
     {
-      "data": "0x600480600b6000396000f35b600056",
       "do": "sendTx",
       "from": "node1",
       "gas": "200000",
+      "data": "0x602a600055601a8060106000396000f33615600e5760016000555b600a565b60005460005260206000f3",
       "save": "dhash"
     },
     {
       "do": "read",
+      "source": "rpcCall",
       "method": "eth_getTransactionReceipt",
       "params": [
         "$dhash"
       ],
-      "save": "addr",
       "select": "contractAddress",
-      "source": "rpcCall"
-    },
-    {
-      "do": "sendTx",
-      "expect": "revert",
-      "from": "node1",
-      "gas": "50000",
-      "save": "chash",
-      "to": "$addr"
-    },
-    {
-      "do": "read",
-      "method": "eth_getTransactionReceipt",
-      "params": [
-        "$chash"
-      ],
-      "save": "used",
-      "select": "gasUsed",
-      "source": "rpcCall"
+      "save": "addr"
     },
     {
       "expect": "txStatus",
@@ -55,14 +37,149 @@
       "is": "0x1"
     },
     {
+      "do": "waitFor",
+      "source": "codeAt",
+      "address": "$addr",
       "compare": "Equal",
-      "expect": "derive",
-      "is": "0",
+      "expected": "0x3615600e5760016000555b600a565b60005460005260206000f3",
+      "pollInterval": "1s",
+      "timeout": "60s"
+    },
+    {
+      "do": "newAccount",
+      "save": "caller",
+      "saveKey": "callerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$caller",
+      "value": "10000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$caller",
+      "save": "before"
+    },
+    {
+      "expect": "call",
+      "to": "$addr",
+      "data": "0x",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$addr",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "do": "sendTx",
+      "key": "$callerKey",
+      "to": "$addr",
+      "gas": "50000",
+      "data": "0x01",
+      "expect": "revert",
+      "save": "chash",
+      "timeout": "120s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "gasUsed",
+      "compare": "Equal",
+      "is": "50000"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
       "of": [
         "$used",
-        "50000"
+        "$price"
       ],
-      "op": "diff"
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$before",
+        "$fee"
+      ],
+      "save": "want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$caller",
+      "compare": "Equal",
+      "is": "$want"
+    },
+    {
+      "expect": "call",
+      "to": "$addr",
+      "data": "0x",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$addr",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "90s"
     }
   ]
 }

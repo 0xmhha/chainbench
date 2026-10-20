@@ -374,6 +374,45 @@ chainbench 는 **클라이언트 쪽에서 태그를 풀어** 우회하고 있�
 
 > 2026-09-24 추가. **W1 과 같은 함수의 이웃한 줄이다** — 함께 읽기를 권한다.
 
+### 2026-10-14 최신 원격 HEAD 재현 — 미해결
+
+go-wemix 원격 HEAD `4538a9f5f2e4bcd2cb9515f8c466fabc24f73987`를 별도 임시 checkout에
+받아 Go 1.25.2로 빌드했다. 기존 로컬 HEAD `1350376a680489298b3203a44d9ebddb7747f9cc`와
+다르다. 기존 외부 checkout과 체인 코드는 수정하지 않았다. 소스 2,056개 파일의 인벤토리,
+깨끗한 tracked 상태, 바이너리의 VCS revision과 SHA-256을 기록했다.
+구체적인 입력·해시·원본 증명은 [W3 증거](wemix-w3-evidence.json)에 있다.
+
+`TestWemixW3PartialGovernanceReproductionE2E`는 실제 `run` 핸드오프로 WEMIX 생산자가
+19번 블록까지 만든 이력을 얻고, 별도 full-sync 관측 노드에 Registry 생성 블록까지의
+prefix를 import한다. 이번 두 성공 실행에서는 Registry가 3번 블록에 생겼다. 같은 높이의
+블록 해시가 생산자와 일치하고, `GovernanceContract` 주소 조회는 정확히
+`address should be non-zero`로 거절된다. 뒤의 블록들을 두 번 import하면 실제 seal verifier가
+`unauthorized block`을 반환하고 관측 노드의 head는 3에 머문다.
+
+관측 노드는 생산자와 다른 P2P 키로 실제 피어에 연결한다. 2초 간격 10회 head·peer 수를
+기록하고, downloader의 `Downloaded item processing failed`와
+`Synchronisation failed, dropping peer` **각 로그에** `unauthorized block`이 있어야 통과한다.
+최종 실행은 4번 블록을 거절했다. 빈·잘못된 peer 수, 수동 import 거절만 있는 로그,
+동기화 timeout과 별도 거절 로그가 섞인 경우를 RED→GREEN으로 검사했다.
+
+최종 race 실행은 90.32초, skip 0건으로 통과했다. 실행 중 저장소 소스 지문은 바뀌지 않았다.
+준비 오류로 실패한 첫 실행도 보존했다. 세 실행 모두 owned 프로세스와 열린 파일이 없는 것을
+확인했고 종료 DB는 0개다. 설정·원본 블록 export·로그·세션 등 746개 파일의
+내용 해시·권한·소유자·mtime을 별도 인벤토리로 보존했다.
+
+재현 시 `CHAINBENCH_W3_PROOF=1`, `CHAINBENCH_E2E_FROM_BIN`(검증한 gwemix),
+`CHAINBENCH_E2E_TO_BIN`(검증한 gwbft)과 기존 runtime/cache 환경을 지정하고 실행한다:
+
+```sh
+go test -tags e2e -race ./cmd/chainbench \
+  -run '^TestWemixW3PartialGovernanceReproductionE2E$' -count=1 -timeout 15m
+```
+
+이 PASS는 **결함을 재현한 진단의 통과**다. 현재 소스 `wemix/admin.go:982-987`도 초기 주소
+조회 revert를 준비 전 상태로 인정하지 않는다. 수정·재시작 복구·무한 시간 정지와 과거
+15노드 배치 경합의 재실행은 이번 증명의 범위가 아니다. 아래 15노드 기록은 당시의 측정이고,
+`02-wemix-chain-up-15`와 W3는 계속 열린 상태다. 체인팀에 메시지나 리뷰 요청은 보내지 않았다.
+
 ### 증상
 
 15노드 wemix(poa) 망(`bp 7 · en 7 · pn 1`)을 세우면 endpoint 한 대가 초기 블록에서 멈추고
@@ -542,3 +581,116 @@ wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 세 건의 원래 관측 기록은 [`chainbench-worklist.md`](chainbench-worklist.md) 에 있고, 이
 문서가 그 기록의 인계본이다. 워크리스트가 작업 상태의 정본이므로, 체인팀 쪽에서 진행되면
 그쪽 이슈 번호를 워크리스트 항목에 붙인다.
+
+## 6. W4 — ETH/LES fetcher 계량기 이름 충돌 (2026-10-14)
+
+**미해결.** 최신 로컬 native go-wemix `1350376a680489298b3203a44d9ebddb7747f9cc`에서
+공통 `CT-NODE-007`의 EN은 새 블록을 받으며 같은 높이의 블록 해시·state root도 일치하지만,
+`eth_fetcher_block_broadcasts_in`과 `eth_fetcher_block_announces_in`이 모두 0이다.
+chainbench parser 결과뿐 아니라 원본 Prometheus·expvar에도 같은 0이 있다.
+근거와 원본 해시는 [동기화 증거](sync-path-evidence.json)에 있다.
+
+외부 소스에서 `eth/fetcher/block_fetcher.go:50,55`와
+`les/fetcher/block_fetcher.go:52,57`이 같은 이름으로 서로 다른 meter를 만든다.
+`metrics/meter.go:80`의 `NewRegisteredMeter`는 `Registry.Register` 오류를 확인하지 않고
+새 객체를 반환한다. `metrics/registry.go:195`는 기존 이름을 `DuplicateMetric`으로 거절한다.
+실제 바이너리를 `GODEBUG=inittrace=1`로 실행한 추적에서도 LES fetcher가 먼저,
+ETH fetcher가 뒤에 초기화된다. 따라서 exporter에 남은 객체는 사용되지 않는 LES 계량기이고,
+블록 수신을 기록하는 ETH 객체는 registry에 들어가지 못한다.
+
+외부 수정 제안은 LES 지표에 별도 이름 공간을 주고 중복 등록 실패를 감지하는 것이다.
+단순히 `GetOrRegisterMeter`로 합치면 두 종류의 경로를 섞을 수 있으므로 같은 지표로 볼지 먼저 결정해야 한다.
+수정 뒤 실제 full node의 새 블록 수신과 두 exporter의 증가를 확인하고, light node도 별도로 검증해야 한다.
+이 문서의 제안은 chainbench에서 적용한 변경이 아니다. 외부 소스는 수정하지 않았다.
+
+chainbench는 전체 블록 전파와 해시 통지 후 fetcher 조회를 각각 기록하고, 선언한 모든 지표의
+출처·유한값을 확인한다. 이 케이스의 metric 조건을 제거하거나 downloader 누적값으로 대체하지 않았다.
+따라서 WEMIX 실시간 경로와 작업 목록 10번은 열린 상태로 남는다. 다른 동기화 경로 14개가
+통과한 것은 이 결함이나 기존 W3의 해결을 뜻하지 않는다. 체인팀에 메시지나 리뷰 요청은 보내지 않았다.
+
+
+### 6-1. W4 — 원격에서 확인했던 4538a9f5 바이너리 재확인 (2026-10-15)
+
+**여전히 미해결.** 위 2026-10-14 기록의 로컬1350376a와 구분해,
+원격에서 확인했던4538a9f5의 깨끗한 tracked 소스·출처 고정 바이너리로 재현했다.
+이번 단계에서 원격 HEAD를 다시 조회한 것은 아니다. 외부 체인 소스는 수정하지 않았다.
+
+공개 `CT-NODE-007`은 pass0/fail1/blocked0/skip0이며, 실패 단언 하나가 정확히
+`eth_fetcher_block_broadcasts_in`과 대체 announce 수신 지표였다. 선언한 metric을 제거하거나
+다른 downloader 지표로 바꾸지 않았다. 같은 실제 EN이 peer4를 유지하며71→91의 추가20블록을
+수신했고, 두 높이에서 BP의 hash/stateRoot와 같았다. 같은 EN의 원본 Prometheus·expvar에서도
+broadcast/announce가 모두0이다. 동일 바이너리의 실제 inittrace는 LES fetcher가 ETH보다 먼저였다.
+소스4파일을 Git blob과 대조하고 AST로 동일 이름의 두 meter 등록과 무시되는 등록 오류·
+DuplicateMetric 반환을 다시 확인했다. 이것은 충돌 원인의 진단 근거이며 수정 검증은 아니다.
+
+0이라는 관찰만으로 진단을 통과시키던 모델에17개 음성 대조를 RED→GREEN으로 추가했고,
+관련 engine/helper/collector race·정적 검사·전체 검사를 통과했다. 소스 지문
+`c1318dd65c180a914e38345a7251ec73f3043b247221e80408085dfed0e827d1`을 고정한
+실제 진단 race는142.493초/skip0으로 통과했으며, 독립 대조와 새 프로세스 전수 조회 후
+종료 DB0·129파일의 내용·권한·소유자·mtime를 보존했다.
+[원본·출처·독립 대조](wemix-w4-latest-evidence.json). 진단 PASS는 CT-NODE-007 통과가 아니며,
+`issueResolved=false`, `strictCaseAccepted=false`다. 작업10과 외부 W4는 계속 열린 상태다.
+체인팀 메시지나 리뷰 요청은 보내지 않았다.
+
+
+## 7. S1 — StableNet의 previous prepared seal 거절 (2026-10-15)
+
+**관찰된 정지이며 원인은 미확정·미해결이다.** 외부 소스는 수정하지 않았고 체인팀에 메시지/리뷰 요청도 보내지 않았다.
+출처를 고정한 StableNet0937ac5c Linux arm64 바이너리(SHA256
+`49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d`)의 원래 공통 L1에서 두 번 관찰했다.
+4BP 각각의 보존 로그는 `failed to verify previous prepared seal ... err="invalid seal"`과
+`invalid PRE-PREPARE block proposal ... err="invalid prev prepared seals"`을 함께 기록한다.
+
+- `CT-NODE-005-snap-sync`: 부모107/제안108에서4생산자가 반복 거절했다. step12의600초 블록 대기가 실패했다.
+  reader 재시작/실제 snap 전송 단언에는 도달하지 않았으므로 snap 구현 원인으로 단정하지 않는다.
+- `CT-RPC-009-event-logs-query`: 부모2/제안3에서4생산자가 각각8회 거절했다. 테스트 본문 전 준비 확인이
+  WAITABLE을73회 기록했고480초 뒤 운영자가 소유 CLI를 정상 중단했다. 실제 종료130이며 원시스위프BLOCKED와 구분한다.
+
+소스에서 확인한 경로는 `go-stablenet/consensus/wbft/engine/engine.go:396`의 `verifyPrevSeals`다.
+`verifyAggregatedSeal` 오류를 `ErrInvalidPrevPreparedSeals`로 바꾸는 위치를 확인했을 뿐,
+잘못된 서명이 생성/선택된 원인, 재현 확률, 메인넷 영향은 이번 로그만으로 확정하지 않았다.
+두 로그 묶음의 네 생산자와 부모/다음 높이를 엄격히 대조하고 누락 노드·다른 높이·다른 오류를 거절했다.
+[부분 L1 원본·진단·중단·보존](linux-l1-cohort-evidence.json).
+
+별개로 chainbench의 준비 확인 예산이 관찰 시간을 제외하던 문제를 RED→GREEN으로 고쳤다.
+실제 Linux4BP에서 정상 케이스 후 채굴을 중지한 동일 workspace가8초 deadline으로 종료2를 반환했고,
+그 뒤 모든 자료를 보존하고 DB를 회수했다. [시간 제한 증거](node-readiness-deadline-evidence.json).
+이 수정은 seal 거절을 고치지 않는다. 전체 L1과 S1은 계속 열린 상태다.
+
+
+### 7-1. S1 — 두 번째 고정 소스 배치의 추가 관찰 (2026-10-16)
+
+동일 StableNet 0937 Linux 바이너리에서 추가로 관찰했다. 원인과 해결은 여전히 미확정이다.
+소스 908의 CT-NODE-003은 부모 3에서 4 BP가 각각 seal·proposal 거절을 8회 기록했고 준비 5분 제한으로 BLOCKED다.
+전체 CLI 376초에는 준비가 포함되므로 관문만 정확히 300초였다고 측정한 것은 아니다.
+CT-NODE-005는 실제 거래 블록 21 뒤 목표 171 대기 600초가 FAIL이고, 4 BP의 거절 부모는 119다.
+reader 시작(index 13) 전에 실패했으며 마지막 조회의 context deadline을 상시 RPC 불통으로 확대하지 않는다.
+
+배치 전체는 32행 30 PASS·1 BLOCKED·1 FAIL이고 보존·DB 회수 후 케이스 경계에서 신호 없이 끝냈다.
+157개 압축·10,523엔트리·2,336개 파일과 15대의 새 프로세스·열린 파일·바이너리·DB 0개를 독립 확인했다.
+[원본 행·직렬 구간·독립 증거](linux-l1-second-cohort-evidence.json).
+공식 StableNet 4d17eea0의 별도 깨끗한 소스와 Mac·Linux 빌드 출처는 확인했지만,
+새 버전의 실제 S1 재검증이나 해결로 세지 않는다([입력](upstream-pinned-build-evidence.json)).
+외부 소스 수정이나 체인팀 메시지·리뷰 요청은 수행하지 않았다.
+
+
+## 8. StableNet ProcessExtraSeal nil 포인터 패닉 (2026-10-16)
+
+**추가 관찰이며 미해결이다.** 외부 소스 수정이나 체인팀 메시지·리뷰 요청은 수행하지 않았다.
+공식4d17eea0의 깨끗한 소스로 빌드한 Mac ARM64 gstable
+(SHA256 `fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48`)의
+4BP 시작 과정에서 node4가 `ProcessExtraSeal`의 nil 포인터 역참조로 종료됐다.
+스택은 `consensus/wbft/core/extraseal.go:152`의 `valSet.GetByAddress(msg.Source())`를 가리키며,
+인자의 nil 인터페이스는 nil validator set과 일치한다. 그 값이 만들어진 원인·경합 조건·재현 빈도는 확정하지 않았다.
+`Backend.processExtraSeals`가 `currentBlock`, `PriorRound`, `PriorValidators`를 전달하는 경로를 확인했을 뿐이다.
+해당 extraseal.go는 이전 고정0937ac5c의 Git blob과 동일하므로 새 커밋이 도입한 회귀라고 판단하지 않는다.
+
+다른3노드는 같은 블록77에 합의했으며 node4의 RPC는 connection refused였다.
+health의 node4 chainId/blockNumber0은 실패한 조회의 기본값이며 실제 최종 상태 관측으로 세지 않는다.
+준비 제한1분30초로 공개 `stablenet-account-extra`는 본문 전 BLOCKED이고 후속 delayed 구성도 시작하지 않았다.
+종료DB0·새 프로세스/열린 파일 전수 조회·실패 파일의 내용과 속성 보존을 독립 확인했다.
+
+같은 고정소스e66에서 새 workspace로 두 구성을 재실행한 결과는2공개케이스·36단언 통과다.
+그 성공은 원문의 extra 상태 명제에 대한 확인이며 패닉 해결 증거가 아니다. 실패 시도와 성공 시도를 합쳐 전부 통과로 세지 않는다.
+Linux·메인넷 영향·장시간 안정성·원인 수정은 이번 범위가 아니다.
+[버전·원본 로그·BLOCKED·새 실행·독립 보존](legacy-extra-state-evidence.json).

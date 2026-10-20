@@ -1,0 +1,487 @@
+{
+  "scope": "Explicit isolated Linux retention root selection, validated read-only against six previously stopped nodes. No new native case execution.",
+  "acceptedScope": true,
+  "headAtProof": "c9630b8f8e2eb928195b0e5c4fc7590059480c33",
+  "sourceDigest": "47b45dcc8ed317763405e99b407d1462e9f0f15010c5e736ffe90a964ee4b134",
+  "priorNativeSourceDigest": "51fe8ef22cf5bcbe15b251b4f3b80e4765483ef941485acf2bbed010622accc2",
+  "tdd": {
+    "redSubcases": 14,
+    "greenTestMethods": 10,
+    "relatedSweepTestsPassed": true,
+    "wholeCheckPassed": true,
+    "publishedWholeCheckPassed": true
+  },
+  "capture": {
+    "acceptedScope": true,
+    "sourceDigest": "47b45dcc8ed317763405e99b407d1462e9f0f15010c5e736ffe90a964ee4b134",
+    "readOnly": true,
+    "priorRuntime": "/private/tmp/cbui/ss-cb3p3dww",
+    "priorProofSource": "51fe8ef22cf5bcbe15b251b4f3b80e4765483ef941485acf2bbed010622accc2",
+    "servers": [
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "/data/chainbench/ss-cb3p3dww/keys",
+          "/data/chainbench/ss-cb3p3dww/logs/3e5eecab98a8",
+          "/data/chainbench/ss-cb3p3dww/node/3e5eecab98a8/node1",
+          "/data/chainbench/ss-cb3p3dww/runtime/3e5eecab98a8"
+        ],
+        "markerSeparateFromSelection": "ss-cb3p3dww/.chainbench-owned-runtime.json",
+        "entries": 60,
+        "archive": {
+          "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server1-metadata.tar.gz",
+          "sha256": "be0f380da478f917fe559282c9a0d13973ea3afd6e2fcd189915669378c50c11",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792121136645412540
+        },
+        "processInventories": 2,
+        "remainingDatabases": 0,
+        "sharedKeysUnchanged": true
+      },
+      {
+        "server": "server2",
+        "container": "chainbench-lf-xjdy6jeu-s2",
+        "selectedRoots": [
+          "/data/chainbench/ss-cb3p3dww/keys",
+          "/data/chainbench/ss-cb3p3dww/logs/3e5eecab98a8",
+          "/data/chainbench/ss-cb3p3dww/node/3e5eecab98a8/node2",
+          "/data/chainbench/ss-cb3p3dww/runtime/3e5eecab98a8"
+        ],
+        "markerSeparateFromSelection": "ss-cb3p3dww/.chainbench-owned-runtime.json",
+        "entries": 60,
+        "archive": {
+          "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server2-metadata.tar.gz",
+          "sha256": "ed817d562a3a54c38be0fb8ee409aa180af3cb79e5415dca084e25ac9f518a89",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792121155575757635
+        },
+        "processInventories": 2,
+        "remainingDatabases": 0,
+        "sharedKeysUnchanged": true
+      },
+      {
+        "server": "server3",
+        "container": "chainbench-lf-xjdy6jeu-s3",
+        "selectedRoots": [
+          "/data/chainbench/ss-cb3p3dww/keys",
+          "/data/chainbench/ss-cb3p3dww/logs/3e5eecab98a8",
+          "/data/chainbench/ss-cb3p3dww/node/3e5eecab98a8/node3",
+          "/data/chainbench/ss-cb3p3dww/runtime/3e5eecab98a8"
+        ],
+        "markerSeparateFromSelection": "ss-cb3p3dww/.chainbench-owned-runtime.json",
+        "entries": 60,
+        "archive": {
+          "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server3-metadata.tar.gz",
+          "sha256": "0265e7b04befd7ca33fe251ab2181be1405811ae4dc52565f5deca2c1110f23e",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792121171309334256
+        },
+        "processInventories": 2,
+        "remainingDatabases": 0,
+        "sharedKeysUnchanged": true
+      },
+      {
+        "server": "server4",
+        "container": "chainbench-lf-xjdy6jeu-s4",
+        "selectedRoots": [
+          "/data/chainbench/ss-cb3p3dww/keys",
+          "/data/chainbench/ss-cb3p3dww/logs/3e5eecab98a8",
+          "/data/chainbench/ss-cb3p3dww/node/3e5eecab98a8/node4",
+          "/data/chainbench/ss-cb3p3dww/runtime/3e5eecab98a8"
+        ],
+        "markerSeparateFromSelection": "ss-cb3p3dww/.chainbench-owned-runtime.json",
+        "entries": 60,
+        "archive": {
+          "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server4-metadata.tar.gz",
+          "sha256": "6297f29d1c47aaca09dbb3b1fddaf00b042ff93428eda96c004713ba6aa7c7ef",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792121199859854983
+        },
+        "processInventories": 2,
+        "remainingDatabases": 0,
+        "sharedKeysUnchanged": true
+      },
+      {
+        "server": "server5",
+        "container": "chainbench-lf-xjdy6jeu-s5",
+        "selectedRoots": [
+          "/data/chainbench/ss-cb3p3dww/keys",
+          "/data/chainbench/ss-cb3p3dww/logs/3e5eecab98a8",
+          "/data/chainbench/ss-cb3p3dww/node/3e5eecab98a8/node5",
+          "/data/chainbench/ss-cb3p3dww/runtime/3e5eecab98a8"
+        ],
+        "markerSeparateFromSelection": "ss-cb3p3dww/.chainbench-owned-runtime.json",
+        "entries": 62,
+        "archive": {
+          "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server5-metadata.tar.gz",
+          "sha256": "913bb14d93b7846d307e647c7d17ae77d317ba88ea270b0d10c4bb4b5bfcaa59",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792121222107866659
+        },
+        "processInventories": 2,
+        "remainingDatabases": 0,
+        "sharedKeysUnchanged": true
+      },
+      {
+        "server": "server6",
+        "container": "chainbench-lf-xjdy6jeu-s6",
+        "selectedRoots": [
+          "/data/chainbench/ss-cb3p3dww/keys",
+          "/data/chainbench/ss-cb3p3dww/logs/3e5eecab98a8",
+          "/data/chainbench/ss-cb3p3dww/node/3e5eecab98a8/node6",
+          "/data/chainbench/ss-cb3p3dww/runtime/3e5eecab98a8"
+        ],
+        "markerSeparateFromSelection": "ss-cb3p3dww/.chainbench-owned-runtime.json",
+        "entries": 62,
+        "archive": {
+          "path": "/private/tmp/cbui/ss-cb3p3dww/reports/retention/server6-metadata.tar.gz",
+          "sha256": "828d8d0452015dd056a0021eb7a34857d3b845be9903942cf6906a5f46eab587",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792121278317713726
+        },
+        "processInventories": 2,
+        "remainingDatabases": 0,
+        "sharedKeysUnchanged": true
+      }
+    ],
+    "sourceAndInputsUnchanged": true,
+    "localFilesPreserved": 151,
+    "newNativeExecution": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "independent": {
+    "acceptedScope": true,
+    "sourceDigest": "47b45dcc8ed317763405e99b407d1462e9f0f15010c5e736ffe90a964ee4b134",
+    "servers": 6,
+    "archiveEntries": 364,
+    "freshIndependentInventories": 12,
+    "sourceAndInputsUnchanged": true,
+    "sharedKeysUnchanged": true,
+    "remainingDatabases": 0,
+    "readOnly": true,
+    "newNativeExecution": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "preservation": {
+    "inputsUnchanged": 229,
+    "localFilesPreserved": 151,
+    "remoteArchiveEntries": 364,
+    "freshProcessInventories": 24,
+    "databaseClasses": [
+      "chaindata",
+      "lightchaindata",
+      "etcd",
+      "triecache"
+    ],
+    "remainingDatabasePaths": 0,
+    "preExistingPresetMtimeDifferences": [
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/address",
+        "priorMtimeNS": 1792120910185055741,
+        "currentMtimeNS": 1792122005471431543,
+        "sha256": "d600b9752a16731fcce100f7286357b51e3efc0da9206fd7671df51729d49ed9",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/bls",
+        "priorMtimeNS": 1792120910185235701,
+        "currentMtimeNS": 1792122005471489627,
+        "sha256": "af5015acf49da868d5c35827f9629bf86bfc1b670a51400c1ca557bfc2fa47aa",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/pop",
+        "priorMtimeNS": 1792120910185383660,
+        "currentMtimeNS": 1792122005471548419,
+        "sha256": "5e00a500d28707fc383aeec1de476e6ec9664e82eaf3f1e7b1d83709b47738b2",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node1/private",
+        "priorMtimeNS": 1792120910184661279,
+        "currentMtimeNS": 1792122005471339584,
+        "sha256": "1046bc3dd9d2613d32a9182a6ff6a1ce96d944076c3e74132490ac425dae052f",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/address",
+        "priorMtimeNS": 1792120910187800514,
+        "currentMtimeNS": 1792122005472437426,
+        "sha256": "4f989c67fd2e3ededa64c33c0244caf1ccf846cee396ef20e8c951b4dbc23b01",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/bls",
+        "priorMtimeNS": 1792120910188288018,
+        "currentMtimeNS": 1792122005472509927,
+        "sha256": "1470ccc2f868d870d033f7471a5e4b9d21e1f6b25ac5d92400eee66ae4f59d24",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/pop",
+        "priorMtimeNS": 1792120910188384519,
+        "currentMtimeNS": 1792122005472563594,
+        "sha256": "b901f05a33e2f73b846d7e60d277ff091e236fcd50b657fbee98cbf51fe76533",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node2/private",
+        "priorMtimeNS": 1792120910187692471,
+        "currentMtimeNS": 1792122005472377384,
+        "sha256": "4f456af044fd9fe195351ac6a9c920d14535002c25e2670cc0b92e13ab6e3079",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/address",
+        "priorMtimeNS": 1792120910190011741,
+        "currentMtimeNS": 1792122005473452435,
+        "sha256": "4d1c0151913b490a9d96a28306bc830e4b31cd2339df6a165054b14b990fcf01",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/bls",
+        "priorMtimeNS": 1792120910190119283,
+        "currentMtimeNS": 1792122005473511477,
+        "sha256": "88d76f973d8b3cfc807c721f01ab1af0da12fe6c731aa85c116de1bb0a9739cc",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/pop",
+        "priorMtimeNS": 1792120910190247535,
+        "currentMtimeNS": 1792122005473567644,
+        "sha256": "9b00306b54e5556ceeeec3d9dff91779e7cf59aad80fbd0af3cc98190629c65e",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node3/private",
+        "priorMtimeNS": 1792120910189660571,
+        "currentMtimeNS": 1792122005473393268,
+        "sha256": "089c362fa88a332235eb1ebb811e1c4407eaa2b141000beef1f39376ddca0dff",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/address",
+        "priorMtimeNS": 1792120910192205510,
+        "currentMtimeNS": 1792122005474487569,
+        "sha256": "e3f737607bd00432e8960ab84d9203b9946d4b1a7ef3ae9403cf6173c4467bec",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/bls",
+        "priorMtimeNS": 1792120910192412845,
+        "currentMtimeNS": 1792122005474543278,
+        "sha256": "19db31f5299a3525474b81f93634670641fd5a8401d9ea21a6598e4a470dabe8",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/pop",
+        "priorMtimeNS": 1792120910193145809,
+        "currentMtimeNS": 1792122005474611445,
+        "sha256": "fd72d1a840b2501052cdf3d13b5e6e3cc748e3edabce84b3f718bbb207f970f7",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node4/private",
+        "priorMtimeNS": 1792120910191952049,
+        "currentMtimeNS": 1792122005474426818,
+        "sha256": "6bf970f9d91fa9bb9eea4c39911b51d63d33a3d428dff78980e6d9e377b293d9",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/address",
+        "priorMtimeNS": 1792120910195733915,
+        "currentMtimeNS": 1792122005475492869,
+        "sha256": "bcb413bd943e67ffd3dc9ac96f4eaeea8547aafc807b286bda084eaa08cc56cd",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/bls",
+        "priorMtimeNS": 1792120910195922791,
+        "currentMtimeNS": 1792122005475548369,
+        "sha256": "e9bed293f0d8392718c2ca5de508db633a976ee1802a2600610a446648adddce",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/pop",
+        "priorMtimeNS": 1792120910196384128,
+        "currentMtimeNS": 1792122005475605703,
+        "sha256": "138cc1f3c7571ac8dd29ced23a0021cf689faff3fb27819d0c22bf2e70aba357",
+        "contentModeOwnerUnchanged": true
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys/node5/private",
+        "priorMtimeNS": 1792120910194874907,
+        "currentMtimeNS": 1792122005475432410,
+        "sha256": "57b791572ce52959741a3b2a21b515ecb76d105794d55ecb2a62afff1fba6285",
+        "contentModeOwnerUnchanged": true
+      }
+    ],
+    "preExistingDifferencesChangedContentsOrModesOrOwners": false,
+    "originalAttemptRefusedBeforeRemoteObservation": true
+  },
+  "limitations": [
+    "Caller must bind data_root to its owned fixture; never infer it from an untrusted record.",
+    "Canonical path selection is not a substitute for fresh process, file-descriptor, ownership and realpath checks before deletion.",
+    "Only read-only observations were made here; archives and DB reclamation belong to the earlier explicitly identified native source cut.",
+    "Existing global fixture behavior remains the default. The producer marker is separate from selected_roots.",
+    "Twenty preset file mtimes differed before this proof; bytes, modes and owners match prior evidence. This proof preserves the current baseline; it does not claim the old mtimes survived later regression tests.",
+    "This is not full L1, legacy or final Web acceptance."
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/linux_retention.py",
+      "sha256": "75e4a5ae334d5c7d5017fc09b881029c5690f0ce8fb0b70aa395f01eb6349019",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792122453071980166
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/test_linux_retention.py",
+      "sha256": "8b9f584849c476abcc6621f29f0503ca0fc81f26f590053dadcc5b5d2c349791",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792122413199546965
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-isolated-retention2-20261016-start.json",
+      "sha256": "38973a5b45296eaafca95643c9d73e0d61db3ec9c571eae1adbaa7dd1517f5f3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122871057719833
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention2-20261016-capture.json",
+      "sha256": "97f22d2fcfcfc18868e5778efc4207f0e6734c7ad7e4c790cf6233f400bc3554",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122886043825709
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention2-20261016-independent.json",
+      "sha256": "19caa9f7ff4cb5b5c9385c84dc322ab2a45dee33fad13c8c7e4a30263ee48f99",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122911574353639
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-capture-20261016.py",
+      "sha256": "8aa345c31ebd20d90c09d1eff5275a5da13b954c30f1a47a64bc9c7dbfd1cfc3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122821906154534
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-independent-20261016.py",
+      "sha256": "a0d812d34875f897b4e3f2333a3ef0684ab09d996c2c6615e7333ad07018db59",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122821930761534
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-capture2-20261016.py",
+      "sha256": "4ce8ab99d0ef729fff30e3d5a5b3f9b805a52252edb5ef6d204f77ff0f65f4de",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122869912326789
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-independent2-20261016.py",
+      "sha256": "670e23641258737f1cef9eec116ac598222d75ccc4590bf0e05dd060b63cd3ea",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122869912846127
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-red-20261016.log",
+      "sha256": "5d2f4c9a15c5d18340244d49d97f95b7e4aef6b6912009d471383aa34f5a61ea",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122414681304359
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-green-20261016.log",
+      "sha256": "69d3092e799b33eb7dca64bf94a3536ab4fa9fc5969f0629675edb863629b707",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122453991615326
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-related-20261016.log",
+      "sha256": "524ebccc50c6e32540e1742858682209ea6b9c6019c222feebe1314e7a82b022",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122462164790154
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-ready-check-20261016.log",
+      "sha256": "e15b219f80741e36304a009c32915f375bf30310d3e4ac1d7fa477511ee2cbad",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122620134616763
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-capture-20261016.log",
+      "sha256": "458be1571abdd7a4a625d79d69492cd422f1ecdebbbda856f80a9363c6f38c9e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122833640924138
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-capture2-20261016.log",
+      "sha256": "2a96e117d4c390db4e879a33e7e110ac5c5a091959fab7ea4dd0b1e5a483963d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122886046408397
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-independent2-20261016.log",
+      "sha256": "524ea6b525c27838961ad306971b570f8d9e33f757ba925f4a4bd95ee9820ae0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792122911574552265
+    },
+    {
+      "path": "/private/tmp/chainbench-isolated-retention-published-check-20261016.log",
+      "sha256": "b56e3838dd5c7554befa1530d3dc8d1968c8d7fc8bda9564be226ae60500a5fa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792123061043215297
+    }
+  ]
+}

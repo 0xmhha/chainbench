@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"debug/buildinfo"
 	"errors"
 	"fmt"
 	"os"
@@ -89,7 +90,7 @@ func TestChainSurfaceJoinsDocumentationAndEngineMapping(t *testing.T) {
 	if s.Verification != "documented" || s.Binary != nil || s.Dialect != "geth114" || len(s.Fingerprint) != 64 || len(s.Sources) != 4 {
 		t.Fatalf("surface %+v", s)
 	}
-	if s.Sources[0].Path != "docs/chain-analysis/gstable/cli-surface.txt" || s.Sources[0].ChainCommit != "0937ac5c9" || s.Sources[0].CapturedAt == nil {
+	if s.Sources[0].Path != "docs/chain-analysis/gstable/cli-surface.txt" || s.Sources[0].ChainCommit != "4d17eea" || s.Sources[0].CapturedAt == nil {
 		t.Fatalf("source %+v", s.Sources[0])
 	}
 	port := webSurfaceOption(t, s, "global:--http.port")
@@ -130,7 +131,7 @@ func TestChainSurfaceJoinsDocumentationAndEngineMapping(t *testing.T) {
 func TestChainSurfaceJudgesTheSelectedBinary(t *testing.T) {
 	c := webSurfaceCatalog(t, "stablenet")
 	documented, _ := JoinChainSurface("stablenet", c, nil)
-	verified, err := JoinChainSurface("stablenet", c, webSurfaceProbe(c, "0937ac5c93d4f56ded5b24899f381d3d1f208c02", ""))
+	verified, err := JoinChainSurface("stablenet", c, webSurfaceProbe(c, "4d17eea018c8dd579409db30bfd27de79c4f4121", ""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,22 +142,22 @@ func TestChainSurfaceJudgesTheSelectedBinary(t *testing.T) {
 		t.Errorf("%+v", o)
 	}
 	stale, _ := JoinChainSurface("stablenet", c, webSurfaceProbe(c, strings.Repeat("1", 40), ""))
-	if stale.Verification != "stale" || len(stale.Limitations) == 0 || !strings.Contains(stale.Limitations[0], "0937ac5c9") {
+	if stale.Verification != "stale" || len(stale.Limitations) == 0 || !strings.Contains(stale.Limitations[0], "4d17eea") {
 		t.Errorf("a different commit is stale: %s %v", stale.Verification, stale.Limitations)
 	}
-	broken, _ := JoinChainSurface("stablenet", c, webSurfaceProbe(c, "0937ac5c93d4f56ded5b24899f381d3d1f208c02", "--http.api"))
+	broken, _ := JoinChainSurface("stablenet", c, webSurfaceProbe(c, "4d17eea018c8dd579409db30bfd27de79c4f4121", "--http.api"))
 	if broken.Verification != "incompatible" || broken.Fingerprint == verified.Fingerprint {
 		t.Errorf("a binary without a mapped flag is incompatible: %s", broken.Verification)
 	}
 	if o := webSurfaceOption(t, broken, "global:--http.api"); o.Support.Status != "binary-absent" || o.Support.Selectable {
 		t.Errorf("%+v", o)
 	}
-	refusing := webSurfaceProbe(c, "0937ac5c93d4f56ded5b24899f381d3d1f208c02", "")
+	refusing := webSurfaceProbe(c, "4d17eea018c8dd579409db30bfd27de79c4f4121", "")
 	refusing.Hidden["--vmodule"] = false
 	if o := webSurfaceOption(t, mustJoin(t, c, refusing), "global:--vmodule"); o.Support.Status != "binary-absent" {
 		t.Errorf("a hidden flag the binary rejects is absent: %+v", o)
 	}
-	noInit := webSurfaceProbe(c, "0937ac5c93d4f56ded5b24899f381d3d1f208c02", "")
+	noInit := webSurfaceProbe(c, "4d17eea018c8dd579409db30bfd27de79c4f4121", "")
 	delete(noInit.Commands, "init")
 	if s := mustJoin(t, c, noInit); s.Verification != "incompatible" || webSurfaceCommand(t, s, "command:init").Support.Status != "binary-absent" {
 		t.Errorf("init help is required for the engine's init: %s", s.Verification)
@@ -226,7 +227,7 @@ func webSurfaceBinary(t *testing.T, c chainsurface.Catalog, drop string) string 
 
 func webSurfaceEngine(t *testing.T, binary string) (*WebChainEngine, webChainPayload) {
 	t.Helper()
-	asset := ManifestBinary{ID: "asset-1", Chain: "stablenet", Path: binary, SHA256: strings.Repeat("b", 64), Commit: "0937ac5c93d4f56ded5b24899f381d3d1f208c02"}
+	asset := ManifestBinary{ID: "asset-1", Chain: "stablenet", Path: binary, SHA256: strings.Repeat("b", 64), Commit: "4d17eea018c8dd579409db30bfd27de79c4f4121"}
 	e := &WebChainEngine{root: t.TempDir(), surfaces: webSurfaceAnalysis, assets: map[string]ManifestBinary{asset.ID: asset}}
 	p := webChainPayload{Arguments: webChainArguments{AssetID: asset.ID}, Binary: ManifestBinaryEvidence{ID: asset.ID, Chain: "stablenet", SHA256: asset.SHA256, Version: "Gstable", OS: "darwin", Architecture: "arm64"}}
 	return e, p
@@ -316,11 +317,8 @@ func TestChainSurfaceJudgesTheSelectedNativeBinaries(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		commit := regexp.MustCompile(`Git Commit: ([0-9a-f]{40})`).FindSubmatch(version)
-		if commit == nil {
-			t.Fatalf("%s reports no commit", c.env)
-		}
-		asset := ManifestBinary{ID: "native-" + c.chain, Chain: c.chain, Path: path, SHA256: manifestHash(raw), Commit: string(commit[1])}
+		commit := nativeSurfaceSourceCommit(t, path, version)
+		asset := ManifestBinary{ID: "native-" + c.chain, Chain: c.chain, Path: path, SHA256: manifestHash(raw), Commit: commit}
 		evidence, err := asset.Verify(context.Background(), c.chain)
 		if err != nil {
 			t.Fatalf("%s: %v", c.chain, err)
@@ -380,8 +378,8 @@ func TestChainSurfaceFingerprintIsStableAcrossJudgements(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	commit := regexp.MustCompile(`Git Commit: ([0-9a-f]{40})`).FindSubmatch(version)
-	asset := ManifestBinary{ID: "native-wbft", Chain: "wbft", Path: path, SHA256: manifestHash(raw), Commit: string(commit[1])}
+	commit := nativeSurfaceSourceCommit(t, path, version)
+	asset := ManifestBinary{ID: "native-wbft", Chain: "wbft", Path: path, SHA256: manifestHash(raw), Commit: commit}
 	e := &WebChainEngine{root: t.TempDir(), surfaces: webSurfaceAnalysis, assets: map[string]ManifestBinary{asset.ID: asset}}
 	a := DeploymentActor{ID: "operator", Role: "operator"}
 	first, err := e.ChainSurface(context.Background(), a, "wbft", asset.ID)
@@ -397,4 +395,26 @@ func TestChainSurfaceFingerprintIsStableAcrossJudgements(t *testing.T) {
 			t.Fatal("native wbft fingerprint changed between identical judgements")
 		}
 	}
+}
+
+// Native surface tests independently read the immutable source revision when
+// the selected upstream build omits the optional legacy version stamp.
+func nativeSurfaceSourceCommit(t *testing.T, path string, version []byte) string {
+	t.Helper()
+	if stamp := regexp.MustCompile(`Git Commit: ([0-9a-f]{40})`).FindSubmatch(version); stamp != nil {
+		return string(stamp[1])
+	}
+	info, err := buildinfo.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	values := map[string]string{}
+	for _, setting := range info.Settings {
+		values[setting.Key] = setting.Value
+	}
+	revision := values["vcs.revision"]
+	if values["vcs"] != "git" || values["vcs.modified"] != "false" || !regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(revision) {
+		t.Fatal("native surface binary has no verified Git build identity")
+	}
+	return revision
 }

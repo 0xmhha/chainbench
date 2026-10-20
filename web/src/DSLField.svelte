@@ -1,6 +1,6 @@
 <script>
  import Field from './DSLField.svelte'
- import {variants, selectedVariant, variantLabel, initial, valueProblem} from './dsl-form.js'
+ import {variants, selectedVariant, variantLabel, initial, valueProblem, forbiddenFields, propertySchema, fieldSuggestions} from './dsl-form.js'
  // errors maps a field path to the engine's message about it; that field is
  // marked invalid and described by the message.
  let {schema,root,value,path='/content',label='문서',onchange,suggestions={nodes:[],before:new Map()},errors={}}=$props()
@@ -15,7 +15,8 @@
  const current=$derived(choices[index]??{})
  const type=$derived(current.type??(current.properties?'object':Array.isArray(value)?'array':value===null?'null':typeof value==='object'?'object':typeof value))
  const properties=$derived(current.properties??{})
- const optional=$derived(Object.keys(properties).filter(k=>!(value && Object.hasOwn(value,k))))
+ const forbidden=$derived(forbiddenFields(current,value))
+ const optional=$derived(Object.keys(properties).filter(k=>!forbidden.has(k)&&!(value && Object.hasOwn(value,k))))
  const refs=$derived([...suggestions.before].find(([prefix])=>path.startsWith(prefix+'/'))?.[1]??[])
  function update(k,v){onchange({...value,[k]:v})}
  function remove(k){const next={...value};delete next[k];onchange(next)}
@@ -34,12 +35,25 @@
  {:else if current.enum}
   <label>{label} <select aria-label={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
   {#if !current.enum.includes(value)}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}</p>{/if}
+ {:else if type==='string'&&path.startsWith('/content/prepared/imports/')&&(label==='case'||label==='name')}
+  {@const options=label==='case'?(suggestions.preparedCases??[]):(suggestions.preparedNames?.[path.split('/')[4]]??[])}
+  <label>{label==='case'?'준비 케이스':'공개된 준비물'} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+   {#if !value}<option value="">선택</option>{:else if !options.includes(value)}<option value={value}>가져온 참조 · {value}</option>{/if}
+   {#each options as option}<option value={option}>{option}</option>{/each}
+  </select></label>
+ {:else if label==='feePayer' && type==='string'}
+  <label>{label} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+   {#if !value}<option value="">대납 계정 선택</option>{:else if !(suggestions.accounts??[]).includes(value)}<option value={value}>가져온 계정 · {value}</option>{/if}
+   {#each suggestions.accounts??[] as account}<option value={account}>{account}</option>{/each}
+  </select></label>
+  {#if !(suggestions.accounts??[]).length}<p>체인 프리셋에 대납 계정을 선언하세요.</p>{/if}
  {:else if type==='object'}
   <fieldset><legend>{label}</legend>
    {#each Object.entries(value??{}) as [name,child] (name)}
     <div class="row">
-     <Field schema={properties[name]??(typeof current.additionalProperties==='object'?current.additionalProperties:{})} {root} value={child} path={`${path}/${name}`} label={name} {suggestions} {errors} onchange={v=>update(name,v)} />
+     <Field schema={propertySchema(current,name)} {root} value={child} path={`${path}/${name}`} label={name} {suggestions} {errors} onchange={v=>update(name,v)} />
      {#if !current.required?.includes(name) && properties[name]?.const===undefined}<button aria-label={`${path}/${name} 삭제`} onclick={()=>remove(name)}>삭제</button>{/if}
+     {#if forbidden.has(name)}<p role="alert">현재 형식에서 허용하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
      {#if !Object.hasOwn(properties,name) && current.additionalProperties===false}<p role="alert">지원하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
     </div>
    {/each}
@@ -48,7 +62,7 @@
    {/if}
    {#if current.additionalProperties!==false}
     <label>항목 이름 <input aria-label={`${path} 항목 이름`} bind:value={key} /></label>
-    <button disabled={!key||Object.hasOwn(value??{},key)} onclick={()=>{update(key,initial(typeof current.additionalProperties==='object'?current.additionalProperties:{},root));key=''}}>항목 추가</button>
+    <button disabled={!key||Object.hasOwn(value??{},key)} onclick={()=>{update(key,initial(propertySchema(current,key),root));key=''}}>항목 추가</button>
    {/if}
   </fieldset>
  {:else if type==='array'}
@@ -73,7 +87,7 @@
   {@const problem=valueProblem(current,value)}
   <label>{label} <input aria-label={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)} /></label>
   {#if problem}<p id={`${path}-problem`} role="alert">{problem}</p>{/if}
-  <datalist id={`${path}-suggestions`}>{#each label==='on'?suggestions.nodes:path.includes('/onEach/')?['all',...suggestions.nodes]:refs as option}<option value={option}></option>{/each}</datalist>
+  <datalist id={`${path}-suggestions`}>{#each fieldSuggestions(current,label,path,suggestions.nodes,refs) as option}<option value={option}></option>{/each}</datalist>
  {/if}
  {#if !current.type&&!current.properties&&!current.enum&&current.const===undefined&&choices.length===1}
   <label>{label} 값 종류 <select aria-label={`${path} 값 종류`} value={type} onchange={e=>onchange(({string:'',number:0,boolean:false,object:{},array:[],null:null})[e.target.value])}>{#each ['string','number','boolean','object','array','null'] as kind}<option value={kind}>{kind}</option>{/each}</select></label>

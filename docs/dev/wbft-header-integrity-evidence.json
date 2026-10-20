@@ -1,0 +1,315 @@
+{
+  "scope": "WBFT-010 Croissant-v1 ECDSA proposer recovery and keccak256-reveal XOR over ten actual consecutive headers; WBFT-002 every one-second interval on the healthy round-zero fixture with explicit one-second block period and request timeout. Not view-change timing, full 87-case/legacy sufficiency, Linux/mainnet or final Web acceptance.",
+  "red": "Eight nonempty but invalid signature/proposer/mix/height/parent/time/round samples accepted before verification; meaningful negative cases now rejected. Valid cryptographic chain and wrong chain-ID/short-window tests pass.",
+  "green": {
+    "nativeTests": 2,
+    "nativeSkipped": 0,
+    "source": "d7b1f6c7be8c6b96526492d7ac3c36a4960e2f9ffc4906950761d76c42d30061",
+    "elapsedSeconds": 157.613,
+    "anchor": 24,
+    "followingHeaders": 10,
+    "intervals": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "verifiedProposerRecoveries": 10,
+    "verifiedMixTransitions": 10
+  },
+  "native": {
+    "exitCode": 0,
+    "sourceBefore": "d7b1f6c7be8c6b96526492d7ac3c36a4960e2f9ffc4906950761d76c42d30061",
+    "sourceAfter": "d7b1f6c7be8c6b96526492d7ac3c36a4960e2f9ffc4906950761d76c42d30061",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceE2E",
+      "TestWemixWbftHeaderIntegrityE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-bcotpv_0",
+      "/private/tmp/cbui/hf-qvoyjzwd"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-bcotpv_0": [],
+      "/private/tmp/cbui/hf-qvoyjzwd": []
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-wbft-header-observed.json",
+    "sha256": "015fcd6ebb51f2213037b424872c4b96abd0f838b2fe7604b71942adec975ed0",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791995657527635440
+  },
+  "observations": {
+    "anchor": 24,
+    "blockPeriodSeconds": 1,
+    "chainID": 8285,
+    "followingConsecutiveHeaders": 10,
+    "mix": "previous mix XOR keccak256(reveal)",
+    "randaoVersion": 1,
+    "requestTimeoutSeconds": 1,
+    "samples": [
+      {
+        "Number": 24,
+        "Timestamp": 1791995538,
+        "Hash": "0xfc3566db21b273101a8d3ec4cd50a9f3b9dbf987ae15ffa87b50c58022780a57",
+        "ParentHash": "0x69287eeb027c09ac0b18b5e35faa7df36af8230108ac0b9dfcbb5566b4d80343",
+        "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "MixHash": "0xa2366066eff7ffca3089a3873294b20a2eec28c47f006c27f0edd51f911a920b",
+        "Reveal": "0xe46fb97685a1b3b9b0e50a5834581f58910d760b346fe80fec6deec1b2d7c5bf23fd30d3907d2b6353651291d388e48e4a3d5466f50fd416a04404c9b324e19001",
+        "Round": 0
+      },
+      {
+        "Number": 25,
+        "Timestamp": 1791995539,
+        "Hash": "0x457cbbd2f8346f7968a44d3ed80b0f70ae0f37d6006d22c23abbf264d9882202",
+        "ParentHash": "0xfc3566db21b273101a8d3ec4cd50a9f3b9dbf987ae15ffa87b50c58022780a57",
+        "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+        "MixHash": "0xeb0e34d971a7e79d6041ac663d439ba6f062214dd17026c2853c946e23240489",
+        "Reveal": "0xfaac682102245ac4799ef9dceda97cbdd0c6291c03a2df233a978cd356cdf6523ce483a24ff46fea6ee196ad7505d5bbf67232eef5a4034fed55229d8221bfcb00",
+        "Round": 0
+      },
+      {
+        "Number": 26,
+        "Timestamp": 1791995540,
+        "Hash": "0xca77a7e521041720ec8bf434f5ae307f71fbae0d9716c9f1c2f720b783d758c2",
+        "ParentHash": "0x457cbbd2f8346f7968a44d3ed80b0f70ae0f37d6006d22c23abbf264d9882202",
+        "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "MixHash": "0xfabdb3adb4ab753f98bc2f537ca0e2542dce19bddf6b2d110840c02b7da61d24",
+        "Reveal": "0x9f8a1bb3b81fe4c99cc2e4326980075b5bdbf6f17cdb2c147607530c0cdebd215495956673e592803417a39776b578898a3347708ec46be29570078d6365bca201",
+        "Round": 0
+      },
+      {
+        "Number": 27,
+        "Timestamp": 1791995541,
+        "Hash": "0xe4fb87e78e13bb83709f70e82317e2e50957f4abf4b9ea828bba4539954fcce3",
+        "ParentHash": "0xca77a7e521041720ec8bf434f5ae307f71fbae0d9716c9f1c2f720b783d758c2",
+        "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "MixHash": "0xe57f12c5e1714617eb25763e879544eabb147f8a542807c27799d419b0f44dee",
+        "Reveal": "0xc70c8c3671f4f06754b4df7eafbe1009450d36aecc06214cb73f3611ebc461e506697c8cd256d692ceb705f8f5a6800d966746bef8d398077b55ba7c018c1da400",
+        "Round": 0
+      },
+      {
+        "Number": 28,
+        "Timestamp": 1791995542,
+        "Hash": "0xae8ae1229eb843d1809316f3930a49b3065aa6d17c235a8aac4713ebd2ec48c5",
+        "ParentHash": "0xe4fb87e78e13bb83709f70e82317e2e50957f4abf4b9ea828bba4539954fcce3",
+        "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "MixHash": "0x48b896cd79e18a1659252b0e979b2bac49dbc9140b870c09a04e259536a7948f",
+        "Reveal": "0x550a68c6c2af2afd7a54e8b8b803178920df882e7a7520bbe90c7c1cc91b6a4428b1f96f563f6c5ae09a7f2d92b7586a823606143835e055f15ee5b553ab91b500",
+        "Round": 0
+      },
+      {
+        "Number": 29,
+        "Timestamp": 1791995543,
+        "Hash": "0xd09484a91dba96f87c0934e31a54e990686a0a19777780f9a7a7d29e4b0d37e3",
+        "ParentHash": "0xae8ae1229eb843d1809316f3930a49b3065aa6d17c235a8aac4713ebd2ec48c5",
+        "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+        "MixHash": "0xffffe7868fbc6fdeee74008b667558f6cd9e07b4c3f0b7a518eea7e2dd83917a",
+        "Reveal": "0xd9e4ba31f5fea92f09b5078c41b9e3894fc20b9f9e7410d6a6be1bf2be62792f2d723b2c88ccbd9962e1aa5e0b346bed6c315c00bf9db4b58266d9aa26187b3d00",
+        "Round": 0
+      },
+      {
+        "Number": 30,
+        "Timestamp": 1791995544,
+        "Hash": "0xe2d805891e54ec0bc663aeac1bb4de6eefb353b3877852fbe654bf7c12ef5e7e",
+        "ParentHash": "0xd09484a91dba96f87c0934e31a54e990686a0a19777780f9a7a7d29e4b0d37e3",
+        "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "MixHash": "0x3e7fa89b496f408c189250a20a1db12e2c7ddb0cf122a2eb6271ef2d7545ec46",
+        "Reveal": "0x42f5dde7c80bf497a855c2fbb79da606a659a3da7e007b4bf2fde66dfb319e1e40eb701a28ff6b5d3c4eb05cc4e506641716e3f175f71b5ef30ba34e290c99eb01",
+        "Round": 0
+      },
+      {
+        "Number": 31,
+        "Timestamp": 1791995545,
+        "Hash": "0x563e9c3d87302ac08ce517d84fc212baaa2e34618d714940f39c605008109d41",
+        "ParentHash": "0xe2d805891e54ec0bc663aeac1bb4de6eefb353b3877852fbe654bf7c12ef5e7e",
+        "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "MixHash": "0x6576e24c445adaa38d94140be0d1a6b594d4ae93183350b3cec11eab6bcaa66f",
+        "Reveal": "0xa8b47d4300aadcf791f5270e1c599dad4a24e0f40db8698c4dccef2a8a12adc72eaf9fc852b929d162bb56fa8338333276512f163ec58e7175538fc0e85bfefe00",
+        "Round": 0
+      },
+      {
+        "Number": 32,
+        "Timestamp": 1791995546,
+        "Hash": "0xbeb6d111e6d100749b23983fb7d6e0eae1ac2321448729faa21769853c13effa",
+        "ParentHash": "0x563e9c3d87302ac08ce517d84fc212baaa2e34618d714940f39c605008109d41",
+        "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "MixHash": "0x4ce217d3f691343887fc1ed4664e419db1818b2168c29cbddfdbf470b63cccf1",
+        "Reveal": "0x6689e58a8cdae17e098bcb763d64b9dcca1fdec8029ed91feea30c9d42122cc27db58a6533544c194a4e69e58cbaa7177b99daabe403aaf09f68b4aacb5b932900",
+        "Round": 0
+      },
+      {
+        "Number": 33,
+        "Timestamp": 1791995547,
+        "Hash": "0x1fbc7f00f0316cd360b685632592fa0c628a96969c95e86e938f40fafee36cfe",
+        "ParentHash": "0xbeb6d111e6d100749b23983fb7d6e0eae1ac2321448729faa21769853c13effa",
+        "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+        "MixHash": "0xb9ddc0845d0e6a0c58b111988237544793984d868164f95058b76091c5948d86",
+        "Reveal": "0xf71ba9d588f16b725d334c7b9ce25d33818b8f554cd8eb88894f360775fb145526cd66bc412760a24d785ee662a989c4a26623705682241e0c5ded87e8fbd9b300",
+        "Round": 0
+      },
+      {
+        "Number": 34,
+        "Timestamp": 1791995548,
+        "Hash": "0x9f19e0a27bdc0524d541bc050cfd4d291e79bb698ffa28985b7c7e068a4bb0a9",
+        "ParentHash": "0x1fbc7f00f0316cd360b685632592fa0c628a96969c95e86e938f40fafee36cfe",
+        "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "MixHash": "0xe61cbda8bf32cffdb41eb5c388cb76e0deb6569f7941ca31ca77862e53562a46",
+        "Reveal": "0x29dbecba42e8ea092586b0ded030dc771153581ea73840b6ce07b9fd7b5f3ed86887cc3064453dd84a7904639e5cc37bfd2c8a9dac6e55f72211782484f2813d00",
+        "Round": 0
+      }
+    ],
+    "signing": "keccak256(keccak256(chainID minimal bytes || version minimal bytes || number minimal bytes))"
+  },
+  "log": {
+    "path": "/private/tmp/chainbench-wbft-header-native-native.jsonl",
+    "sha256": "f4de7433936cd34ce282f4bcd24dc15cb54d4783bf116bbdec8ca6dd0f8f0142",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791995552274916169
+  },
+  "startCheckpoint": {
+    "path": "/private/tmp/chainbench-wbft-header-native-start.json",
+    "sha256": "0b7a39252e7b766577c93efad73e040edb86f83d3b3537b0d93f437a71ade3c2",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791995392323045112
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/wbft_header_integrity_e2e_test.go",
+      "sha256": "20b33c16ae0870d77b211b09317044db5169a48cb3a0f3a600934d78f1dd0b87",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791995350018283151
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/consensus/wbft/engine/engine.go",
+      "sha256": "928fd05ac51aa2e9aa6ec6d50fff550195e758915e94acd282d1053c8eb36762",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397339219078
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/consensus/wbft/backend/backend.go",
+      "sha256": "5a07bcf47c8a6549dbfccc1e00db898e565a94b6c3b70d18d6c32ba9c7635140",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397335607497
+    }
+  ],
+  "unitLogs": [
+    {
+      "path": "/private/tmp/chainbench-wbft-header-unit-red.log",
+      "sha256": "49310846cab5206b8ebba4112b3f4ff697fe8733c6ea102e172a692b514f2c42",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791995252490023895
+    },
+    {
+      "path": "/private/tmp/chainbench-wbft-header-unit-green.log",
+      "sha256": "b7b982ff67d18e85af87693beaeb9ee02a7887618735354d6c1c393a91b11692",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791995354888742705
+    }
+  ],
+  "binaries": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/hf-bcotpv_0",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-bcotpv_0/reports/wbft-header-inventory.json",
+        "sha256": "607449f243672d3b7263374056f26a216858e4a0a8a8736c4a36c66e5ca41ecf",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791995715345399365
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-qvoyjzwd",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-qvoyjzwd/reports/wbft-header-inventory.json",
+        "sha256": "e6507b2ff0c34ca25b6b71dda0f1b97ed5ef8b6e374e7d7302d3ea8f8f857b66",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791995715397348598
+      }
+    }
+  ],
+  "finalChecks": {
+    "makeCheck": "pass",
+    "taggedVet": "pass",
+    "relatedTaggedRace": "pass",
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-wbft-header-check.log",
+        "sha256": "7b8c3e2d5068a4d12b0a6fe57b5487e9059893cb0de4634fa15f1b46c49e51a1",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791995856719782975
+      },
+      {
+        "path": "/private/tmp/chainbench-wbft-header-vet.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791995946967738411
+      },
+      {
+        "path": "/private/tmp/chainbench-wbft-header-related-race.log",
+        "sha256": "9d74a704d5974bf8bc0a38698a8d92a60f9213dcbaaa82757e7a56a9031bfc26",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791995951847873701
+      }
+    ]
+  }
+}

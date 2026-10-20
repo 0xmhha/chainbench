@@ -1,5 +1,7 @@
 # gwemix — CLI Subcommand + Flag Graph
 
+> Source-reference snapshot: `1350376a680489298b3203a44d9ebddb7747f9cc`. The live CLI/help capture is now pinned to `4538a9f5f2e4bcd2cb9515f8c466fabc24f73987` (2026-10-18); documented visible, hidden and not-accepted flag names were rechecked against that binary. Source line references and code-level explanations below remain the earlier snapshot and require re-audit before citing them as current source behavior.
+
 Source: `github.com/ethereum/go-ethereum` WEMIX fork. Binary built from `cmd/gwemix`.
 All `path:line` references are **relative to the repo root** `chain/go-wemix/`.
 

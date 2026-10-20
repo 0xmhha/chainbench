@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -84,7 +85,8 @@ func (txMinedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessio
 // them. Args: senderKey, feePayerKey (hex, 0x optional), to, value (default 1),
 // which ("sender" | "feepayer"), on (target selector). The chain id and the
 // sender's nonce come from the node; the fee caps are read from the head so the
-// only reason the node can refuse the tx is the broken signature.
+// only reason the node can refuse the tx is the broken signature. Alternatively,
+// raw accepts a node-signed 0x16 envelope and excludes all four builder inputs.
 type sendRawTamperedAction struct{}
 
 func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
@@ -98,72 +100,100 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 	if which != "sender" && which != "feepayer" {
 		return fmt.Errorf("dsl: sendRawTampered requires \"which\" of \"sender\" or \"feepayer\"")
 	}
-	senderKey, err := hexKey(ac.Args["senderKey"], "senderKey")
-	if err != nil {
-		return err
+	var raw []byte
+	if supplied, present := ac.Args["raw"]; present {
+		for _, field := range []string{"senderKey", "feePayerKey", "to", "value"} {
+			if _, mixed := ac.Args[field]; mixed {
+				return fmt.Errorf("dsl: sendRawTampered raw and %s are mutually exclusive", field)
+			}
+		}
+		encoded, ok := supplied.(string)
+		if !ok || !strings.HasPrefix(encoded, "0x") {
+			return fmt.Errorf("dsl: sendRawTampered raw requires 0x-prefixed hex")
+		}
+		bytes, err := hex.DecodeString(encoded[2:])
+		if err != nil {
+			return fmt.Errorf("dsl: sendRawTampered raw: %w", err)
+		}
+		raw, err = accounts.TamperFeeDelegatedRaw(bytes, which)
+		if err != nil {
+			return fmt.Errorf("dsl: sendRawTampered raw: %w", err)
+		}
 	}
-	feePayerKey, err := hexKey(ac.Args["feePayerKey"], "feePayerKey")
-	if err != nil {
-		return err
-	}
-	toRef, _ := ac.Args["to"].(string)
-	if toRef == "" {
-		return fmt.Errorf("dsl: sendRawTampered requires \"to\"")
-	}
-	to, err := ResolveAddress(ac.Deps, toRef)
-	if err != nil {
-		return err
-	}
-	value, err := parseValueWei(ac.Args["value"])
-	if err != nil {
-		return err
-	}
-	if value == nil {
-		value = big.NewInt(1)
-	}
-
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
 	}
-	chainID, err := c.ChainID(ctx)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: chain id: %w", err)
-	}
-	senderAddr, err := accounts.AddressOf(senderKey)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: %w", err)
-	}
-	nonce, err := c.NonceAt(ctx, senderAddr)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: nonce: %w", err)
-	}
-	feeCap, tipCap, err := validFeesFor(ctx, c)
-	if err != nil {
-		return err
-	}
-
-	raw, err := accounts.EncodeFeeDelegatedTampered(senderKey, feePayerKey, to, value,
-		int64(chainID), nonce, feeCap, tipCap, which)
-	if err != nil {
-		return fmt.Errorf("dsl: sendRawTampered: build: %w", err)
+	if raw == nil {
+		raw, err = buildTamperedTransfer(ctx, ac, c, which)
+		if err != nil {
+			return err
+		}
 	}
 	var h string
 	sendErr := c.Call(ctx, "eth_sendRawTransaction", &h, "0x"+hex.EncodeToString(raw))
 	if sendErr == nil {
 		return fmt.Errorf("dsl: sendRawTampered: node accepted a tx with a corrupt %s signature (hash %s)", which, h)
 	}
-	ac.Value = sendErr.Error()
-	// Any refusal used to pass. A tampered signature recovers to some other
-	// address, so the node could refuse for that address's empty balance and
-	// the case would pass without the signature check ever being the reason.
-	// "reason" names what the refusal has to say.
-	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
-		if !strings.Contains(strings.ToLower(sendErr.Error()), strings.ToLower(reason)) {
-			return fmt.Errorf("dsl: sendRawTampered: the %s-tampered tx was refused, but not for %q: %v", which, reason, sendErr)
-		}
+	// A failed HTTP request or RPC protocol error says nothing about the
+	// signature. Use the same typed submission check as sendTx, including its
+	// reason match against the node message rather than the method name.
+	if err := checkSubmitRejected(h, sendErr, ac); err != nil {
+		return fmt.Errorf("dsl: sendRawTampered (%s): %w", which, err)
 	}
 	return nil
+}
+
+// buildTamperedTransfer is the legacy key-based path. Raw input bypasses it
+// entirely, so it cannot replace a node-signed nonce, fee, or payload.
+func buildTamperedTransfer(ctx context.Context, ac *interp.ActionCtx, c *rpc.Client, which string) ([]byte, error) {
+	senderKey, err := hexKey(ac.Args["senderKey"], "senderKey")
+	if err != nil {
+		return nil, err
+	}
+	feePayerKey, err := hexKey(ac.Args["feePayerKey"], "feePayerKey")
+	if err != nil {
+		return nil, err
+	}
+	toRef, _ := ac.Args["to"].(string)
+	if toRef == "" {
+		return nil, fmt.Errorf("dsl: sendRawTampered requires \"to\"")
+	}
+	to, err := ResolveAddress(ac.Deps, toRef)
+	if err != nil {
+		return nil, err
+	}
+	value, err := parseValueWei(ac.Args["value"])
+	if err != nil {
+		return nil, err
+	}
+	if value == nil {
+		value = big.NewInt(1)
+	}
+
+	chainID, err := c.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: chain id: %w", err)
+	}
+	senderAddr, err := accounts.AddressOf(senderKey)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: %w", err)
+	}
+	nonce, err := c.NonceAt(ctx, senderAddr)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: nonce: %w", err)
+	}
+	feeCap, tipCap, err := validFeesFor(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := accounts.EncodeFeeDelegatedTampered(senderKey, feePayerKey, to, value,
+		int64(chainID), nonce, feeCap, tipCap, which)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendRawTampered: build: %w", err)
+	}
+	return raw, nil
 }
 
 // sendSetCodeAction sends an EIP-7702 (type 0x04) set-code transaction: the
@@ -361,11 +391,14 @@ func (callErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 // rpcErrorAssertion passes when the node answers a JSON-RPC call with an error
 // that contains reason (case-insensitive). Args: method, reason (both
 // required), params (optional array; node labels resolve to addresses), on.
+// Optional errorData requires an exact 0x-hex error payload as well as the reason.
 //
 // A value, another reason, or a method the node lacks fails it. A request that
 // never got an answer is returned as an error: it says nothing about what the
 // node would have refused. reason is required because "any error passes" is
 // how callError once counted a refused connection as a revert.
+// Transaction submission methods additionally require a transaction refusal;
+// RPC protocol failures are not a verdict about the submitted transaction.
 type rpcErrorAssertion struct{}
 
 func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
@@ -378,6 +411,20 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 		return res, err
 	}
 	res.Expected = method + " fails with an error containing " + strconvQuote(reason)
+	var expectedData string
+	_, exactData := ac.Spec["errorData"]
+	if exactData {
+		var ok bool
+		expectedData, ok = ac.Spec["errorData"].(string)
+		_, decodeErr := hex.DecodeString(strings.TrimPrefix(expectedData, "0x"))
+		if !ok || !strings.HasPrefix(expectedData, "0x") || decodeErr != nil {
+			err := fmt.Errorf("dsl: %s errorData must be 0x-prefixed whole hex bytes", assertRPCError)
+			res.Actual = err.Error()
+			return res, err
+		}
+		res.Expected = fmt.Sprint(res.Expected) + " and exact error data " + expectedData
+	}
+
 	spec, err := resolveNamedArgs(ac.Deps, ac.Spec)
 	if err != nil {
 		res.Actual = err.Error()
@@ -411,12 +458,29 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 		return res, fmt.Errorf("dsl: %s: %w", assertRPCError, callErr)
 	}
 	res.Actual = se.Message
-	switch {
-	case isMethodNotFound(se):
+	if isMethodNotFound(se) {
 		res.Source = method + " is not a registered method"
-	case !strings.Contains(strings.ToLower(se.Message), strings.ToLower(reason)):
+		return res, nil
+	}
+	if exactData {
+		res.Actual = map[string]any{"code": se.Code, "message": se.Message, "data": se.Data}
+		var actualData string
+		if err := json.Unmarshal(se.Data, &actualData); err != nil || !strings.EqualFold(actualData, expectedData) {
+			res.Source = method + " returned different, missing or non-string error data"
+			return res, nil
+		}
+	}
+	if method == "eth_sendTransaction" || method == "eth_sendRawTransaction" {
+		if err := checkSubmitRejected("", callErr, &interp.ActionCtx{Args: map[string]any{"reason": reason}}); err != nil {
+			res.Source = err.Error()
+		} else {
+			res.Pass = true
+		}
+		return res, nil
+	}
+	if !strings.Contains(strings.ToLower(se.Message), strings.ToLower(reason)) {
 		res.Source = method + " failed, but not for " + strconvQuote(reason)
-	default:
+	} else {
 		res.Pass = true
 	}
 	return res, nil
@@ -427,6 +491,8 @@ func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessi
 // (-32601) means the method is absent. Args: method (required), params
 // (optional array), on. It is the indirect presence check for a
 // chain-distinctive RPC whose full flow another case exercises.
+// Transport, malformed responses and parse/request/internal protocol errors
+// cannot establish registration; an invalid-argument probe (-32602) can.
 type methodPresentAssertion struct{}
 
 func (methodPresentAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
@@ -460,6 +526,15 @@ func (methodPresentAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 	}
 	var out any
 	callErr := c.Call(ctx, method, &out, params...)
+	var se *rpc.ServerError
+	if callErr != nil && !errors.As(callErr, &se) {
+		res.Pass, res.Actual = false, callErr.Error()
+		return res, fmt.Errorf("dsl: %s: %w", assertMethodPresent, callErr)
+	}
+	if se != nil && (se.Code == -32700 || se.Code == -32600 || se.Code == -32603) {
+		res.Pass, res.Actual = false, callErr.Error()
+		return res, fmt.Errorf("dsl: %s: RPC protocol failure cannot establish registration: %w", assertMethodPresent, callErr)
+	}
 	if isMethodNotFound(callErr) {
 		res.Pass, res.Actual = false, callErr.Error()
 		res.Source = "method not found"

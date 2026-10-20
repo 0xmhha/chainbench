@@ -38,8 +38,8 @@ type EvidenceSink interface {
 
 // Options tunes the gate. Zero fields take the package defaults.
 type Options struct {
-	// MaxNodeMonitorTimeout bounds the total time spent waiting on WAITABLE
-	// nodes across all rounds. A caller gating a cluster whose nodes join on a
+	// MaxNodeMonitorTimeout bounds the entire readiness gate, including
+	// observation, recovery and waits across rounds. A cluster whose nodes join on a
 	// schedule (e.g. go-wemix etcd) should set it at least as large as that
 	// join window.
 	MaxNodeMonitorTimeout time.Duration
@@ -96,19 +96,34 @@ type Result struct {
 // error.
 func Gate(ctx context.Context, obs Observer, restart Restarter, clock Clock, sink EvidenceSink, opts Options) (Result, error) {
 	opts = opts.withDefaults()
+	gateCtx, cancel := context.WithTimeout(ctx, opts.MaxNodeMonitorTimeout)
+	defer cancel()
 	if sink == nil {
 		sink = noopSink{}
 	}
 	restarts := map[int]int{}
 	remainingWait := opts.MaxNodeMonitorTimeout
+	var lastReports []NodeReport
+	finishError := func(err error) (Result, error) {
+		if ctx.Err() != nil {
+			return Result{}, ctx.Err()
+		}
+		if gateCtx.Err() != nil {
+			return Result{Reports: lastReports, Terminate: fmt.Sprintf("node readiness deadline reached after %s", opts.MaxNodeMonitorTimeout)}, nil
+		}
+		return Result{}, err
+	}
 
 	for round := 1; ; round++ {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
+		if err := gateCtx.Err(); err != nil {
+			return finishError(err)
 		}
-		facts, err := obs.Observe(ctx)
+		facts, err := obs.Observe(gateCtx)
 		if err != nil {
-			return Result{}, fmt.Errorf("nodemonitor: observe: %w", err)
+			return finishError(fmt.Errorf("nodemonitor: observe: %w", err))
+		}
+		if err := gateCtx.Err(); err != nil {
+			return finishError(err)
 		}
 		reports := make([]NodeReport, len(facts))
 		var fatal *NodeReport
@@ -128,6 +143,7 @@ func Gate(ctx context.Context, obs Observer, restart Restarter, clock Clock, sin
 				waitable = append(waitable, r)
 			}
 		}
+		lastReports = reports
 
 		if fatal != nil {
 			return Result{Reports: reports, Terminate: fmt.Sprintf("node%d FATAL: %s", fatal.Node, reasons(*fatal))}, nil
@@ -143,8 +159,11 @@ func Gate(ctx context.Context, obs Observer, restart Restarter, clock Clock, sin
 					return Result{Reports: reports, Terminate: fmt.Sprintf("node%d exhausted %d restart(s): %s", r.Node, opts.MaxRestarts, reasons(r))}, nil
 				}
 				restarts[r.Node]++
-				rerr := restart.Restart(ctx, r.Node)
+				rerr := restart.Restart(gateCtx, r.Node)
 				sink.Recovery(r.Node, restarts[r.Node], rerr)
+				if err := gateCtx.Err(); err != nil {
+					return finishError(err)
+				}
 				if rerr != nil {
 					return Result{Reports: reports, Terminate: fmt.Sprintf("node%d restart failed: %v", r.Node, rerr)}, nil
 				}
@@ -156,8 +175,8 @@ func Gate(ctx context.Context, obs Observer, restart Restarter, clock Clock, sin
 		if remainingWait < opts.WaitInterval {
 			return Result{Reports: reports, Terminate: fmt.Sprintf("%d node(s) still not ready after %s", len(waitable), opts.MaxNodeMonitorTimeout)}, nil
 		}
-		if err := clock.Sleep(ctx, opts.WaitInterval); err != nil {
-			return Result{}, err
+		if err := clock.Sleep(gateCtx, opts.WaitInterval); err != nil {
+			return finishError(err)
 		}
 		remainingWait -= opts.WaitInterval
 	}

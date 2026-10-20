@@ -1,0 +1,368 @@
+{
+  "date": "2026-10-20",
+  "scope": "Seven public burn/refund cases: actual generated requester in original proof input, exact ledger/native custody and events, mined NoRefundAvailable failures. BP4 shortened fixture only.",
+  "headAtProof": "b2f836116fc777cb2eb693d95af86b0ce1659694",
+  "workingTreeModifiedAtProof": true,
+  "sourceAtNativeProof": "c4b674882b7ec348b1d44b0ad10d399c54fe5acc1cd8dc07c21a69b3747f9d65",
+  "implementationFiles": [
+    "docs/dev/architecture/package-tree.md",
+    "docs/dev/wemix4-tc-sufficiency-review.json",
+    "internal/core/rpc/client.go",
+    "internal/core/rpc/subscribe.go",
+    "internal/testhelper/arguments.go",
+    "internal/testhelper/editor_contract.go",
+    "internal/testhelper/testdata/corpus-addresses.golden",
+    "internal/testhelper/txprobe.go",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/03-burn-cancel-refundable.json",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/04-burn-reject-refundable.json",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/05-burn-expire-refundable.json",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/06-burn-execute-no-refundable.json",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/07-claim-burn-refund-succeeds.json",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/08-claim-zero-refund-reverts.json",
+    "tests/tc/go-stablenet/post-v1.0.0-change/common-all/09-claim-burn-refund-double-reverts.json",
+    "tests/tc/go-stablenet/vocabulary/14-arguments-probes.json",
+    "internal/core/rpc/server_error_data_test.go",
+    "internal/testengine/burn_refund_native_test.go",
+    "internal/testhelper/burn_proof_input_semantics_test.go",
+    "internal/testhelper/burn_refund_checkpoint_semantics_test.go",
+    "internal/testhelper/rpc_error_data_semantics_test.go",
+    "internal/testhelper/testdata/burn-proof-payloads.json"
+  ],
+  "semanticRed": {
+    "wrongProofCaller": 12,
+    "wrongExactErrorData": 6,
+    "finalizationFalsePasses": 18,
+    "transportPayloadLoss": 8,
+    "editorContractMissing": 1,
+    "preparationFailureNotSemantic": true
+  },
+  "unitAndFullCheckLogs": [
+    {
+      "path": "/private/tmp/chainbench-burn-input-error-data-red-v2-20261019.log",
+      "sha256": "05e397a7afe81d5c928645a2d465dc7436123dce8c188dcea611e0846fbd6ae5",
+      "bytes": 4009,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792419470944370821
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-error-data-transport-editor-red-20261019.log",
+      "sha256": "9c8e9a71d11d0dab2057ef654d0c0473f547ead9ab145b79c7af0b4022ac5d4c",
+      "bytes": 1825,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792419572368221770
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-finalization-semantic-red-20261019.log",
+      "sha256": "8e4373379e0d7960a7fa2750c8d0b8a61d3879f4ebd236aa4edb9cfae050f57a",
+      "bytes": 32145,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792419967791333066
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-predicates-green-20261019.log",
+      "sha256": "b937d8929823588a24aa2d8a42db2ac00168a9db54ec42d033ea9e321a4784f5",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792420188099588989
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-full-related-race-v2-20261019.log",
+      "sha256": "68d9b498082629f4240f89153b932c6bd53320a22d53bbd42eef9118a9ab6a2f",
+      "bytes": 182,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792420930322451415
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-cli-contract-race-20261019.log",
+      "sha256": "2a64f2c321513e2abb8d76eb2065aed0799979966cffe3ed48ef82be3cd77566",
+      "bytes": 56,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792420995066156445
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-make-check-final-20261019.log",
+      "sha256": "d19cd73c81dd43dfa70a402e166d69e7ae96af13a199162c348a39f56d149f90",
+      "bytes": 8632,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792421290769176956
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-publication-check-20261020.log",
+      "sha256": "af0fb60c7c178bc4f964b1b09620308d973fabd76463fbc11b6685c9f45b9b61",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792422602557639607
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-publication-check-v2-20261020.log",
+      "sha256": "55858675d4c67bf2c762eb840a4fa4af31de4b1d1d85e98f19e5886c579f5569",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792422765303580506
+    }
+  ],
+  "native": {
+    "exitCode": 0,
+    "actualProofPassed": true,
+    "sourceBefore": "c4b674882b7ec348b1d44b0ad10d399c54fe5acc1cd8dc07c21a69b3747f9d65",
+    "sourceAfter": "c4b674882b7ec348b1d44b0ad10d399c54fe5acc1cd8dc07c21a69b3747f9d65",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "runtimes": [
+      "/private/tmp/cbui/txfail-9fqzpi11",
+      "/private/tmp/cbui/txfail-9jofxt2g",
+      "/private/tmp/cbui/txfail-ak_z8fn_",
+      "/private/tmp/cbui/txfail-elqhn_41",
+      "/private/tmp/cbui/txfail-itdsic7q",
+      "/private/tmp/cbui/txfail-r_8bxhhw",
+      "/private/tmp/cbui/txfail-w_a_6cl7"
+    ],
+    "runtimeCount": 7,
+    "testPasses": [
+      "TestNativeBurnRefundPublicCases/03-burn-cancel-refundable.json",
+      "TestNativeBurnRefundPublicCases/04-burn-reject-refundable.json",
+      "TestNativeBurnRefundPublicCases/05-burn-expire-refundable.json",
+      "TestNativeBurnRefundPublicCases/06-burn-execute-no-refundable.json",
+      "TestNativeBurnRefundPublicCases/07-claim-burn-refund-succeeds.json",
+      "TestNativeBurnRefundPublicCases/08-claim-zero-refund-reverts.json",
+      "TestNativeBurnRefundPublicCases/09-claim-burn-refund-double-reverts.json",
+      "TestNativeBurnRefundPublicCases"
+    ],
+    "testFailures": [],
+    "testSkips": [],
+    "eventLog": {
+      "path": "/private/tmp/chainbench-burn-native-20261019-events.jsonl",
+      "sha256": "70add8cd21f866da69bc1391270a95da8ab513d439a0f90f598a0fedad04daac",
+      "bytes": 10323,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792422148085441607
+    },
+    "stderr": {
+      "path": "/private/tmp/chainbench-burn-native-20261019-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792421821061919756
+    },
+    "elapsedSeconds": 328.7925250530243,
+    "freeBytesAfter": 26975969280,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "acceptedPreservationScope": true,
+    "acceptedAllSevenBehaviorScope": true,
+    "sourceDigest": "c4b674882b7ec348b1d44b0ad10d399c54fe5acc1cd8dc07c21a69b3747f9d65",
+    "partial": false,
+    "outcomes": [
+      {
+        "case": "03-burn-cancel-refundable.json",
+        "assertions": 22,
+        "actions": 20,
+        "transactions": 3,
+        "minedCustomErrorFailures": 0,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      },
+      {
+        "case": "04-burn-reject-refundable.json",
+        "assertions": 28,
+        "actions": 25,
+        "transactions": 5,
+        "minedCustomErrorFailures": 0,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      },
+      {
+        "case": "05-burn-expire-refundable.json",
+        "assertions": 24,
+        "actions": 25,
+        "transactions": 3,
+        "minedCustomErrorFailures": 0,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      },
+      {
+        "case": "06-burn-execute-no-refundable.json",
+        "assertions": 14,
+        "actions": 20,
+        "transactions": 2,
+        "minedCustomErrorFailures": 0,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      },
+      {
+        "case": "07-claim-burn-refund-succeeds.json",
+        "assertions": 23,
+        "actions": 20,
+        "transactions": 3,
+        "minedCustomErrorFailures": 0,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      },
+      {
+        "case": "08-claim-zero-refund-reverts.json",
+        "assertions": 7,
+        "actions": 8,
+        "transactions": 2,
+        "minedCustomErrorFailures": 1,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      },
+      {
+        "case": "09-claim-burn-refund-double-reverts.json",
+        "assertions": 25,
+        "actions": 21,
+        "transactions": 4,
+        "minedCustomErrorFailures": 1,
+        "hashAbsentRefusals": 0,
+        "actualProofCallerVerified": true
+      }
+    ],
+    "retainedFiles": 1533,
+    "closedRuntimes": [
+      {
+        "runtime": "/private/tmp/cbui/txfail-r_8bxhhw",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-9jofxt2g",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-9fqzpi11",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-ak_z8fn_",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-itdsic7q",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-w_a_6cl7",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      },
+      {
+        "runtime": "/private/tmp/cbui/txfail-elqhn_41",
+        "reclaimedDatabases": 8,
+        "remainingDatabases": 0
+      }
+    ],
+    "freshInventories": [
+      {
+        "attempt": 1,
+        "processes": 534,
+        "openedNames": 12061,
+        "allInactive": true
+      },
+      {
+        "attempt": 2,
+        "processes": 531,
+        "openedNames": 12025,
+        "allInactive": true
+      },
+      {
+        "attempt": 3,
+        "processes": 530,
+        "openedNames": 12025,
+        "allInactive": true
+      }
+    ],
+    "independentControlsRejected": [
+      "hidden public assertion",
+      "forged arithmetic",
+      "old default identity",
+      "unaccepted full scope",
+      "wrong actual proof sender"
+    ],
+    "sourceKeysAndBinariesUnchanged": true,
+    "remainingDatabases": 0,
+    "fullLegacyAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-burn-native-20261019-start.json",
+      "sha256": "fdfb772e9b7cf49d2e891718cd17fe22296c99a6be0f2adc8e2b6b9c8b64091c",
+      "bytes": 49978,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792421821061622173
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-native-20261019-summary.json",
+      "sha256": "470748f2d23a09c9ed6024cbd8f5b959123c352a6090ece3a64902496d6e5901",
+      "bytes": 1927,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792422149854046342
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-native-20261019-independent.json",
+      "sha256": "9902493cf96a56cfa1680f0d2d6b56eacb66dcf6ff5c0177707d1a361853ab32",
+      "bytes": 470581,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792422286727174489
+    },
+    {
+      "path": "/private/tmp/chainbench-burn-native-build-20261019.json",
+      "sha256": "3ccbd0005c344dd0164a5eeb2ca64856beef034980c4d7c7524ae229f39aa92c",
+      "bytes": 541,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792421452460727206
+    }
+  ],
+  "actualPublicCases": 7,
+  "publicAssertions": 143,
+  "publicActions": 139,
+  "remainingConditions": [
+    "Original seven-validator/quorum-five and Boho100 settings differ from BP4/quorum-two Boho0; shortened expiration30s/wait40s does not establish full original timing/topology equivalence.",
+    "WEB05 errorData declaration fixture extended, but fresh actual Web14 capture/independent acceptance remains open.",
+    "Full254 legacy scenarios, fresh358 L1, all14 and historical receipts remain open."
+  ],
+  "observedBehavior": {
+    "execute": "Actual receipt-bound execution decreases governance native collateral and NCA totalSupply by exactly burn amount; upstream comment claiming retained collateral is stale, no criterion change needed.",
+    "NoRefundAvailable": "Both zero and second claims mined status0, trace failed with e49c14cb; no submission-refusal substitute."
+  },
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false,
+  "publicationCheck": "Initial restricted-port failure preserved; same-source authorized local-port rerun exited0."
+}

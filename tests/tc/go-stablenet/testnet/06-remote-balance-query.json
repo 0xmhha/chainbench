@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "remote-balance-query",
+  "description": "Legacy remote/balance-check: query any explicitly configured address; default zero address. Set chainPreset.values.queryAddress in the editor or a custom preset. Never assumes a local key label or a positive balance.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-testnet",
+    "values": {
+      "queryAddress": "0x0000000000000000000000000000000000000000"
+    }
+  },
+  "steps": [
+    {
+      "expect": "remoteBalance",
+      "address": "$queryAddress"
+    }
+  ]
+}

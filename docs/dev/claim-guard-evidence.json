@@ -1,0 +1,213 @@
+{
+  "scope": "GOV022 two registered stakers with actual positive rewardee balances; operatorA\u2192B and unrelated third-party\u2192A exact mined no-reward failures, transaction prestate diffs prove no changed rewardees/other operator/contract and caller exact fee-only debit/nonce. Separate valid operator claim native regression. Not full87/Linux/mainnet/legacy/public DSL/final Web acceptance.",
+  "originalAll87Complete": false,
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "ce94ceeb27d61eb34231b74851a7f8013ff2c08f93dd57c841bf3ca5ad829b55",
+    "sourceAfter": "ce94ceeb27d61eb34231b74851a7f8013ff2c08f93dd57c841bf3ca5ad829b55",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceClaimGuardE2E",
+      "TestWemixGovernanceOperatorClaimE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-5lr591fx",
+      "/private/tmp/cbui/hf-hnt0y5fn",
+      "/private/tmp/cbui/hf-vf5pa9pc"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-5lr591fx": [],
+      "/private/tmp/cbui/hf-hnt0y5fn": [],
+      "/private/tmp/cbui/hf-vf5pa9pc": []
+    },
+    "elapsedSeconds": 199.182,
+    "summary": {
+      "path": "/private/tmp/chainbench-claim-guard-native-summary.json",
+      "sha256": "fd6dd7d5396e9642e1b01a65d53e3b98b1496a927b9e7a49ee97433f99e11b33",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017714600830506
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-claim-guard-native-native.jsonl",
+      "sha256": "cd898ba81fa8a42066b3735b603d9dc473479264a2ba465b14cf2c5240007e18",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017714118326084
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-claim-guard-native-start.json",
+      "sha256": "f39e346483a80b51edc3bf8288bb2a56d0a4d6f143117892f2fce4847de014d0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017512618555892
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-claim-guard-observed.json",
+    "sha256": "35509907731a5ee61cf9f55aeb0eff38a7d102f268c492619483c6088800d9b7",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792017728531298445
+  },
+  "claims": [
+    {
+      "name": "operatorA-to-B",
+      "hash": "0x8b878ad5c2dc415ba7657707b202d8d864109ebe1dc2342cafcb3a66b57a9d84",
+      "rewardBalances": [
+        "3000000000000000000",
+        "1000000000000000000"
+      ],
+      "caller": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+      "staker": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+    },
+    {
+      "name": "third-party-to-A",
+      "hash": "0x84561e7b6f92b09cfb109ea841109bdd5d17335b6f986997adb476448b5f3e35",
+      "rewardBalances": [
+        "3000000000000000000",
+        "1000000000000000000"
+      ],
+      "caller": "0x7564105e977516c53be337314c7e53838967bdac",
+      "staker": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+    }
+  ],
+  "independentSelector": "0x92fd2daf",
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-5lr591fx",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-5lr591fx/reports/claim-guard-inventory.json",
+        "sha256": "9bdf42c7391ab01dd70e4846114411cff82283ebd0b80d9f6c4c4bc2d0c6338d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017728564618514
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-hnt0y5fn",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-hnt0y5fn/reports/claim-guard-inventory.json",
+        "sha256": "e6d0d7b4aede158118889c9e4e79288bfd64d03f90569daa68b43cd4a097597b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017728599637889
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-vf5pa9pc",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-vf5pa9pc/reports/claim-guard-inventory.json",
+        "sha256": "1b50eec26706f8b1c3ca8f77d1b4aa879137abe7f6dd2b0d83391a5ba68b42c1",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017728633184996
+      }
+    }
+  ],
+  "retainedFiles": 682,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-claim-guard-publication.json",
+    "sha256": "a8056a4d1b5ff698c83ec65d63d6dab72f7bb8dbe3c4120ad6491880939bfec1",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792017339932863145
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-claim-guard-red.log",
+      "sha256": "04d9cc06c10d05bfc86689cc87120a3ab7aa1849572886dd3218e6ed0d1229c2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017246168303354
+    },
+    {
+      "path": "/private/tmp/chainbench-claim-guard-green.log",
+      "sha256": "a653c9afce6df48a06179a58a560c40d7d467ad05d4794e16947113a1864d1ea",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017295649408824
+    },
+    {
+      "path": "/private/tmp/chainbench-claim-guard-related-race.log",
+      "sha256": "63c5ccbd151d73f161e51efc198c9ced2418682ec9a1f0e7b34aa0cc198939a8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017418059669350
+    },
+    {
+      "path": "/private/tmp/chainbench-claim-guard-check.log",
+      "sha256": "eefaad2e28b3f27badd1528f59afc951fe9a8a46dfcbf11b779513d867d60049",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017499268109243
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/claim_guard_diff_e2e_test.go",
+      "sha256": "7a1aa7f3858677a16668728e649567694f98dac31170a142bde81bf5ce71bb1c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792017290437084215
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "e94133594423fbefb1d9ca2377ec08c68d1ea8cd2f8b03c152eb3ef949429e58",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792017290438940520
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

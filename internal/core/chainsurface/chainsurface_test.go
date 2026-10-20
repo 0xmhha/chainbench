@@ -79,7 +79,7 @@ func TestEveryIndexedFlagIsReadFromTheHelpPages(t *testing.T) {
 
 func TestProvenanceComesFromTheCaptureHeader(t *testing.T) {
 	c := load(t, "gstable")
-	if c.Program != "gstable" || c.ChainCommit != "0937ac5c9" || !c.CapturedAt.Equal(time.Date(2026, 8, 22, 12, 38, 9, 0, time.UTC)) {
+	if c.Program != "gstable" || c.ChainCommit != "4d17eea" || !c.CapturedAt.Equal(time.Date(2026, 10, 17, 21, 51, 51, 0, time.UTC)) {
 		t.Fatalf("provenance %q %q %v", c.Program, c.ChainCommit, c.CapturedAt)
 	}
 	kinds := map[string]bool{}
@@ -94,7 +94,7 @@ func TestProvenanceComesFromTheCaptureHeader(t *testing.T) {
 			t.Errorf("missing %s source", k)
 		}
 	}
-	if w := load(t, "gwemix"); w.ChainCommit != "1350376a6" {
+	if w := load(t, "gwemix"); w.ChainCommit != "4538a9f" {
 		t.Errorf("gwemix commit %q", w.ChainCommit)
 	}
 }

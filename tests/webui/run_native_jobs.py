@@ -1,4 +1,6 @@
 """Development proof for native durable jobs; does not award any Seed criterion."""
+from runtime_storage import reclaim_after_shutdown
+from runtime_storage import create_runtime
 import importlib.util
 import json
 import os
@@ -17,8 +19,7 @@ from browser_process import run_browser
 def main():
     output=Path('chainbench-out/web-ui-development/native-jobs')
     output.mkdir(parents=True,exist_ok=True)
-    runtime=runtime_root()/str(uuid.uuid4())
-    runtime.mkdir(parents=True,mode=0o700)
+    runtime = create_runtime()
     spec=importlib.util.spec_from_file_location('native_fixture','tests/webui/fixtures/prepare_web04.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     provenance=module.prepare(runtime,output)
@@ -89,11 +90,14 @@ def main():
             for node in json.loads(record.read_text()).get('nodes',[]):
                 pid=node.get('pid',0)
                 if pid:
+                    command_line=subprocess.run(['ps','-p',str(pid),'-o','command='],capture_output=True,text=True)
+                    if str(runtime) not in command_line.stdout:continue
                     try:os.kill(pid,15)
                     except ProcessLookupError:pass
         server.terminate()
         try:server.wait(timeout=10)
         except subprocess.TimeoutExpired:server.kill();server.wait()
         log.close()
+        reclaim_after_shutdown(runtime, output)
 
 if __name__=='__main__':main()

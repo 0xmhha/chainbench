@@ -3,6 +3,11 @@ package testhelper
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
@@ -65,6 +70,81 @@ func (partitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 					}
 				}
 			}
+		}
+	}
+	return settlePeerPartition(ctx, ac, groups, enodes)
+}
+
+// settlePeerPartition catches already-running dials which can finish after
+// removePeer. A partition succeeds only after two consecutive observations
+// without cross-group peers. RPC or malformed peer observations fail closed.
+func settlePeerPartition(ctx context.Context, ac *interp.ActionCtx, groups [][]node.Node, enodes map[int]string) error {
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	identity := func(value string) (string, error) {
+		u, err := url.Parse(value)
+		if err != nil || u.Scheme != "enode" || u.User == nil {
+			return "", fmt.Errorf("dsl: malformed peer enode %q", value)
+		}
+		return strings.ToLower(u.User.Username()), nil
+	}
+	quiet := 0
+	for quiet < 2 {
+		crossed := false
+		for gi, group := range groups {
+			targets := map[string]string{}
+			for gj, others := range groups {
+				if gi == gj {
+					continue
+				}
+				for _, n := range others {
+					key, err := identity(enodes[n.Index])
+					if err != nil {
+						return err
+					}
+					targets[key] = enodes[n.Index]
+				}
+			}
+			for _, n := range group {
+				c, err := clientFor(ac.Deps, n.RPCURL)
+				if err != nil {
+					return err
+				}
+				var peers []struct {
+					Enode string `json:"enode"`
+				}
+				if err = c.Call(ctx, "admin_peers", &peers); err != nil {
+					return fmt.Errorf("dsl: observe partition node%d: %w", n.Index, err)
+				}
+				if peers == nil {
+					return fmt.Errorf("dsl: observe partition node%d: null peer list", n.Index)
+				}
+				for _, p := range peers {
+					key, err := identity(p.Enode)
+					if err != nil {
+						return err
+					}
+					if target, ok := targets[key]; ok {
+						crossed = true
+						if err = c.RemovePeer(ctx, target); err != nil {
+							return fmt.Errorf("dsl: settle partition node%d: %w", n.Index, err)
+						}
+					}
+				}
+			}
+		}
+		if crossed {
+			quiet = 0
+		} else {
+			quiet++
+		}
+		if quiet == 2 {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("dsl: partition did not settle: %w", ctx.Err())
+		case <-time.After(500 * time.Millisecond):
 		}
 	}
 	return nil
@@ -193,6 +273,17 @@ func enodesFor(ctx context.Context, ac *interp.ActionCtx, nodes []node.Node) (ma
 		enode, err := c.Enode(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("dsl: enode of node%d: %w", n.Index, err)
+		}
+		// Managed nodes have a recorded peer-reachable host/port. NAT may
+		// change admin_nodeInfo's advertised address after startup; adding that
+		// WAN address back cannot restore a local/static peer graph.
+		if n.Host != "" && n.Ports.P2P > 0 {
+			parsed, err := url.Parse(enode)
+			if err != nil || parsed.Scheme != "enode" || parsed.User == nil {
+				return nil, fmt.Errorf("dsl: invalid enode of node%d: %q", n.Index, enode)
+			}
+			parsed.Host = net.JoinHostPort(n.Host, strconv.Itoa(n.Ports.P2P))
+			enode = parsed.String()
 		}
 		out[n.Index] = enode
 	}

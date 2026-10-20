@@ -421,9 +421,9 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 | ID | 항목 | 근거 | 의존 | 상태 |
 |---|---|---|---|---|
 | P1 | 반복되는 체인 선언을 파일로 뽑고 205건이 참조하게 한다 | 체인 선언의 밑바탕(chain·topology·keys·binaries)은 **17개 모양**뿐이었고 그중 하나가 161개 파일에 복사돼 있었다. `tests/tc/env/` 에 17개를 두고, 51건은 이름으로만 부르고 154건은 `extends` 로 다른 것만 덮는다. (그 트리는 `a5386b0e` 에서 `presets/chain/` 으로 옮겼다.) **205건의 `--plan` 출력이 전후로 바이트까지 같다** | ~~V1~~~V7, ~~M1~~~M5, ~~M4-a~~ | **완료 (2026-09-15)** |
-| P2 | preset 에 `values` 블록을 둔다 | 주소·수수료는 `env` 항목이 아니라 step 인자다. preset 만으로는 내려가지 않는다 | D5, P1 | **미착수 — §11.5** |
-| P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 문법은 이미 있고 118개 파일이 쓴다(`internal/dsl/interp/binding.go:23`). 값의 출처가 실행 중 `read` 결과뿐이다. **R1·R5 가 여기 걸려 있다**(§8) | P2 | **미착수 — §11.5** |
-| P4 | 케이스에 `needs`, preset 에 `provides` 를 둔다 | HANDOFF 요구사항 5. 못 주는 값이면 SKIP 하고 사유를 남긴다 | D4 | 미착수 |
+| P2 | preset 에 `values` 블록을 둔다 | JSON 타입·이름 규칙·깊은 병합과 삭제/배열 교체를 검증하고 구조화 Web 작성·내보내기를 보존했다. [실제 증거](../preset-values-evidence.json) | D5, P1 | **완료 (2026-10-14)** |
+| P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 첫 hook부터 초기값을 바인딩하고 오프라인 검사·타입 보존·실행별 복사·save 덮어쓰기·의미 지문을 검증했다. 세 체인 CLI/MCP 두 케이스 실행과 Web 작성이 통과했다. R1 관문과 다른 후속 작업은 별도다. [증거](../preset-values-evidence.json) | P2 | **완료 (2026-10-14)** |
+| P4 | 케이스 사전 요구와 preset 제공 능력을 대조한다 | 현행 문법은 `requires`와 `attach.provides`/`genesis.provides`다. 부족한 능력·체인 불일치 사유와 선언 관측을 RED→GREEN·전체 검사·race·세 체인 CLI/MCP 18판정으로 보강했다. 실제 기능 확인은 R3이고 전체 사전 요구 충분성은 별도다. [증거](../capability-reason-evidence.json) | D4 | **진행 (2026-10-14), 선언 사유 보강 완료** |
 | P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
 | P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **완료 (2026-09-18): 66 → 0** — §P5-L1 참조 |
 | P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | **해소 (2026-09-15). 없다.** 실제 wbft 망을 띄워 `istanbul_getWbftExtraInfo` 를 블록 1·5·32 에서 읽었더니 필드는 `committedSeal · epochInfo · preparedSeal · prevCommittedSeal · prevPreparedSeal · prevRound · randaoReveal · round · vanityData` 뿐이고 **`gasTip` 이 없다**. 그리고 `08-legacy-transfer` 를 `--env wbft-bp4` 로 실제로 올려 보니 `step 3 (read) failed: no "gasTip" in the result` 로 **FAIL** 했다. 즉 `applicableChains: "stablenet,wbft"` 라고 적힌 3건은 **wbft 에서 돌지 않는다** — 선언이 틀렸고, `engine:anzeon` 으로 좁히는 것이 맞았다 | **해소 (2026-09-15)** |
@@ -1133,7 +1133,19 @@ reported `Applepie: #<nil>`". 노드가 포크 표에 찍었다는 것은 바이
 
 ## 8. 실제 망 대응 (R)
 
+**2026-10-13 현행 보강:** [엔드포인트 실제 증거](../endpoint-profile-evidence.json)와
+[HEAD 바이너리 출처](../head-binary-provenance.json)를 추가했다. 이 기록은 R2 읽기 프로필 범위이며
+전체 L1, R3·R4·R5와 최종 Web 인수는 완료하지 않았다. R6의 CLI/MCP 다중 preset 실행·ID 기록은 아래 행의 새 증거로 완료했다. 아래 오래된 전제는 해당 항목의 현행 코드·테스트와 대조하며 갱신한다.
+
+**실제 접속 이름 보강:** `gwbft`는 논리 이름이고 go-wbft의 빌드 대상과 클라이언트 이름은 `gwemix`다.
+접속 검사가 매니페스트의 두 이름을 정확히 비교하도록 고쳤다. 이름 일부만 일치하는 다른 클라이언트는 거절한다.
+전체 검사·관련 race·현재 HEAD 세 체인 4노드의 실제 접속과 합의 관측·종료 DB 제거가 통과했다.
+[증거](../attach-client-identity-evidence.json). WBFT와 WEMIX의 공통 클라이언트 이름만으로 두 체인을 구별했다고 주장하지 않는다.
+
+
 여기부터는 로컬에서 확인할 수 없는 것이 섞인다.
+
+**2026-10-14 갱신:** P2/P3 초기값 구현과 실제 증명이 완료됐다. 아래 2026-09-18의 선행 조건 설명은 당시 이력이며, R1·R5·R6 자체의 잔여는 각 행에서 추적한다.
 
 **착수 순서는 의존이 정한다 (2026-09-18).** P3 없이 갈 수 있는 것은 **R2 · R3 · R4**
 셋뿐이다. R1 과 R5 가 P3 에 의존하고 R6 이 R1 에 의존하는데, P3 는 값에 막힌 케이스가
@@ -1142,12 +1154,12 @@ reported `Applepie: #<nil>`". 노드가 포크 표에 찍었다는 것은 바이
 
 | ID | 항목 | 근거 | 의존 | 상태 |
 |---|---|---|---|---|
-| R1 | chainId 를 preset 값과 비교한다 | 지금 `WantChainID` 가 0이면 검사를 건너뛴다(`internal/testengine/nodegate.go:44-56`) | P3 | 미착수 |
-| R2 | 엔드포인트에 역할·WS·metrics 를 담는다 | `--rpc` 는 URL 만 받는다. 워크스페이스 attach 는 역할을 안다 | P1 | 미착수 |
-| R3 | 능력을 실제 RPC 로 확인한다 | 매니페스트의 `capabilities` 는 손으로 쓴 목록이다 | P4, V7 | 미착수 |
-| R4 | faucet·deploy·load 를 로컬 서명으로 바꾼다 | 실제 망 노드는 남의 키를 열어주지 않는다. 지금 로컬 서명 sendTx 는 gas 21000 고정이고 컨트랙트 생성을 못 한다 | D7 | 미착수 |
-| R5 | `expect: reject` 를 사유별로 판정한다 | 지금은 어떤 오류든 통과한다 | P3 | 미착수 |
-| R6 | 한 스위트를 여러 preset 으로 실행하고 결과에 preset id 를 남긴다 | 완료 조건 4번을 증명한다 | P5, R1 | 미착수 |
+| R1 | chainId 를 preset 값과 비교한다 | `values.chainId`를 권위 있는 선언으로 삼아 모든 실행 노드의 인증된 `eth_chainId`와 hook 전에 비교한다. 명시 0도 검사하며 불일치 FAIL·조회 불가 BLOCKED와 관측 출처를 보존한다. 미선언은 기존 동작을 유지한다. RED→GREEN·전체 검사·race·브라우저·세 체인 CLI/MCP 18판정/90노드 확인. [증거](../chain-identity-evidence.json) | P3 | **완료 (2026-10-14), 선언한 경우의 실행 관문** |
+| R2 | 엔드포인트에 역할·WS·metrics 를 담는다 | `attach.endpoints`가 역할·RPC·WS·metrics·인증 환경 참조·선언 API 목록을 보존한다. 기존 `attach.rpc`는 유지하며 둘을 함께 쓰면 거절한다. CLI/MCP 같은 입력으로 native BP4/EN1에서 실제 인증 읽기를 확인했다. API 목록은 실제 지원의 증거가 아니다(R3); SDK 로컬 서명의 인증 전송은 R4에 남는다 | P1 | 읽기 프로필 완료 (2026-10-13), R4 연계 잔여 별도 |
+| R3 | 능력을 실제 RPC 로 확인한다 | 합의 요구는 모든 기록된 노드를 인증된 family 조회로 확인해 supported·unsupported·unknown과 노드별 출처를 남긴다. 조회 불가는 BLOCKED로 우선한다. 세 체인 CLI/MCP 12실행·60관측을 검증했다. `evm:shanghai`의 PUSH0도 실제 읽기 전용 실행으로 30노드에서 확인했다. P256 유효/무효 서명은 StableNet 기본/Boho 활성·WBFT·WEMIX의 40노드 관측으로 확인했으며 실제 조회 뒤에 `skipsOn`을 판정한다. RPC 접근·WS 구독 응답·시스템 컨트랙트 코드/내장 getter도 네 native 프로필 CLI/MCP 24실행·320노드 관측으로 확인했다. 전환 후 노드에 기록된 체인별 계약 주소표를 사용하고 미등록 체인 거절/옛 기록 fallback을3프로필 실제 회귀로 확인했다([증거](../recorded-contract-capability-evidence.json)). 계약 ABI/버전/권한/포크와 다른 RPC·거래/VM·계정 상태·선언 필터 충분성은 남는다. [네트워크 관측](../network-capability-evidence.json). [초기 증거](../consensus-capability-evidence.json), [노드별 증거](../consensus-nodes-evidence.json), [VM 증거](../vm-capability-evidence.json), [P256 증거](../p256-capability-evidence.json) | P4, V7 | **합의 여러 노드 확인 완료 (2026-10-14), 나머지 진행** |
+| R4 | faucet·deploy·load 를 로컬 서명으로 바꾼다 | 인증 SDK 전송·선언 계정 자산·legacy/동적 접근 목록·배포 override와 key 인자 검증을 보강했다. 공통 항목 스키마를 실제 UI에서 작성·검증·내보내고 계정/컨트랙트 주소 참조를 보존한다. 세 체인 실제 CLI/MCP 거래·목록·배포 추정·종료 DB 제거를 확인했다. 선언 대납 계정의 이중 서명과 고급 송금 입력도 SDK 바이트·세 체인 실제 거래·gas 추정과 대조했다(Applepie block 0 명시). gas 생략 calldata의 동적·legacy nonce/수수료도 추정과 서명·세 체인 거래로 확인했다. 트랜잭션 숫자 입력의 정확성·실패 원자성과 실제 브라우저 검증도 완료했다([숫자 입력](../transaction-number-evidence.json)). load 제어 숫자도 세 체인 CLI/MCP·Web 범위 검증으로 보강했다([load 제어](../load-control-evidence.json)). 대납 계약 생성과 대납 계정의 실제 브라우저 선택·충돌/수수료 쌍 검증·내보내기도 통과했다([계약 생성](../delegated-creation-evidence.json)). 세 체인 CLI/MCP의 생성 18건과 가스/코드/값/영수증을 대조했다. 정수 제어 18필드의 정확성·범위·0/생략 구분과 Web 저장/내보내기, 네 native 프로필 CLI/MCP의 명시 실패 144건도 확인했다([제어 입력](../unsigned-control-evidence.json)). 대기 시간 22필드의 오류·기본값·Web 계약과 네 프로필 attach CLI/MCP 실패 168건도 보강했다([시간 입력](../duration-control-evidence.json)). crossFork의 잘못된 제어 입력 거절은 단위 증거로 유지한다. Boho200의 과거→현재 실제 재시작과1.0.1→1.1.0의 서명/영수증 보존은 Linux 원래2개 케이스로 검증했다([증거](../linux-upgrade-cases-evidence.json)). 다른 포크/제어 조합·전수 회귀·전체 Linux L1 등 R4 잔여는 남는다. [calldata](../calldata-overrides-evidence.json). [대납](../fee-delegation-inputs-evidence.json), [배포](../deployment-overrides-evidence.json), [동적 목록](../dynamic-access-list-evidence.json), [편집/참조](../access-list-editor-evidence.json) | D7 | 자산·목록 편집·거래 입력 부분 완료 (2026-10-14), 나머지 진행 |
+| R5 | `expect: reject` 를 사유별로 판정한다 | 제출 메서드의 typed 노드 오류·hash 부재·노드 메시지 사유를 검사하고 HTTP/준비/추정/프로토콜 오류를 거절한다. RED→GREEN·전체 검사·7패키지 race·세 체인 CLI/MCP의 실제 거부 12건 통과. `keptOut` receipt 조회 실패도 RED→GREEN으로 고쳤고 세 체인의 CLI/MCP pending 6건을 두 블록 관측했다. Sender의 SDK guard 종료를 실제 제출로 보강하고 Sender·Recipient·FeePayer의 CLI/MCP 여섯 실행에서 실제 거부를 확인했다. MCP 인라인 preset 해석도 공유했다. P2/P3 선행 조건은 완료됐다. 서명 변조도 공통 typed 판정기를 쓰며17대조·세 체인 공개6실행·직접 노드6관측·독립 보존 대조를 확인했다([변조 거부](../tamper-submission-rejection-evidence.json)). 개인API 원문4건은 전용키 공개DSL과 실제검증으로 보강했다([증거](../legacy-personal-delegation-evidence.json)). 두 제출 메서드의rpcError 프로토콜 분류도17대조와 StableNet 공개4건/46단언 재실행·독립 대조로 보강했다([증거](../rpcerror-submission-classification-evidence.json)). 모순·불완전·후행 응답과 존재 검사의 transport 오탐도 RED 30개·관련 6패키지 race·같은 고정 소스의 공개 7건/49단언·12노드 probe와 814파일 독립 보존으로 보강했다([응답 계약](../rpc-response-contract-evidence.json)). 두 builtin은 현재 on만 지원하며 onEach는 추가 요구로 세지 않는다. 다른 R5 조합·전체 R3/R5/L1·출처 충분성은 남는다. [blacklist/MCP](../blacklist-preset-parity-evidence.json). [제출 증거](../submission-rejection-evidence.json), [관측 증거](../keptout-visibility-evidence.json) | P3 | 제출 분류 부분 완료 (2026-10-14), 나머지 진행 |
+| R6 | 한 스위트를 여러 preset 으로 실행하고 결과에 preset id 를 남긴다 | CLI `--chain-presets` 반복과 MCP `chainPresets`가 같은 등록 usecase를 호출한다. 모든 대상 사전 검사·직렬 실행·독립 workspace/session·실패 격리·취소/정리 실패 후속 차단과 구성 계획을 검증했다. 선택한 ID와 케이스의 실제 ID를 구분해 결과·session·status·report에 보존한다. 전체 검사·8패키지 race·브라우저·현재 native 세 체인 6스위트/12판정(의도한 ID 불일치 2건 포함)과 종료 DB/프로세스 0건을 확인했다. [증거](../preset-matrix-evidence.json). Web 다중 대상 기동 폼과 전체 공통 TC 출처 충분성은 이 항목의 완료 근거에 포함하지 않는다 | P5, R1 | **완료 (2026-10-14), CLI/MCP 다중 preset 실행과 ID 기록** |
 
 ### 공통 TC 가 요구하는 도구 기능과의 대응 (2026-09-20)
 
@@ -2004,7 +2016,7 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 | ~~**2**~~ | ~~**L2 노드 간 읽기 경합 전수**~~ | **완료 (2026-09-20).** 전수 감사 **123지점 56케이스**, 그중 **10건이 L1 에서 실제로 깨졌고** 고쳤다. L1 이 표본을 준다는 예상대로였다 — 반복 실행은 하지 않았다. 아래 §11.4.2 |
 | 3 | **X5 라이브 절반** | 기준선의 Stablenet 간헐 실패. **단발 실행으로는 판정 불가** — 기준선 자신이 재실행 PASS 를 기록한다. §B1~B6 의 동시 관측이 필요하다 |
 | 4 | **X14** | e2e 간헐 실패. **다음에 실패할 때** 문구를 잡아 분석한다. 2026-09-20 의 L1 은 이 테스트를 돌리지 않았다(게이트된 Go e2e 이지 `tests/tc` 케이스가 아니다) — 표본이 늘지 않았다 |
-| 5 | R2 → R3 → R4 → (P3) → R1 → R5 → R6 | 실제 망 대응. **순서를 고쳤다 (2026-09-18)**: 예전 표기 `R2 → R3 → R5 → R4 → R6` 은 자기 의존과 어긋났다 — R1 이 아예 빠져 있는데 R6 이 R1 에 의존하고, R1·R5 는 둘 다 P3 에 의존한다. P3 는 지금 §11.5 로 내려가 있으므로 **R1·R5·R6 은 P3 가 올라오기 전까지 열리지 않는다.** P3 없이 갈 수 있는 것은 R2·R3·R4 다 |
+| 5 | R2 → R3 → R4 → (P3) → R1 → R5 → R6 | 실제 망 대응. **순서를 고쳤다 (2026-09-18)**: 예전 표기 `R2 → R3 → R5 → R4 → R6` 은 자기 의존과 어긋났다 — R1 이 아예 빠져 있는데 R6 이 R1 에 의존하고, R1·R5 는 둘 다 P3 에 의존한다. P3 는 지금 §11.5 로 내려가 있으므로 **P2/P3는 2026-10-14에 완료됐다. R1·R5·R6의 이 선행 조건은 해소됐고 각 항목의 구현·증명은 별도로 남는다.** P3 없이 갈 수 있는 것은 R2·R3·R4 다 |
 | 6 | Z2 | local·remote(docker) 두 곳 통과 |
 
 **L1 이 덮어야 할 변경 (2026-09-18).** 전부 이날 들어갔고, 아래 넷은 **모든 케이스가
@@ -2065,6 +2077,98 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 
 ---
 
+**2026-10-16 StableNet Mac 시작 패닉 — 원인·해결은 미확정:**
+공식4d17eea0 BP4의 extra-state 첫 시도는 node4 ProcessExtraSeal nil 패닉으로 준비90초제한 BLOCKED다.
+본문과 후속구성은 실행되지 않았고 다른3노드는 같은77에 합의했다. 조회실패의0값을 실제 node4 높이로 보지 않는다.
+같은 소스e66의 새 시도는2케이스·36단언을 통과했지만, 최초 실패와 독립 보존 기록을 남겼고 결함을 닫지 않았다.
+Mac관찰이며 Linux/메인넷 영향은 미확인이다.
+[증거](../legacy-extra-state-evidence.json), [추가 인계](../chain-handover-2026-09-12.md#8-stablenet-processextraseal-nil-포인터-패닉-2026-10-16).
+
+**2026-10-16 새 두 입력의 실제 15노드 시작 — 전체 L1은 미완료:**
+StableNet 4d17eea0·WBFT d535dd3d를 소유 15대에 새 프로세스·열린 파일·기존 해시 확인 뒤 배치했다.
+원래 BP7·EN7·PN1 시작 케이스를 소스 de214에서 직렬 실행해 각각 pass1·다른 판정0이다.
+실행 중 회수 거부와 종료·PAX/파일시스템 대조, 독립 30압축·538파일·15대 DB0을 확인했다.
+WEMIX 재실행·S1 해결·전체353회·R3/P4/R4/R5·최종 Web 인수는 이 범위가 아니다.
+[실제 실행과 보존](../upstream-fleet-startup-evidence.json).
+
+**2026-10-16 두 번째 L1 부분 배치·공식 입력 갱신 — 전체 인수는 미완료:**
+소스 908의 32행은 30 PASS·1 BLOCKED·1 FAIL이며 321행은 미실행이다. 소스 e967의 옛 46행과 합산하지 않는다.
+CT-NODE-003은 준비 5분 제한으로 BLOCKED, CT-NODE-005는 거래 블록 21+150의 목표 171 대기 600초가 FAIL이다.
+후자는 4 BP 부모 119의 seal 거절이며 reader 시작 전이다. S1 원인은 미확정이다.
+32 workspace·157개 압축·2,336개 파일과 15대의 프로세스·열린 파일·DB 0개를 독립 대조했다.
+[두 번째 배치](../linux-l1-second-cohort-evidence.json).
+공식 StableNet 4d17eea0·WBFT d535dd3d의 새 Mac·Linux 빌드 4개는 출처 검증을 통과했다.
+이는 새 입력 준비이며 실제 구동·전체 L1·R3/P4/R4/R5나 결함 해결은 미완료다.
+[고정 입력](../upstream-pinned-build-evidence.json). 캠페인 중 소스를 바꾸지 않고 확인한 커밋으로 완주한다.
+
+**2026-10-15 L1 부분 배치와 준비 확인의 실제 시간 제한 — 전체 인수는 미완료:**
+소스e967의353회 중44통과·1실패·1운영자 중단이다.307행 미실행과 중단1행이 남는다.
+46 workspace 보존/DB 회수 및15서버 새 전수 확인을 완료했다.
+StableNet4BP의 previous prepared seal 거절이107/108과2/3에서 관찰됐고 S1 원인/해결은 미확정이다.
+휴식만 세던 준비 시간 예산은 관찰·복구까지 포함한 deadline으로 고쳤다.4개 RED·관련5패키지 race·전체 검사,
+실제4BP 정상 진행/채굴 중지/8초 제한(전체 CLI12.020초)/독립 보존·15서버 DB0을 검증했다.
+이는 원래 L1 실패의 해결이나 전체 회귀 완료가 아니다.
+[부분 배치](../linux-l1-cohort-evidence.json), [시간 제한](../node-readiness-deadline-evidence.json).
+
+**2026-10-15 현행 L1 첫 배치의 attach 수정 — 전체 인수는 미완료:**353회 계획 중
+4행(3pass/1blocked)을 실행하고 스위프의 localmap 정규식 문제가 확인돼 중단했다.
+나머지349행은 실행하지 않았다. 노드/회수 훅 종료와15서버 DB0 확인 후 Go 기반 선택적
+RPC dial 조회를 CLI/MCP에 추가하고 스위프가 소비하도록 했다. 단위 RED→GREEN·관련 전체 race·
+전체 검사와 원래 basic08의 실제 CLI/stdio MCP 주소 동등성·attach 성공·5서버 회수가 통과했다.
+[증거](../dial-address-query-evidence.json). 원래 실패와 중단/회수 기록은 보존했다.
+수정된 소스로 전체 L1을 다시 실행하기 전에는 전체 통과로 표시하지 않는다.
+
+**2026-10-15 원래 Linux 포크·버전 교체2건 — 전체L1은 미완료:** 원래 Boho 재시작을
+과거ad0122af0→현재0937ac5c로 실제 실행해 높이27의 재실행·경계200 이후 높이202와 코드 변경을
+확인했다. 이어1.0.1 bf17c9607→1.1.0 교체 뒤 실제 clientVersion 차이와 거래/영수증 보존을 확인했다.
+8단언·pass2/fail0/blocked0/skip0, 아카이브9개·종료 DB0과 독립 배포/명세 대조가 통과했다.
+[증거](../linux-upgrade-cases-evidence.json). 나머지 전체L1과 R3/P4/R4/R5·혼합 구현 입력은 남는다.
+목적이 끝난 소유 빌드 캐시 약0.78GiB와 새 빌더 이미지 참조를 회수하고 원본/ELF/증거를 보존했다.
+
+**2026-10-15 과거 포크·버전 입력 — 실제 전환은 미완료:** 원래 케이스의 Boho 이전
+ad0122af0과 Boho 지원1.0.1 bf17c9607을 원본 수정 없이 Git 객체로 대조한 별도 입력으로
+빌드했다. 실제 읽기 전용 Linux 소스 전수 해시·ELF 실행/버전·독립 출력 대조가 통과했다.
+[증거](../linux-legacy-build-evidence.json). 이는 입력 준비이며 실제 체인 포크/서명 호환 전환이나
+전체L1의 통과가 아니다. 혼합 구현5개에 필요한 wbft-stablenet 입력은 별도 확인 중이다.
+
+**2026-10-15 세 체인 실제 Linux15노드 시작 — 전체 L1은 미완료:** CT-NODE-002의
+원래 BP7/EN7/PN1 구성을15대 소유 가상 서버에서 직렬 실행해 세 체인 모두 통과했다.
+블록 전진·검증자7개·각15노드 peer와 정확한 체인 ID를 실제 assertion으로 확인했다.
+실행 중 데이터 회수 거부, 종료 후 프로세스·열린 파일 조회와 PAX 아카이브45개 보존,
+기록된 dataDir 전체의 DB/캐시0개를 독립 확인했다. 4GiB VM의 cache64 명시 외에
+원래 토폴로지를 바꾸지 않았다. [실제 실행·회수·독립 대조](../linux-chain-startup-evidence.json).
+이는 시작3건의 범위이며 전체 L1·R3/P4/R4/R5나 W3/W4 해결을 뜻하지 않는다.
+
+**2026-10-15 Linux15대 가상 fleet 준비 — 전체 L1은 미완료:** 기존3개 컨테이너를
+보존한 별도 이름·네트워크·loopback 포트에서15대 Ubuntu ARM64 가상 서버를 준비했다.
+실제 공개 CLI의 SSH 신원·세 바이너리 해시·실행, root 전용 파일의 sudo 다운로드, 잘못된 비밀번호/
+sudo 비허용의 실제 거절을 확인했다. machine-id와 SSH host key는 각 새 컨테이너에서 한 번 생성해
+재시작에도 유지하며 서로 다르다. 기존 컨테이너 상태와 원본 응답·실제 파일을 독립 대조했다.
+[준비·출처·원본·독립 대조](../linux-fleet-readiness-evidence.json). 물리15대나 블록체인 실행을
+검증한 것은 아니다. 첫 증명기의 content-address 형식 누락은 원본을 보존하고 테스트로 바로잡아
+15대 전체를 다시 관측했다. fleet 준비는 완료됐지만 실제 체인 smoke·전체 L1과 남은 R3/P4/R4/R5는
+아직 실행하지 않았고 기존209건/현재211개 케이스 파일의 전체 통과로 표시하지 않는다.
+
+**2026-10-15 WBFT·WEMIX Linux 빌드 보강 — fleet/L1 미완료:** 앞선 StableNet 하위 검증에
+이어 WBFT7af50e45(2215파일)·WEMIX4538a9f5(2050파일·symlink1)를 Linux 읽기 전용 bind에서
+전수 대조하고 실제 새 ARM64 ELF를 빌드했다. WEMIX는 원본을 수정하지 않은 공유 경로 입력
+사본이며 미초기화 gitlink5개를 보존했다. 두 바이너리 모두 서버1대의 복사 해시·실행과 기존
+파일 보존을 확인하고 원래 정지 상태로 돌렸다. [출처·독립 대조](../linux-remaining-build-evidence.json).
+세 체인 바이너리의 이 준비는 완료됐지만,15대 배치·전체 L1·R3/P4/R4/R5의 남은 실제 조건은
+아직 통과하지 않았다. 옛209건 결과를 현행 인수로 바꾸지 않는다. 준비를 끝낸 전용 빌드 캐시
+약1.43GiB와 새 빌더 이미지 두 개는 참조가 없음을 확인하고 회수했으며 증명·ELF·기존 파일은 보존했다.
+
+**2026-10-15 Linux 준비 하위 검증 — 전체 L1은 미완료:** `setup.sh binaries`가
+새 Docker 출력을 찾지 못해도 이전 호스트 ELF를 배포할 수 있던 경로를 실패 테스트로 재현했다.
+새 임시 출력의 빌드 성공·가시성·ELF를 확인한 뒤 교체하며 실패 시 이전 파일을 보존하도록 수정했다.
+종료 코드·임시 폴더 정리·작은 VM의 빌드 병렬도 전달도 검증했다. 실제 StableNet0937의2241파일을
+읽기 전용 Linux bind 안에서 전수 대조하고 새 ARM64 ELF를 빌드·복사·실행했다. 추적 소스 변경은
+없으며 보존한 사용자 미추적 설정으로 Go `vcs.modified=true`가 기록된다. 두 상태를 구분해
+검증했고, 처음 잘못 작성한 출처 검사 실패와 원본 자료도 보존했다.
+[독립 대조·출처·이전 바이너리 보존](../linux-fresh-build-evidence.json).
+이는 **StableNet1개·서버1대** 범위다. WBFT/WEMIX Linux 빌드·15대 배치·전체 L1과
+R3/P4/R4/R5 남은 조건을 통과한 것은 아니며 기존209건을 현행 인수로 바꾸지 않는다.
+
 ### 11.4.2 노드 간 읽기 경합 — 전수 감사와 수정 (2026-09-20)
 
 §11.2.13 이 `04b` 한 건만 실측하고 "전수 점검은 아직 안 했다" 로 남긴 항목이다.
@@ -2096,7 +2200,7 @@ en1 에서 행동**한다. en1 이 그 블록을 못 받았으면 잔고가 0 �
 |---|---|---|
 | Z1 | 대 | 모든 테스트를 DSL 문법으로 (별도 트랙) |
 | Z3 + C2 | 중 | `V` 버전 표기 제거, v1 재정리, 주석 전수 감사 |
-| P2 · P3 | 중 | preset 의 `values` 블록과 `${…}` 초기값. **막힌 케이스가 2건뿐이라 내려와 있다.** 다만 항목으로는 R1·R5·R6 셋이 P3 에 걸려 있으므로(§8), **R 묶음을 시작할 때 이 순위를 다시 센다** — §11.3 의 상자 |
+| P2 · P3 | 중 | **완료 (2026-10-14).** 초기값 파싱·바인딩·격리·Web 편집과 세 체인 CLI/MCP를 검증했다. R1·R5·R6의 선행 조건만 해소하며 이 항목들 자체를 완료하지 않는다. [증거](../preset-values-evidence.json) |
 | N1-b | 소 | attach 의 `chain` 을 RPC 로 읽어 지운다. 지금은 컨트랙트 표가 첫 호출 전에 있어야 해서 요구한다(§2.5.1) |
 | H4 (2단계) | 소 | 허용 목록 줄이기. 묶음을 치울 때마다 줄인다고 정해 뒀고, H3-b 로 주소 리터럴이 0 이 됐으니 지금이 줄일 때다 |
 | ~~X9~~ | — | **완료 (2026-09-18).** go-stablenet 을 읽어 닫았다. 그 체인의 고유 포크는 `applepie` 와 `boho` 둘인데 매니페스트에는 `boho` 만 있었다. `applepie` 는 죽은 이름이 아니다 — `IsApplepie` 가 수수료 대납 tx 타입을 막는 게이트다(`core/state_transition.go`, `core/txpool/validation.go`). 매니페스트에 넣었다. **`fork:applepie` 를 요구하는 케이스는 아직 없다**: 수수료 대납 케이스 여섯은 `requires: ["rpc"]` 뿐이라, applepie 가 없는 망에서는 건너뛰지 않고 실패한다 |
@@ -2269,3 +2373,5 @@ X12 에는 소스 수준 검사를 붙여 그 영역을 덮었다(주소 인자�
 | 2026-09-14 | 하위호환 제거를 원칙으로 올림. 용어 표 추가(대상 워크스페이스 / 구성 기록 / 실행 세션 / 로컬 작업 공간). 주석 관련 진행 규칙 2건 추가. C 묶음과 W 묶음 신설 |
 | 2026-09-14 | D2 확정. 표준 토폴로지(bp 7 · en 7 · pn 1)와 `bp`/`validator` 용어를 확정해 V8·V9 추가. 마무리 묶음 Z1~Z3 추가. X6 추가 |
 | 2026-09-14 | 착수 전 조사 2건 완료. 옛 역할 철자 사용 0건 확인(V3 위험 제거), X4 부분 확인. 바이너리 철자 수치를 164/13 으로 정정 |
+
+**2026-10-16 계획 분모 갱신:** 공개 개인API4건 추가 후215파일·357회·매핑 누락0이다. 계획만 재측정했고 전체L1은 미실행이다. 과거353회 배치의 결과·소스·분모는 그대로 보존한다.

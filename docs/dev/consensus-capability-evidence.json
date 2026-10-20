@@ -1,0 +1,93 @@
+{
+  "scope": "R3 consensus API runtime check only. Remaining R3/R4/R5/R6, Linux L1 and final Web acceptance remain open.",
+  "redLog": "/private/tmp/chainbench-r3-probe-red.log",
+  "greenLog": "/private/tmp/chainbench-r3-probe-green.log",
+  "regressionLog": "/private/tmp/chainbench-r3-regression.log",
+  "raceLog": "/private/tmp/chainbench-r3-consensus-race.log",
+  "fullCheckLog": "/private/tmp/chainbench-r3-consensus-check.log",
+  "nativeLog": "/private/tmp/chainbench-r3-consensus-native.jsonl",
+  "nativeElapsedSeconds": 147.43,
+  "nativeProofs": [
+    {
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "chain": "stablenet",
+      "facts": {
+        "Status": "supported",
+        "Source": "istanbul_getValidators",
+        "validatorCount": 4
+      },
+      "observation": "/private/tmp/cbui/capability-native-3478863927/reports/20261013-121809-5733/UTC-20261013-121809/tests/001_runtime-consensus/observations/capability-probes.json",
+      "session": "/private/tmp/cbui/capability-native-3478863927/reports/20261013-121809-5733/UTC-20261013-121809",
+      "sources": {
+        "../consensus/poa/validators.go": "bb736917c4125777ae93d154f23bec3cb33fa5e00a1e6c072f60440f2d53615d",
+        "../consensus/poa/validators_test.go": "56df3ff693426c181a2bbc4763632dbef7364d947262d3811b57950ce995c5bc",
+        "../core/registry/consensus.go": "e735acc93a58252ab684d55bb9bf3d635d4d03ac21f70bb287f5d42957b9b8e1",
+        "attach.go": "34265683235fb077eece49e0851e075463dd86e9ea4aa5c2935bd3f3132b199e",
+        "capability_probe.go": "481e41890991bce3fbd5e92189f3c263920517dd8d88c13656870154dd0b514d",
+        "capability_probe_native_test.go": "659a792f024badb5355c71c49722b800bf53981fec1c403a0e229647224d31dc",
+        "capability_probe_test.go": "af42ba2098d2ad84fe9de7488a80ea66953c30d7b7d878a09cbca125ad5e4b8d",
+        "engine_impl.go": "c14c85d1d96012d29f54d0ac0bd4318e5f0556fdcdc632bac993212ed974b173"
+      },
+      "proof": "/private/tmp/cbui/capability-native-3478863927/proof.json",
+      "proofSHA256": "7f939412b90e0b615bf5c074dbcc8b973adf0f868959025248b1fbc379bc2045",
+      "nodeDatabasesRemoved": true
+    },
+    {
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "chain": "wbft",
+      "facts": {
+        "Status": "supported",
+        "Source": "istanbul_getValidators",
+        "validatorCount": 4
+      },
+      "observation": "/private/tmp/cbui/capability-native-3810241937/reports/20261013-121809-5733/UTC-20261013-121854/tests/001_runtime-consensus/observations/capability-probes.json",
+      "session": "/private/tmp/cbui/capability-native-3810241937/reports/20261013-121809-5733/UTC-20261013-121854",
+      "sources": {
+        "../consensus/poa/validators.go": "bb736917c4125777ae93d154f23bec3cb33fa5e00a1e6c072f60440f2d53615d",
+        "../consensus/poa/validators_test.go": "56df3ff693426c181a2bbc4763632dbef7364d947262d3811b57950ce995c5bc",
+        "../core/registry/consensus.go": "e735acc93a58252ab684d55bb9bf3d635d4d03ac21f70bb287f5d42957b9b8e1",
+        "attach.go": "34265683235fb077eece49e0851e075463dd86e9ea4aa5c2935bd3f3132b199e",
+        "capability_probe.go": "481e41890991bce3fbd5e92189f3c263920517dd8d88c13656870154dd0b514d",
+        "capability_probe_native_test.go": "659a792f024badb5355c71c49722b800bf53981fec1c403a0e229647224d31dc",
+        "capability_probe_test.go": "af42ba2098d2ad84fe9de7488a80ea66953c30d7b7d878a09cbca125ad5e4b8d",
+        "engine_impl.go": "c14c85d1d96012d29f54d0ac0bd4318e5f0556fdcdc632bac993212ed974b173"
+      },
+      "proof": "/private/tmp/cbui/capability-native-3810241937/proof.json",
+      "proofSHA256": "7270b955486daddd1d464d5f338d32d71579ae690d93458c37a204ec58281c6c",
+      "nodeDatabasesRemoved": true
+    },
+    {
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "chain": "wemix",
+      "facts": {
+        "Status": "supported",
+        "Source": "poa runtime validators",
+        "validatorCount": 4
+      },
+      "observation": "/private/tmp/cbui/capability-native-365638244/reports/20261013-121809-5733/UTC-20261013-121909/tests/001_runtime-consensus/observations/capability-probes.json",
+      "session": "/private/tmp/cbui/capability-native-365638244/reports/20261013-121809-5733/UTC-20261013-121909",
+      "sources": {
+        "../consensus/poa/validators.go": "bb736917c4125777ae93d154f23bec3cb33fa5e00a1e6c072f60440f2d53615d",
+        "../consensus/poa/validators_test.go": "56df3ff693426c181a2bbc4763632dbef7364d947262d3811b57950ce995c5bc",
+        "../core/registry/consensus.go": "e735acc93a58252ab684d55bb9bf3d635d4d03ac21f70bb287f5d42957b9b8e1",
+        "attach.go": "34265683235fb077eece49e0851e075463dd86e9ea4aa5c2935bd3f3132b199e",
+        "capability_probe.go": "481e41890991bce3fbd5e92189f3c263920517dd8d88c13656870154dd0b514d",
+        "capability_probe_native_test.go": "659a792f024badb5355c71c49722b800bf53981fec1c403a0e229647224d31dc",
+        "capability_probe_test.go": "af42ba2098d2ad84fe9de7488a80ea66953c30d7b7d878a09cbca125ad5e4b8d",
+        "engine_impl.go": "c14c85d1d96012d29f54d0ac0bd4318e5f0556fdcdc632bac993212ed974b173"
+      },
+      "proof": "/private/tmp/cbui/capability-native-365638244/proof.json",
+      "proofSHA256": "ffa1424be02d1a33642984256a1ccb7176e811db92eff20f75e953e2c6fcba0c",
+      "nodeDatabasesRemoved": true
+    }
+  ],
+  "limitations": [
+    "Static applicability filters declared capabilities before runtime confirmation.",
+    "Consensus probe uses the primary endpoint only.",
+    "Method not found yields SKIP; transport errors or unusable response yield BLOCKED; supported RPC permits execution.",
+    "Only the consensus range is proven; no complete R3 or 14-criterion award."
+  ]
+}

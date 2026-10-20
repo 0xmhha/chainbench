@@ -1,0 +1,519 @@
+{
+  "scope": "Five unmodified public cases on four recorded WBFT successors after WEMIX-to-WBFT Croissant20. Retired WEMIX producer excluded. Not mixed-network capability support, invalid-signature TX019, full87, mainnet, Linux, legacy or final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Aggregate-only result model accepted eight identity/completeness/status errors. First actual batch passed five public cases but its added recorded-spec oracle incorrectly expected unredacted key/saveKey binding names; retained failed run plus passing registration regression.",
+  "unitGreen": "Exact five IDs/sequences/presets/statuses plus nine negative summary controls. Positive expected scrubbing and five negative input/stored-spec mutations, including altered key bindings before redaction.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "08b5e725619848e3b0b89a6113cfa72f810f3cd5c32bcd5aa17ee4bf8631bfed",
+    "sourceAfter": "08b5e725619848e3b0b89a6113cfa72f810f3cd5c32bcd5aa17ee4bf8631bfed",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixPostforkPublicCasesE2E",
+      "TestWemixGovernanceRegisterStakerE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-0a3q3orx",
+      "/private/tmp/cbui/hf-xudu7n4h"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-0a3q3orx": [],
+      "/private/tmp/cbui/hf-xudu7n4h": []
+    },
+    "elapsedSeconds": 127.351,
+    "log": {
+      "path": "/private/tmp/chainbench-postfork-public-scrubbed-native.jsonl",
+      "sha256": "97c2134e7396b7cfbd2606bc0e5b21072b05ed5b9a7f3d2207baa82bd643dade",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037856534529802
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-postfork-public-scrubbed-summary.json",
+      "sha256": "848fe01ab45982892f3ed8c4cddd0f8f13996a8baa75fb02ab50fd34800fd9cf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037857195295995
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-postfork-public-scrubbed-start.json",
+      "sha256": "7644c8eb04a23f8d73c80f8a58775fab067bb9b0a77efbe6ce0e48facb8dfcfb",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037727041786234
+    }
+  },
+  "priorOracleFailure": {
+    "exitCode": 1,
+    "sourceBefore": "af0ecb80f461369d31f9aef92d10ab849946c85f0aec97937edf62aeb170f84f",
+    "sourceAfter": "af0ecb80f461369d31f9aef92d10ab849946c85f0aec97937edf62aeb170f84f",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceRegisterStakerE2E"
+    ],
+    "failed": [
+      "TestWemixPostforkPublicCasesE2E"
+    ],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-8ctntfm6",
+      "/private/tmp/cbui/hf-e2t8v6xq"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-8ctntfm6": [],
+      "/private/tmp/cbui/hf-e2t8v6xq": []
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-postfork-public-native-native.jsonl",
+      "sha256": "582289da6c28d793ba6bda5e3d23aaada79150483fa2ce1c94a6f4339ac90638",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037543239432207
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-postfork-public-native-summary.json",
+      "sha256": "78a4744aad1431d2e4114259d5161cd00a90b92fcdc3389b9333e9fb85d2174f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037543762907269
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork-public-proof.json",
+    "sha256": "b0ca73574f71864e6361fe717bdcc1a0e1aec0c54a28087672a1c8ffde3f6127",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792037779388349116
+  },
+  "cases": [
+    {
+      "id": "fee-delegated-transfer",
+      "source": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/tx/CT-TX-005-fee-delegated-transfer.json",
+        "sha256": "ab8f7cfe03f1f94b37dc927dbfd5cf3386fe369ac31b864459e749e8ba5f9a9c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1791380070132222284
+      },
+      "preservedSource": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-source-1.json",
+        "sha256": "ab8f7cfe03f1f94b37dc927dbfd5cf3386fe369ac31b864459e749e8ba5f9a9c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771507790933
+      },
+      "resolved": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-resolved-1.json",
+        "sha256": "ec0cfc97a47843a4f729ed90e519e2f7f6d4e1895b3903307af07847c311539e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771507917516
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/001_fee-delegated-transfer/assert.json",
+        "sha256": "e21cc73364ea3a5936937485a42cd9da267ff32daac22ea1ff886ca1b87702df",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037774174088704
+      },
+      "assertionCount": 7,
+      "actionCount": 15,
+      "transactionCount": 3,
+      "steps": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/001_fee-delegated-transfer/steps.json",
+        "sha256": "7ea7f1b370208d6b595286ee1318838a212ceb216f0b26f0554b4caba080a06c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037774163810703
+      }
+    },
+    {
+      "id": "secp256r1-precompile-valid",
+      "source": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-wbft/accounts/01-secp256r1-precompile-valid.json",
+        "sha256": "eac2c8b83a73c9535079e988e513887e041a1daecc3105b9bda9939601f90520",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1791380070146172346
+      },
+      "preservedSource": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-source-2.json",
+        "sha256": "eac2c8b83a73c9535079e988e513887e041a1daecc3105b9bda9939601f90520",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771511396266
+      },
+      "resolved": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-resolved-2.json",
+        "sha256": "c4ad896339b9650863c9985243db3dd1ee6f00b76e81603f6ad99676e956e03d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771511585308
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/002_secp256r1-precompile-valid/assert.json",
+        "sha256": "dca443c467feff21cb2ce53256b4dc213413e3e1a7eb16adfc8f93475b451fc9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037774188862788
+      },
+      "assertionCount": 1,
+      "actionCount": 0,
+      "transactionCount": 0,
+      "runtimeP256Gate": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/002_secp256r1-precompile-valid/observations/precompile-capability-probes.json",
+        "sha256": "4ad82dab20147ecce228e436122063773d6dd7c2bdc98d82d53c1c37b51b9b25",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037774186597413
+      }
+    },
+    {
+      "id": "insufficient-funds-rejected",
+      "source": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json",
+        "sha256": "733e60844cb8643e40f7bbca5ec537d6b0791b1c112bbe7e4986f4a2a8fcac53",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1791380070133053824
+      },
+      "preservedSource": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-source-3.json",
+        "sha256": "733e60844cb8643e40f7bbca5ec537d6b0791b1c112bbe7e4986f4a2a8fcac53",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771514896308
+      },
+      "resolved": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-resolved-3.json",
+        "sha256": "14b89a049fcb61d0c14bc514b727687fa9a6f0e1ba08af448dd6417838338a75",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771514984267
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/003_insufficient-funds-rejected/assert.json",
+        "sha256": "c2b9f75172ff52bfcc4432bc47fd75372d62f29c0968a989f70ac9e03f6efdab",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037776229744534
+      },
+      "assertionCount": 3,
+      "actionCount": 6,
+      "transactionCount": 1,
+      "steps": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/003_insufficient-funds-rejected/steps.json",
+        "sha256": "771c27eda0c064803683ec959927327e2d7a1f1f7292184cb934fa79c2d6ed9d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037775211194119
+      }
+    },
+    {
+      "id": "fd-feepayer-sig-invalid-rejected",
+      "source": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json",
+        "sha256": "0b74463248d1180361326f01052c7b9aa79ed96018912a83101dac4bb75231e6",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1791380070132431200
+      },
+      "preservedSource": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-source-4.json",
+        "sha256": "0b74463248d1180361326f01052c7b9aa79ed96018912a83101dac4bb75231e6",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771517787767
+      },
+      "resolved": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-resolved-4.json",
+        "sha256": "26d832f2326a7f29ffae012a97bdef88ed713f09922fa859a3ca2cda2c124867",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771517870767
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/004_fd-feepayer-sig-invalid-rejected/assert.json",
+        "sha256": "d52bc8fc87e3247059e9ce2d093252d3a8a6472ba0c05b493005465c38089b8b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037779320242989
+      },
+      "assertionCount": 1,
+      "actionCount": 7,
+      "transactionCount": 2,
+      "steps": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/004_fd-feepayer-sig-invalid-rejected/steps.json",
+        "sha256": "7924f9538228a58ab531f381c9b1c7b3621c70176ef7a3af51cbf2a5727598fe",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037778309259032
+      }
+    },
+    {
+      "id": "secp256r1-precompile-short-input",
+      "source": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-wbft/accounts/03-secp256r1-precompile-short-input.json",
+        "sha256": "673b325009b9ed1af2510914bc5235bac7cea463e1a0a96f16bfce6fe07d4cf7",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1791380070146371346
+      },
+      "preservedSource": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-source-5.json",
+        "sha256": "673b325009b9ed1af2510914bc5235bac7cea463e1a0a96f16bfce6fe07d4cf7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771519525058
+      },
+      "resolved": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/public-resolved-5.json",
+        "sha256": "02a337eaee283ca80445b45346a1de44741c75188de104ddc74ece9557540d92",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037771519598267
+      },
+      "assertions": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/005_secp256r1-precompile-short-input/assert.json",
+        "sha256": "78a89bdce47fd4ee43e194e68f4282e3d1175e9c6bc9421f10219360b0bc0469",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037779353993365
+      },
+      "assertionCount": 2,
+      "actionCount": 0,
+      "transactionCount": 0,
+      "runtimeP256Gate": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork/20261015-041529-81362/UTC-20261015-041611/tests/005_secp256r1-precompile-short-input/observations/precompile-capability-probes.json",
+        "sha256": "4ad82dab20147ecce228e436122063773d6dd7c2bdc98d82d53c1c37b51b9b25",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037779348645156
+      }
+    }
+  ],
+  "feeDelegation": {
+    "type": "0x16",
+    "value": "1000000000000000000",
+    "gasUsed": "0x5208",
+    "effectiveGasPrice": "0x1748771f89",
+    "fee": "2100000298557000"
+  },
+  "refusalScope": "Unmodified action success enforces node submission refusal with required insufficient-funds / invalid-feePayer reason substrings. No separate raw rejection response artifact is claimed.",
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-0a3q3orx",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 278,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-0a3q3orx/reports/postfork-public-inventory.json",
+        "sha256": "25519866fd71945caaf37c8ca1ae698ae04a7b7403192a22d90bce6030e7053e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037865836516916
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-8ctntfm6",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-8ctntfm6/reports/postfork-public-inventory.json",
+        "sha256": "869cbb954653acc9ee87180b198f825d69285511f02b4bb652e74d56803fe636",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037865881351543
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-e2t8v6xq",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 278,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-e2t8v6xq/reports/postfork-public-inventory.json",
+        "sha256": "c4b40f3f6fdb9528b032ea0cdc0a2e18169d9c7f4ca4c7926d53517b2eb4a8e5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037865928658378
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-xudu7n4h",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-xudu7n4h/reports/postfork-public-inventory.json",
+        "sha256": "3f1954c678778d3bf58c2d531bdfb40638fe379713b273fbe4230f45b60b70ce",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792037865976008089
+      }
+    }
+  ],
+  "retainedFiles": 1012,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-postfork-public-review-before-publication.json",
+    "sha256": "1508a15e669e69c0076a372d7a03ed68ed9f2b76614c99c4a12539b1d2f6a7a8",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792037233564139337
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-postfork-public-red.log",
+      "sha256": "cd1b46825271c6231df49387d0dc2d78c8e98e46b9d5e66fc49477e0a07bb737",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037159934253330
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-scrub-red.log",
+      "sha256": "6955cef11bf7ed62f871ead31b1f65f4b027b95a4ea24b9007b685e432c0c0ee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037569978025920
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-green2.log",
+      "sha256": "366773df08084ac929490842cdb5341165a63b7a3fce04248a4e44bf89b17f3a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037583508286491
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-related-race.log",
+      "sha256": "b88adc3ecbd312c05aeeafe36475740b0714fd8d6a5e80f6e6ded7806f9ef360",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037238649819327
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-related-race-local.log",
+      "sha256": "fadaf63893ad23e51eff12e90a530563d579d03d8a37df42a20ff65be16b6371",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037371544744112
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-related-race2.log",
+      "sha256": "df24b10b5033b1e08c8ddfd4e527a02bf89476e2349712d22d6a26fd5814990e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037686645924236
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-check.log",
+      "sha256": "32af1ffe944d7ee8946774998396cfe32b525585da9b0689419d0ca77de70184",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037249428759499
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-check-local.log",
+      "sha256": "51bad986f21e92c5020686f632a558254a0248f641512e62276a3da6e878bdb2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037370079885680
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-check2.log",
+      "sha256": "f5760eee5caad9498d6efa3ace70a54c01d81adcc68d007426d9dfd78bfd6559",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037693383623875
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-vet2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037590840650778
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-vcs.log",
+      "sha256": "89959a222a16e7a652c1796a3715520b5107d7944ca59640108caafc8f90996f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037385208229855
+    },
+    {
+      "path": "/private/tmp/chainbench-postfork-public-green3.log",
+      "sha256": "ba43f5451f0e46c5517e59c5b53e323af448f6c01d5e22a7e6a85f4b8332e328",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792037722561758767
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

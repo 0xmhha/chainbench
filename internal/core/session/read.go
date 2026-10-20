@@ -21,10 +21,11 @@ type Result struct {
 
 // TestResult is one test's entry in session.json.
 type TestResult struct {
-	Seq    int    `json:"seq"`
-	ID     string `json:"id"`
-	Env    string `json:"env,omitempty"`
-	Status string `json:"status"`
+	PresetID string `json:"presetId,omitempty"`
+	Seq      int    `json:"seq"`
+	ID       string `json:"id"`
+	Env      string `json:"env,omitempty"`
+	Status   string `json:"status"`
 }
 
 // Counts is the verdict tally over a session's tests.

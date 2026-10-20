@@ -1,0 +1,6412 @@
+{
+  "date": "2026-10-18",
+  "scope": "Full owned source syntax inventory after the completed-workspace Go cache policy and CI preservation contracts. Not resolved dynamic calls, runtime coverage, full L1/race/e2e or Web acceptance.",
+  "headAtProof": "8646d33ed1d5e7f08e97166d81eed97b43f92c36",
+  "workingTreeModifiedAtProof": true,
+  "red": "The preceding graph omitted current Python declarations/calls and CI recipe commands. The same AST-derived declaration/multiplicity check passed on the new graph.",
+  "green": {
+    "parserContracts": 21,
+    "precedingImplementationMakeCheckPassed": true,
+    "cacheContracts": 48,
+    "maintenanceContracts": 23,
+    "runtimeContracts": 28,
+    "lowSpaceRuntimeContracts": 28
+  },
+  "publicationOrder": "The first document check rejected changing row13 to pending while the original reassessment was closed. No test was weakened and no unmeasured work was marked complete. This full refresh precedes closing the current AST row and committing the implementation.",
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "3541096ddcc18ec8476dc32eca3c20419cbb7e156b20a4094c165bf70eaade85",
+    "sourceAfter": "3541096ddcc18ec8476dc32eca3c20419cbb7e156b20a4094c165bf70eaade85",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-completed-cache-run-20261018.py": "7a8f47218d030b72809d8d185ae7b31e35df67ab0ec0a60b362314e89a157104",
+      "/private/tmp/chainbench-ast-completed-cache-specific-20261018.py": "ace6043965345f5284c1580f3dc6d9d820e54f602daefd0313e39adcafa738fe",
+      "/private/tmp/chainbench-ast-completed-cache-independent-20261018.py": "e816a3a201c5f3afd0054a2a0a82e9e66183b9b2b176753c59a14be39d154d25",
+      "/private/tmp/chainbench-ast-completed-cache-parser-contracts-20261018.log": "6009c3c129beeef4ff28d65e36a3ff8a93fa69444682558f1a775a9ef1ac36a3",
+      "/private/tmp/chainbench-completed-cache-maintenance-20261018.json": "e87941b0ad9366e4934765f4baab7dbd918ac6f5f4b12915f13230e589103df9",
+      "/private/tmp/chainbench-completed-cache-independent-20261018.json": "5401f5c3a698e9b2c0ac3bde93c68788a9ce6f03c3922d2b1829fdad4148b531",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-completed-cache-run-20261018.py": "7a8f47218d030b72809d8d185ae7b31e35df67ab0ec0a60b362314e89a157104",
+      "/private/tmp/chainbench-ast-completed-cache-specific-20261018.py": "ace6043965345f5284c1580f3dc6d9d820e54f602daefd0313e39adcafa738fe",
+      "/private/tmp/chainbench-ast-completed-cache-independent-20261018.py": "e816a3a201c5f3afd0054a2a0a82e9e66183b9b2b176753c59a14be39d154d25",
+      "/private/tmp/chainbench-ast-completed-cache-parser-contracts-20261018.log": "6009c3c129beeef4ff28d65e36a3ff8a93fa69444682558f1a775a9ef1ac36a3",
+      "/private/tmp/chainbench-completed-cache-maintenance-20261018.json": "e87941b0ad9366e4934765f4baab7dbd918ac6f5f4b12915f13230e589103df9",
+      "/private/tmp/chainbench-completed-cache-independent-20261018.json": "5401f5c3a698e9b2c0ac3bde93c68788a9ce6f03c3922d2b1829fdad4148b531",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/Users/0xtopaz/.gvm/gos/go1.26.8/bin/go": "8e43901f27100355684d9889fb2a885653211130a22c609ab25d00770d2c1874",
+      "/Users/0xtopaz/.nvm/versions/node/v24.17.0/bin/node": "f5f9b9db4d95f5e0340982685f083de654c21eef9d9122cab5321081ccaa2601",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-capture.json",
+        "sha256": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285785038865723
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-independent.json",
+        "sha256": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285789332377696
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285790037261032
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792285790640429188
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-capture.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138728191556278
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-independent.json",
+        "sha256": "f76b4087f55aeb8cf683a1d50fb758fcfee4152ec2b8d5502012971ec0778001",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138732584954949
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733279929901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792138733858826845
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-capture.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256047559989444
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-independent.json",
+        "sha256": "ee9e5b28b853439912c57229fe87b0a7b983174927abc675d9cb05b6b33e8b51",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256052213855427
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256054193014048
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-firewall-refresh-20261017-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792256055161286677
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-capture.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260738390205874
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-independent.json",
+        "sha256": "e36f230dbc24669f2a556e9e170011eedc85097b35c4880dd254b85ee1d7c504",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260742921095712
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260743646057877
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-placement-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792260744252072557
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-capture.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268269240845841
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-independent.json",
+        "sha256": "0cd4f79f5a86e0b1460c348419e804842f315dd9dfb55cfa81c6ae4f39ba4667",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274154302635
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268274866457837
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-sweep-round-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792268275462092118
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-capture.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271163296884178
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-independent.json",
+        "sha256": "d572eb84d0756be6c7ddd60b42de9e18bd5a1de2e675c60ca94944619c571608",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271168224653793
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169184135951
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271169870775257
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-capture.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271720905095693
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-independent.json",
+        "sha256": "969f77de706fff8ef57eda827c85f69f4c5a52d953b6c54fdf82a0940d0bfd94",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271725960577399
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271727377214282
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-installer-shell-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792271728103754763
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-capture.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275273257659028
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-independent.json",
+        "sha256": "66bf762a8a999f80df6d92e0f52fbcb7d1cddc257841cfe6abc001ee5fed5c68",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275277868420622
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275278705057632
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-final-preflight-refresh-20261018-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792275279415672506
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-capture.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278880780083910
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-independent.json",
+        "sha256": "e2d4293728d3a0dd6a2bc601622ad157733af8dc4e5c332ddcc4dd7328cb75c4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885184994311
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278885962118588
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-upgrade-consensus-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792278886574606998
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-capture.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283083411279582
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-independent.json",
+        "sha256": "c70096c885c93e396985a2f5a929de0fee3dcdfef211747f5dcddbc344956ff4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283087752365160
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-capture.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283088454993140
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-web05-arguments-refresh-20261018-a8-independent.json",
+        "sha256": "d6b147e79e36107b21942a15ec2d6854440bb865f17911dcb210396934f1cfd3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792283089050854117
+      }
+    ],
+    "elapsedSeconds": 12.068774207960814,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independentAudit": {
+    "accepted": true,
+    "sourceDigest": "3541096ddcc18ec8476dc32eca3c20419cbb7e156b20a4094c165bf70eaade85",
+    "graphReproduced": true,
+    "counts": {
+      "parsedFiles": 2091,
+      "languages": {
+        "toml": 1,
+        "yaml": 11,
+        "make": 1,
+        "go": 1410,
+        "json": 352,
+        "python": 131,
+        "gomod": 2,
+        "bash": 63,
+        "dockerfile": 1,
+        "gosum": 1,
+        "html": 3,
+        "css": 1,
+        "javascript": 89,
+        "svelte": 25
+      },
+      "nodes": 138254,
+      "edges": 147569,
+      "excluded": 441,
+      "missing": 0
+    },
+    "ownedPaths": 2532,
+    "goTestFilesParsed": 801,
+    "embeddedASTs": 41,
+    "dynamicProgramInputs": 25,
+    "areas": {
+      ".betterleaks.toml": 1,
+      ".github": 1,
+      ".golangci.yml": 1,
+      "Makefile": 1,
+      "cmd": 180,
+      "docs": 109,
+      "env": 5,
+      "examples": 23,
+      "go.mod": 1,
+      "go.sum": 1,
+      "install.sh": 1,
+      "accounts": 31,
+      "app": 197,
+      "internal": 41,
+      "chains": 24,
+      "chainsetup": 149,
+      "consensus": 29,
+      "core": 287,
+      "dashboard": 47,
+      "dsl": 48,
+      "feature": 18,
+      "mcp": 47,
+      "preset": 3,
+      "resource": 46,
+      "testengine": 153,
+      "testhelper": 95,
+      "webcli": 2,
+      "presets": 42,
+      "scripts": 28,
+      "server-set.sample.yaml": 1,
+      "setup.sh": 1,
+      "tests": 427,
+      "uninstall.sh": 1,
+      "web": 49,
+      "workspace-config.sample.yaml": 1
+    },
+    "nodeKinds": {
+      "file": 2091,
+      "call": 101515,
+      "dynamic-program-input": 25,
+      "target": 21,
+      "function": 6619,
+      "import": 10259,
+      "binding": 11154,
+      "type": 1383,
+      "method": 1663,
+      "dsl-operation": 2833,
+      "template-parameter": 7,
+      "selector": 421,
+      "package": 83,
+      "dependency": 180
+    },
+    "exclusionReasons": {
+      "documentation or non-executable data": 221,
+      "generated proof metadata, not executable source": 173,
+      "test data, not executable source": 47
+    },
+    "auditNegativeControlsRejected": [
+      "omitted owned source",
+      "stale source digest",
+      "duplicate graph node",
+      "dangling edge",
+      "parser failure hidden by success count",
+      "zero parsed syntax",
+      "embedded identity absent",
+      "false summary count",
+      "nested input origin forged",
+      "unclassified exclusion",
+      "Docker capture program omitted",
+      "nested deletion call omitted"
+    ],
+    "a8": {
+      "nonMethodExportedSymbols": 1891,
+      "uses": {
+        "inside": 451,
+        "outside": 1174,
+        "test": 177,
+        "signature": 80,
+        "set": 9
+      },
+      "nowhere": 0,
+      "methodsNotMeasuredByThisReachabilityRule": true
+    },
+    "criticalRuntimeScript": {
+      "path": "internal/testengine/transaction_failure_native_test.go",
+      "language": "python",
+      "sha256": "1c64d0ce637f45c4100f15694cf494b6e59a2b8530e1346083671c7af85c8deb",
+      "reclaimCallObserved": true
+    },
+    "transportPrograms": {
+      "CAPTURE": "cfe0850187fa74fc08796ba810314bff58ae452ce8292ca5b85e0bf64d69ccb3",
+      "DELETE": "179f8a462a134802d62891712aace0bb63d2447b4e110ae06cb72fb0cc8317ee",
+      "NESTED_DELETE": "48033bd685a9cf1022e5800f81af65e7e1ca2b50692e3333b7a2a36719ec7bbe"
+    },
+    "transportProgramCount": 3,
+    "historicalGraphsPreserved": true,
+    "historicalSourceDigest": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "parserVersions": {
+      "go": "go version go1.26.8 darwin/arm64",
+      "python": "3.10.11",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter": "0.25.2",
+      "PyYAML": "6.0.3",
+      "shfmt": "v3.12.0",
+      "frontend": {
+        "node": "v24.17.0",
+        "acorn": "8.17.0",
+        "svelte": "5.56.8",
+        "postcss": "8.5.23"
+      }
+    },
+    "fullDynamicCoverageAccepted": false,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "specificOmissionAudit": {
+    "accepted": true,
+    "sourceDigest": "3541096ddcc18ec8476dc32eca3c20419cbb7e156b20a4094c165bf70eaade85",
+    "targetKeys": 193,
+    "targetOccurrences": 203,
+    "specificOmissionsRejected": 386,
+    "expected": [
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "identity",
+          31
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "validate_root",
+          36
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "inactive",
+          49
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "reference_ids",
+          60
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "referenced",
+          67
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "completion_file",
+          71
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "dependency_reclaimed",
+          79
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "completed_sources",
+          94
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "associated_sources",
+          136
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "plan",
+          145
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "apply",
+          212
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "main",
+          274
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completion_file",
+          116
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completion_file",
+          117
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          158
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          222
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          246
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "dependency_reclaimed",
+          129
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          240
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          248
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          182
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CacheTests",
+          16
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CompletedSourceCacheTests",
+          219
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "setUp",
+          17
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "entry",
+          25
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "plan",
+          33
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "apply",
+          38
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_old_entry_is_selected_and_removed",
+          42
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_mtime_is_retained",
+          50
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_ctime_is_retained_even_with_old_mtime",
+          54
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_future_entry_is_retained",
+          61
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unknown_name_and_prefix_mismatch_are_retained",
+          65
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_symlinks_hardlinks_and_executable_directories_are_retained",
+          70
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_explicit_evidence_reference_is_retained",
+          77
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_generic_cache_configuration_does_not_protect_every_entry",
+          82
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_cache_descriptor_refuses_plan",
+          86
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_go_tool_refuses_plan",
+          92
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_inventory_failure_refuses_plan_and_apply",
+          99
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_changed_entry_or_new_reference_refuses_apply",
+          105
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_replaced_root_refuses_apply",
+          116
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_replaced_bucket_refuses_apply",
+          123
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_root_symlink_or_wrong_marker_refuses_plan",
+          129
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_budget_and_minimum_retention_are_enforced",
+          136
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_target_already_met_does_not_delete",
+          147
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_age_below_eight_hours_is_rejected",
+          153
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_second_inventory_detects_activity_before_delete",
+          157
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_partial_failure_retains_deletion_journal",
+          164
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_reference_catalog_is_not_rescanned_for_every_cache_entry",
+          178
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_dry_run_and_explicit_apply_write_private_reports",
+          191
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_failure_retains_error_report_and_refuses_overwrite",
+          205
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_ci_runs_cache_contracts",
+          214
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "setUp",
+          223
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "associated",
+          240
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "selection",
+          245
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_closed_source_entry_is_opt_in_and_reclaimed",
+          250
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_unrelated_entry_is_retained",
+          264
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_source_is_retained",
+          268
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_ownership_without_cleanup_record_is_retained",
+          273
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_start_without_completion_is_retained",
+          277
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_of_another_tree_does_not_qualify_source",
+          282
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unmarked_or_absent_source_is_retained",
+          287
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unknown_association_alongside_closed_source_is_retained",
+          294
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_reference_still_protects_recent_closed_source_entry",
+          300
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_future_timestamp_is_never_eligible",
+          304
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_malformed_cleanup_record_refuses_plan",
+          308
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_wrong_ownership_refuses_plan",
+          312
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_linked_or_symlink_cleanup_record_refuses_plan",
+          316
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_record_changed_after_plan_refuses_all_deletion",
+          324
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_became_active_after_plan_refuses_apply",
+          330
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_replaced_after_plan_refuses_apply",
+          337
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_new_reference_before_apply_preserves_recent_entry",
+          343
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_multiple_closed_sources_are_verified",
+          348
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_symlink_source_refuses_plan",
+          365
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_invalid_completion_timestamp_or_budget_refuses",
+          370
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_completed_mode_does_not_weaken_minimum_cold_age",
+          381
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_activity_in_second_observation_refuses_apply",
+          387
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_partial_source_prefix_does_not_authorize_recent_entry",
+          395
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_explicit_completed_mode_uses_same_preservation_policy",
+          400
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "fail_second",
+          168
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CountedEvidence",
+          179
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "bounded",
+          402
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "__contains__",
+          181
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          34
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          35
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          39
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          40
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          56
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          57
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          88
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          101
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          132
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          141
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          142
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          149
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          150
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          159
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          172
+        ],
+        "count": 2
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          207
+        ],
+        "count": 4
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          246
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          247
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          252
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          253
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          332
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          383
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          390
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          90
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          95
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          102
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          103
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          161
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          174
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          208
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          211
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          334
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          385
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          392
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          410
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          411
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          412
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          413
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          414
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          415
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          416
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          417
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          97
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          197
+        ],
+        "count": 6
+      },
+      {
+        "key": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          198
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "type",
+          "RuntimeStorageTests",
+          15
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "setUp",
+          16
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "runtime",
+          23
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "fixture",
+          27
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "reclaim",
+          34
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_completion_removes_only_disposable_data_and_preserves_proof",
+          38
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_explicitly_referenced_database_is_preserved",
+          46
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_exported_snapshots_and_source_fixtures_are_not_node_data",
+          51
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_activity_reappearing_before_removal_refuses_cleanup",
+          61
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_unknown_or_legacy_runtime_is_never_reclaimed",
+          68
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_inventory_failure_active_process_or_open_file_refuses_cleanup",
+          74
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_nested_symlink_and_redirected_root_refuse_cleanup",
+          83
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_ownership_marker_cannot_claim_another_runtime",
+          90
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_staged_dependencies_are_removed_but_source_and_receipts_remain",
+          96
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_browser_test_dependencies_do_not_accumulate_across_completions",
+          107
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_explicitly_cited_dependency_artifacts_are_preserved",
+          121
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_preflight_rejects_under_twenty_gib_before_creating_runtime",
+          130
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_copy_is_independent_and_preserves_mode_and_mtime",
+          136
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_repeated_completion_does_not_accumulate_databases",
+          146
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_standalone_fixtures_reclaim_after_process_shutdown",
+          153
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_partial_proof_without_success_receipt_reclaims_only_unreferenced_data",
+          163
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_proof_explicit_database_evidence_survives_reclamation",
+          176
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_partial_jsonl_database_evidence_is_preserved",
+          184
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_evidence_inventory_with_a_link_refuses_reclamation",
+          192
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_waits_for_open_files_instead_of_racing_async_node_exit",
+          201
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_timeout_preserves_data_and_refuses_cleanup",
+          210
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_rechecks_activity_that_appears_during_reclamation",
+          217
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_mid_reclamation_activity_timeout_preserves_database",
+          229
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_does_not_retry_unavailable_inventory",
+          237
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "workspace",
+          247
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_capture_reclaims_partial_invocation_without_awarding_acceptance",
+          255
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_independent_reproduction_reclaims_dependencies_and_keeps_fresh_evidence",
+          271
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_ci_runs_runtime_and_maintenance_preservation_contracts",
+          298
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_capture_collects_runtimes_and_artifact_paths_without_deleting_receipts",
+          304
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "stage",
+          277
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          24
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          35
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          63
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          131
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          170
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          180
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          188
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          196
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          204
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          205
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          212
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          222
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          223
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          232
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          239
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          240
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          310
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          78
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          116
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          262
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          263
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          264
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          285
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          286
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          287
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          288
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          289
+        ],
+        "count": 2
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          290
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          291
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "Makefile",
+          "call",
+          "python3",
+          57
+        ],
+        "count": 1
+      },
+      {
+        "key": [
+          "Makefile",
+          "call",
+          "python3",
+          58
+        ],
+        "count": 1
+      }
+    ],
+    "controls": [
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "identity",
+          31
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "validate_root",
+          36
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "inactive",
+          49
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "reference_ids",
+          60
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "referenced",
+          67
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "completion_file",
+          71
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "dependency_reclaimed",
+          79
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "completed_sources",
+          94
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "associated_sources",
+          136
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "plan",
+          145
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "apply",
+          212
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "main",
+          274
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completion_file",
+          116
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completion_file",
+          117
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          158
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          222
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          246
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "dependency_reclaimed",
+          129
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          240
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          248
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          182
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CacheTests",
+          16
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CompletedSourceCacheTests",
+          219
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "setUp",
+          17
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "entry",
+          25
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "plan",
+          33
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "apply",
+          38
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_old_entry_is_selected_and_removed",
+          42
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_mtime_is_retained",
+          50
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_ctime_is_retained_even_with_old_mtime",
+          54
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_future_entry_is_retained",
+          61
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unknown_name_and_prefix_mismatch_are_retained",
+          65
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_symlinks_hardlinks_and_executable_directories_are_retained",
+          70
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_explicit_evidence_reference_is_retained",
+          77
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_generic_cache_configuration_does_not_protect_every_entry",
+          82
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_cache_descriptor_refuses_plan",
+          86
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_go_tool_refuses_plan",
+          92
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_inventory_failure_refuses_plan_and_apply",
+          99
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_changed_entry_or_new_reference_refuses_apply",
+          105
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_replaced_root_refuses_apply",
+          116
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_replaced_bucket_refuses_apply",
+          123
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_root_symlink_or_wrong_marker_refuses_plan",
+          129
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_budget_and_minimum_retention_are_enforced",
+          136
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_target_already_met_does_not_delete",
+          147
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_age_below_eight_hours_is_rejected",
+          153
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_second_inventory_detects_activity_before_delete",
+          157
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_partial_failure_retains_deletion_journal",
+          164
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_reference_catalog_is_not_rescanned_for_every_cache_entry",
+          178
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_dry_run_and_explicit_apply_write_private_reports",
+          191
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_failure_retains_error_report_and_refuses_overwrite",
+          205
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_ci_runs_cache_contracts",
+          214
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "setUp",
+          223
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "associated",
+          240
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "selection",
+          245
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_closed_source_entry_is_opt_in_and_reclaimed",
+          250
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_unrelated_entry_is_retained",
+          264
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_source_is_retained",
+          268
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_ownership_without_cleanup_record_is_retained",
+          273
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_start_without_completion_is_retained",
+          277
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_of_another_tree_does_not_qualify_source",
+          282
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unmarked_or_absent_source_is_retained",
+          287
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unknown_association_alongside_closed_source_is_retained",
+          294
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_reference_still_protects_recent_closed_source_entry",
+          300
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_future_timestamp_is_never_eligible",
+          304
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_malformed_cleanup_record_refuses_plan",
+          308
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_wrong_ownership_refuses_plan",
+          312
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_linked_or_symlink_cleanup_record_refuses_plan",
+          316
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_record_changed_after_plan_refuses_all_deletion",
+          324
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_became_active_after_plan_refuses_apply",
+          330
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_replaced_after_plan_refuses_apply",
+          337
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_new_reference_before_apply_preserves_recent_entry",
+          343
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_multiple_closed_sources_are_verified",
+          348
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_symlink_source_refuses_plan",
+          365
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_invalid_completion_timestamp_or_budget_refuses",
+          370
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_completed_mode_does_not_weaken_minimum_cold_age",
+          381
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_activity_in_second_observation_refuses_apply",
+          387
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_partial_source_prefix_does_not_authorize_recent_entry",
+          395
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_explicit_completed_mode_uses_same_preservation_policy",
+          400
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "fail_second",
+          168
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CountedEvidence",
+          179
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "bounded",
+          402
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "__contains__",
+          181
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          34
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          35
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          39
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          40
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          56
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          57
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          88
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          101
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          132
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          141
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          142
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          149
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          150
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          159
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          172
+        ],
+        "expectedMultiplicity": 2
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          207
+        ],
+        "expectedMultiplicity": 4
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          246
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          247
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          252
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          253
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          332
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          383
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          390
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          90
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          95
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          102
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          103
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          161
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          174
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          208
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          211
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          334
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          385
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          392
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          410
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          411
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          412
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          413
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          414
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          415
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          416
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          417
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          97
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          197
+        ],
+        "expectedMultiplicity": 6
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          198
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "type",
+          "RuntimeStorageTests",
+          15
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "setUp",
+          16
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "runtime",
+          23
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "fixture",
+          27
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "reclaim",
+          34
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_completion_removes_only_disposable_data_and_preserves_proof",
+          38
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_explicitly_referenced_database_is_preserved",
+          46
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_exported_snapshots_and_source_fixtures_are_not_node_data",
+          51
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_activity_reappearing_before_removal_refuses_cleanup",
+          61
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_unknown_or_legacy_runtime_is_never_reclaimed",
+          68
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_inventory_failure_active_process_or_open_file_refuses_cleanup",
+          74
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_nested_symlink_and_redirected_root_refuse_cleanup",
+          83
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_ownership_marker_cannot_claim_another_runtime",
+          90
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_staged_dependencies_are_removed_but_source_and_receipts_remain",
+          96
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_browser_test_dependencies_do_not_accumulate_across_completions",
+          107
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_explicitly_cited_dependency_artifacts_are_preserved",
+          121
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_preflight_rejects_under_twenty_gib_before_creating_runtime",
+          130
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_copy_is_independent_and_preserves_mode_and_mtime",
+          136
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_repeated_completion_does_not_accumulate_databases",
+          146
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_standalone_fixtures_reclaim_after_process_shutdown",
+          153
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_partial_proof_without_success_receipt_reclaims_only_unreferenced_data",
+          163
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_proof_explicit_database_evidence_survives_reclamation",
+          176
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_partial_jsonl_database_evidence_is_preserved",
+          184
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_evidence_inventory_with_a_link_refuses_reclamation",
+          192
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_waits_for_open_files_instead_of_racing_async_node_exit",
+          201
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_timeout_preserves_data_and_refuses_cleanup",
+          210
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_rechecks_activity_that_appears_during_reclamation",
+          217
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_mid_reclamation_activity_timeout_preserves_database",
+          229
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_does_not_retry_unavailable_inventory",
+          237
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "workspace",
+          247
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_capture_reclaims_partial_invocation_without_awarding_acceptance",
+          255
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_independent_reproduction_reclaims_dependencies_and_keeps_fresh_evidence",
+          271
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_ci_runs_runtime_and_maintenance_preservation_contracts",
+          298
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_capture_collects_runtimes_and_artifact_paths_without_deleting_receipts",
+          304
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "stage",
+          277
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          24
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          35
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          63
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          131
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          170
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          180
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          188
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          196
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          204
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          205
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          212
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          222
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          223
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          232
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          239
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          240
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          310
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          78
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          116
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          262
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          263
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          264
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          285
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          286
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          287
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          288
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          289
+        ],
+        "expectedMultiplicity": 2
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          290
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          291
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "Makefile",
+          "call",
+          "python3",
+          57
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-capture.json",
+        "omitted": [
+          "Makefile",
+          "call",
+          "python3",
+          58
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "identity",
+          31
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "validate_root",
+          36
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "inactive",
+          49
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "reference_ids",
+          60
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "referenced",
+          67
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "completion_file",
+          71
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "dependency_reclaimed",
+          79
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "completed_sources",
+          94
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "associated_sources",
+          136
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "plan",
+          145
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "apply",
+          212
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "function",
+          "main",
+          274
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completion_file",
+          116
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completion_file",
+          117
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          158
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          222
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "completed_sources",
+          246
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "dependency_reclaimed",
+          129
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          240
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          248
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/prune_go_cache.py",
+          "call",
+          "associated_sources",
+          182
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CacheTests",
+          16
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CompletedSourceCacheTests",
+          219
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "setUp",
+          17
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "entry",
+          25
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "plan",
+          33
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "apply",
+          38
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_old_entry_is_selected_and_removed",
+          42
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_mtime_is_retained",
+          50
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_ctime_is_retained_even_with_old_mtime",
+          54
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_future_entry_is_retained",
+          61
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unknown_name_and_prefix_mismatch_are_retained",
+          65
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_symlinks_hardlinks_and_executable_directories_are_retained",
+          70
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_explicit_evidence_reference_is_retained",
+          77
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_generic_cache_configuration_does_not_protect_every_entry",
+          82
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_cache_descriptor_refuses_plan",
+          86
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_go_tool_refuses_plan",
+          92
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_inventory_failure_refuses_plan_and_apply",
+          99
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_changed_entry_or_new_reference_refuses_apply",
+          105
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_replaced_root_refuses_apply",
+          116
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_replaced_bucket_refuses_apply",
+          123
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_root_symlink_or_wrong_marker_refuses_plan",
+          129
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_budget_and_minimum_retention_are_enforced",
+          136
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_target_already_met_does_not_delete",
+          147
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_age_below_eight_hours_is_rejected",
+          153
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_second_inventory_detects_activity_before_delete",
+          157
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_partial_failure_retains_deletion_journal",
+          164
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_reference_catalog_is_not_rescanned_for_every_cache_entry",
+          178
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_dry_run_and_explicit_apply_write_private_reports",
+          191
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_failure_retains_error_report_and_refuses_overwrite",
+          205
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_ci_runs_cache_contracts",
+          214
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "setUp",
+          223
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "associated",
+          240
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "selection",
+          245
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_closed_source_entry_is_opt_in_and_reclaimed",
+          250
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_recent_unrelated_entry_is_retained",
+          264
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_active_source_is_retained",
+          268
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_ownership_without_cleanup_record_is_retained",
+          273
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_start_without_completion_is_retained",
+          277
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_of_another_tree_does_not_qualify_source",
+          282
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unmarked_or_absent_source_is_retained",
+          287
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_unknown_association_alongside_closed_source_is_retained",
+          294
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_reference_still_protects_recent_closed_source_entry",
+          300
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_future_timestamp_is_never_eligible",
+          304
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_malformed_cleanup_record_refuses_plan",
+          308
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_wrong_ownership_refuses_plan",
+          312
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_linked_or_symlink_cleanup_record_refuses_plan",
+          316
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cleanup_record_changed_after_plan_refuses_all_deletion",
+          324
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_became_active_after_plan_refuses_apply",
+          330
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_replaced_after_plan_refuses_apply",
+          337
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_new_reference_before_apply_preserves_recent_entry",
+          343
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_multiple_closed_sources_are_verified",
+          348
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_symlink_source_refuses_plan",
+          365
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_invalid_completion_timestamp_or_budget_refuses",
+          370
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_completed_mode_does_not_weaken_minimum_cold_age",
+          381
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_source_activity_in_second_observation_refuses_apply",
+          387
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_partial_source_prefix_does_not_authorize_recent_entry",
+          395
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "test_cli_explicit_completed_mode_uses_same_preservation_policy",
+          400
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "fail_second",
+          168
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "type",
+          "CountedEvidence",
+          179
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "bounded",
+          402
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "function",
+          "__contains__",
+          181
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          34
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          35
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          39
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          40
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          56
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          57
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          88
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          101
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          132
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          141
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          142
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          149
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          150
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          159
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          172
+        ],
+        "expectedMultiplicity": 2
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          207
+        ],
+        "expectedMultiplicity": 4
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          246
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          247
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          252
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          253
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          332
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          383
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          390
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          90
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          95
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          102
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          103
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          161
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          174
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          208
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          211
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          334
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          385
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.apply",
+          392
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          410
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          411
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          412
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          413
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          414
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          415
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          416
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          417
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.plan",
+          97
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "patch.object",
+          197
+        ],
+        "expectedMultiplicity": 6
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "scripts/test_prune_go_cache.py",
+          "call",
+          "cache.main",
+          198
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "type",
+          "RuntimeStorageTests",
+          15
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "setUp",
+          16
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "runtime",
+          23
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "fixture",
+          27
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "reclaim",
+          34
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_completion_removes_only_disposable_data_and_preserves_proof",
+          38
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_explicitly_referenced_database_is_preserved",
+          46
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_exported_snapshots_and_source_fixtures_are_not_node_data",
+          51
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_activity_reappearing_before_removal_refuses_cleanup",
+          61
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_unknown_or_legacy_runtime_is_never_reclaimed",
+          68
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_inventory_failure_active_process_or_open_file_refuses_cleanup",
+          74
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_nested_symlink_and_redirected_root_refuse_cleanup",
+          83
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_ownership_marker_cannot_claim_another_runtime",
+          90
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_staged_dependencies_are_removed_but_source_and_receipts_remain",
+          96
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_browser_test_dependencies_do_not_accumulate_across_completions",
+          107
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_explicitly_cited_dependency_artifacts_are_preserved",
+          121
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_preflight_rejects_under_twenty_gib_before_creating_runtime",
+          130
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_copy_is_independent_and_preserves_mode_and_mtime",
+          136
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_repeated_completion_does_not_accumulate_databases",
+          146
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_standalone_fixtures_reclaim_after_process_shutdown",
+          153
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_partial_proof_without_success_receipt_reclaims_only_unreferenced_data",
+          163
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_proof_explicit_database_evidence_survives_reclamation",
+          176
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_partial_jsonl_database_evidence_is_preserved",
+          184
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_evidence_inventory_with_a_link_refuses_reclamation",
+          192
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_waits_for_open_files_instead_of_racing_async_node_exit",
+          201
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_timeout_preserves_data_and_refuses_cleanup",
+          210
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_rechecks_activity_that_appears_during_reclamation",
+          217
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_mid_reclamation_activity_timeout_preserves_database",
+          229
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_shutdown_does_not_retry_unavailable_inventory",
+          237
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "workspace",
+          247
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_capture_reclaims_partial_invocation_without_awarding_acceptance",
+          255
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_failed_independent_reproduction_reclaims_dependencies_and_keeps_fresh_evidence",
+          271
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_ci_runs_runtime_and_maintenance_preservation_contracts",
+          298
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "test_capture_collects_runtimes_and_artifact_paths_without_deleting_receipts",
+          304
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "function",
+          "stage",
+          277
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          24
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          35
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          63
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          131
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          170
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          180
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          188
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          196
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          204
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          205
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          212
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          222
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          223
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          232
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          239
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          240
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          310
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          78
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          116
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          262
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          263
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          264
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          285
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          286
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          287
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          288
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          289
+        ],
+        "expectedMultiplicity": 2
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          290
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "tests/webui/test_runtime_storage.py",
+          "call",
+          "patch.object",
+          291
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "Makefile",
+          "call",
+          "python3",
+          57
+        ],
+        "expectedMultiplicity": 1
+      },
+      {
+        "graph": "-independent.json",
+        "omitted": [
+          "Makefile",
+          "call",
+          "python3",
+          58
+        ],
+        "expectedMultiplicity": 1
+      }
+    ],
+    "graphsPreserved": {
+      "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-capture.json": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c",
+      "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-independent.json": "7e29fb03b7fd9f98af4a9d994fca2ebc180780f085dedb5c2b227f1c3f34e01c"
+    },
+    "oldGraphRejected": true,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-run-20261018.py",
+      "sha256": "7a8f47218d030b72809d8d185ae7b31e35df67ab0ec0a60b362314e89a157104",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285731007215996
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-run-20261018.log",
+      "sha256": "deb5a6e07dc0cb9ff55eb17e04ddbc2de1fa46b4a85e86084d82312de0266831",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285792865957186
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-independent-20261018.py",
+      "sha256": "e816a3a201c5f3afd0054a2a0a82e9e66183b9b2b176753c59a14be39d154d25",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285731007768529
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-independent-20261018.log",
+      "sha256": "556d54fb97f5b507ef63c40560600a6878a34cd758bb8df9854ecd3c97b79271",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285833577971338
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-specific-20261018.py",
+      "sha256": "ace6043965345f5284c1580f3dc6d9d820e54f602daefd0313e39adcafa738fe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285731012435619
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-specific-20261018.log",
+      "sha256": "74e54ca19f87758aae8c85265608dee69ed84f0f14c9f712dbec47793d7b64e8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285881200466434
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-red-20261018.log",
+      "sha256": "bce07b0fff0aee0007968a2b6047b91891fbb0854d46bd0945d5ee4b8e39c533",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285731347876876
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-green-20261018.log",
+      "sha256": "41388e5c02742500e94f31099c8b02c8212c4348975482a369957fdbb177509d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792286050017707122
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-parser-contracts-20261018.log",
+      "sha256": "6009c3c129beeef4ff28d65e36a3ff8a93fa69444682558f1a775a9ef1ac36a3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285744352929314
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-publish-20261018.py",
+      "sha256": "4d0078629f78cfe6fb9949ed61606b2d6667b185db5ca54bb8039b7ba0ada42d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792286050515445909
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-start.json",
+      "sha256": "e4147a7c645356cfd9326f70586f2daad4c5f769719678e4c3e460604e3bfcf5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285780796499044
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-summary.json",
+      "sha256": "919c1e34dd1950a97563d10f152a747a9e2861e51c56d7349832bffc7b23b922",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285792865765273
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-independent-audit.json",
+      "sha256": "15d9e09aa6b88c4dbb52c8021d490b78e0b8e8b06c9cc7ae73bd50eed8627aa6",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285833577736134
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-completed-cache-refresh-20261018-specific-audit.json",
+      "sha256": "4e6416cc60534488bcfceef680410af9229a1a04d28d6a552f6f1e4c42040386",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285881200316895
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-docs-20261018.log",
+      "sha256": "ea4b25c247de337700760aa39620b1f9568a17494397701579cfed6dabbb7ac8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285535257623343
+    }
+  ],
+  "limits": [
+    "Generated proof metadata and prose are excluded from code classification; publishing this record changes that metadata after the fixed-source measurement.",
+    "All 25 dynamic program inputs remain explicitly unresolved. A8 covers exported non-method Go symbols and does not measure method reachability.",
+    "Target counts distinguish 193 file/kind/name/line keys from 203 syntax occurrences; repeated calls on one line are checked with AST multiplicity.",
+    "This does not replace current-source Web capture/reproduction, full live race/e2e or whole L1."
+  ],
+  "all14Accepted": false
+}

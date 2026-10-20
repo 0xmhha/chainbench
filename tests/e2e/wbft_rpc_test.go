@@ -29,7 +29,12 @@ func TestE2E_WbftAdminPeers(t *testing.T) {
 	deadline := time.Now().Add(60 * time.Second)
 	var peers int
 	for time.Now().Before(deadline) {
-		if peers = adminPeerCount(c); peers > 0 {
+		var err error
+		peers, err = adminPeerCount(c)
+		if err != nil {
+			t.Fatalf("admin_peers failed: %v", err)
+		}
+		if peers > 0 {
 			return
 		}
 		time.Sleep(3 * time.Second)
@@ -70,13 +75,13 @@ func isValidator(t *testing.T, url string) bool {
 	return out
 }
 
-// adminPeerCount returns the number of peers admin_peers reports (0 on error).
-func adminPeerCount(c *rpc.Client) int {
+// adminPeerCount preserves RPC errors separately from a legitimate empty peer set.
+func adminPeerCount(c *rpc.Client) (int, error) {
 	var peers []struct {
 		ID string `json:"id"`
 	}
 	if err := c.Call(context.Background(), "admin_peers", &peers); err != nil {
-		return 0
+		return 0, err
 	}
-	return len(peers)
+	return len(peers), nil
 }

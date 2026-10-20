@@ -1,0 +1,348 @@
+{
+  "scope": "NODE-002 same-datadir recognition, exact pre-fork block/transaction/receipt preservation and connected post-fork synchronization against a live successor. Does not claim the migrated reader seals as a validator, full original 87-case sufficiency, full mainnet, W3 resolution or final Web acceptance.",
+  "requirement": "docs/tc/wemix4.0/01-test-scenarios.md NODE-002",
+  "red": {
+    "bridge": "Existing directory, file and symlink were replaced by the old bridge; all three cases now refuse and preserve sentinel data.",
+    "comparison": "The prior non-empty block check accepted changed block hash/state root, transaction input, receipt gas and missing transaction. Each now fails; identical data passes."
+  },
+  "sourceFingerprint": "f010645827e80be7d3c26639c032650beae1e7a350e3151c6f40bbedf3263a3b",
+  "actual": {
+    "proof": {
+      "path": "/private/tmp/cbui/hf-hex_yprq/reports/migration-proof.json",
+      "sha256": "424b8674e5a5b0ddea46ba07048bcc7aff0441967fdd3aaf17d328a7ea13e5d9",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984198438897447
+    },
+    "preforkHead": 19,
+    "fork": 20,
+    "transactionHash": "0x444015a66157bb92bbdf24e73f8585d96c0e7d14fd97d28a11fab5a679b6b931",
+    "historicalBlock": {
+      "hash": "0xe678dfc8d24b9adbc5f2c311e1b737eb879274344fdf9af4337159e59c2c1811",
+      "stateRoot": "0x7d58874b05b1ba0578cb8eff87a1a35f491acc0a27b81e0fb52474ee4ce9bb8f",
+      "number": "0x7"
+    },
+    "transactionFields": [
+      "blockHash",
+      "blockNumber",
+      "from",
+      "hash",
+      "input",
+      "nonce",
+      "to",
+      "transactionIndex",
+      "type",
+      "value"
+    ],
+    "receiptFields": [
+      "blockHash",
+      "blockNumber",
+      "contractAddress",
+      "cumulativeGasUsed",
+      "effectiveGasPrice",
+      "from",
+      "gasUsed",
+      "logs",
+      "logsBloom",
+      "status",
+      "to",
+      "transactionHash",
+      "transactionIndex"
+    ],
+    "receiptStatus": "0x1",
+    "exactBeforeAfterAndAfterSync": true,
+    "readerHeadObservations": [
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      36
+    ],
+    "postforkBlock": {
+      "hash": "0xd1605ff0b6ca426f70913007e8ac9d696ba0cac4cc45861a8c31b2c581129e64",
+      "stateRoot": "0x04676f609e629aa96ac22fad48e8f9c3123c10ed72cf3864791c236361ce3d8d",
+      "number": "0x24"
+    },
+    "connectedPeer": true,
+    "readerMatchesLiveSuccessor": true,
+    "zeroSkip": true
+  },
+  "related": {
+    "test": "TestWemixW3PartialGovernanceReproductionE2E",
+    "proof": {
+      "path": "/private/tmp/cbui/hf-4jt14h6f/reports/w3-proof.json",
+      "sha256": "3f24bd9528006d8b98127da8d9de0f0cf664dfd7fc813acb86fbf42ae317fb0a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984370501180920
+    },
+    "issueResolved": false,
+    "firstSetupBlocked": "consensus capability unknown: rpc_probe_unavailable; retained before second setup succeeded"
+  },
+  "runs": [
+    {
+      "exitCode": 0,
+      "sourceBefore": "f010645827e80be7d3c26639c032650beae1e7a350e3151c6f40bbedf3263a3b",
+      "sourceAfter": "f010645827e80be7d3c26639c032650beae1e7a350e3151c6f40bbedf3263a3b",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixDataMigrationE2E",
+        null
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/hf-hex_yprq"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/hf-hex_yprq/reports/migration-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-hex_yprq": []
+      },
+      "summary": {
+        "path": "/private/tmp/chainbench-w3-node002-initial-summary.json",
+        "sha256": "7ee2fa6d35723fe0df98962ae1e9f330bf8e4baa55eb8b9d11d749e80586fc63",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984202031466477
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-w3-node002-initial-native.jsonl",
+        "sha256": "502d89c38d68bba9317d9f1ee9939da9fd39f66a8f69c65a23d2dfef686e2743",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984201594722488
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "f010645827e80be7d3c26639c032650beae1e7a350e3151c6f40bbedf3263a3b",
+      "sourceAfter": "f010645827e80be7d3c26639c032650beae1e7a350e3151c6f40bbedf3263a3b",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixW3PartialGovernanceReproductionE2E",
+        null
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/hf-4jt14h6f",
+        "/private/tmp/cbui/hf-peg63syt"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/hf-4jt14h6f/reports/w3-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-4jt14h6f": [],
+        "/private/tmp/cbui/hf-peg63syt": []
+      },
+      "summary": {
+        "path": "/private/tmp/chainbench-w3-node002-related-summary.json",
+        "sha256": "ccf1de2ec1eef5f596d6e9a1cf485d0a677886e31405d7310fff18a8af628712",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984375094579098
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-w3-node002-related-native.jsonl",
+        "sha256": "b16537b7f220e06d0aea8f908dd802fcbb346336721d7056237be20525d119af",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984374627919973
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/hf-4jt14h6f",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 249,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-4jt14h6f/reports/migration-inventory.json",
+        "sha256": "b2f20b12c0e6511a887a2578aa86c503a85d3418f98b83b8a43f3b293ad1ac41",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984453492122259
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-hex_yprq",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 263,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-hex_yprq/reports/migration-inventory.json",
+        "sha256": "7ccff42f5cd2f6334db33a996ce7b7443031893d1b82a853344d8a80d00fdcd7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984453544197903
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-peg63syt",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-peg63syt/reports/migration-inventory.json",
+        "sha256": "9059549398547058768c383a76dd3f8af0923068a98ccbfa12980964e38fcf7b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791984453578699332
+      }
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_data_migration_e2e_test.go",
+      "sha256": "827a0277faf9ce7b18ef4f90aff74cb85bf98e298bbd5ec6bb586145a028db08",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791984078506040852
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/wemix_w3_repro_e2e_test.go",
+      "sha256": "e597cd1806fc1734780fbaa75b5c6422478c12b465a586019d67c578a279e228",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791984048816317099
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/handoff_runtime_test.go",
+      "sha256": "e7ae95bb668820ba655f541fa4de978269665061eefa0aa7ba7443bf2ea370e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791960744122890562
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/tc/wemix4.0/01-test-scenarios.md",
+      "sha256": "81d8638066f00515b02fb12c6d2c9bb03cb60a721eea1f573080c33f8b84fd4f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070025190903
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/runtime_storage.py",
+      "sha256": "a630238e7e6ad2cebc40c66899442a5eebc62a9f04bf6d965afeab5b05dd1d50",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791903896111163030
+    }
+  ],
+  "binaries": [
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    },
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/gwemix",
+      "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791973660680382414
+    },
+    {
+      "path": "/private/tmp/chainbench-head-native/gwbft",
+      "sha256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791888502020736500
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-node002-bridge-red.log",
+      "sha256": "2e512ce20c4c56b6300c68159ed16abf28067d2eb52258f214f1d96b5d8f67f0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791983890201235171
+    },
+    {
+      "path": "/private/tmp/chainbench-node002-snapshot-red.log",
+      "sha256": "a805fa19b61c8d29363b964a73bc5992d744f428478949fa4b6e49a22b3e5cd7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984052192861262
+    },
+    {
+      "path": "/private/tmp/chainbench-node002-snapshot-compile-error.log",
+      "sha256": "2e690327147af4226c34a0276997d6693927da6fbaa4c165fa6e6616bea8a831",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984048767216290
+    },
+    {
+      "path": "/private/tmp/chainbench-node002-unit-green.log",
+      "sha256": "f37c25e02956124cad58e0f8ae63c9dddf7173a6134028df86b18f25d2f457f7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984084090747760
+    },
+    {
+      "path": "/private/tmp/chainbench-node002-final-check.log",
+      "sha256": "8366605bebbd7df100ae2c89a4949c97922fe5ae25286a40826526ed0d4776ce",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984631731352684
+    },
+    {
+      "path": "/private/tmp/chainbench-node002-tagged-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791984544227723402
+    }
+  ],
+  "reproduce": "Set verified CHAINBENCH_E2E_FROM_BIN/TO_BIN, owned WEBUI_RUNTIME_ROOT, GOCACHE, replacement binary and 20 GiB free, then go test -tags e2e -race ./cmd/chainbench -run ^TestWemixDataMigrationE2E$ -count=1 -timeout 15m. Actual proofs must run serially, with no source or documentation edits.",
+  "validation": {
+    "makeCheck": "passed",
+    "taggedVet": "passed",
+    "relatedUnitRace": "passed",
+    "nativeMigrationRace": "passed",
+    "relatedW3DiagnosticRace": "passed",
+    "finalWebAcceptanceAwarded": false
+  }
+}

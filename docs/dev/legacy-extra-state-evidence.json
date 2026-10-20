@@ -1,0 +1,378 @@
+{
+  "scope": "Independent two-profile public extra cases: RPC extra/VM status/balance/boundary code and raw DSL assertions. AccountProof response presence checked; Merkle-proof validity not claimed. Two fresh host process/FD inventories and retained file bytes/mode/uid/gid/ns-mtime checked. Prior actual BLOCKED/panic preserved, not fixed. Not all254/87/Linux/mainnet/Web.",
+  "sourceDigest": "e66aaef7736af0d580cfa0aaa7c540efa85bc267d351609bebbc46250ff1508d",
+  "headAtProof": "ad74b244",
+  "sourceFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_extra_state_test.go",
+      "sha256": "b68637ea65d8697e7c37f805e456dbb9414f4937f6e4680a41c6a5fa39ab9aae",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792098883506206598
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_extra_state_native_test.go",
+      "sha256": "a759f8ac29a8afb02cac08c5a72b129065dd2189884e1252013acaf9c99bceae",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792098883506441181
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "2d07c3bf750fdf0a0ffbbb61188e3c11c41cf55787437f83ac117228a5b7a972",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792098818546211303
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/02-stablenet-account-extra.json",
+      "sha256": "7431c2fb041453567a52145b3a272680c48ab2514ad9c0918a21502bd119ad53",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792098669271799070
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/07b-extra-state-across-delayed-boho.json",
+      "sha256": "d311869eccd531760bd2a1ada8ed43fb00fff59ee7f9d167a9211d0c31f08fba",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792098815592243827
+    }
+  ],
+  "originalSourceCommit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+  "originals": [
+    {
+      "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/extra-state/tests/02-test-extra-contract-to-alloc.sh",
+      "gitBlob": "b3a08c8c41132a8f8744f3eaa741292b2ea33704",
+      "capture": {
+        "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/extra-state/tests/02-test-extra-contract-to-alloc.sh",
+        "sha256": "772ad3f10d1cf492d3af21cdb1eaffc4c2a1329d153d565bbd6cc409323b8781",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792088397274543004
+      }
+    },
+    {
+      "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/extra-state/tests/07-test-extra-v1-to-v2-delayed.sh",
+      "gitBlob": "0799e24a6f7c31e8cdc4ce8332c5fcbc496ed25f",
+      "capture": {
+        "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/extra-state/tests/07-test-extra-v1-to-v2-delayed.sh",
+        "sha256": "9d2c3c5725033d6df5043d434908e55c73e970775ded7ee6880bdf68742cdb4f",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792088397277301744
+      }
+    }
+  ],
+  "originalGenesis": {
+    "gitPath": "chainbench/tests/stablenet/configs/private-chain/extra-state/genesis.json",
+    "gitBlob": "655b33c08e9301857079dd54839c62f3198a2f18",
+    "capture": {
+      "path": "/private/tmp/chainbench-legacy-extra-genesis-13b5e12.json",
+      "sha256": "d56d4b55c000bd66d60eeb547cbdc4f135d9f5fd89e49c6d87b608935ca7e202",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098341461589825
+    }
+  },
+  "fixtureDifferences": [
+    "Current owned BP4 and local test EOAs differ from original role-specific addresses/topology.",
+    "Original private fixture Boho100, current delayed fixture explicitly Boho6 with v2 GovMinter and historical5/6 observations.",
+    "Original shell programs not executed. Native validates corresponding read-only predicates on official current StableNet."
+  ],
+  "unitRed": {
+    "log": {
+      "path": "/private/tmp/chainbench-legacy-extra-red-20261016.log",
+      "sha256": "bf5731c177ca08a40af04fe8f965c1cd3a829fd0c8c297eb24f79661d8dd75d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098565663713450
+    },
+    "falsePassesDetected": 18,
+    "existingControlsAlreadyRejecting": 2,
+    "positiveControls": 2
+  },
+  "unitGreen": {
+    "log": {
+      "path": "/private/tmp/chainbench-legacy-extra-green-20261016.log",
+      "sha256": "cd805774c125eff45359d2ca61fce309e6b00f815d37b5e9307b7116760d4dbf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098676302105983
+    },
+    "subtests": 22,
+    "negativeControls": 20,
+    "positiveControls": 2
+  },
+  "regression": {
+    "initialFailure": {
+      "path": "/private/tmp/chainbench-legacy-extra-related-20261016.log",
+      "sha256": "45aab5ff9dbba551d9aa06be6850060d7349ab219b31b8fef50a6a926bd2cb26",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098779909978813
+    },
+    "fixtureCapabilityFailure": {
+      "path": "/private/tmp/chainbench-legacy-extra-related-final-20261016.log",
+      "sha256": "d1a1f1d41bad3c01205ac1ed6ed847e0809436b49bc5ac8e7aa57cb8ed175bc4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098837242088945
+    },
+    "finalEngineHelperRace": {
+      "path": "/private/tmp/chainbench-legacy-extra-related-corrected-20261016.log",
+      "sha256": "cfe55daeeb2cc39e59d5737d444a74add4e53c3805db4ecac16736ac59018bb1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098895087586051
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-legacy-extra-check-20261016.log",
+      "sha256": "76349d2f59a1484137c6a54354ddf2c5d09ac18696e2590e7d1dc85bcf8aef50",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099079326850397
+    },
+    "addressUpdate": {
+      "path": "/private/tmp/chainbench-legacy-extra-address-update-20261016.log",
+      "sha256": "2b357306b9e466acd43a74c6ffb146796e545d96d17fbac71bcc3172bb2c073d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098818548323625
+    },
+    "addressPositionsBefore": 910,
+    "addressPositionsAfter": 949,
+    "onlyTwoIntendedCasePrefixesChanged": true,
+    "corrections": "Declare govMinter requirement for explicit fork overlay, add same capability to unit fixture, update reviewed two-case address positions."
+  },
+  "firstActualAttempt": {
+    "summary": {
+      "path": "/private/tmp/chainbench-legacy-extra-20261016-summary.json",
+      "sha256": "34e0010925b11795d28ed75296c71fa2905e4b022b0478ea5c5c054da060bc69",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099216404170469
+    },
+    "rawGoEvents": {
+      "path": "/private/tmp/chainbench-legacy-extra-20261016-native.jsonl",
+      "sha256": "ae07d2cbc754a60fb34afd32385c76eb2e141bf5cc254b070c94f938cbc718a5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099215357559139
+    },
+    "independentFailureAudit": {
+      "path": "/private/tmp/chainbench-legacy-extra-20261016-failure-independent.json",
+      "sha256": "370d01941b4b535b2045aeaa6ecb855ae35a6f30efbf71fed2e3c622e9c467ee",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099369171226703
+    },
+    "nativeAcceptedScope": false,
+    "caseVerdict": "BLOCKED",
+    "testBodyExecuted": false,
+    "delayedProfileExecuted": false,
+    "retainedFiles": 194,
+    "remainingDatabases": 0,
+    "otherThreeAgreeAtBlock": 77,
+    "crash": {
+      "log": {
+        "path": "/private/tmp/cbui/txfail-vkpz6yjz/w/logs/node4.log",
+        "sha256": "8907d49082f3031959cd7e5eeb8374ccb0820a13d0a5ff0d2777ef21411ab0fa",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792099129178548474
+      },
+      "function": "consensus/wbft/core.(*Core).ProcessExtraSeal",
+      "source": {
+        "path": "/private/tmp/chainbench-upstream-20261016/go-stablenet/consensus/wbft/core/extraseal.go",
+        "sha256": "5f3b5ba1492946f8b9bdd9b39fec466580b96b7dc6b89da05fbe643593d15370",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792094861680147327
+      },
+      "line": 152,
+      "expression": "idx, _ := valSet.GetByAddress(msg.Source())",
+      "interpretation": "Stack nil interface and source dereference are consistent with nil validator set; origin and frequency are not established.",
+      "issueResolved": false
+    },
+    "sameCrashSourceAsPreviousPin": true,
+    "rootCauseAndFrequencyEstablished": false
+  },
+  "successfulReplay": {
+    "summary": {
+      "path": "/private/tmp/chainbench-legacy-extra-20261016-attempt2-summary.json",
+      "sha256": "4d46e0af6f47e6030a283dba9021935d451a511c23c81e251da7249058c39c0e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099513249625837
+    },
+    "rawGoEvents": {
+      "path": "/private/tmp/chainbench-legacy-extra-20261016-attempt2-native.jsonl",
+      "sha256": "0e6975c085d599a619e974c4952906ab09a4b4ccb090ea5adb58b85c64a26e1f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099512217269094
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-legacy-extra-20261016-attempt2-independent.json",
+      "sha256": "6adb08d05a743c943e909e51d52d66e56e1e61eacf0aa422283dffdd779c337f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099602346269105
+    },
+    "sameFrozenSourceAndCaseInputs": true,
+    "goPasses": [
+      "TestNativeLegacyAccountExtraState/params",
+      "TestNativeLegacyAccountExtraState/delayed",
+      "TestNativeLegacyAccountExtraState"
+    ],
+    "topLevelTests": 1,
+    "subtests": 2,
+    "publicCasesPassed": 2,
+    "actualAssertions": 36,
+    "stateObservations": 11,
+    "elapsedSeconds": 65.93390620802529,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "profiles": [
+      {
+        "profile": "params",
+        "id": "stablenet-account-extra",
+        "assertions": 15,
+        "observationCount": 5,
+        "proof": {
+          "path": "/private/tmp/cbui/txfail-1dcnpig8/reports/legacy-extra-proof.json",
+          "sha256": "9f34eb5bc292bc24265bc93dc0fef60b2192acf42094a72d925f8db9308dc7c9",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792099459177622684
+        },
+        "spec": {
+          "path": "/private/tmp/cbui/txfail-1dcnpig8/reports/20261015-212410-82523/UTC-20261015-212410/tests/001_stablenet-account-extra/spec.json",
+          "sha256": "094d9baad094acbf3d65fb027f0d5b136e537194b4a1f9e3ee3c9c8c4f8e4242",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792099457047945809
+        },
+        "assertionFile": {
+          "path": "/private/tmp/cbui/txfail-1dcnpig8/reports/20261015-212410-82523/UTC-20261015-212410/tests/001_stablenet-account-extra/assert.json",
+          "sha256": "5ab62f6cb0144ce9a58db0796a3907ce5457af978d57d2b485003e53591a46a7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792099459167266991
+        }
+      },
+      {
+        "profile": "delayed",
+        "id": "extra-state-across-delayed-boho",
+        "assertions": 21,
+        "observationCount": 6,
+        "proof": {
+          "path": "/private/tmp/cbui/txfail-sa2qa8z9/reports/legacy-extra-proof.json",
+          "sha256": "a58dd10e587df3f929c860c3acc485a1aeced1712594c0e87548946b4772aba6",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792099509273129604
+        },
+        "spec": {
+          "path": "/private/tmp/cbui/txfail-sa2qa8z9/reports/20261015-212410-82523/UTC-20261015-212425/tests/001_extra-state-across-delayed-boho/spec.json",
+          "sha256": "520d70aafbe85eeee2596d35fd4c7db1768e4023a8d4c21dd9451f0704baa100",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792099507066779362
+        },
+        "assertionFile": {
+          "path": "/private/tmp/cbui/txfail-sa2qa8z9/reports/20261015-212410-82523/UTC-20261015-212425/tests/001_extra-state-across-delayed-boho/assert.json",
+          "sha256": "fa277ae170796ef9fcab2b2caa95868121524591cd16b3b5197b1fc595f2ed7f",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792099509228147936
+        }
+      }
+    ],
+    "retainedFiles": 394,
+    "remainingDatabases": 0,
+    "retainedTrieCacheBytes": 0,
+    "firstFailedArtifactsRehashedUnchanged": true
+  },
+  "independentAuditCorrection": {
+    "firstLog": {
+      "path": "/private/tmp/chainbench-legacy-extra-independent-first-20261016.log",
+      "sha256": "bc3f4b3ca0eac69fbd7ff72f226209586de8f6bee77ab6597eedb4f3990cf7b4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099554803967881
+    },
+    "reason": "Recorded RPC provenance preserves accountManager alias. Resolve it through exact current StableNet manifest and reject four wrong-target controls; do not omit the address check."
+  },
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-legacy-extra-run-20261016.py",
+      "sha256": "22e40a136ed907bfa7559f9c79ac9f4be495b06e59db8182c7d51d8350ccb637",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098965749582439
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-extra-run2-20261016.py",
+      "sha256": "06e8d40ab2f958580a2b1e6fb3d099be913f3fda520b41cdc353f7984b3c7be3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099439918547860
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-extra-failure-audit-20261016.py",
+      "sha256": "1e47b08d9eef3b4df7a44801244a0fbc2b82ba4be132ed3b287e5c5a57a3eb09",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099367857748142
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-extra-independent-20261016.py",
+      "sha256": "932811c9a6470fcf4a2c54251a54f2902dc708b08d9bf812c0e4f6417452f6fb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792099600596100711
+    }
+  ],
+  "acceptedScope": true,
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "externalPanicResolved": false,
+  "merkleProofValidityVerified": false
+}

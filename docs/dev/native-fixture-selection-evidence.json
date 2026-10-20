@@ -1,0 +1,233 @@
+{
+  "date": "2026-10-18",
+  "scope": "Use one explicit native selection for WEB01 and WEB04/shared proof fixtures; source/version/help preparation only, not product registration, native chain execution, browser mapping, full L1 or final Web acceptance.",
+  "implementation": [
+    "Reuse WEBUI_SELECTED_BINARIES and existing default manifest across both builders. No hardcoded legacy binary fallback.",
+    "Require exactly three distinct supported profiles; validate file hash, source object/family, host and commit before any materialization. Preserve wrong-family/stale negative assets used by existing WEB04 tests.",
+    "For a missing legacy Git Commit version line, require matching Go VCS revision with vcs=git and vcs.modified=false. Conflicting stamps and modified/missing VCS metadata remain refused. Record identity method and metadata digest.",
+    "No new product CLI/MCP input."
+  ],
+  "red": {
+    "canonicalLegacyBuilderBehaviorFailures": 5,
+    "missingLegacyStampWithValidGoVCSFailure": 1,
+    "earlierTestRecorderGlobShadowErrorsPreservedNotCountedAsProductRed": true
+  },
+  "green": {
+    "nativeSelectionContracts": 15,
+    "prerequisiteRegressionContracts": 7,
+    "web14RegressionContracts": 11,
+    "makeCheckExitCode": 0
+  },
+  "firstActualAttempt": {
+    "accepted": false,
+    "sourceBefore": "bd1ca692224b6e6f1fc746710a2b1e3088d6bf2b748640c7c112d2b737e5a86e",
+    "runtime": "/private/tmp/cbui/selection-s9vu6kiv",
+    "failure": "Pinned WEMIX version omits the legacy Git Commit line. Source identity was rejected; no acceptance claimed.",
+    "diagnosis": "Actual Go VCS metadata contains the exact pinned4538a9f5 revision and modified=false, and the source family marker is present. The source/binary was not rebuilt or modified."
+  },
+  "actualRetry": {
+    "scope": "Actual shared source selection, three pinned native version/help preparations and three pre-copy refusals. No chain network, WEB01 mapping/browser, full L1 or final Web acceptance.",
+    "sourceBefore": "c087d6c6ee5f9f8da5c45caef8df6c4bba15107f2e3063f7dfd69f0942aa98bb",
+    "sourceAfter": "c087d6c6ee5f9f8da5c45caef8df6c4bba15107f2e3063f7dfd69f0942aa98bb",
+    "runtime": "/private/tmp/cbui/selection-0lmu5ojc",
+    "nativeNodesStarted": 0,
+    "remainingDatabases": [],
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "actualProfiles": [
+    {
+      "chain": "stablenet",
+      "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48",
+      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 4d17eea018c8dd579409db30bfd27de79c4f4121\nGit Commit Date: 20261013\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+      "commit": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+      "helpDigest": "8e043a9edf99755acf0a5a3f42c186a684abf7bbb6182731a14e5839eec6cb13",
+      "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028",
+      "identitySource": "version",
+      "buildInfoSHA256": null
+    },
+    {
+      "chain": "wbft",
+      "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689",
+      "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: d535dd3d25110977ce19503d8fcbf7e9a5430562\nGit Commit Date: 20261008\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+      "commit": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+      "helpDigest": "f36146a64d5e5aa653cdac8b6927a1802847f9c63dd205de1ad4448489d6f354",
+      "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4",
+      "identitySource": "version",
+      "buildInfoSHA256": null
+    },
+    {
+      "chain": "wemix",
+      "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+      "version": "Gwemix\nVersion: 0.10.15-stable\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+      "commit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+      "helpDigest": "5d4724086ea87aafd0b567d81de6d9617147fa2848f01391e9f8636a38c49713",
+      "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09",
+      "identitySource": "go-build-info",
+      "buildInfoSHA256": "d978978c30f48eb44f38d8a6907eb75ba04c6a92f2ed54a7a67bdd55b8907eb1"
+    }
+  ],
+  "actualNativeCommands": [
+    [
+      "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+      "version"
+    ],
+    [
+      "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+      "version"
+    ],
+    [
+      "/private/tmp/chainbench-w3-head-native/gwemix",
+      "version"
+    ],
+    [
+      "/private/tmp/cbui/selection-0lmu5ojc/stablenet-node",
+      "--help"
+    ],
+    [
+      "/private/tmp/cbui/selection-0lmu5ojc/wbft-node",
+      "--help"
+    ],
+    [
+      "/private/tmp/cbui/selection-0lmu5ojc/wemix-node",
+      "--help"
+    ],
+    [
+      "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+      "version"
+    ],
+    [
+      "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+      "version"
+    ],
+    [
+      "/private/tmp/chainbench-w3-head-native/gwemix",
+      "version"
+    ],
+    [
+      "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+      "version"
+    ],
+    [
+      "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+      "version"
+    ]
+  ],
+  "independent": {
+    "scopeAccepted": true,
+    "sourceDigest": "c087d6c6ee5f9f8da5c45caef8df6c4bba15107f2e3063f7dfd69f0942aa98bb",
+    "profilesReobserved": 3,
+    "externalSourceFilesPreserved": 6508,
+    "refusalsBeforeCopy": 3,
+    "tamperControlsRejected": [
+      "source mutation",
+      "input mutation",
+      "external change",
+      "wrong family",
+      "stale asset checksum",
+      "wrong source commit",
+      "missing profile",
+      "missing refusal",
+      "accepted invalid input",
+      "preflight copy",
+      "native network claim",
+      "node launch command",
+      "database left behind",
+      "final acceptance claim"
+    ],
+    "nativeNodesStarted": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "remainingProductGate": "Read-only source comparison found app Web binary upload and ManifestBinary.Verify still require the legacy Git Commit line (web_assets.go, manifest_setup.go). Shared fixture preparation passing does not prove those product paths accept the current WEMIX build. Add behavioral RED/GREEN and actual product proof before final acceptance.",
+  "remainingIndependentGate": "The independent staged source omits .git while whole race forbids skips; tracked-tree doc checks explicitly skip without Git. Reproduce and preserve a private Git view for the independent runner; not yet implemented or proved.",
+  "fullPythonRegressionAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-native-selection-retry-20261018-summary.json",
+      "sha256": "bac462947d2556d4ed60e86cd865396425226738dd1dd8e0c0e2084d37f52c18"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-retry-20261018-start.json",
+      "sha256": "9c0271abc9e948c1b67d9f2618ff1f6c326e5ccf5a851682bd037e6f2971336e"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-retry-20261018-independent.json",
+      "sha256": "7059cd919d18c5c398198dc3e6b1b62d7d7af5ca766d46ff8d67729f8e549fd0"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-red-20261018.log",
+      "sha256": "2a6a8ece72987a795cadffbed44e63fddbc4287b58a75603e67ada1017d80c44"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-red-corrected-20261018.log",
+      "sha256": "94a7037f7b0c980d0f6cf7ae72c15b41b9077c2cb9bc2968966f3a840aaed14b"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-red-canonical-20261018.log",
+      "sha256": "c2a2f62273084870cf857d91953d1019a27b3594346dae654938532ffa2936d2"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-green-20261018.log",
+      "sha256": "4a1f5064c7f18ca37b9543195257b9f2839fa6fa779a936c7998cebbc626bbfa"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-green-canonical-20261018.log",
+      "sha256": "dae97527feaa5f4404b7cf8a367c36b5834935509ab9babacf648b1bb8476a3b"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-expanded-green-20261018.log",
+      "sha256": "9dac12ca9bcb4fd29b7c16113e91083114b84a24ee30b09ad76db688cb328e59"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-vcs-red-20261018.log",
+      "sha256": "279b2aca9647926820ea289508d7424f349ee40e73e1a06ca50054673937530c"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-vcs-green-20261018.log",
+      "sha256": "d5cd8fbdf814f649138c0872e740aa59985e8b38ec315a1acc4873be9976e6c5"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-check-20261018.log",
+      "sha256": "ae45d016c7325929e2f696b332c3bc7175da2e372041b998046d803d0df990e3"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-vcs-check-20261018.log",
+      "sha256": "b01e56969af723f59466c42e669da7f5fe573b11fcfae59e6beee63f712ca820"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-proof-run-20261018.log",
+      "sha256": "54eaa84655a25f1fcd85600cc2369a6b41c24f1b1545a14b4429d51e5425cc2a"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-retry-run-20261018.log",
+      "sha256": "f4b03118ed81ff7a4dad31dea3a25f55748fc00389f68ed0935b38da6fe23519"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-retry-audit-run-20261018.log",
+      "sha256": "fa2e5ac4753450956f4b1bf689c571efe7bc99653d5e610f2972fec0f2504f21"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-vcs-prerequisite-regression-20261018.log",
+      "sha256": "fd49aba5f35c938be43436424bc3c2f9f2397a091da4f7e2a3cf10e5b4ba5abf"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-vcs-web14-regression-20261018.log",
+      "sha256": "6e2c2e2d0c5d4f2445feb5005937a4d47635379f8adf4113de6f692d171b2766"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-proof-20261018-start.json",
+      "sha256": "3553950938e150f8be039e8a7d608530b6eb343e90fa328b2a7ec2c3f5fb034c"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-identity-diagnosis-corrected-20261018.json",
+      "sha256": "a8a07476b94611bdb0d452435557d0a74c4412b0a0112016fa41bb360c6ee594"
+    },
+    {
+      "path": "/private/tmp/chainbench-native-selection-pinned-20261018.json",
+      "sha256": "98241eb54227e652770b30d0b4faaa97591b7f92c9d59a124b9ba7e764e92067"
+    }
+  ]
+}

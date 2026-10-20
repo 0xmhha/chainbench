@@ -57,7 +57,7 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if extra, ok := args["params"].([]any); ok {
 		params = append(params, extra...)
 	}
-	sub, err := rpc.Subscribe(ctx, wsURL, params...)
+	sub, err := subscribeWithRunHeaders(ctx, ac.Deps, wsURL, params...)
 	if err != nil {
 		return fmt.Errorf("dsl: wsOpen %s: %w", event, err)
 	}
@@ -110,6 +110,15 @@ func (wsCollectedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 		return res, err
 	}
 	defer func() { _ = sub.Close() }()
+	if err := validateDurationControl("wsCollected", "timeout", ac.Spec); err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	if err := validateUnsignedControl("assertion", "wsCollected", "count", ac.Spec); err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+
 	want := 1
 	if n, ok := uintArg(ac.Spec["count"]); ok && n > 0 {
 		want = int(n)
@@ -175,6 +184,16 @@ func sanitizeWSProvenance(spec map[string]any) map[string]any {
 type wsSubscribeAssertion struct{}
 
 func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	for _, field := range []string{"timeout"} {
+		if err := validateDurationControl("wsSubscribe", field, ac.Spec); err != nil {
+			return session.AssertResult{Assert: "wsSubscribe", Actual: err.Error(), Provenance: ac.Spec}, err
+		}
+	}
+
+	if err := validateUnsignedControl("assertion", "wsSubscribe", "count", ac.Spec); err != nil {
+		return session.AssertResult{Assert: "wsSubscribe", Actual: err.Error(), Provenance: ac.Spec}, err
+	}
+
 	res := session.AssertResult{Assert: assertWSSubscribe, Provenance: ac.Spec}
 
 	wsURL, err := wsTarget(ac)
@@ -208,7 +227,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	sctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	sub, err := rpc.Subscribe(sctx, wsURL, params...)
+	sub, err := subscribeWithRunHeaders(sctx, ac.Deps, wsURL, params...)
 	if err != nil {
 		res.Actual = err.Error()
 		return res, fmt.Errorf("dsl: wsSubscribe %s: %w", event, err)
@@ -321,8 +340,9 @@ func wsTargetURL(nodes []node.Node) (string, error) {
 // readDerive computes an arithmetic combination of already-bound values —
 // the saved-value arithmetic the migration ledger recorded as a gap
 // (gasPrice == baseFee + gasTip; block-period timestamp diffs). Spec:
-// op (sum | diff), of (values or "$bindings"; hex 0x or decimal strings, or
-// numbers). diff subtracts the rest from the first. The result is a decimal
+// op (sum | diff | mul | min), of (values or "$bindings"; hex 0x or decimal
+// strings, or numbers). diff subtracts the rest from the first; min selects
+// the smallest exact integer. The result is a decimal
 // string, comparable with the numeric assert primitives.
 //
 // format: "hex" returns a 0x-hex quantity instead. A block-scoped RPC method
@@ -330,3 +350,10 @@ func wsTargetURL(nodes []node.Node) (string, error) {
 // could read a receipt's block number but not ask anything about the block
 // after it — which is the only way to check a rule stated over a block and its
 // child, such as the base fee an in-band block hands on unchanged.
+
+func subscribeWithRunHeaders(ctx context.Context, d *interp.Deps, url string, params ...any) (*rpc.Subscription, error) {
+	if d != nil && d.Headers != nil {
+		return rpc.SubscribeWithHeaders(ctx, url, d.Headers(url), params...)
+	}
+	return rpc.Subscribe(ctx, url, params...)
+}

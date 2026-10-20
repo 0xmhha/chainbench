@@ -279,7 +279,14 @@ func dotPath(v any, path string) (any, bool) {
 }
 
 func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[string]any) (any, error) {
+	if err := validateUnsignedControl("reader", "derive", "index", spec); err != nil {
+		return nil, err
+	}
+
 	op, _ := spec["op"].(string)
+	if op == "regexpCount" {
+		return deriveRegexpCount(spec)
+	}
 	if op == "abiCall" {
 		return deriveAbiCall(spec)
 	}
@@ -288,6 +295,9 @@ func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[strin
 	}
 	if op == "quorum" {
 		return deriveQuorum(spec)
+	}
+	if op != "sum" && op != "diff" && op != "mul" && op != "min" {
+		return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum, diff, mul or min)", op)
 	}
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) == 0 {
@@ -313,8 +323,10 @@ func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[strin
 			// to say what a reverted call cost: the balance it expects afterwards
 			// is the balance before minus gasUsed times effectiveGasPrice.
 			acc.Mul(acc, v)
-		default:
-			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum, diff or mul)", op)
+		case "min":
+			if v.Cmp(acc) < 0 {
+				acc.Set(v)
+			}
 		}
 	}
 	switch f, _ := spec["format"].(string); f {

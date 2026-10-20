@@ -11,10 +11,24 @@ type StepResult struct {
 	Gas     string
 	Hash    string
 	Receipt map[string]any
+	// Deployment holds public contract-creation provenance, never signing keys.
+	Deployment *ContractDeployment `json:"Deployment,omitempty"`
 	// Error is why the step failed, empty when it succeeded. Without it a
 	// failed run records that a step failed but not why, which is the one thing
 	// the reader needs (design: never hide the cause).
 	Error string
+}
+
+// ContractDeployment describes the transaction and bytecode actually deployed.
+// Nonce is nullable so an unavailable observation cannot claim nonce zero.
+type ContractDeployment struct {
+	Deployer         string  `json:"deployer,omitempty"`
+	Nonce            *uint64 `json:"nonce,omitempty"`
+	ExpectedAddress  string  `json:"expectedAddress,omitempty"`
+	ActualAddress    string  `json:"actualAddress,omitempty"`
+	BytecodeSHA256   string  `json:"bytecodeSHA256,omitempty"`
+	Artifact         string  `json:"artifact,omitempty"`
+	ObservationError string  `json:"observationError,omitempty"`
 }
 
 // AssertResult records one assertion outcome with its provenance for

@@ -43,10 +43,10 @@ var manifestJSON []byte
 var genesisTmpl []byte
 
 func init() {
-	registry.Register(registry.StaticPlugin{
+	registry.Register(plugin{registry.StaticPlugin{
 		M:     registry.MustParseManifest(manifestJSON),
 		Fam:   wbftfam.New(),
 		Proto: protocol.WBFT(),
 		Tmpl:  genesisTmpl,
-	})
+	}})
 }

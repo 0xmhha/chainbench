@@ -28,6 +28,9 @@ func lowerCase(c CaseV2) (Spec, error) {
 		return Spec{}, err
 	}
 	spec := newSpec(c, env)
+	if err := validatePrepared(c.ID, c.Prepared, env.Values); err != nil {
+		return Spec{}, err
+	}
 	for _, step := range []func(CaseV2, ChainPresetV2, *Spec) error{
 		lowerChain, lowerEnvDeclarations, lowerHooks, lowerStatements,
 	} {
@@ -64,6 +67,9 @@ func casePreset(c CaseV2) (ChainPresetV2, error) {
 	}
 	if env.Chain == "" {
 		return ChainPresetV2{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
+	}
+	if err := validatePresetValues(env.Values); err != nil {
+		return ChainPresetV2{}, err
 	}
 	if err := checkAttach(c.ID, env); err != nil {
 		return ChainPresetV2{}, err
@@ -104,6 +110,9 @@ func newSpec(c CaseV2, env ChainPresetV2) Spec {
 		DefaultOn:        c.On,
 		Timeouts:         c.Timeouts,
 		EnvAttach:        env.Attach,
+		EnvValues:        env.Values,
+		PresetID:         env.ID,
+		Prepared:         c.Prepared,
 	}
 	// The env's capabilities and the case's requires are both gating inputs, so
 	// they union — a case that lists its own requires must not lose the ones the
@@ -718,12 +727,25 @@ func checkAttach(caseID string, env ChainPresetV2) error {
 	if env.Attach == nil {
 		return nil
 	}
-	if len(env.Attach.RPC) == 0 {
+	if len(env.Attach.RPC) == 0 && len(env.Attach.Endpoints) == 0 {
 		return fmt.Errorf("dsl: case %s: env.attach needs \"rpc\" (the endpoints of the network to run against)", caseID)
 	}
 	for i, u := range env.Attach.RPC {
 		if strings.TrimSpace(u) == "" {
 			return fmt.Errorf("dsl: case %s: env.attach.rpc[%d] is empty", caseID, i)
+		}
+	}
+	if len(env.Attach.RPC) > 0 && len(env.Attach.Endpoints) > 0 {
+		return fmt.Errorf("dsl: case %s: attach rpc and endpoints are exclusive", caseID)
+	}
+	if len(env.Attach.Endpoints) > 0 {
+		if _, err := node.AttachedSet(env.Chain, "attached", env.Attach.Endpoints); err != nil {
+			return fmt.Errorf("dsl: case %s: %w", caseID, err)
+		}
+		for index, ep := range env.Attach.Endpoints {
+			if err := ep.Validate(); err != nil {
+				return fmt.Errorf("dsl: case %s: attach endpoint %d: %w", caseID, index+1, err)
+			}
 		}
 	}
 	var composing []string

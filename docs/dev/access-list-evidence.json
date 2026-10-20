@@ -1,0 +1,623 @@
+{
+  "scope": "TX007 original contractAddr/slot0 tuple on three managed native families; real funded independent account deploys finite SSTORE runtime and signs type1 call writing42. Receipt type/status and exact raw RLP/Keccak/recovered sender/tuple/input/storage proven. Prior BALANCE access-list generator regression retained. Not staged migration/full87/mainnet/Linux/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Original external BALANCE address case accepted seven malformed slot-specific responses.",
+  "unitGreen": "One positive and seven negative controls execute public DSL.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "37107141ed39e0bc1db1e0a4aa7e242fe873c119060aa5c40dd0fe630a5ed957",
+    "sourceAfter": "37107141ed39e0bc1db1e0a4aa7e242fe873c119060aa5c40dd0fe630a5ed957",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeDeployedSlotAccessList/stablenet",
+      "TestNativeDeployedSlotAccessList/wbft",
+      "TestNativeDeployedSlotAccessList/wemix",
+      "TestNativeDeployedSlotAccessList"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-3a1u10r0",
+      "/private/tmp/cbui/txfail-4cimoyfg",
+      "/private/tmp/cbui/txfail-80f0fvup"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-3a1u10r0/reports/access-list-proof.json",
+      "/private/tmp/cbui/txfail-4cimoyfg/reports/access-list-proof.json",
+      "/private/tmp/cbui/txfail-80f0fvup/reports/access-list-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-3a1u10r0": [],
+      "/private/tmp/cbui/txfail-4cimoyfg": [],
+      "/private/tmp/cbui/txfail-80f0fvup": []
+    },
+    "elapsedSeconds": 164.546,
+    "log": {
+      "path": "/private/tmp/chainbench-access-list-funded-native.jsonl",
+      "sha256": "420ddebbd5173d7f87691d428dbb6689cbda4649bdd5f91dcdd4088e656d7113",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026816641022629
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-access-list-funded-summary.json",
+      "sha256": "4679b16ef3a1c4ac4cab29beda8f9d5a26b4cd47fd14a98c8069852230df78cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026817164738133
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-access-list-funded-start.json",
+      "sha256": "cf50895e09739340d9c7cce5b9c5e2e2c7cda503b3a397e639fdd74cb5aa4ff1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026649904596537
+    }
+  },
+  "families": [
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-3a1u10r0/reports/access-list-proof.json",
+        "sha256": "42f7ab6f4fe535025e4f9b7e8e54c42a6a943854eeb5032da492dd11a3d5fd19",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026666531675178
+      },
+      "blockNumber": "0xc",
+      "blockHash": "0x99893baf6d71548be146a477ace63f6afdd66e44bfa397b6f99c9e78739069d9",
+      "hash": "0xf666d958da59b8019dca7f3e69a460f0e7cf99e4610005cf34f921d8b0a0dc8c",
+      "sender": "0x1aff37201c7028392d906d7f29375153a1ba2255",
+      "contract": "0xccb949db59c9ad391729f00f228298244a3f0e2b",
+      "accessList": [
+        {
+          "address": "0xccb949db59c9ad391729f00f228298244a3f0e2b",
+          "storageKeys": [
+            "0x0000000000000000000000000000000000000000000000000000000000000000"
+          ]
+        }
+      ],
+      "storage": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "rawHashMatches": true,
+      "signatureRecovered": true,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-3a1u10r0/reports/20261015-011052-11749/UTC-20261015-011052/tests/001_access-list-tx/assert.json",
+        "sha256": "9c9e5a04f1962c515e3a096814ea41489aceeb16319c6d68b1194ee6742a75ba",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026666522885839
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-3a1u10r0/reports/20261015-011052-11749/UTC-20261015-011052/tests/001_access-list-tx/steps.json",
+        "sha256": "91cfb3592b8532a0fd2da19bd71ad78133eb41ede5e8d1f18036a16cf72c5c4d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026666497471573
+      },
+      "assertionCount": 13,
+      "runtime": "/private/tmp/cbui/txfail-3a1u10r0",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-3a1u10r0/reports/access-list-inventory.json",
+        "sha256": "cb4031fe2f58940ab8bf7b7216a75c6fa59f939d96eef667b1ff7d77c1dd7d3f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026858697577840
+      }
+    },
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-4cimoyfg/reports/access-list-proof.json",
+        "sha256": "e2121a52e3a087567f0fd58b718d30ff32cd6c871788f1e74e1e3492199d6dd0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026717593958365
+      },
+      "blockNumber": "0x2f",
+      "blockHash": "0x3552553d4ad0451aa5464746fddbb8a0172d130945537d43b561acbf7b81e812",
+      "hash": "0xd66a90199c6f4de839c9af8eeef2a3fc5e63c1746c9e6f0697f5747b56435724",
+      "sender": "0xd3a4b53247e6e4516cde28d622497bff0c0e8244",
+      "contract": "0x6c889702e5e98fe7248eb8df7e331cbdc7811bad",
+      "accessList": [
+        {
+          "address": "0x6c889702e5e98fe7248eb8df7e331cbdc7811bad",
+          "storageKeys": [
+            "0x0000000000000000000000000000000000000000000000000000000000000000"
+          ]
+        }
+      ],
+      "storage": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "rawHashMatches": true,
+      "signatureRecovered": true,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-4cimoyfg/reports/20261015-011052-11749/UTC-20261015-011108/tests/001_access-list-tx/assert.json",
+        "sha256": "4eac8afe8558713e7708e07cd3e570a4f63a6d594b5b9d61c6b9029399300a51",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026717582382399
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-4cimoyfg/reports/20261015-011052-11749/UTC-20261015-011108/tests/001_access-list-tx/steps.json",
+        "sha256": "51d60dc7fc73ff70f408331621faade8b789a88915a9e98f34c78f351d7ac708",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026717541199414
+      },
+      "assertionCount": 13,
+      "runtime": "/private/tmp/cbui/txfail-4cimoyfg",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-4cimoyfg/reports/access-list-inventory.json",
+        "sha256": "23fbd7662d17aa9fadee0519dac2c7fcb86017c9b0cbb9165383471d46e53f05",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026858898659178
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-80f0fvup/reports/access-list-proof.json",
+        "sha256": "799b65eba9f5c8b9dc4bb738b10d9752605417b9f2ff9dc6451d7e903f6bb6c9",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026799363686901
+      },
+      "blockNumber": "0x2b",
+      "blockHash": "0x0e318d6ad7f510e41d4496e032965c9f95d972db4fe8ebf02a3050442fd2f169",
+      "hash": "0x4219641d6a6324aefb450b8aaadb85a1cc884f7df558690f0b9fb6a3ebdc4143",
+      "sender": "0xd2bda08a3ceb6ef88dd711cf37f6806eabb483b2",
+      "contract": "0xa64233fcee0926a4e4568b5e73f6c68af9ba5435",
+      "accessList": [
+        {
+          "address": "0xa64233fcee0926a4e4568b5e73f6c68af9ba5435",
+          "storageKeys": [
+            "0x0000000000000000000000000000000000000000000000000000000000000000"
+          ]
+        }
+      ],
+      "storage": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "rawHashMatches": true,
+      "signatureRecovered": true,
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-80f0fvup/reports/20261015-011052-11749/UTC-20261015-011159/tests/001_access-list-tx/assert.json",
+        "sha256": "edce31beca5db706a4cae9e5307cd536dfb2172611b07bd062c33832c8f5f681",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026799349471433
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-80f0fvup/reports/20261015-011052-11749/UTC-20261015-011159/tests/001_access-list-tx/steps.json",
+        "sha256": "61aa43cdf8ccd0d8dd7b3c5f1cb9cf347cd4090e143f165369958ecdd2c013f8",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026799306154655
+      },
+      "assertionCount": 13,
+      "runtime": "/private/tmp/cbui/txfail-80f0fvup",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-80f0fvup/reports/access-list-inventory.json",
+        "sha256": "13e6954487eecfbb5afee4b22c2e936dc5fe1a9165d311a068659599baf3c097",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859090788177
+      }
+    }
+  ],
+  "failedRuntimes": [
+    {
+      "runtime": "/private/tmp/cbui/txfail-amwfpklm",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 202,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-amwfpklm/reports/access-list-inventory.json",
+        "sha256": "b14ca29b8e44bceabf00ecc1c6ee4b4be12159a609929783e320f53b97a6b6cd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859129543535
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-c19pl5s8",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 202,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-c19pl5s8/reports/access-list-inventory.json",
+        "sha256": "80081c4469a17ba0f257dda4ee25111d36c84b61473a35daa2cea21595061085",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859173537605
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-v0uye6lk",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 115,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-v0uye6lk/reports/access-list-inventory.json",
+        "sha256": "2d22b3bdd2336ecd794ef0997691cd7f7c205cf629ee6e9c2e2c1ab6f462c569",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859206138251
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-c8ne7xbm",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 202,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-c8ne7xbm/reports/access-list-inventory.json",
+        "sha256": "3479ec5a90a4b9ef506d2f7fd29a93a6c03799a06607c7de7ae9d2fb6a07460a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859261573787
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-hk_atfdt",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-hk_atfdt/reports/access-list-inventory.json",
+        "sha256": "0644a93a6a262b0907af3e8acf25863458a78ab700d14487e6135831c5e5b0ec",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859295575392
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-m5ft5iug",
+      "accepted": false,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 202,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-m5ft5iug/reports/access-list-inventory.json",
+        "sha256": "aff7250219580e6cb7f57a54ad84a23f733ccdde549365a19f3947b41f114ef5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792026859328757039
+      }
+    }
+  ],
+  "priorFailedAttempt": {
+    "accepted": false,
+    "exitCode": 1,
+    "sourceBefore": "86df874efa7a1b04f75e50ffb437607313437fe8a36b94389e014d9597ad2e71",
+    "sourceAfter": "86df874efa7a1b04f75e50ffb437607313437fe8a36b94389e014d9597ad2e71",
+    "sourceUnchanged": true,
+    "passed": [],
+    "failed": [
+      "TestNativeDeployedSlotAccessList/stablenet",
+      "TestNativeDeployedSlotAccessList/wbft",
+      "TestNativeDeployedSlotAccessList/wemix",
+      "TestNativeDeployedSlotAccessList",
+      null
+    ],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-amwfpklm",
+      "/private/tmp/cbui/txfail-c19pl5s8",
+      "/private/tmp/cbui/txfail-v0uye6lk"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-amwfpklm/reports/access-list-proof.json",
+      "/private/tmp/cbui/txfail-c19pl5s8/reports/access-list-proof.json",
+      "/private/tmp/cbui/txfail-v0uye6lk/reports/access-list-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-amwfpklm": [],
+      "/private/tmp/cbui/txfail-c19pl5s8": [],
+      "/private/tmp/cbui/txfail-v0uye6lk": []
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-access-list-native-summary.json",
+      "sha256": "bdd80e535d7c73eed380e1a175dee605f69c55393c2998a7eb09bb7e9fab2ced",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025792478456486
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-access-list-native-native.jsonl",
+      "sha256": "901518055bb318eab0d39a521c109313c05f3267a56b8284a7873806eac6abbb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025791989318666
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-access-list-native-start.json",
+      "sha256": "70b9fe0fac331a21ab9f6615d2bd70a40774e58310e2b809302e7a0c1216402e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025585617588803
+    }
+  },
+  "priorCreationAttempt": {
+    "accepted": false,
+    "exitCode": 1,
+    "sourceBefore": "266a36a43533143010350224029a4d86f37659c81f36e8123609a3038201d58e",
+    "sourceAfter": "266a36a43533143010350224029a4d86f37659c81f36e8123609a3038201d58e",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeDeployedSlotAccessList/wemix"
+    ],
+    "failed": [
+      "TestNativeDeployedSlotAccessList/stablenet",
+      "TestNativeDeployedSlotAccessList/wbft",
+      "TestNativeDeployedSlotAccessList",
+      null
+    ],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-c8ne7xbm",
+      "/private/tmp/cbui/txfail-hk_atfdt",
+      "/private/tmp/cbui/txfail-m5ft5iug"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-c8ne7xbm/reports/access-list-proof.json",
+      "/private/tmp/cbui/txfail-hk_atfdt/reports/access-list-proof.json",
+      "/private/tmp/cbui/txfail-m5ft5iug/reports/access-list-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-c8ne7xbm": [],
+      "/private/tmp/cbui/txfail-hk_atfdt": [],
+      "/private/tmp/cbui/txfail-m5ft5iug": []
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-access-list-creation-summary.json",
+      "sha256": "47ffe3193d233e6591c54c1dacb30ca7d310a8d03c8a12acc826ac12d20c71ee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026228378920360
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-access-list-creation-native.jsonl",
+      "sha256": "c30fabcab73412fc03f62aea43f4477bc978c04e1506edd65c2af82f64c65305",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026227893927478
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-access-list-creation-start.json",
+      "sha256": "bd5528ffda0fc799e06b9bed0e07c78ad6f93046c07aaabb6798e1bfd801786a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026009313116162
+    }
+  },
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-access-list-publication.json",
+    "sha256": "1e106165624223969f5562683050e2a69e9de2644c6466c4807aee611a9cae61",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792026353755910749
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-access-list-red.log",
+      "sha256": "2e42fea77476b971ce3d8b453d445abf17bee334331890e04301111f691e8e50",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025257418101271
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-green.log",
+      "sha256": "ed3a38dc387de6c7ed4f350a51b117aa0d5188c32d9f05f3ba754bcb7adad997",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025310795268754
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-creation-red.log",
+      "sha256": "eb9aa271fcbc3896236b686a6b5210d44ab58b9516501a8e0fdaa4a6d1003139",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025821299027505
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-creation-green.log",
+      "sha256": "67e9c7d735b8f374d784a780d9c481fae756e7b3cbcabfc806251760458484d2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025843241432356
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-related-race.log",
+      "sha256": "cf9ec0b778ba72e74fd8f83c5ff7a3e451902b650e6525ec7b8bc7f7216240a3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025412753679269
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-related-race2.log",
+      "sha256": "2cb8dada6a87c2a27e3b66ecddab8d77083c6fd28982583c6d2a943fb777a876",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025456662601835
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-related-race3.log",
+      "sha256": "081cbef19743b598efa5befd00c17a81aa4ee35e7de4bbc51776ecd94f91934b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025881784572660
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-related-race4.log",
+      "sha256": "acc5cc04f802dfb68aed059356ee9217930f47c4c7f245d5598fedddbf8351c2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026531262028800
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-check.log",
+      "sha256": "9ece872c27b4aebf2cb7a3989ebd6b36a4a0b9ba44dbc6bf5883e5fa32245bcf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025558116123439
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-check2.log",
+      "sha256": "3e2596c4097b2750d1dda5e56d6f093f05b2cbd1ac825ba4340d29e8e2515b69",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025978819487834
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-check3.log",
+      "sha256": "ea3900bd9c5f4f0ab8b002f64bb6f438e1d16a644b50e01ab76a22697ac7ad17",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026631171181245
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-corpus-update.log",
+      "sha256": "606bb15534ff67a2e09aa803a22f5263e0c1073e3ef2332fdddec275c3a302c2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025422301461555
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-corpus-update2.log",
+      "sha256": "e152557e66c3665930c4286b58560a55d1cf99c84d2d38d52764d741fb9b9943",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025861157583722
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-corpus-update3.log",
+      "sha256": "bf96cefdde6d030e593ba89d1fe59426f80ca19b04e6674a082ea348656b116f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026508943342862
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-budget-red.log",
+      "sha256": "702b6a1da4a9072b98d1a66bed3274441da0d87d0f1b5a2d3890fb1b168a851d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026282453229005
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-budget-green.log",
+      "sha256": "fbb88ad5d5612025759d873d848d183d7afa6cbdfeadbddadc7c4b3610e92d4a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026356231557409
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-budget-scale-red.log",
+      "sha256": "952cef18f3dd7250b83a3c40f2920441402106695f51e767bc902f209a270cd7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026456423648692
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-budget-scale-green.log",
+      "sha256": "12e6984b4d303356fd3ba9a8cbc4eb1b40aa995b2063eb7055a992d5faeca4db",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792026402455425654
+    }
+  ],
+  "independentCrypto": [
+    {
+      "path": "/private/tmp/chainbench-policy-keccak.go",
+      "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001507798664088
+    },
+    {
+      "path": "/private/tmp/chainbench-access-list-recover.go",
+      "sha256": "cf8fa2b955228d965cab75b7108dc14fa89cc0fb7d7ce8b1716ce3de8f045a5f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792025528396324901
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

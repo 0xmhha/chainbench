@@ -1,4 +1,6 @@
 """WEB-04 fixture runner; writes incomplete receipts on any missing live evidence."""
+from runtime_storage import create_runtime
+from prerequisite import run_check
 from runtime_contract import runtime_root, base_commit
 from browser_process import run_browser
 
@@ -41,15 +43,14 @@ def main():
     started = now()
     for old in out.iterdir():
         if old.is_file(): old.unlink()
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True,mode=0o700)
+    runtime = create_runtime(invocation)
     server = None
     handles = []
     evidence = {'criterion': 'WEB-04', 'invocationId': invocation, 'scenarios': [], 'artifacts': []}
     failures = []
     try:
         for command in ('npm --prefix web run build', 'go test ./internal/chains/external', 'go test ./internal/app ./internal/dashboard -run Manifest'):
-            run = subprocess.run(command,shell=True,text=True,capture_output=True)
+            run = run_check(command,shell=True,text=True,capture_output=True)
             log = 'build.log' if command.startswith('npm') else ('external-tests.log' if command.endswith('/external') else 'tests.log')
             (out / log).write_text(run.stdout+run.stderr)
             if run.returncode: raise RuntimeError(command+' failed')

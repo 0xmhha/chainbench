@@ -1,0 +1,313 @@
+{
+  "scope": "RPC020/021 local WEMIX-to-WBFT Croissant20, actual production-bounded WS window. Exact newHeads count versus canonical generated range with all number/hash/parent links. Public LOG1 runtime reused; address+topic filter returns exact mined target log and excludes same-topic other-address log. Submit-to-receive upper bound includes queueing/signing/consensus and must be below actual block period, stronger than notification-only delay; no coarse header timestamp subtraction. Not entire public DSL cases/Linux/mainnet/all87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Count-only model accepted twenty acknowledgement/window/hash/link/filter/receipt/latency controls; missing-log rejection remained active.",
+  "unitGreen": "Positive and twenty-one negatives plus transaction lifecycle and actual RPC subscription protocol regressions; receipt-pinned deployment positive/five negatives reject latest/different canonical block/address/failed receipt/empty code.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "1d826d73661a39a1c85fd210e72ab116dc4fc35e8065d648b276c77c93f587b8",
+    "sourceAfter": "1d826d73661a39a1c85fd210e72ab116dc4fc35e8065d648b276c77c93f587b8",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixWebsocketWitnessE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-mirs2g69"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-mirs2g69": []
+    },
+    "elapsedSeconds": 67.657,
+    "log": {
+      "path": "/private/tmp/chainbench-websocket-witness-pinned-native.jsonl",
+      "sha256": "c9c28399a2dd197e47b3c34e201888b4841381537f501ee041313f68931d7a85",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041569279271038
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-websocket-witness-pinned-summary.json",
+      "sha256": "16ee2f106ad9d9d4324bd024fd18b1c130476854cc69f5efc5cfbbf1e544b302",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041569913331115
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-websocket-witness-pinned-start.json",
+      "sha256": "5ad713125b3e5f80428dc8c26b23a03ca92a2ed11b63afb32e0f196f237b62e3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041497770061222
+    }
+  },
+  "priorDeploymentObservation": {
+    "accepted": false,
+    "causeUnconfirmed": true,
+    "description": "First latest code observation returned 0x before WS began. Exact raw/receipt were not retained by that first assertion; subsequent source pins receipt-block code, waits canonical successor and retains partial deployment rows/raws. No production defect resolution is claimed.",
+    "exitCode": 1,
+    "sourceBefore": "8148d98c21f937c4860d48e52a729c6363e18a0f340dca3a29fde28201dc70d2",
+    "sourceAfter": "8148d98c21f937c4860d48e52a729c6363e18a0f340dca3a29fde28201dc70d2",
+    "sourceUnchanged": true,
+    "passed": [],
+    "failed": [
+      "TestWemixWebsocketWitnessE2E"
+    ],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-6tbi_wsw"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-6tbi_wsw": []
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-websocket-witness-native-native.jsonl",
+      "sha256": "12ddc4b08aeabf370fbe09c5278752bd4b885ff15d7638a7527af0025f5af85d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041065304536345
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-websocket-witness-native-summary.json",
+      "sha256": "f0324df7f741d71c92ffac7b22b5fda4717b1d0a8b9f95587e2069dd25c9f8d9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041065798851430
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-mirs2g69/reports/websocket-witness-proof.json",
+    "sha256": "89c700960790a955fc25b0b15d27b352cb138adfa5c01d6ae64ec08e9308f0b5",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792041565253736324
+  },
+  "publicRuntimeSource": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/rpc/CT-RPC-014-ws-subscribe-logs.json",
+    "sha256": "41805b85363a93dc9267631177e75b17176c36f9f791e94d92904a30210442aa",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1791380070131684868
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-websocket-witness-evidence.py",
+    "sha256": "df2090070c44f2a22f27ddf22cacec03257c4c4fe04a6fd3a35abc5f20f4ae12",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792041481001288286
+  },
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "subscriptionImplementation": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/rpc/subscribe.go",
+    "sha256": "0dcda3d4a2635cc8b11043b02c3f2e86537d470bf3d0d825d6f931eb7a8a1ab1",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1791944213788281512
+  },
+  "headWindow": {
+    "start": 44,
+    "end": 49,
+    "generated": 5,
+    "received": 5
+  },
+  "latencyUpperBound": {
+    "nanoseconds": 291625000,
+    "milliseconds": 291.625,
+    "blockPeriodNanoseconds": 1000000000,
+    "anchor": "before target wallet submission, including signing, queueing, consensus, transport and local collection; not header second-resolution timestamp"
+  },
+  "filter": {
+    "address": "0xa16529511e3811b1dbf94207f53cc7fe1b00d1e4",
+    "topics": [
+      "0x1111111111111111111111111111111111111111111111111111111111111111"
+    ]
+  },
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-6tbi_wsw",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 230,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-6tbi_wsw/reports/websocket-witness-inventory.json",
+        "sha256": "42e96a01d3457fe3e60e35d257470636c8797a7cd86186c4cda0e12f6dfea1ff",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792041597255559604
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-mirs2g69",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 230,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-mirs2g69/reports/websocket-witness-inventory.json",
+        "sha256": "070533371d5e9db9a52697e1b5b550bc26441449ecbe11974e51eb0ec8d11712",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792041597301287794
+      }
+    }
+  ],
+  "retainedFiles": 460,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-websocket-witness-publication.json",
+    "sha256": "067c719a8d0ceb8e090eb458ac3595b0d0fdc1ca46bc6a2c2b85abdda16e1021",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792040083355950258
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-red.log",
+      "sha256": "dc77b0044015fe4a49a5eb20fe9aa8a0f148b68c1b828f17f324a8b11da06b4d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040523430405158
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-green.log",
+      "sha256": "e01ad446e853dcefd6184a3e225e8bcb6e3ba296b3767e72eefd78c26220376e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040597436113324
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-green2.log",
+      "sha256": "69aee11e2a00cc16b78af7536ac0f1a7369e36878978c3fdf81e0dd013c237c6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040727742474417
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-pinned-red.log",
+      "sha256": "c07e31417645dcd5a474732e0f5b9a02db071ad63c3a90c25cbd80b5ac39b523",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041238449606538
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-green3.log",
+      "sha256": "0653dea475a48118e3347f4b208b7f12cbb683459bb901f9ef2a4a6b0c6bb35b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041275526393015
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-green4.log",
+      "sha256": "8a48b70bf140711d9fe68b936718432aa10a764df68986560492ce89272e03cf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041365988015495
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-related-race.log",
+      "sha256": "ea589de8183768624fd854aaaa0085500d45294364f957121c2840b22800f470",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040903010083920
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-related-race2.log",
+      "sha256": "0653dea475a48118e3347f4b208b7f12cbb683459bb901f9ef2a4a6b0c6bb35b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041323416625361
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-related-race3.log",
+      "sha256": "44a8bb746eb1b01b465b20b3cbe97170ea3c21a8cd5500e3f332af43a76dfabc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041464126525875
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-check.log",
+      "sha256": "f5f7c836b25e1476ec1619be19a2d2372582489a04b416f3c860db61847649ed",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040895890289266
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-check2.log",
+      "sha256": "2d745dee15fbb03f55960a81ee4d70e1dc9b7c7850ebb1d2e6da9565cb16a5d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041434090404044
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040797660766023
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-vet2.log",
+      "sha256": "1a1939e6309b36f1e6c0b4b8cb598dd4b0691f13338303ef1e124b8c1b3cfa06",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041324020278712
+    },
+    {
+      "path": "/private/tmp/chainbench-websocket-witness-vet3.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792041386893515959
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

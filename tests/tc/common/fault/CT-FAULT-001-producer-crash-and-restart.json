@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-node-crash",
-  "description": "CT-FAULT-001 — 생성 노드 하나를 멈춰도 블록이 계속 나오고, 다시 띄우면 기준 노드 높이까지 따라잡아 해시와 상태 루트가 같아진다 (기존 명세 RT-A-1-04, NODE-005, 절차는 docs/tc/common/06-detailed-procedures/06-fault.md 의 CT-FAULT-001). 2026-09-30 에 fault-node-crash, sample-lifecycle-node-restart, wbft-node-crash, wemix-node-crash 네 파일을 하나로 합쳤다. 남긴 모양은 wbft·wemix 사본 쪽이다. stablenet 판은 다시 띄운 노드를 고정 높이 8 까지만 기다렸는데, 그 높이는 체인이 이미 지나간 뒤라 아무것도 기다리지 않는다. 사본은 멈춘 사이에 나아간 node1 의 그 시점 높이를 읽어 두고 node3 가 거기까지 오기를 기다린다. 대기 시간은 셋 중 가장 긴 wemix 값으로 통일했다. sample-lifecycle 이 더 들고 있던 송금 세 단계는 옮기지 않았다. 그것은 CT-TX-001 이 재는 것이고, 그 케이스가 파일 하나로 세 체인을 돈다. sample-lifecycle 이 쓰던 binvar preset 도 옮기지 않았다. 마지막 readNodeLog 는 옮겨 왔다. 이 파일이 docs/guide/dsl-authoring.md 가 가리키는 작성 샘플 둘 중 하나이고, 그 동작을 보여 주는 곳이 여기였다. 판정에는 들어가지 않고 실패했을 때 읽을 로그 꼬리를 남긴다.",
+  "description": "검증자 node3를 중단한 뒤 중단 전 높이에서 새 블록 10개가 생성되는지 확인한다. 복구 후 네 노드의 현재 높이 차이가 2블록 이내인지 검사하고, 공통 높이의 블록 해시·상태 루트와 복구 노드 로그를 확인한다. 원문 fault/node-crash.sh.",
   "requires": [
     "rpc",
     "consensus",
@@ -21,14 +21,46 @@
       "block": "latest"
     },
     {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "crashStartHeight"
+    },
+    {
       "do": "stopNode",
       "on": "node3"
     },
     {
-      "expect": "blockAdvance",
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$crashStartHeight",
+        "10"
+      ],
+      "save": "crashProgressTarget"
+    },
+    {
+      "do": "waitBlock",
       "on": "node1",
-      "timeout": "180s",
-      "pollInterval": "3s"
+      "target": "$crashProgressTarget",
+      "timeout": "60s"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "crashStoppedProgressHead"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$crashStoppedProgressHead",
+        "$crashStartHeight"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "10"
     },
     {
       "do": "restartNode",
@@ -41,13 +73,102 @@
       "save": "caught"
     },
     {
-      "do": "waitFor",
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$caught",
+        "2"
+      ],
+      "save": "caughtMinimum"
+    },
+    {
+      "expect": "blockLag",
+      "maxLag": "2",
+      "timeout": "90s",
+      "pollInterval": "2s",
+      "onEach": [
+        "node1",
+        "node2",
+        "node3",
+        "node4"
+      ]
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "crashRecoveredHead1"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node2",
+      "save": "crashRecoveredHead2"
+    },
+    {
+      "do": "read",
       "source": "blockNumber",
       "on": "node3",
-      "compare": "GreaterOrEqual",
-      "expected": "$caught",
-      "timeout": "300s",
-      "pollInterval": "2s"
+      "save": "crashRecoveredHead3"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node4",
+      "save": "crashRecoveredHead4"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "min",
+      "of": [
+        "$crashRecoveredHead1",
+        "$crashRecoveredHead2",
+        "$crashRecoveredHead3",
+        "$crashRecoveredHead4"
+      ],
+      "save": "crashRecoveredMinimum"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$crashRecoveredHead1",
+        "$crashRecoveredMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$crashRecoveredHead2",
+        "$crashRecoveredMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$crashRecoveredHead3",
+        "$crashRecoveredMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$crashRecoveredHead4",
+        "$crashRecoveredMinimum"
+      ],
+      "compare": "LessOrEqual",
+      "is": "2"
     },
     {
       "expect": "sameBlockHash",
@@ -58,7 +179,7 @@
       "source": "derive",
       "op": "sum",
       "of": [
-        "$caught",
+        "$crashRecoveredMinimum",
         "0"
       ],
       "format": "hex",

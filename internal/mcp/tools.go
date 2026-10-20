@@ -93,7 +93,7 @@ func reportTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string"},
+				"workspaceDir": commonProperty("workspaceDir", nil),
 				"all":          map[string]any{"type": "boolean"},
 			},
 			"required": []string{"workspaceDir"},
@@ -104,7 +104,7 @@ func reportTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			all := app.ArgBool(args, "all", false)
-			rep, err := app.Report(context.Background(), app.Deps{}, app.ReportIn{Dir: dir, All: all})
+			rep, err := invokeFeature[app.ReportIn, app.ReportDoc](context.Background(), app.Deps{}, "report.session", app.ReportIn{Dir: dir, All: all})
 			if err != nil {
 				return "", err
 			}
@@ -141,7 +141,7 @@ func nodeRPCTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"rpc":    map[string]any{"type": "string"},
+				"rpc":    commonProperty("rpc", nil),
 				"method": map[string]any{"type": "string"},
 				"params": map[string]any{"type": "array"},
 			},
@@ -158,7 +158,7 @@ func nodeRPCTool() Tool {
 				params = p
 			}
 			var raw json.RawMessage
-			raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: url, Method: method, Params: params})
+			raw, err := invokeFeature[app.NodeCallIn, []byte](ctx, app.Deps{}, "node.rpc", app.NodeCallIn{RPC: url, Method: method, Params: params})
 			if err != nil {
 				return "", err
 			}
@@ -175,8 +175,8 @@ func consensusTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain": map[string]any{"type": "string"},
-				"rpc":   map[string]any{"type": "string"},
+				"chain": commonProperty("chain", nil),
+				"rpc":   commonProperty("rpc", nil),
 			},
 			"required": []string{"chain", "rpc"},
 		},
@@ -187,7 +187,7 @@ func consensusTool() Tool {
 				return "", err
 			}
 			method := p.Manifest().Consensus.ValidatorsMethod
-			res, err := app.Validators(ctx, app.Deps{}, argString(args, "chain", "stablenet"), "", "", argString(args, "rpc", ""))
+			res, err := invokeFeatureFields[app.ValidatorsOut](ctx, app.Deps{}, "chain.validators", map[string]any{"Chain": argString(args, "chain", "stablenet"), "RPC": argString(args, "rpc", "")})
 			vals := res.Validators
 			if err != nil {
 				return "", err
@@ -231,8 +231,8 @@ func faucetTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":    map[string]any{"type": "string"},
-				"rpc":      map[string]any{"type": "string"},
+				"chain":    commonProperty("chain", nil),
+				"rpc":      commonProperty("rpc", nil),
 				"from_key": map[string]any{"type": "string"},
 				"to":       map[string]any{"type": "string"},
 				"amount":   map[string]any{"type": "string"},
@@ -240,7 +240,7 @@ func faucetTool() Tool {
 			"required": []string{"rpc", "from_key", "to", "amount"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			hash, err := app.Faucet(ctx, app.Deps{}, app.FaucetIn{
+			hash, err := invokeFeature[app.FaucetIn, string](ctx, app.Deps{}, "account.faucet", app.FaucetIn{
 				Chain: chainRefFromArgs(args), FromKey: argString(args, "from_key", ""),
 				To: argString(args, "to", ""), Amount: argString(args, "amount", ""),
 			})
@@ -260,13 +260,13 @@ func verifyTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain": map[string]any{"type": "string"},
+				"chain": commonProperty("chain", nil),
 				"rpc":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 			},
 			"required": []string{"rpc"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.VerifyNetwork(ctx, app.Deps{}, app.VerifyNetworkIn{
+			res, err := invokeFeature[app.VerifyNetworkIn, app.VerifyNetworkOut](ctx, app.Deps{}, "network.verify", app.VerifyNetworkIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				Chain:   argString(args, "chain", ""),
 				RPCURLs: argStrings(args, "rpc"),
@@ -304,7 +304,7 @@ func statusTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string"},
+				"workspaceDir": commonProperty("workspaceDir", nil),
 			},
 			"required": []string{"workspaceDir"},
 		},
@@ -313,7 +313,7 @@ func statusTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			res, err := app.NetworkStatus(ctx, app.Deps{}, app.NetworkStatusIn{DataDir: dir})
+			res, err := invokeFeature[app.NetworkStatusIn, app.NetworkStatusOut](ctx, app.Deps{}, "network.status", app.NetworkStatusIn{DataDir: dir})
 			if err != nil {
 				return "", err
 			}
@@ -336,7 +336,7 @@ func txpoolTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"rpc": map[string]any{"type": "string"},
+				"rpc": commonProperty("rpc", nil),
 			},
 			"required": []string{"rpc"},
 		},
@@ -349,7 +349,7 @@ func txpoolTool() Tool {
 				Pending string `json:"pending"`
 				Queued  string `json:"queued"`
 			}
-			raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: url, Method: "txpool_status"})
+			raw, err := invokeFeature[app.NodeCallIn, []byte](ctx, app.Deps{}, "node.rpc", app.NodeCallIn{RPC: url, Method: "txpool_status"})
 			if err != nil {
 				return "", err
 			}
@@ -369,7 +369,7 @@ func logTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string"},
+				"workspaceDir": commonProperty("workspaceDir", nil),
 				"pattern":      map[string]any{"type": "string"},
 				"regexp":       map[string]any{"type": "boolean"},
 				"node":         map[string]any{"type": "integer"},
@@ -384,7 +384,7 @@ func logTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexp, _ := args["regexp"].(bool)
-			matches, err := app.LogSearch(context.Background(), app.Deps{}, app.LogSearchIn{
+			matches, err := invokeFeature[app.LogSearchIn, []app.LogMatch](context.Background(), app.Deps{}, "report.log", app.LogSearchIn{
 				Dir: dir,
 				SearchOpts: app.LogSearchFilter{
 					Pattern: argString(args, "pattern", ""),
@@ -418,7 +418,7 @@ func accountStateTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"rpc":     map[string]any{"type": "string"},
+				"rpc":     commonProperty("rpc", nil),
 				"address": map[string]any{"type": "string"},
 			},
 			"required": []string{"rpc", "address"},
@@ -428,7 +428,7 @@ func accountStateTool() Tool {
 			if url == "" || addr == "" {
 				return "", fmt.Errorf("rpc and address are required")
 			}
-			out, err := app.AccountState(ctx, app.Deps{}, app.AccountStateIn{RPC: url, Address: addr})
+			out, err := invokeFeature[app.AccountStateIn, app.AccountStateOut](ctx, app.Deps{}, "account.state", app.AccountStateIn{RPC: url, Address: addr})
 			if err != nil {
 				return "", err
 			}
@@ -446,7 +446,7 @@ func contractCallTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"rpc":  map[string]any{"type": "string"},
+				"rpc":  commonProperty("rpc", nil),
 				"to":   map[string]any{"type": "string"},
 				"data": map[string]any{"type": "string"},
 			},
@@ -457,7 +457,7 @@ func contractCallTool() Tool {
 			if url == "" || to == "" {
 				return "", fmt.Errorf("rpc and to are required")
 			}
-			return app.ContractCall(ctx, app.Deps{}, app.ContractCallIn{
+			return invokeFeature[app.ContractCallIn, string](ctx, app.Deps{}, "contract.call", app.ContractCallIn{
 				RPC: url, To: to, Data: argString(args, "data", ""),
 			})
 		},
@@ -472,7 +472,7 @@ func txWaitTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"rpc":             map[string]any{"type": "string"},
+				"rpc":             commonProperty("rpc", nil),
 				"hash":            map[string]any{"type": "string"},
 				"timeout_seconds": map[string]any{"type": "integer"},
 			},
@@ -483,7 +483,7 @@ func txWaitTool() Tool {
 			if url == "" || hash == "" {
 				return "", fmt.Errorf("rpc and hash are required")
 			}
-			r, err := app.TxWait(ctx, app.Deps{}, app.TxWaitIn{
+			r, err := invokeFeature[app.TxWaitIn, app.TxReceipt](ctx, app.Deps{}, "tx.wait", app.TxWaitIn{
 				RPC: url, Hash: hash,
 				Timeout: time.Duration(argInt(args, "timeout_seconds", 30)) * time.Second,
 			})
@@ -502,8 +502,8 @@ func txSendTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":    map[string]any{"type": "string"},
-				"rpc":      map[string]any{"type": "string"},
+				"chain":    commonProperty("chain", nil),
+				"rpc":      commonProperty("rpc", nil),
 				"from_key": map[string]any{"type": "string"},
 				"to":       map[string]any{"type": "string"},
 				"data":     map[string]any{"type": "string"},
@@ -512,7 +512,7 @@ func txSendTool() Tool {
 			"required": []string{"rpc", "from_key", "to"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			hash, err := app.TxSend(ctx, app.Deps{}, app.TxSendIn{
+			hash, err := invokeFeature[app.TxSendIn, string](ctx, app.Deps{}, "tx.send", app.TxSendIn{
 				Chain: chainRefFromArgs(args), FromKey: argString(args, "from_key", ""),
 				To: argString(args, "to", ""), Data: argString(args, "data", ""),
 				Value: argString(args, "value", "0"),
@@ -532,8 +532,8 @@ func contractDeployTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":    map[string]any{"type": "string"},
-				"rpc":      map[string]any{"type": "string"},
+				"chain":    commonProperty("chain", nil),
+				"rpc":      commonProperty("rpc", nil),
 				"from_key": map[string]any{"type": "string"},
 				"bytecode": map[string]any{"type": "string"},
 				"value":    map[string]any{"type": "string"},
@@ -541,7 +541,7 @@ func contractDeployTool() Tool {
 			"required": []string{"rpc", "from_key", "bytecode"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.ContractDeploy(ctx, app.Deps{}, app.ContractDeployIn{
+			out, err := invokeFeature[app.ContractDeployIn, app.ContractDeployOut](ctx, app.Deps{}, "contract.deploy", app.ContractDeployIn{
 				Chain: chainRefFromArgs(args), FromKey: argString(args, "from_key", ""),
 				Bytecode: argString(args, "bytecode", ""), Value: argString(args, "value", "0"),
 			})

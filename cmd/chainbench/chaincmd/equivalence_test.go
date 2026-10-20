@@ -92,6 +92,7 @@ func normalize(v any, dir string) {
 	switch t := v.(type) {
 	case map[string]any:
 		delete(t, "at")
+		delete(t, "startedAt")
 		// compositionId is derived from the workspace directory, which the two
 		// surfaces deliberately run in different temp dirs, so it differs by
 		// construction — a run-specific value like the timestamp, not a
@@ -112,6 +113,35 @@ func normalize(v any, dir string) {
 			}
 			normalize(sub, dir)
 		}
+	}
+}
+
+func TestEquivalence_NormalizeOnlyRunSpecificFields(t *testing.T) {
+	state := func(dir, stamp string) map[string]any {
+		return map[string]any{
+			"chain": "stablenet", "keysDir": "presets/keys",
+			"target": map[string]any{"dataRoot": dir},
+			"steps": map[string]any{"new": map[string]any{
+				"startedAt": stamp, "done": true, "result": "done", "detail": "workspace " + dir,
+			}},
+		}
+	}
+	left := state("/tmp/cli-workspace", "2026-10-15T21:42:37Z")
+	normalize(left, "/tmp/cli-workspace")
+	for _, field := range []string{"same composition", "chain", "keysDir", "done", "result", "detail"} {
+		t.Run(field, func(t *testing.T) {
+			right := state("/tmp/mcp-workspace", "2026-10-15T21:42:38Z")
+			switch field {
+			case "chain", "keysDir":
+				right[field] = "different"
+			case "done", "result", "detail":
+				right["steps"].(map[string]any)["new"].(map[string]any)[field] = "different"
+			}
+			normalize(right, "/tmp/mcp-workspace")
+			if same := reflect.DeepEqual(left, right); same != (field == "same composition") {
+				t.Fatalf("equivalent=%v after changing %s: %#v / %#v", same, field, left, right)
+			}
+		})
 	}
 }
 

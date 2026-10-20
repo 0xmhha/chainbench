@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "revert-tx-status-zero",
-  "description": "CT-CONTRACT-006 — 되돌리는 호출은 블록에 들어가되 영수증 상태가 실패이고, 쓴 가스만 차감된다 (기존 명세 RT-A-3-06, TX-017, 절차는 docs/tc/common/06-detailed-procedures/04-contract.md 의 CT-CONTRACT-006). 2026-09-30 에 revert-tx-status-zero, stablenet-negative-tx-revert, wbft-revert-status-zero, wemix-revert-status-zero 네 파일을 하나로 합쳤다. 체인별 두 파일은 preset 과 id 만 달랐다. 합치면서 잃을 뻔한 두 가지를 옮겨 왔다. 하나는 negative-tx-revert 가 보던 배포 코드 확인으로, 배포된 런타임이 정확히 0x60006000fd 인지 본다. 코드가 비어 있지 않은지만 보면 엉뚱한 코드가 올라가도 통과한다. 다른 하나는 체인별 파일이 보던 blockAdvance 로, 되돌린 트랜잭션이 블록을 깨뜨리지 않고 체인이 계속 나아가는지 본다. 차감액은 문서 기대 결과 \"쓴 가스만 차감된다\" 를 재는 부분이다. 호출자를 새 계정으로 두는 것은 node1 이 블록 보상을 받아 잔액이 저절로 움직이기 때문이다. 쓴 가스가 한도(100000)보다 작은지도 본다. 한도를 다 쓰면 REVERT 가 아니라 가스 소진이고, 그때는 '쓴 가스만 차감' 과 '한도만큼 차감' 을 구별할 수 없다.",
+  "description": "CT-CONTRACT-006 / TX-017 — 0번 슬롯을 42로 초기화한 London 호환 컨트랙트를 배포한다. 빈 calldata는 슬롯 값을 돌려준다. 0x01 호출은 SSTORE로 1을 쓴 뒤 REVERT한다. 실제 실패 영수증, 사용 가스가 한도보다 작음, 실패 전후 eth_call과 저장소의 42 유지, 새 호출자 잔액의 정확한 gasUsed × effectiveGasPrice 차감, 후속 블록 전진을 확인한다. 배포 runtime도 정확히 대조한다. Native 회귀는 debug_traceTransaction에서 실패 전에 SSTORE가 완료된 사실을 별도로 확인하여 쓰기 없는 fixture의 자명한 롤백을 거절한다.",
   "requires": [
     "rpc"
   ],
@@ -18,7 +18,7 @@
       "do": "sendTx",
       "from": "node1",
       "gas": "200000",
-      "data": "0x600580600b6000396000f360006000fd",
+      "data": "0x602a600055601b8060106000396000f33615600f57600160005560006000fd5b60005460005260206000f3",
       "save": "dhash"
     },
     {
@@ -41,7 +41,7 @@
       "source": "codeAt",
       "address": "$addr",
       "compare": "Equal",
-      "expected": "0x60006000fd",
+      "expected": "0x3615600f57600160005560006000fd5b60005460005260206000f3",
       "pollInterval": "1s",
       "timeout": "60s"
     },
@@ -66,13 +66,32 @@
       "save": "before"
     },
     {
+      "expect": "call",
+      "to": "$addr",
+      "data": "0x",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$addr",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
       "do": "sendTx",
       "key": "$callerKey",
       "to": "$addr",
       "gas": "100000",
       "expect": "revert",
       "save": "chash",
-      "timeout": "120s"
+      "timeout": "120s",
+      "data": "0x01"
     },
     {
       "expect": "rpcCall",
@@ -139,6 +158,24 @@
       "address": "$caller",
       "compare": "Equal",
       "is": "$want"
+    },
+    {
+      "expect": "call",
+      "to": "$addr",
+      "data": "0x",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$addr",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
     },
     {
       "expect": "blockAdvance",

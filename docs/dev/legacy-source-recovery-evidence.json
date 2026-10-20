@@ -1,0 +1,63 @@
+{
+  "scope": "Recover cached Git source inputs for legacy comparison. Not scenario equivalence, historical snapshot byte identity, shell runtime acceptance or full87 completion.",
+  "repository": "/Users/0xtopaz/work/github/stablenet/packages",
+  "sourceCommit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+  "sourceTree": "43ef3e55c1f834407360d07c6a86d9b51821e9e2",
+  "originalWorkingHead": "cca35a2e7f0a8929dc77bd237fd41b035b971e51",
+  "originalWorkingHeadUnchanged": true,
+  "cachedRef": "origin/feat/private-chain",
+  "capturedShellFiles": 460,
+  "capturedBytes": 1548814,
+  "gitBlobBytesAndModesVerified": true,
+  "originalUidGidMtimePreserved": false,
+  "manifest": {
+    "path": "/private/tmp/chainbench-legacy-source-13b5e12/manifest.json",
+    "sha256": "57ff758d3722b97108f6d6e2755af884f28bd489e0837d8a55274aab8adbd555",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792088397377464846
+  },
+  "independent": {
+    "path": "/private/tmp/chainbench-legacy-source-13b5e12/source-independent-20261016.json",
+    "sha256": "b159769fc26015cf23a1d0221dfaf32cf34334a80faa138643508b7f1fb10f1c",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792095372347928236
+  },
+  "outerShellSyntaxGraph": {
+    "graph": {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/shell-structure-combined-graph.json",
+      "sha256": "f08ef2a76d57243fa84eddd8562e4d2612d7643d065ec88af03b975db80e9925",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792089728923220866
+    },
+    "files": 460,
+    "nodes": 16747,
+    "edges": 31392,
+    "missingFiles": 0,
+    "parseErrors": 0,
+    "danglingEdges": 0,
+    "primaryParserErrorsPreserved": 1,
+    "fallback": {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/run-all-alternative-ast.json",
+      "sha256": "0225077138b7be2688b3fd68a5081708c4c1f7dbccd2046c634bc4e5e71502ce",
+      "reason": "Valid Bash array word with quoted prefix and unquoted bracket glob; Bash syntax-check succeeds while mvdan rejects it."
+    },
+    "primaryGraph": {
+      "path": "/private/tmp/chainbench-legacy-source-13b5e12/shell-structure-graph.json",
+      "sha256": "e448e0969eb2094b9ac1ca3842ab030ece53dc7a339d050cecd9cd7964f244e8"
+    },
+    "scope": "Outer shell structure only. No embedded-program parsing, dynamic binding resolution or runtime coverage."
+  },
+  "semanticEquivalenceAccepted": false,
+  "historicalSnapshotByteIdentityEstablished": false,
+  "remainingConditions": [
+    "Reconcile historical logical254/170+84 classifications with actual source wrappers and scenario files.",
+    "Compare current consumers and actual predicates, including21 historical partial ports; existing names and extra b-cases alone are not acceptance.",
+    "Original87 criterion review remains separate; TX019 decision and external W3/W4 remain open."
+  ]
+}

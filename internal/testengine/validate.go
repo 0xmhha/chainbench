@@ -164,6 +164,19 @@ func malformedRequires(s dsl.Spec) []string {
 // It runs the same name and selector checks as ValidateSpecs (capability
 // applicability is a per-spec SKIP the engine applies, not a hard failure).
 func Precheck(specs []dsl.Spec) error {
+	if err := dsl.CheckPreparedSequence(specs); err != nil {
+		return err
+	}
+	return precheckDeclarations(specs)
+}
+
+// PrecheckCase validates a standalone declaration for editing. Its prepared
+// dependency order is checked when the whole execution list reaches Precheck.
+func PrecheckCase(spec dsl.Spec) error {
+	return precheckDeclarations([]dsl.Spec{spec})
+}
+
+func precheckDeclarations(specs []dsl.Spec) error {
 	reg := testhelper.Registry()
 	for _, s := range specs {
 		if unresolved := interp.Unresolved(s, reg); len(unresolved) > 0 {

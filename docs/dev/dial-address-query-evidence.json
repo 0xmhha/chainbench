@@ -1,0 +1,221 @@
+{
+  "scope": "Original basic08 attaches through Go-owned block-YAML dial projection; actual CLI and stdio MCP schema/read/error contracts on the live owned Linux workspace. Not full353 L1.",
+  "acceptedScope": true,
+  "fullL1Accepted": false,
+  "sourceDigest": "19274685939e5750cf6ad825877946f9c4760650811134331cc70e634a388c34",
+  "elapsedSeconds": 80.05311683303444,
+  "proof": {
+    "path": "/private/tmp/cbui/dq-8qmqyskj/reports/proof.json",
+    "sha256": "f57c87baadeaffe731571f1a08cc3b6c071711a58ec9a6b0e7da586ce7be6ee1",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792066170796517548
+  },
+  "summary": {
+    "path": "/private/tmp/chainbench-dial-query-native-summary.json",
+    "sha256": "f57c87baadeaffe731571f1a08cc3b6c071711a58ec9a6b0e7da586ce7be6ee1",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792066170796687715
+  },
+  "cliMCPParity": {
+    "path": "/private/tmp/cbui/dq-8qmqyskj/reports/cli-mcp-parity.json",
+    "sha256": "2912fa8eb3428cc3ea1cfccd109a59b59ff5f31861b330209e2a1270c96f9edf",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792066140708347206
+  },
+  "mcpRawResponses": {
+    "path": "/private/tmp/cbui/dq-8qmqyskj/reports/mcp-stdio-output.jsonl",
+    "sha256": "91785970623acac9c4592225d911caa67ba315145a433f979d7becf0ba8eb0a4",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792066140707579079
+  },
+  "observedRawHost": "172.31.42.11",
+  "observedRPCURL": "http://127.0.0.1:46001",
+  "actualAttachEnvironmentURL": "http://127.0.0.1:46001",
+  "actualAttachAssertions": 2,
+  "setupAssertions": 3,
+  "workspaceReadOnlyScope": "Hashes of chain-record.json, process.json and compose-plan.json unchanged across CLI and stdio MCP queries.",
+  "retainedFiles": 92,
+  "inventory": {
+    "path": "/private/tmp/cbui/dq-8qmqyskj/reports/inventory.json",
+    "sha256": "c1058820ba76492d82e91ee0a5b5c846c79542a4f89d6831fec07f80a35db952",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792066437150103916
+  },
+  "independentAudit": {
+    "path": "/private/tmp/cbui/dq-8qmqyskj/reports/independent-audit.json",
+    "sha256": "8263e7f146543907a2d4e62772abce847fc9501ed306759466310eb6c4a263b3",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792066437095711844
+  },
+  "remainingDatabasePaths": 0,
+  "unitRed": "CLI lacked dial query; MCP lacked bool/schema/output and silently ignored string input. Original sweep reproduced BLOCKED with block-style YAML and inaccessible raw Docker IP.",
+  "unitGreen": "Flow/block YAML, raw placement preservation, non-Docker, opt-in/default, missing/invalid maps, IPv6, caller-facing text/JSON, strict MCP bool and parity; sweep11 and retention7 pass. App/CLI/MCP/feature full race passed.",
+  "firstFullSweep": {
+    "proof": {
+      "path": "/private/tmp/cbui/l1-z5jhc6t0/reports/proof.json",
+      "sha256": "3f048111c37891720c3b25a66a7e7d85951b3caf1b83f07fd2b0552e0a09338a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792064457714453785
+    },
+    "sourceDigest": "f48d1d42e7fb5ae572720d264c9c95fc0a31bbaf4da3313f7c1b55653577947c",
+    "plannedRows": 353,
+    "reportedRows": 4,
+    "pass": 3,
+    "blocked": 1,
+    "remainingRowsNotExecuted": 349,
+    "executionCompleted": false,
+    "blockedStatus": {
+      "path": "/private/tmp/cbui/l1-z5jhc6t0/reports/sessions/20261015-113632-66275/UTC-20261015-113707/tests/001_attached-chain-produces/status.json",
+      "sha256": "356b5f7b8f253c7940a89c2cd386b45c697cf87fe360aec7af1ab7b646c0e7d7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792064237362534364
+    },
+    "oldRPCURL": "http://172.31.42.11:8601",
+    "controlledStop": {
+      "path": "/private/tmp/cbui/l1-z5jhc6t0/reports/scheduler-stop-request.json",
+      "sha256": "1bf781a3fee5327653666e796e87e68c2b8b8cf00f61056f811e0705d0f2994a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792064455728693281
+    },
+    "finalization": {
+      "path": "/private/tmp/cbui/l1-z5jhc6t0/reports/controlled-stop-finalization.json",
+      "sha256": "0c770f9439f2e5f6601ba64369eb81cf191c8f51719652f737d66f11add51f33",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792064724250918776
+    },
+    "lastCaseReclamationRecovery": {
+      "path": "/private/tmp/chainbench-full-l1-recover-last.py",
+      "sha256": "9c27414bb8bcccf66d13f18976ceafd4dc4a1ac5626a8bfc2918d4c3130b4a87",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792064645477799243
+    },
+    "note": "Stopped only freshly identified owned scheduler to fix observed harness bug. Fourth passing case had stopped nodes before interruption; its retention hook did not finish, so idempotent stop and fresh retention/reclamation were completed before15-server vacancy/DB audit and any repository edits."
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-dial-query-red.log",
+      "sha256": "37ef305e3d1bef264736f92f3e6c18c40a68ec522a5aa0f381066ad1369b15ad",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065040469692950
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-green.log",
+      "sha256": "82ccfe9ae7a8f0fcb0959ce523378e3eb1a7206e595015f8da787edfa58414bf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065114556405559
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-sweep-red.log",
+      "sha256": "85969f89511e9ad03e88a9912b6274c0326b9f02f92ce11ae60d02083369e636",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065236592291560
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-sweep-green3.log",
+      "sha256": "45fb3f6a9d6dd1f7e523ce0c8d9c962619f7afa4917be308c165750164ce72de",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065550983191794
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-related-race.log",
+      "sha256": "a7db923db7d9d4b95ced3f0637264f351f79f49c48eecf614dd85d425e721646",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065497491816541
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-check.log",
+      "sha256": "80064b25f540803dd28cc5800d04bde6655556cd3dfa603f23af04f9918122b3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065818900238713
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-check2.log",
+      "sha256": "7b4d769c1cffb19934498fe798eb3a82f742f9be44efbaadcff62882080196a8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065995666420496
+    }
+  ],
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-dial-query-prepare.py",
+      "sha256": "eadc910fb2e3cf6e1ff06b2abdd0b48a0325cb0f858af93c8f09086eee699ef4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065738581885960
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-cli",
+      "sha256": "77c1c4daac03b662941af8c0c07096d07b37beb074330da718c0277f9ddd2671",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065848837736537
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-retain",
+      "sha256": "47f4bdb28b187ba01e4d91a5a2f16c3d07eb07316cdc54d61fc2b000ec99d13d",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065848843800468
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-run.py",
+      "sha256": "e98c84fa8d5de443374f76947be252c34fe5ec562d40974fcc720639269798f5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792065848847391935
+    },
+    {
+      "path": "/private/tmp/chainbench-dial-query-evidence.py",
+      "sha256": "2a4d13c86da4f76f67e0b5918cc62d0091af32ad28115ac55aad8cba26abf285",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792066433878977787
+    }
+  ],
+  "publicationCheck": {
+    "passed": true,
+    "path": "/private/tmp/chainbench-dial-query-publication-check.log",
+    "sha256": "a874aa7a1576e97fed048c0c0e8ddf3b1c17b4dd13cd6bfdc4d468415b561e5f"
+  }
+}

@@ -1,5 +1,7 @@
 # gstable — RPC API + metrics graph
 
+> Source-reference snapshot: `0937ac5c93d4f56ded5b24899f381d3d1f208c02`. The separate CLI/help capture is pinned to `4d17eea018c8dd579409db30bfd27de79c4f4121` (2026-10-18). This RPC/metrics source analysis has not been re-audited or promoted to the new source snapshot.
+
 Code-level extraction of the JSON-RPC namespaces/methods and the metrics surface for the `gstable` node (go-ethereum fork, WBFT/Anzeon consensus). All `path:line` references are relative to the repo root `chain/go-stablenet/`.
 
 ---
@@ -70,7 +72,10 @@ Type defs: `EthereumAPI` `internal/ethapi/api.go:61`; `BlockChainAPI` `:693`; `T
 - runtime `debug.Handler`: `node/api.go:40`. Tracer debug API: `eth/tracers/api.go:1020`.
 
 #### `personal` (registered `internal/ethapi/backend.go:124` → `PersonalAccountAPI` type `internal/ethapi/api.go:285`)
-Gated by `--personal` (`node.Config.EnablePersonal`).
+Gated by `--rpc.enabledeprecatedpersonal` (`node.Config.EnablePersonal`).
+The flag spelling is confirmed by the captured CLI flag list and the 2026-10-16
+owned native personal-signing proof; this correction does not remeasure the other
+RPC registrations in this snapshot ([evidence](../../dev/legacy-personal-delegation-evidence.json)).
 
 #### `miner` (registered `eth/backend.go:338` → `MinerAPI` type `eth/api_miner.go:29`)
 

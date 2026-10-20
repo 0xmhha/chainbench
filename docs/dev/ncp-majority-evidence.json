@@ -1,0 +1,283 @@
+{
+  "scope": "GOV006 actual seven distinct NCP operators voting after local WEMIX-to-WBFT Croissant20. Standard four managed WBFT successors; NCP electorate is independently funded operators, no staker registration or seven-node consensus claim. Exact proposal type1, canonical raw/transaction/receipt/block binding, per-vote acceptance state and exact events, unchanged7/candidatefalse through votes1..3, immediate fourth-vote8/candidatetrue. Not removal/self-exit/rank/stabilization/public JSON entire execution/mainnet/Linux/full87/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Membership/count model with the existing failed-receipt guard retained accepted23 additional wrong electorate, vote input/identity, raw/hash, mined inclusion, exact events and early/final state controls. First narrower model also accepted the existing status guard; not counted as a new gap.",
+  "unitGreen": "Positive plus24 negatives; CLI full race, e2e vet and full make check passed.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "1f8b424c3157726b27c2a491b6daa46bcccbd4e1374d7cb03435418922793d5e",
+    "sourceAfter": "1f8b424c3157726b27c2a491b6daa46bcccbd4e1374d7cb03435418922793d5e",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixNCPSevenMemberMajorityE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-mzd9zwej"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-mzd9zwej": []
+    },
+    "elapsedSeconds": 78.341,
+    "log": {
+      "path": "/private/tmp/chainbench-ncp-majority-native-native.jsonl",
+      "sha256": "64404d3381fb68332a338d38a633fb9a72c1edb6f41fc06a998cbaf8bbfb93a7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044828223428649
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-ncp-majority-native-summary.json",
+      "sha256": "7fe75b5a085e833e7f34275d8ec69f45a1377eb2b2b9334501bbebd60e6e8cf0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044828692387949
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-ncp-majority-native-start.json",
+      "sha256": "fbf453b1aa864176681af0f42e85bba0f327b39c1c4e47b741e4c3e27f56ec28",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044747354226358
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-mzd9zwej/reports/ncp-majority-proof.json",
+    "sha256": "9206ea274f78a8cf03002f3e385edd440dc1ffb941a363f75da06442522054ec",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792044825049648964
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-ncp-majority-evidence.py",
+    "sha256": "e850e0f25aeba0efff0bb88e83faf9f47d2bddffff8cb9e3dba8b7f3cdcb6cdf",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792044873554707631
+  },
+  "reusedDecoderSource": {
+    "path": "/private/tmp/chainbench-original-epoch-evidence.py",
+    "sha256": "87794f7ac8055e5d727b63b3bdcb47896f6b4e4bb8fafca488e3a8ba202c7987",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792038415534476826
+  },
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "stages": [
+    {
+      "stage": 0,
+      "block": 26,
+      "hash": "0x6897449128c0a2d63c8be27d04a2709d7eb5618f808d42a60f406e26b6f2402f",
+      "accepts": 0,
+      "proposalState": 1,
+      "count": 7,
+      "candidateMember": false,
+      "logs": 1
+    },
+    {
+      "stage": 1,
+      "block": 27,
+      "hash": "0x57beac0cc4b728381bba0259b0c11290a1dc9daf00eb7048eb9712818220802e",
+      "accepts": 1,
+      "proposalState": 1,
+      "count": 7,
+      "candidateMember": false,
+      "logs": 1
+    },
+    {
+      "stage": 2,
+      "block": 28,
+      "hash": "0x0a02e37ea7b9004f214ffd8f0330fd307d7ff9cf8b78bc4c483e566c501b5851",
+      "accepts": 2,
+      "proposalState": 1,
+      "count": 7,
+      "candidateMember": false,
+      "logs": 1
+    },
+    {
+      "stage": 3,
+      "block": 29,
+      "hash": "0x9ba4a9d7890af54b8a0a192c6f88e2b1f616d4088512a1675007b3ee19f05c79",
+      "accepts": 3,
+      "proposalState": 1,
+      "count": 7,
+      "candidateMember": false,
+      "logs": 1
+    },
+    {
+      "stage": 4,
+      "block": 30,
+      "hash": "0x17ea5858c32f28fa3ed37d2bb62ef1fe18533435f8a5a69f695592ad46267816",
+      "accepts": 4,
+      "proposalState": 2,
+      "count": 8,
+      "candidateMember": true,
+      "logs": 3
+    }
+  ],
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-mzd9zwej/w/genesis.json",
+      "sha256": "ca7d2c72adf039ddff332fd5a993069d445d44f9098cf3815e212a7185d46150",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044750641984065
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mzd9zwej/w/node1/genesis.json",
+      "sha256": "ca7d2c72adf039ddff332fd5a993069d445d44f9098cf3815e212a7185d46150",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044750668941066
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mzd9zwej/w/node2/genesis.json",
+      "sha256": "ca7d2c72adf039ddff332fd5a993069d445d44f9098cf3815e212a7185d46150",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044751021463475
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mzd9zwej/w/node3/genesis.json",
+      "sha256": "ca7d2c72adf039ddff332fd5a993069d445d44f9098cf3815e212a7185d46150",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044751280170759
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mzd9zwej/w/node4/genesis.json",
+      "sha256": "ca7d2c72adf039ddff332fd5a993069d445d44f9098cf3815e212a7185d46150",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044751537440213
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mzd9zwej/w/node5/genesis.json",
+      "sha256": "ca7d2c72adf039ddff332fd5a993069d445d44f9098cf3815e212a7185d46150",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044751815585520
+    }
+  ],
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-mzd9zwej",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 229,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-mzd9zwej/reports/ncp-majority-inventory.json",
+        "sha256": "55a2b6aa43922bfe072b2d09aeb6c178924eb0ddf298d181a3caa86225ccd925",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792044887327628831
+      }
+    }
+  ],
+  "retainedFiles": 229,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-ncp-majority-publication.json",
+    "sha256": "1979c6f9f6ea7b10c7175a50a7daaa2d8bfc7d974e6de5ceeb5f8fe06783b805",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792044337915281318
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-red.log",
+      "sha256": "722e035a616dd8d6195594e1a9d17d5a317b5d506073d6758203498164d7e95f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044515283559066
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-red2.log",
+      "sha256": "38fb22b00f488e854de007acbd2ee72bb197d0054550ace22f3b2c032b568eda",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044876345900875
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-green.log",
+      "sha256": "12e2086f309416901618fc99607a4e7b8819ca9c3ad1a3f0c5412c4e1c446e39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044558518625447
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-compile.log",
+      "sha256": "ee1d35c84e1e48c258a188895fe46ca931b805915bb219d636704a600756d143",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044607674112103
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-related-race.log",
+      "sha256": "38aca11860b828d34c6b8c0fe424274cdb2085125543fe199332a2174d362066",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044711524107369
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044617152007710
+    },
+    {
+      "path": "/private/tmp/chainbench-ncp-majority-check.log",
+      "sha256": "0e3fdfccca3946f0e4c5872ec8673f02931e5dd6f16272c1232ebfcccca9ecb0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792044716554766145
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

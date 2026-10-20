@@ -1,0 +1,361 @@
+{
+  "scope": "Typed node submission refusal for sendRawTampered only; six unchanged public locally signed cases on funded accounts plus six recorded direct raw-node witnesses on fresh unfunded accounts. Not personal API paths, all R5/L1/legacy/87 or final WEB acceptance.",
+  "sourceDigest": "24dee8cb4fc4a5e7821c5188804d6ff5c43342366fc37a0e739fd8baef86cafc",
+  "headAtProof": "3989c2ff38f01a8589f119a031869ea6bd36b14f",
+  "sourceUnchanged": true,
+  "helperInputsUnchanged": true,
+  "implementation": [
+    {
+      "path": "internal/testhelper/txprobe.go",
+      "sha256": "c999f9cf571b802d9e0ba0499bff3de32ec0bca2d573872f43d11ac8abe06624",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792100322167430352
+    },
+    {
+      "path": "internal/testhelper/tamper_rejection_test.go",
+      "sha256": "d7b87e2306dac7d0bb26b76300f26094f5e18a8211555ccab25da82d27342e21",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792100324549008295
+    },
+    {
+      "path": "internal/testengine/tamper_rejection_native_test.go",
+      "sha256": "f8d5e56c98f3afc5ec8ee8b4e38dbda70e5b4be1163c4444accc91bda8202a14",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792100425874882502
+    }
+  ],
+  "behavior": {
+    "reuse": "checkSubmitRejected",
+    "requires": [
+      "no returned hash",
+      "typed rpc.ServerError from eth_sendRawTransaction",
+      "transaction refusal, excluding RPC protocol codes",
+      "optional reason matched only against node Message"
+    ],
+    "rejects": [
+      "HTTP status failures",
+      "connection EOF",
+      "malformed JSON",
+      "wrong result shape",
+      "accepted submission",
+      "preparation errors",
+      "RPC protocol errors",
+      "reason matching only method name"
+    ],
+    "bindsValueOnlyOnAcceptedRejection": true
+  },
+  "redGreen": {
+    "newSubtests": 17,
+    "redFailures": 11,
+    "greenPassed": 17,
+    "actualNodeControls": 2,
+    "existingSubmitClassifierRegression": true,
+    "helperEngineAccountsFullRace": true,
+    "fullMakeCheck": true,
+    "firstSandboxBindFailureIsProductRed": false
+  },
+  "additionalCheckFailure": {
+    "packageMeasurement": "four fewer non-test helper lines; refreshed exact figures",
+    "clockFailure": "CLI/MCP composition times straddled one second; deterministic RED then six normalization controls and actual equivalence race repeated30",
+    "clockCommit": "3989c2ff",
+    "staleReview": "Only TX-014 txprobe target existed; inspected stronger semantics and updated source SHA/description, preserving historical evidence and remaining conditions"
+  },
+  "native": {
+    "driverSeconds": 146.76348166604294,
+    "passed": [
+      "TestNativeTamperSubmissionRejections/stablenet",
+      "TestNativeTamperSubmissionRejections/wbft",
+      "TestNativeTamperSubmissionRejections/wemix",
+      "TestNativeTamperSubmissionRejections"
+    ],
+    "failed": [],
+    "skipped": [],
+    "publicCases": 6,
+    "directNodeWitnesses": 6,
+    "profiles": [
+      {
+        "chain": "wbft",
+        "binary": {
+          "path": "/private/tmp/chainbench-upstream-20261016/darwin/gwbft",
+          "sha256": "932a62c6ab58f5a03860d2d30591f3c99a47e2625acde93c46cb12ddaed6c689",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1792095013232017765
+        },
+        "publicCases": [
+          {
+            "presetId": "wbft-bp4",
+            "seq": 1,
+            "id": "fd-sender-sig-invalid-rejected",
+            "status": "pass"
+          },
+          {
+            "presetId": "wbft-bp4",
+            "seq": 2,
+            "id": "fd-feepayer-sig-invalid-rejected",
+            "status": "pass"
+          }
+        ],
+        "runtimes": {
+          "root": "/private/tmp/cbui/txfail-a6fkoddl",
+          "chain": "wbft",
+          "publicCases": 2,
+          "nodeRejections": 2,
+          "rawHashes": [
+            "0x1be3375ed0cc5b41c6a77f5a50b174ddc6b8b34af4fb9fe191ea80a28c118edc",
+            "0x28b9d64204893713364815f7e91f26294a8e93aa52fdfb9f629172e12c14bc06"
+          ],
+          "cache64Launches": 4,
+          "remainingDatabases": 0,
+          "trieCacheBytes": 0
+        }
+      },
+      {
+        "chain": "wemix",
+        "binary": {
+          "path": "/private/tmp/chainbench-w3-head-native/gwemix",
+          "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1791973660680382414
+        },
+        "publicCases": [
+          {
+            "presetId": "wemix-bp4",
+            "seq": 1,
+            "id": "fd-sender-sig-invalid-rejected",
+            "status": "pass"
+          },
+          {
+            "presetId": "wemix-bp4",
+            "seq": 2,
+            "id": "fd-feepayer-sig-invalid-rejected",
+            "status": "pass"
+          }
+        ],
+        "runtimes": {
+          "root": "/private/tmp/cbui/txfail-cdrnc56k",
+          "chain": "wemix",
+          "publicCases": 2,
+          "nodeRejections": 2,
+          "rawHashes": [
+            "0x300cfeca770c127cecaedbe93b694994e88668285f71101bab3c6c4a1000865a",
+            "0x7361576be016ddd680c4c406272c064c4029e80e4398bcc6b175a417e8972fe3"
+          ],
+          "cache64Launches": 4,
+          "remainingDatabases": 0,
+          "trieCacheBytes": 2321254
+        }
+      },
+      {
+        "chain": "stablenet",
+        "binary": {
+          "path": "/private/tmp/chainbench-upstream-20261016/darwin/gstable",
+          "sha256": "fc2edafff9a785e9ed514c29cf3d1bb6e5b8f970c91f36411335494700c9be48",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1792094963879863833
+        },
+        "publicCases": [
+          {
+            "presetId": "stablenet-bp4",
+            "seq": 1,
+            "id": "fd-sender-sig-invalid-rejected",
+            "status": "pass"
+          },
+          {
+            "presetId": "stablenet-bp4",
+            "seq": 2,
+            "id": "fd-feepayer-sig-invalid-rejected",
+            "status": "pass"
+          }
+        ],
+        "runtimes": {
+          "root": "/private/tmp/cbui/txfail-v42mouai",
+          "chain": "stablenet",
+          "publicCases": 2,
+          "nodeRejections": 2,
+          "rawHashes": [
+            "0x89d75e3bfe5914a2b938e7e599adbacfb84d3b0fd5c169985837162fdd0f8a33",
+            "0xda8c5ea2dfd23230840c956fc312bf166644b12c778e3e2dd43db147c99c79d8"
+          ],
+          "cache64Launches": 4,
+          "remainingDatabases": 0,
+          "trieCacheBytes": 0
+        }
+      }
+    ]
+  },
+  "independent": {
+    "report": {
+      "path": "/private/tmp/chainbench-tamper-rejection-20261016-independent.json",
+      "sha256": "b654318fc129c1c5f497618a3ce6ba9cb73780624d39becd61b55220836c7cca",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101199707090937
+    },
+    "retainedFiles": 531,
+    "remainingDB3Types": 0,
+    "retainedTrieCacheBytes": 2321254,
+    "freshHostProcessAndFDInventories": 2,
+    "preserved": [
+      "exact file set",
+      "bytes",
+      "mode",
+      "uid",
+      "gid",
+      "ns mtime"
+    ],
+    "rawKeccakVerifiedLocally": true,
+    "signatureCryptographyIndependentlyVerified": false,
+    "delayedNonInclusionVerified": false,
+    "firstAudit": "Literal source comparison rejected saveKey redaction. First log retained; only two exact expected newAccount saveKey redactions allowed,30 mutated recorded fields rejected. Verification assumption error, not product RED.",
+    "redactionNegativeControls": 30
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-red-native-20261016.log",
+      "sha256": "2087b7b063b636027aa652586f3daea3d0feb10a0e78ce12b54c8bc1c93aab11",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100307475567916
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-green-20261016.log",
+      "sha256": "0aa8688a6b6cbec5a5f9fa2a8f4a8ae506a08a5aa351d8fd24ec0390ee381c16",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100329911885130
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-race-20261016.log",
+      "sha256": "d847a412bcec636de8cb62eeaf9c1b92cc1c50fd92eb506ba08feae65c0f190a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100455005549950
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-check-20261016.log",
+      "sha256": "c3b3bcf9690d337f47805efd21dd38cea7eb5997470695fab6624fef9cd07f6c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100611760453920
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-check-final-20261016.log",
+      "sha256": "d5d242211fe14e9aecaa565106dabf21636688e661ba7efef79577a8e96e8d1e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100783183419985
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-check-reviewed-20261016.log",
+      "sha256": "3ec22471df6048c927ae7c512b628f0a0133dbf8f967a8f05b77a618affc7a39",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100948560608081
+    },
+    {
+      "path": "/private/tmp/chainbench-equivalence-clock-red-20261016.log",
+      "sha256": "74432a9da4e84833ff7ddad454f4d7cf7f79457556cf75f488f380e9e47edcad",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100656307164252
+    },
+    {
+      "path": "/private/tmp/chainbench-equivalence-clock-green-20261016.log",
+      "sha256": "96d84194240b38f7cf92cd64471306e842a36a3ab6a61f8a8ebf408cdccc8582",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100678225668953
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-driver-20261016.log",
+      "sha256": "b1a0e26f2e07fe87513cad8f276d467eb1890b2b351cf393e4223e86fdfc28a6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101146602712100
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-independent-first-20261016.log",
+      "sha256": "f5b5b2253f0b226152478d319b90503291ff88e0fd55f0089f58f40f8953af4b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101154458756088
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-independent-20261016.log",
+      "sha256": "35d0167c8cadc3626e827661127f93686b22ec043a4873b9c08f1237ace67073",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101199707614987
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-20261016-start.json",
+      "sha256": "2fe89843fd8245b32fec818beb5a5c3c23dc8f9da1ee9cd0186659008656423b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100999644269997
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-20261016-summary.json",
+      "sha256": "20a54a93c6751ca15b0837530189ae7d2ae44e307219a90f1790f4279b3924d3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101146601882295
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-20261016-native.jsonl",
+      "sha256": "9c7e09d3714c178087f1c0b08fe8b41396375f865fc3f443e7cdd545d6f913bc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101144129952396
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-run-20261016.py",
+      "sha256": "b77ce903e3f617f7ffe2bc4cbcd96aa54fe9a756c7c8986483c839f28d8e884a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792100437987308436
+    },
+    {
+      "path": "/private/tmp/chainbench-tamper-rejection-independent-20261016.py",
+      "sha256": "d05d6d8f5438e3e5ea06648434233a0e58d3468a6041f4b0f0492bac7aa688da",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792101193716821208
+    }
+  ],
+  "allR5Accepted": false,
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "externalIssuesResolved": false
+}

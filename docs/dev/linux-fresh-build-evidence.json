@@ -1,0 +1,259 @@
+{
+  "scope": "Actual StableNet Linux build with every selected source file verified inside read-only bind, fresh ELF publication through setup.sh, Docker copy/version/hash on one owned server. Not three-chain/fleet15/fullL1/Linux mainnet/Web acceptance.",
+  "fullL1Accepted": false,
+  "fleet15Ready": false,
+  "allThreeChainsBuilt": false,
+  "unitRed": "Existing host ELF was accepted and copied when container output was missing; invalid/failed output overwrote the previous artifact. A first staging fix leaked its EXIT cleanup because Bash unwound locals, and a failed build leaving ELF bytes still passed command-substitution errexit. Those failures are retained. Resource propagation control was corrected after an initial test-fixture boolean-list mistake, then produced genuine RED.",
+  "unitGreen": "Fresh output positive and four failure modes, no placement on failure, previous bytes preserved, own staging reclaimed, GOMAXPROCS/GOFLAGS propagated. Full resource/setup race and make check passed after final code.",
+  "run": {
+    "sourceBefore": "2f3d76ad80e4da5a2a9194b1f132eef3c3f028a89126c617b1f08de36d7710e0",
+    "sourceAfter": "2f3d76ad80e4da5a2a9194b1f132eef3c3f028a89126c617b1f08de36d7710e0",
+    "sourceUnchanged": true,
+    "elapsedSeconds": 14.315093375043944,
+    "summary": {
+      "path": "/private/tmp/chainbench-linux-fresh-build-native2-summary.json",
+      "sha256": "77515560ec5f5cdfde4aaf6028646eff1ecb83f77df3174131b8571357328fc3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053482048524547
+    },
+    "proof": {
+      "path": "/private/tmp/cbui/linux-build-u3eyfull/reports/proof.json",
+      "sha256": "77515560ec5f5cdfde4aaf6028646eff1ecb83f77df3174131b8571357328fc3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053482047084692
+    },
+    "runner": {
+      "path": "/private/tmp/chainbench-linux-fresh-build-run2.py",
+      "sha256": "6bfe0159b33407436d39aaaeec19c516262dc97a9d3d1a43738c61747ba36710",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053460156510249
+    }
+  },
+  "firstAttempt": {
+    "summary": {
+      "path": "/private/tmp/chainbench-linux-fresh-build-native-summary.json",
+      "sha256": "8a6c24f6b266e459f7d02cfa3ef9f1cc8f76980db6e8f23cb837775e8d5543fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053389309882532
+    },
+    "runner": {
+      "path": "/private/tmp/chainbench-linux-fresh-build-run.py",
+      "sha256": "4c646207237177dda3d42b3ef7c9f3a9b00a661936b3144a053b4820ef128b3f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053237572698913
+    },
+    "acceptedScope": false,
+    "reason": "Build/copy/version succeeded, but proof driver incorrectly equated tracked cleanliness with Go vcs.modified, which also includes preserved user untracked configuration. No product failure claimed. Both statuses split, metadata controls checked, actual run repeated with verified owned warm cache."
+  },
+  "source": {
+    "root": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet",
+    "revision": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+    "trackedModified": false,
+    "worktreeModified": true,
+    "selectedFiles": 2241,
+    "allFilesMatchedInsideReadOnlyLinuxBind": true,
+    "sourceFilesUnchanged": true,
+    "inventory": {
+      "path": "/private/tmp/cbui/linux-build-u3eyfull/reports/source-inventory.json",
+      "sha256": "1280951f509b9280fbb93d7b033da185e46de339ab1cc8294f4416820b37c0ec",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053463548341253
+    }
+  },
+  "artifact": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-u3eyfull/gstable",
+    "sha256": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+    "remoteSHA256": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+    "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=\nGOROOT=/usr/local/go\n",
+    "buildInfo": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-u3eyfull/gstable: go1.25.14\n\tpath\tgithub.com/ethereum/go-ethereum/cmd/gstable\n\tmod\tgithub.com/ethereum/go-ethereum\tv1.0.1-0.20260810103215-0937ac5c93d4+dirty\t\n\tdep\tgithub.com/DataDog/zstd\tv1.4.5\th1:EndNeuB0l9syBZhut0wns3gV1hL8zX8LIu6ZiVHWLIQ=\n\tdep\tgithub.com/VictoriaMetrics/fastcache\tv1.12.2\th1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjCM7NQbSmF7WI=\n\tdep\tgithub.com/beorn7/perks\tv1.0.1\th1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=\n\tdep\tgithub.com/bits-and-blooms/bitset\tv1.20.0\th1:2F+rfL86jE2d/bmw7OhqUg2Sj/1rURkBn3MdfoPyRVU=\n\tdep\tgithub.com/cespare/xxhash/v2\tv2.2.0\th1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=\n\tdep\tgithub.com/cockroachdb/errors\tv1.8.1\th1:A5+txlVZfOqFBDa4mGz2bUWSp0aHElvHX2bKkdbQu+Y=\n\tdep\tgithub.com/cockroachdb/logtags\tv0.0.0-20190617123548-eb05cc24525f\th1:o/kfcElHqOiXqcou5a3rIlMc7oJbMQkeLk0VQJ7zgqY=\n\tdep\tgithub.com/cockroachdb/pebble\tv0.0.0-20230928194634-aa077af62593\th1:aPEJyR4rPBvDmeyi+l/FS/VtA00IWvjeFvjen1m1l1A=\n\tdep\tgithub.com/cockroachdb/redact\tv1.0.8\th1:8QG/764wK+vmEYoOlfobpe12EQcS81ukx/a4hdVMxNw=\n\tdep\tgithub.com/cockroachdb/sentry-go\tv0.6.1-cockroachdb.2\th1:IKgmqgMQlVJIZj19CdocBeSfSaiCbEBZGKODaixqtHM=\n\tdep\tgithub.com/cockroachdb/tokenbucket\tv0.0.0-20230807174530-cc333fc44b06\th1:zuQyyAKVxetITBuuhv3BI9cMrmStnpT18zmgmTxunpo=\n\tdep\tgithub.com/consensys/gnark-crypto\tv0.18.1\th1:RyLV6UhPRoYYzaFnPQA4qK3DyuDgkTgskDdoGqFt3fI=\n\tdep\tgithub.com/cpuguy83/go-md2man/v2\tv2.0.2\th1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=\n\tdep\tgithub.com/crate-crypto/go-ipa\tv0.0.0-20231025140028-3c0104f4b233\th1:d28BXYi+wUpz1KBmiF9bWrjEMacUEREV6MBi2ODnrfQ=\n\tdep\tgithub.com/crate-crypto/go-kzg-4844\tv1.1.0\th1:EN/u9k2TF6OWSHrCCDBBU6GLNMq88OspHHlMnHfoyU4=\n\tdep\tgithub.com/davecgh/go-spew\tv1.1.1\th1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=\n\tdep\tgithub.com/deckarep/golang-set/v2\tv2.6.0\th1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80NsVHagjM=\n\tdep\tgithub.com/deepmap/oapi-codegen\tv1.6.0\th1:w/d1ntwh91XI0b/8ja7+u5SvA4IFfM0UNNLmiDR1gg0=\n\tdep\tgithub.com/dlclark/regexp2\tv1.7.0\th1:7lJfhqlPssTb1WQx4yvTHN0uElPEv52sbaECrAQxjAo=\n\tdep\tgithub.com/dop251/goja\tv0.0.0-20230806174421-c933cf95e127\th1:qwcF+vdFrvPSEUDSX5RVoRccG8a5DhOdWdQ4zN62zzo=\n\tdep\tgithub.com/fatih/color\tv1.16.0\th1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=\n\tdep\tgithub.com/ferranbt/fastssz\tv0.1.2\th1:Dky6dXlngF6Qjc+EfDipAkE83N5I5DE68bY6O0VLNPk=\n\tdep\tgithub.com/gballet/go-libpcsclite\tv0.0.0-20190607065134-2772fd86a8ff\th1:tY80oXqGNY4FhTFhk+o9oFHGINQ/+vhlm8HFzi6znCI=\n\tdep\tgithub.com/gballet/go-verkle\tv0.1.1-0.20231031103413-a67434b50f46\th1:BAIP2GihuqhwdILrV+7GJel5lyPV3u1+PgzrWLc0TkE=\n\tdep\tgithub.com/go-sourcemap/sourcemap\tv2.1.3+incompatible\th1:W1iEw64niKVGogNgBN3ePyLFfuisuzeidWPMPWmECqU=\n\tdep\tgithub.com/gofrs/flock\tv0.8.1\th1:+gYjHKf32LDeiEEFhQaotPbLuUXjY5ZqxKgXy7n59aw=\n\tdep\tgithub.com/gogo/protobuf\tv1.3.2\th1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=\n\tdep\tgithub.com/golang-jwt/jwt/v4\tv4.5.2\th1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXeUI=\n\tdep\tgithub.com/golang/protobuf\tv1.5.3\th1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg=\n\tdep\tgithub.com/golang/snappy\tv0.0.5-0.20220116011046-fa5810519dcb\th1:PBC98N2aIaM3XXiurYmW7fx4GZkL8feAMVq7nEjURHk=\n\tdep\tgithub.com/google/pprof\tv0.0.0-20230207041349-798e818bf904\th1:4/hN5RUoecvl+RmJRE2YxKWtnnQls6rQjjW5oV7qg2U=\n\tdep\tgithub.com/google/uuid\tv1.3.0\th1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=\n\tdep\tgithub.com/gorilla/websocket\tv1.4.2\th1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=\n\tdep\tgithub.com/graph-gophers/graphql-go\tv1.3.0\th1:Eb9x/q6MFpCLz7jBCiP/WTxjSDrYLR1QY41SORZyNJ0=\n\tdep\tgithub.com/hashicorp/go-bexpr\tv0.1.10\th1:9kuI5PFotCboP3dkDYFr/wi0gg0QVbSNz5oFRpxn4uE=\n\tdep\tgithub.com/holiman/billy\tv0.0.0-20240216141850-2abb0c79d3c4\th1:X4egAf/gcS1zATw6wn4Ej8vjuVGxeHdan+bRb2ebyv4=\n\tdep\tgithub.com/holiman/bloomfilter/v2\tv2.0.3\th1:73e0e/V0tCydx14a0SCYS/EWCxgwLZ18CZcZKVu0fao=\n\tdep\tgithub.com/holiman/uint256\tv1.3.2\th1:a9EgMPSC1AAaj1SZL5zIQD3WbwTuHrMGOerLjGmM/TA=\n\tdep\tgithub.com/huin/goupnp\tv1.3.0\th1:UvLUlWDNpoUdYzb2TCn+MuTWtcjXKSza2n6CBdQ0xXc=\n\tdep\tgithub.com/influxdata/influxdb-client-go/v2\tv2.4.0\th1:HGBfZYStlx3Kqvsv1h2pJixbCl/jhnFtxpKFAv9Tu5k=\n\tdep\tgithub.com/influxdata/influxdb1-client\tv0.0.0-20220302092344-a9ab5670611c\th1:qSHzRbhzK8RdXOsAdfDgO49TtqC1oZ+acxPrkfTxcCs=\n\tdep\tgithub.com/influxdata/line-protocol\tv0.0.0-20200327222509-2487e7298839\th1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=\n\tdep\tgithub.com/jackpal/go-nat-pmp\tv1.0.2\th1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=\n\tdep\tgithub.com/jedisct1/go-minisign\tv0.0.0-20230811132847-661be99b8267\th1:TMtDYDHKYY15rFihtRfck/bfFqNfvcabqvXAFQfAUpY=\n\tdep\tgithub.com/karalabe/usb\tv0.0.2\th1:M6QQBNxF+CQ8OFvxrT90BA0qBOXymndZnk5q235mFc4=\n\tdep\tgithub.com/klauspost/cpuid/v2\tv2.0.9\th1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBFYa4=\n\tdep\tgithub.com/kr/pretty\tv0.3.1\th1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=\n\tdep\tgithub.com/kr/text\tv0.2.0\th1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.13\th1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.20\th1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=\n\tdep\tgithub.com/mattn/go-runewidth\tv0.0.13\th1:lTGmDsbAYt5DmK6OnoV7EuIF1wEIFAcxld6ypU4OSgU=\n\tdep\tgithub.com/matttproud/golang_protobuf_extensions\tv1.0.2-0.20181231171920-c182affec369\th1:I0XW9+e1XWDxdcEniV4rQAIOPUGDq67JSCiRCgGCZLI=\n\tdep\tgithub.com/minio/sha256-simd\tv1.0.0\th1:v1ta+49hkWZyvaKwrQB8elexRqm6Y0aMLjCNsrYxo6g=\n\tdep\tgithub.com/mitchellh/mapstructure\tv1.4.1\th1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=\n\tdep\tgithub.com/mitchellh/pointerstructure\tv1.2.0\th1:O+i9nHnXS3l/9Wu7r4NrEdwA2VFTicjUEN1uBnDo34A=\n\tdep\tgithub.com/naoina/go-stringutil\tv0.1.0\th1:rCUeRUHjBjGTSHl0VC00jUPLz8/F9dDzYI70Hzifhks=\n\tdep\tgithub.com/naoina/toml\tv0.1.2-0.20170918210437-9fafd6967416\th1:shk/vn9oCoOTmwcouEdwIeOtOGA/ELRUw/GwvxwfT+0=\n\tdep\tgithub.com/olekukonko/tablewriter\tv0.0.5\th1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=\n\tdep\tgithub.com/opentracing/opentracing-go\tv1.1.0\th1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=\n\tdep\tgithub.com/peterh/liner\tv1.1.1-0.20190123174540-a2c9a5303de7\th1:oYW+YCJ1pachXTQmzR3rNLYGGz4g/UgFcjb28p/viDM=\n\tdep\tgithub.com/pkg/errors\tv0.9.1\th1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=\n\tdep\tgithub.com/prometheus/client_golang\tv1.12.0\th1:C+UIj/QWtmqY13Arb8kwMt5j34/0Z2iKamrJ+ryC0Gg=\n\tdep\tgithub.com/prometheus/client_model\tv0.2.1-0.20210607210712-147c58e9608a\th1:CmF68hwI0XsOQ5UwlBopMi2Ow4Pbg32akc4KIVCOm+Y=\n\tdep\tgithub.com/prometheus/common\tv0.32.1\th1:hWIdL3N2HoUx3B8j3YN9mWor0qhY/NlEKZEaXxuIRh4=\n\tdep\tgithub.com/prometheus/procfs\tv0.7.3\th1:4jVXhlkAyzOScmCkXBTOLRLTz8EeU+eyjrwB/EPq0VU=\n\tdep\tgithub.com/rivo/uniseg\tv0.2.0\th1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=\n\tdep\tgithub.com/rogpeppe/go-internal\tv1.12.0\th1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=\n\tdep\tgithub.com/rs/cors\tv1.7.0\th1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=\n\tdep\tgithub.com/russross/blackfriday/v2\tv2.1.0\th1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=\n\tdep\tgithub.com/shirou/gopsutil\tv3.21.4-0.20210419000835-c7a38de76ee5+incompatible\th1:Bn1aCHHRnjv4Bl16T8rcaFjYSrGrIZvpiGO6P3Q4GpU=\n\tdep\tgithub.com/status-im/keycard-go\tv0.2.0\th1:QDLFswOQu1r5jsycloeQh3bVU8n/NatHHaZobtDnDzA=\n\tdep\tgithub.com/supranational/blst\tv0.3.16\th1:bTDadT+3fK497EvLdWRQEjiGnUtzJ7jjIUMF0jqwYhE=\n\tdep\tgithub.com/syndtr/goleveldb\tv1.0.1-0.20210819022825-2ae1ddf74ef7\th1:epCh84lMvA70Z7CTTCmYQn2CKbY8j86K7/FAIr141uY=\n\tdep\tgithub.com/tklauser/go-sysconf\tv0.3.12\th1:0QaGUFOdQaIVdPgfITYzaTegZvdCjmYO52cSFAEVmqU=\n\tdep\tgithub.com/tklauser/numcpus\tv0.6.1\th1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+Fk=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.1.0\th1:5eUemwrMargf3BSLRRCalXT93Ns6pQJIjYQN2nyfOP8=\n\tdep\tgithub.com/urfave/cli/v2\tv2.25.7\th1:VAzn5oq403l5pHjc4OhD54+XGO9cdKVL/7lDjF+iKUs=\n\tdep\tgithub.com/xrash/smetrics\tv0.0.0-20201216005158-039620a65673\th1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=\n\tdep\tgo.uber.org/automaxprocs\tv1.5.2\th1:2LxUOGiR3O6tw8ui5sZa2LAaHnsviZdVOUZw4fvbnME=\n\tdep\tgolang.org/x/crypto\tv0.35.0\th1:b15kiHdrGCHrP6LvwaQ3c03kgNhhiMgvlhxHQhmg2Xs=\n\tdep\tgolang.org/x/exp\tv0.0.0-20231110203233-9a3e6036ecaa\th1:FRnLl4eNAQl8hwxVVC17teOw8kdjVDVAiFMtgUdTSRQ=\n\tdep\tgolang.org/x/net\tv0.25.0\th1:d/OCCoBEUq33pjydKrGQhw7IlUPI2Oylr+8qLx49kac=\n\tdep\tgolang.org/x/sync\tv0.11.0\th1:GGz8+XQP4FvTTrjZPzNKTMFtSXH80RAzG+5ghFPgK9w=\n\tdep\tgolang.org/x/sys\tv0.30.0\th1:QjkSwP/36a20jFYWkSue1YwXzLmsV5Gfq7Eiy72C1uc=\n\tdep\tgolang.org/x/text\tv0.22.0\th1:bofq7m3/HAFvbF51jz3Q9wLg3jkvSPuiZu/pD1XwgtM=\n\tdep\tgolang.org/x/time\tv0.3.0\th1:rg5rLMjNzMS1RkNLzCG38eapWhnYLFYXDXj2gOlr8j4=\n\tdep\tgoogle.golang.org/protobuf\tv1.27.1\th1:SnqbnDw1V7RiZcXPx5MEeqPv2s79L9i7BJUlG/+RurQ=\n\tdep\tgopkg.in/natefinch/lumberjack.v2\tv2.0.0\th1:1Lc07Kr7qY4U2YPouBjpCLxpiyxIVoxqXgkXLknAOE8=\n\tdep\tgopkg.in/yaml.v2\tv2.4.0\th1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tDefaultGODEBUG=containermaxprocs=0,decoratemappings=0,gotestjsonbuildtext=1,httpcookiemaxnum=0,multipathtcp=0,randseednop=0,rsa1024min=0,tlsmlkem=0,tlssha1=1,updatemaxprocs=0,urlmaxqueryparams=0,x509rsacrt=0,x509sha256skid=0,x509usepolicies=0\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=linux\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=0937ac5c93d4f56ded5b24899f381d3d1f208c02\n\tbuild\tvcs.time=2026-08-10T10:32:15Z\n\tbuild\tvcs.modified=true\n",
+    "file": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-u3eyfull/gstable: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=fa97fc26ee91a1ba2eb2203119e9c5c0bd9b51ff, for GNU/Linux 3.7.0, with debug_info, not stripped",
+    "reference": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-u3eyfull/gstable",
+      "sha256": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792053479016726905
+    },
+    "remoteMode": "0o755",
+    "elfMachine": 183
+  },
+  "builder": {
+    "id": "sha256:4e2219ca515d99610115539a96f733fa567f62941e31ac5bfb87c7ade6143bcc",
+    "repoDigests": [
+      "golang@sha256:699337d620559a59b4a2bb298ad59611e535d2ee755a34cf2d2a98f37578dc80"
+    ],
+    "goVersion": "go version go1.25.14 linux/arm64"
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-linux-fresh-build-evidence.py",
+    "sha256": "c5442d734ca8179d7781017339bbf91018450db393a1229b54d8b4e7baeb36d4",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792053570836492897
+  },
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/linux-build-5cytmp5i",
+      "acceptedScope": false,
+      "buildExitCode": 0,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 7,
+      "inventory": {
+        "path": "/private/tmp/cbui/linux-build-5cytmp5i/reports/linux-build-inventory.json",
+        "sha256": "2a4333341d8a14985a06133c6e8df9de17d78d51f20003930597a5a112301a62",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792053572659566931
+      },
+      "previousBinary": {
+        "present": true,
+        "sha256": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 20,
+        "mtime": 1791581398,
+        "archive": "/private/tmp/cbui/linux-build-5cytmp5i/reports/previous-gstable.tar"
+      },
+      "artifactDirectory": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-5cytmp5i"
+    },
+    {
+      "root": "/private/tmp/cbui/linux-build-u3eyfull",
+      "acceptedScope": true,
+      "buildExitCode": 0,
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 6,
+      "inventory": {
+        "path": "/private/tmp/cbui/linux-build-u3eyfull/reports/linux-build-inventory.json",
+        "sha256": "f37f52474e01a532f4b6ea034e77f5eb40ee4bd8d4c83723c896a4363eea85b5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792053572730599558
+      },
+      "previousBinary": {
+        "present": true,
+        "sha256": "49e76bc1e43a0a9743bb5e50534c01e92840b96f7758256b069ad175badfbf3d",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 20,
+        "mtime": 1792053384,
+        "archive": "/private/tmp/cbui/linux-build-u3eyfull/reports/previous-gstable.tar"
+      },
+      "artifactDirectory": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-u3eyfull"
+    }
+  ],
+  "retainedFiles": 13,
+  "cache": {
+    "volume": "cb-linux-build-5cytmp5i-go-cache",
+    "ownerRuntime": "/private/tmp/cbui/linux-build-5cytmp5i",
+    "activeContainers": 0,
+    "retainedFor": "Remaining WBFT/WEMIX Linux builds; unrelated adk-gomod volume untouched."
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-red.log",
+      "sha256": "9c0741681598fcaff8fdb87f560428c8950d779021bd673ac455867de36198db",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052540731719329
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-green.log",
+      "sha256": "8f166550aeed1ff0b6b7863ee17dfc2ea1b4f0aa82a7eed8b49c418827c2d34a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052586307589904
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-exit-red.log",
+      "sha256": "6328931ee5c0b0c472732c27141a99b3e435ef6388c39422b3b6de19953f2a78",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052608473855254
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-green2.log",
+      "sha256": "a6af9b5bedb6f37fa35b0b0d9f6b538f294770e2a7ffff7036ae5dd47b8077a5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052690634838505
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-budget-red.log",
+      "sha256": "1767bfe0c99246a9dd3bade40b367dcc64b4eeb16498d93e0f5005af94bb9dc4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053073945062536
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-budget-red2.log",
+      "sha256": "4dde991edda2a1ca11e2553c17c51fc79b84d12adc3f2a174a8a8b77cfe2e6fc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053096463032298
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-related-race.log",
+      "sha256": "e454791da072dde25554957d706f6492f6679990aa8a89402bf7c7e8570dcc50",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052842322941339
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-related-race2.log",
+      "sha256": "dff1d30822511de6d5c9d4e97f8092a79ef421c8eeedc6501a80a5d4899d5acf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053185361358709
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-check.log",
+      "sha256": "5c9ce4841199a870e5f4df93e34841e9a68af4ab02601db2cc7dcd8bde15cac1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052981390237204
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-fresh-build-check2.log",
+      "sha256": "225a40f98520587e04b8126afad8a14fb3224bf6d56ffa3b3deff9ce7229eda3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053263612358196
+    }
+  ],
+  "builderPull": {
+    "path": "/private/tmp/chainbench-linux-builder-pull.log",
+    "sha256": "712723aebc4d73734c9351d30203584e3fbb0234f290798c5a62ac6d501f29e2",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792052807689250227
+  }
+}

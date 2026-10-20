@@ -1,0 +1,295 @@
+{
+  "scope": "Task Go build-cache cold regular entries; no runtime data or chain acceptance",
+  "acceptedCacheScope": true,
+  "sourceDigestAtActualProof": "a17a517391d03a8c1bbe10b5e447a03adb05e44eeae9741978bf7ec95364c2cd",
+  "tdd": {
+    "initialFailureConditions": 17,
+    "partialFailureJournalRED": true,
+    "repeatedReferenceScanRED": true,
+    "proofContractMethods": 22,
+    "finalContractMethods": 24,
+    "additionalCLIContractsAddedAfterAudit": true,
+    "relatedStorageMethods": 23,
+    "readyWholeCheckPassed": true,
+    "finalPublishedWholeCheckPassed": true
+  },
+  "actualIndependentAudit": {
+    "acceptedCacheScope": true,
+    "sourceDigest": "a17a517391d03a8c1bbe10b5e447a03adb05e44eeae9741978bf7ec95364c2cd",
+    "deletedEntries": 17132,
+    "deletedAllocatedBytes": 4148563968,
+    "retainedRegularFiles": 20121,
+    "retainedAllocatedBytes": 3883200512,
+    "freeBytesBefore": 22694981632,
+    "freeBytesAfter": 26841251840,
+    "openDescriptorRefusal": "cache file is open; retry after it closes",
+    "sourceAndInputsUnchanged": true,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "policy": {
+    "root": "/private/tmp/chainbench-go-cache",
+    "minimumAgeHours": 8,
+    "maximumAllocatedBytes": 4294967296,
+    "minimumRetainedAllocatedBytes": 1073741824,
+    "targetFreeBytes": 26843545600,
+    "dryRunDefault": true,
+    "freshProcessAndFDChecksBeforeDelete": 2,
+    "referencedDigestsPreserved": true,
+    "recentMtimeOrCtimePreserved": true,
+    "controlFilesUnknownNamesSymlinksHardlinksExecutableDirectoriesPreserved": true,
+    "revalidateDirectoryAndEntryIdentityBeforeUnlink": true,
+    "partialFailureDeletionJournalRetained": true
+  },
+  "initialAttempt": {
+    "readOnlyPlannerStoppedBeforePlanAndApply": true,
+    "reason": "Repeated substring scans of the evidence catalog; new proof ran after indexing identifiers",
+    "exitCode": 143,
+    "noDeletion": true
+  },
+  "limits": [
+    "Go use mtimes are approximate by at most one hour, verified in installed Go 1.26.8 cache.go; eight-hour retention is conservative.",
+    "Cache entries are rebuildable and this opt-in operation can cause later recompilation.",
+    "No module cache, runtime proof, external source, user app or system swap was deleted.",
+    "Independent retained-file equality is at audit time; later Go builds may normally update the cache.",
+    "Two CLI-only tests were added after the frozen 22-contract actual proof; the maintenance implementation is unchanged."
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/prune_go_cache.py",
+      "sha256": "dc4f525df2f6430d87acd595af1766b33f7355756f17bfb25c91dbe40a8b35c4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792131086167003558
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_prune_go_cache.py",
+      "sha256": "7043547789195e13dd38451c37a0e387d904b5e751eba112a0017f6f00ac083c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792131312152345455
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/Makefile",
+      "sha256": "26ca295c909af3f4b1e6d82c5f3d0e352869ad7c4c9c7133a5f50cc3f5f66c14",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792130747675421696
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-go-cache-red-20261016.log",
+      "sha256": "fbbaaea409197771b7a01c47f768335e7d50f99fc92f29afb4f48c414d5e7ed6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130705133282583
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-journal-red-20261016.log",
+      "sha256": "151aaaff3a13dfe3cfd75ba38c01fca8ee753ffd2532138e8220c8af87f708c6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130796774128770
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-journal-red2-20261016.log",
+      "sha256": "b06f307faf8208db40689b563fbc678b3381a9427f7e61952c427ec5a20b744d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130803013596804
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-index-red-20261016.log",
+      "sha256": "df37dc8cde161afe47c17c97f4a248cfd41171da5bb841ac310b93c08b5a10c9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131073495699528
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-green-20261016.log",
+      "sha256": "570ddf573cdd0e99c8b819cd026012de15cc9f58398f389adabf6ac338cc4304",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130748019464121
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-green2-20261016.log",
+      "sha256": "47f8951e0f0cee9ab7839c421ead696e08236052d4dfa6cbaa3ae28d9694767b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130811947253391
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-green3-20261016.log",
+      "sha256": "70b45e20112135e53981e716d38cd0d8a31b843e34386bff92626685fa61054d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131086316452889
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-final-contracts-20261016.log",
+      "sha256": "ceba94e8970f007fb1cdd9b92991ddc2ce4d07ef6dab8225f1e9d0f5a1fd1459",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131312360041505
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-related-20261016.log",
+      "sha256": "b04553c034f9c2b56bc1848b7aa7fd2e8bf007dd3ec4cbff74c72c92e82dfedc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130763714289000
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-ready-check-20261016.log",
+      "sha256": "c8219cba766616228dc1b5d39a651863d491a87faac57c5b3b37e1a30a93410f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130875193519207
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-ready-check2-20261016.log",
+      "sha256": "142ac0dec7cc015c887ccf6bdd4e185e5d7ce7d118bfade6433211809747d759",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131193706444079
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof-driver-20261016.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130895414239226
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof2-driver-20261016.log",
+      "sha256": "c40652765e8ae4a43a32f27145b5b1b3e8c62363c782aa3a8497d91f42256d77",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131237416197046
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-independent2-20261016.log",
+      "sha256": "c89955a1eff3863b978fb9249afcb4d6fb3672298f19ec773e2ffc6031aaa810",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131258788928621
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-cli-review-20261016.log",
+      "sha256": "f511666307eed367fb670ec2f33241a57473e4ad53fbec82ac1b4efb314cb08f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131314670257136
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof2-20261016-before.json",
+      "sha256": "ab19175749cb12e800dc91f5fc7b994443bf731e5bd97ea156f81146f22ae224",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131229094386618
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof2-20261016-plan.json",
+      "sha256": "5add0b89b1f58ec88f3fd397d019dd852bed8205f63472f109b39347d9dc75eb",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131231870352794
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof2-20261016-summary.json",
+      "sha256": "5c62ec9a70b1deaa0e5903e920bce6c86377d0948cffba8a8a46685895a6e8ce",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131237412403702
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof2-20261016-independent.json",
+      "sha256": "4cc2673752505bf130f5a4f86dad5743a8d0b5baa56e8139a3bd9eb491b71a04",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131258788741121
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof-20261016.py",
+      "sha256": "8f29a86cc3c9593d5851107b43cdbcd2473a0c420c287f2a8f9827d9c81ac0f9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130885844512282
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-independent-20261016.py",
+      "sha256": "687634ce1e0198fc6a825f073d9ede5935ef99e7b916fbe37bb98f04a8f03f72",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792130885848483752
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-proof2-20261016.py",
+      "sha256": "d6042a93e327c3b7cff135498901dc8e01cd8b9f9462907b36cc476d26fefed9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131108790833825
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-independent2-20261016.py",
+      "sha256": "7b02cec3087cdef24c1601cbb21b1938c86d593f9708bc9b0a30e04328840a7d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131108791301118
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-readonly-abort-20261016.json",
+      "sha256": "c5bf65b0272dbe06668ecaca52aba3ef0444f9e92d96ff86321efe64cf8e5bfb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131058118850410
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-cli-review-20261016.json",
+      "sha256": "5dab19a631af255f348c6d94894527a959704731ae6677205ab93c2872220e8f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131314669788926
+    },
+    {
+      "path": "/private/tmp/chainbench-go-cache-published-check-20261016.log",
+      "sha256": "4bf2aaef3841119e9a65c06836ce737cde458e3a9754bd24f6b4f213c17d6902",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792131502495731862
+    }
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

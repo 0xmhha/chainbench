@@ -1,0 +1,233 @@
+{
+  "scope": "Approved CT-FAULT-004 predicates and nine-node fixed-height recovery under P2P-only firewall isolation. Separate WEMIX etcd peer TCP traffic was not isolated; complete consensus-network isolation remains unproved.",
+  "date": "2026-10-18",
+  "sourceDigest": "9d8763afa816272b7d1994bc835c374c5b541000c5e3e7cf356536c6d9a89fc3",
+  "headAtProof": "6b0097af492b895b4fad99c43aac86d0c2ee0357",
+  "runtime": "/private/tmp/cbui/l1i-mlvho3iw",
+  "userApprovedCriterion": "Keep nine nodes split 4/5; WEMIX minority halts and majority advances; all nine synchronize and agree at a fixed recovered block. Other BFT families retain both-group halt expectation.",
+  "tests": {
+    "meaningfulRedScenarios": 20,
+    "excludedRed": "First delayed-height fixture incorrectly denied an existing block; rejected and corrected before the valid RED.",
+    "greenScenarios": 30,
+    "raceRepetitions": 10,
+    "relatedFivePackagesRace": "pass",
+    "makeCheck": "pass"
+  },
+  "native": {
+    "selectedScopeAccepted": true,
+    "cases": [
+      {
+        "chain": "stablenet",
+        "minorityHeads": [
+          [
+            "node1",
+            "43",
+            "43",
+            "0"
+          ],
+          [
+            "node2",
+            "43",
+            "43",
+            "0"
+          ],
+          [
+            "node3",
+            "43",
+            "43",
+            "0"
+          ],
+          [
+            "node4",
+            "43",
+            "43",
+            "0"
+          ]
+        ],
+        "majorityBefore": 43,
+        "majorityAfter": 43,
+        "majorityAdvance": 0,
+        "recoveredBlock": "0x43",
+        "assertions": 8,
+        "recordedActions": 25,
+        "recoveryWaits": 18
+      },
+      {
+        "chain": "wemix",
+        "minorityHeads": [
+          [
+            "node1",
+            "162",
+            "162",
+            "0"
+          ],
+          [
+            "node2",
+            "162",
+            "162",
+            "0"
+          ],
+          [
+            "node3",
+            "162",
+            "162",
+            "0"
+          ],
+          [
+            "node4",
+            "162",
+            "162",
+            "0"
+          ]
+        ],
+        "majorityBefore": 176,
+        "majorityAfter": 220,
+        "majorityAdvance": 44,
+        "recoveredBlock": "0x1be",
+        "assertions": 8,
+        "recordedActions": 25,
+        "recoveryWaits": 18
+      },
+      {
+        "chain": "wbft",
+        "minorityHeads": [
+          [
+            "node1",
+            "56",
+            "56",
+            "0"
+          ],
+          [
+            "node2",
+            "56",
+            "56",
+            "0"
+          ],
+          [
+            "node3",
+            "56",
+            "56",
+            "0"
+          ],
+          [
+            "node4",
+            "56",
+            "56",
+            "0"
+          ]
+        ],
+        "majorityBefore": 56,
+        "majorityAfter": 56,
+        "majorityAdvance": 0,
+        "recoveredBlock": "0x4a",
+        "assertions": 8,
+        "recordedActions": 25,
+        "recoveryWaits": 18
+      }
+    ],
+    "assertions": 24,
+    "recordedActions": 75,
+    "negativeControlsRejected": [
+      "stablenet:minority omitted",
+      "stablenet:majority forged",
+      "stablenet:sync omitted",
+      "stablenet:hash omitted",
+      "stablenet:hash diverged",
+      "stablenet:heal failure",
+      "stablenet:case failed",
+      "stablenet:reference latest",
+      "wemix:minority omitted",
+      "wemix:majority forged",
+      "wemix:sync omitted",
+      "wemix:hash omitted",
+      "wemix:hash diverged",
+      "wemix:heal failure",
+      "wemix:case failed",
+      "wemix:reference latest",
+      "wbft:minority omitted",
+      "wbft:majority forged",
+      "wbft:sync omitted",
+      "wbft:hash omitted",
+      "wbft:hash diverged",
+      "wbft:heal failure",
+      "wbft:case failed",
+      "wbft:reference latest"
+    ]
+  },
+  "preservation": {
+    "archiveCount": 27,
+    "archiveEntries": 1323,
+    "localFilesPreserved": 655,
+    "freshIndependentProcessInventories": 30,
+    "caseBoundaryScopeChecks": 45,
+    "sharedKeysUnchanged": true,
+    "remainingDatabasePaths": 0,
+    "firewallTablesChecked": 15,
+    "remainingPartitionRules": 0,
+    "sourceAndInputsUnchanged": true
+  },
+  "newIsolationGap": {
+    "source": "/private/tmp/chainbench-w3-head-source/wemix/etcdutil.go",
+    "peerListen": "TCP P2P+1, recorded Endpoints.Etcd",
+    "localClient": "P2P+2, localhost only; excluded from cross-host isolation",
+    "observedWemixPorts": {
+      "p2p": 30301,
+      "etcd": 30302,
+      "etcdClient": 30303
+    },
+    "status": "Open: isolate recorded peer endpoints and prove cross-group TCP is actually cut and restored."
+  },
+  "fullL1Accepted": false,
+  "completeConsensusIsolationAccepted": false,
+  "finalWebAccepted": false,
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-20261018-summary.json",
+      "sha256": "1d3d089f9119e351fcc083411b5d1f8dde70fe9946dc72d0f4333b6586f024ec"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-20261018-independent.json",
+      "sha256": "a9e6c9ac055cfbb017585d6d75ec6db6bbc697e3405bf673d0431596977c3605"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-20261018-specific.json",
+      "sha256": "885012471131aab7f34ef7466f1abf5a3b2ed46005ef7357a2c8c2d0643b0d58"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-red-20261018.log",
+      "sha256": "adef69c0e76fa77c6ae931e24e783db7ab49183422b51196e7c054b79c465825"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-height-red-20261018.log",
+      "sha256": "e837f97eaca77e8b046e96fb85fa8df3389e42c999e2864425549a5dacf1dec4"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-height-red2-20261018.log",
+      "sha256": "02c918d3a989282a915c651c0c7cb78f814f92910d902b6554b01a82b0d8676e"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-green2-20261018.log",
+      "sha256": "2aaf0f1af5efe83014a8bb58316aee8ee283ae633221b36845727a5c5912d74c"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-race2-20261018.log",
+      "sha256": "d04ddabb6cb92798ab638abcbea7ab08541704c79476d8bb2ad9735097c50dce"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-check2-20261018.log",
+      "sha256": "cc731fa9d10088bd8c0bd0943f27397856caa419fea5882f7cec917aca34e45e"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-final-race-20261018.log",
+      "sha256": "9a47cf915766fbc7a28e4c4fb3f6bdb7ad3361ed8704a37b77d34f8fbd70ab33"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-independent-20261018.log",
+      "sha256": "c37fd0e99fbdd7183e5dce8c6479f4640342297f9ff8837778d8f40f954f8aa8"
+    },
+    {
+      "path": "/private/tmp/chainbench-partition-quorum-specific-20261018.log",
+      "sha256": "d796115d2c5d2aa3d8281b6b23226d27a24327293169da94c2cf2e41c2e60d81"
+    }
+  ]
+}

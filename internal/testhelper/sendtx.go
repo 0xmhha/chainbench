@@ -1,8 +1,10 @@
 package testhelper
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -32,6 +34,22 @@ type sendTxAction struct{}
 // checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
 // status 0x0 (see checkTxOutcome).
 func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("sendTx", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
+	if err := validateUnsignedControl("action", "sendTx", "blocks", ac.Args); err != nil {
+		return err
+	}
+
+	if err := validateTransactionNumbers(ac.Args); err != nil {
+		return err
+	}
+	if err := validateQuantity(ac.Args, "value", 0); err != nil {
+		return err
+	}
 	// A "key" arg switches to local signing: the tx is signed offline with that
 	// private key and submitted via eth_sendRawTransaction, rather than
 	// eth_sendTransaction against a node's keystore. This lets a spec send from a
@@ -58,6 +76,12 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	// only place that key exists.
 	if sender.SignsLocally() {
 		return sendTxLocalFrom(ctx, ac, sender)
+	}
+	if _, supplied := ac.Args["feePayer"]; supplied {
+		return fmt.Errorf("dsl: feePayer requires a local signing account")
+	}
+	if _, supplied := ac.Args["feePayerKey"]; supplied {
+		return fmt.Errorf("dsl: feePayerKey requires a local signing account")
 	}
 	args := rpc.SendTxArgs{From: sender.Address}
 	if to, ok := ac.Args["to"].(string); ok {
@@ -118,7 +142,8 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // reject/wait/revert logic as the node-signed path. It uses the injected
 // account provider's Wallet: a "feePayerKey" arg makes it a 0x16 fee-delegated
 // transfer (the "key" account is the sender, feePayerKey covers the gas), a
-// "gasPrice" makes it a legacy (or, with an empty accessList, 0x01) transfer,
+// "gasPrice" makes it a fully specified legacy transaction (or, with an
+// accessList, an EIP-2930 transaction preserving the list's entries),
 // Execute when a "data" payload is present, else SendCoin for a value-only
 // transfer. The target node RPC comes from the usual "on" selector so the wallet
 // dials the same endpoint the node-signed path would.
@@ -161,46 +186,33 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 		return err
 	}
 	feePayerKey, _ := ac.Args["feePayerKey"].(string)
+	feePayer, _ := ac.Args["feePayer"].(string)
 	data, _ := ac.Args["data"].(string)
 	gasHex, hasGas := hexQuantity(ac.Args["gas"])
-	gasPriceHex, hasGasPrice := hexQuantity(ac.Args["gasPrice"])
+	_, hasGasPrice := hexQuantity(ac.Args["gasPrice"])
 	var hash string
 	switch {
 	// A "gasPrice" names the pre-1559 fee field, so the case asked for a type
 	// that carries it: legacy, or EIP-2930 when an access list comes with it.
 	case hasGasPrice:
-		gasPrice, ok := new(big.Int).SetString(strings.TrimPrefix(gasPriceHex, "0x"), 16)
-		if !ok {
-			return fmt.Errorf("dsl: sendTx key: bad gasPrice %v", ac.Args["gasPrice"])
-		}
-		if value == nil {
-			value = new(big.Int)
-		}
-		if _, withList := ac.Args["accessList"]; withList {
-			hash, err = w.SendAccessListGas(ctx, to, value, gasPrice)
-			break
-		}
-		hash, err = w.SendLegacyGas(ctx, to, value, gasPrice)
+		hash, err = sendLegacyOptions(ctx, ac, w, to, value, data, rpcURL)
 	// A "feePayerKey" arg makes this a 0x16 fee-delegated transfer: the "key"
 	// account signs as the sender (moves value) while feePayerKey covers the gas.
 	// It is the only way to exercise a blacklisted-fee-payer rejection — the SDK's
 	// static value-transfer guard checks sender and recipient but not the fee
 	// payer, so the tx reaches the node, which is what does the rejecting.
-	case feePayerKey != "":
-		fp, ferr := hex.DecodeString(strings.TrimPrefix(feePayerKey, "0x"))
-		if ferr != nil {
-			return fmt.Errorf("dsl: sendTx feePayerKey: decode: %w", ferr)
-		}
-		if value == nil {
-			value = new(big.Int)
-		}
-		hash, err = w.SendFeeDelegated(ctx, fp, to, value)
+	case feePayerKey != "" || feePayer != "":
+		hash, err = sendDelegatedOptions(ctx, ac, w, to, value, data, rpcURL)
+	case ac.Args["accessList"] != nil:
+		hash, err = sendDynamicOptions(ctx, ac, w, to, value, data, rpcURL)
 	// An explicit "gas" is the limit the case asked for. Every other branch
 	// picks its own — SendCoin fixes 21000, Execute estimates — so a case that
 	// sent 100000 gas to a reverting contract ran out at 21000 instead, and
 	// measured out-of-gas where it meant to measure a revert.
 	case hasGas:
 		hash, err = sendWithGas(ctx, ac, w, to, value, data, gasHex, rpcURL)
+	case data != "" && data != "0x" && (ac.Args["nonce"] != nil || ac.Args["maxFeePerGas"] != nil || ac.Args["maxPriorityFeePerGas"] != nil):
+		hash, err = sendDynamicOptions(ctx, ac, w, to, value, data, rpcURL)
 	case data != "" && data != "0x":
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
@@ -273,34 +285,43 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	return checkTxOutcome(hash, receipt, ac.Args)
 }
 
-// feePayerKeyExcludes are the fields a locally signed fee-delegated send cannot
-// carry: the wallet signs a value-only 0x16 transfer with its own gas and fees.
-var feePayerKeyExcludes = []string{"gas", "data", "nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "accessList"}
-
-// legacyExcludes are the fields a locally signed gasPrice send cannot carry:
-// the wallet signs a 21000-gas value transfer at the account's next nonce.
-var legacyExcludes = []string{"gas", "data", "nonce", "maxFeePerGas", "maxPriorityFeePerGas"}
+// legacyExcludes rejects mixing the two fee models in one transaction.
+var legacyExcludes = []string{"maxFeePerGas", "maxPriorityFeePerGas"}
 
 // checkLocalSendArgs refuses a combination the local signing path would
 // otherwise send without one of its fields. A case that names a field expects
 // the transaction to carry it, so dropping it silently measures something else.
 func checkLocalSendArgs(args map[string]any) error {
-	if _, ok := args["feePayerKey"]; ok {
-		for _, f := range feePayerKeyExcludes {
-			if _, has := args[f]; has {
-				return fmt.Errorf("dsl: sendTx: feePayerKey sends a value-only transfer; %q is not supported with it", f)
-			}
+	_, hasPayer := args["feePayer"]
+	_, hasPayerKey := args["feePayerKey"]
+	if hasPayer && hasPayerKey {
+		return fmt.Errorf("dsl: feePayer and feePayerKey are mutually exclusive")
+	}
+	if hasPayer {
+		if name, ok := args["feePayer"].(string); !ok || strings.TrimSpace(name) == "" {
+			return fmt.Errorf("dsl: feePayer must name a local account")
 		}
-		return nil
+	}
+	if hasPayerKey {
+		if key, ok := args["feePayerKey"].(string); !ok || key == "" {
+			return fmt.Errorf("dsl: feePayerKey must name a private key binding")
+		}
+	}
+	if hasPayer || hasPayerKey {
+		_, fee := args["maxFeePerGas"]
+		_, tip := args["maxPriorityFeePerGas"]
+		if fee != tip {
+			return fmt.Errorf("dsl: fee delegation: maxFeePerGas and maxPriorityFeePerGas come together")
+		}
+		if _, legacy := args["gasPrice"]; legacy {
+			return fmt.Errorf("dsl: fee delegation cannot carry gasPrice")
+		}
 	}
 	al, hasList := args["accessList"]
 	_, hasGasPrice := args["gasPrice"]
 	if hasList {
-		if !hasGasPrice {
-			return fmt.Errorf("dsl: sendTx key: accessList needs gasPrice (a locally signed access list is type 0x01)")
-		}
-		if list, ok := al.([]any); !ok || len(list) > 0 {
-			return fmt.Errorf("dsl: sendTx key: only an empty accessList can be signed here")
+		if _, ok := al.([]any); !ok {
+			return fmt.Errorf("dsl: sendTx key: accessList must be an array")
 		}
 	}
 	if !hasGasPrice {
@@ -308,7 +329,7 @@ func checkLocalSendArgs(args map[string]any) error {
 	}
 	for _, f := range legacyExcludes {
 		if _, has := args[f]; has {
-			return fmt.Errorf("dsl: sendTx key: gasPrice sends a 21000-gas legacy transfer; %q is not supported with it", f)
+			return fmt.Errorf("dsl: sendTx key: gasPrice cannot be combined with %q", f)
 		}
 	}
 	return nil
@@ -320,6 +341,9 @@ func checkLocalSendArgs(args map[string]any) error {
 func noncePointer(v any) (*uint64, error) {
 	q, ok := hexQuantity(v)
 	if !ok {
+		if v != nil {
+			return nil, fmt.Errorf("dsl: sendTx: bad nonce quantity")
+		}
 		return nil, nil
 	}
 	n, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
@@ -336,6 +360,9 @@ func noncePointer(v any) (*uint64, error) {
 func parseValueWei(v any) (*big.Int, error) {
 	q, ok := hexQuantity(v)
 	if !ok {
+		if v != nil {
+			return nil, fmt.Errorf("dsl: sendTx: bad value quantity")
+		}
 		return nil, nil
 	}
 	bi, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
@@ -350,10 +377,18 @@ func parseValueWei(v any) (*big.Int, error) {
 // key hex under "saveKey". The key is an ephemeral, throwaway test key — a spec
 // funds it from a node account, then uses it as sendTx "key" to sign locally.
 
-// sendWithGas signs a type-0x02 transaction with the gas limit the case named,
-// its data if any, and its fee caps if given — else the node's suggestion:
+// sendWithGas retains an explicit legacy gas price, or signs type 0x02 with
+// the named gas limit, data, and fee caps — else the node's suggestion:
 // tip from eth_maxPriorityFeePerGas, cap twice the latest base fee plus the tip.
 func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string) (string, error) {
+	return sendWithAccessListGas(ctx, ac, w, to, value, data, gasHex, rpcURL, nil)
+}
+
+func sendWithAccessListGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string, list []accounts.AccessTuple) (string, error) {
+	return sendSpecifiedGas(ctx, ac, w, to, value, data, gasHex, rpcURL, list, nil)
+}
+
+func sendSpecifiedGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string, list []accounts.AccessTuple, feeKey []byte) (string, error) {
 	gas, err := strconv.ParseUint(strings.TrimPrefix(gasHex, "0x"), 16, 64)
 	if err != nil {
 		return "", fmt.Errorf("dsl: sendTx gas: %w", err)
@@ -361,7 +396,7 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 	if value == nil {
 		value = new(big.Int)
 	}
-	args := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: gas}
+	args := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: gas, AccessList: list}
 	if data != "" && data != "0x" {
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
@@ -374,6 +409,19 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 		return "", err
 	}
 	args.Nonce = nonce
+	if price, legacy := hexQuantity(ac.Args["gasPrice"]); legacy {
+		if _, supplied := ac.Args["maxFeePerGas"]; supplied {
+			return "", fmt.Errorf("dsl: gasPrice and maxFeePerGas are mutually exclusive")
+		}
+		if _, supplied := ac.Args["maxPriorityFeePerGas"]; supplied {
+			return "", fmt.Errorf("dsl: gasPrice and maxPriorityFeePerGas are mutually exclusive")
+		}
+		gasPrice, ok := new(big.Int).SetString(strings.TrimPrefix(price, "0x"), 16)
+		if !ok {
+			return "", fmt.Errorf("dsl: invalid gasPrice")
+		}
+		return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: args.Data, Gas: gas, GasPrice: gasPrice, Nonce: nonce, AccessList: list})
+	}
 	maxFee, hasMaxFee := hexQuantity(ac.Args["maxFeePerGas"])
 	tip, hasTip := hexQuantity(ac.Args["maxPriorityFeePerGas"])
 	if hasMaxFee != hasTip {
@@ -410,5 +458,123 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 		args.GasTipCap = tipCap
 		args.GasFeeCap = new(big.Int).Add(new(big.Int).Mul(base, big.NewInt(2)), tipCap)
 	}
+	if feeKey != nil {
+		return w.SendFeeDelegatedTx(ctx, feeKey, args)
+	}
 	return w.SendDynamicFeeTx(ctx, args)
+}
+
+// sendLegacyOptions is exclusive to sendTx: asset actions keep their own schema.
+func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
+	var list []accounts.AccessTuple
+	if raw, supplied := ac.Args["accessList"]; supplied {
+		decoded, err := localAccessList(ac.Deps, raw)
+		if err != nil {
+			return "", err
+		}
+		list = decoded
+	}
+	gas := uint64(21000)
+	if quantity, explicit := hexQuantity(ac.Args["gas"]); explicit {
+		parsed, err := strconv.ParseUint(strings.TrimPrefix(quantity, "0x"), 16, 64)
+		if err != nil {
+			return "", fmt.Errorf("dsl: gas: %w", err)
+		}
+		gas = parsed
+	} else if (data != "" && data != "0x") || len(list) > 0 {
+		client, err := clientFor(ac.Deps, rpcURL)
+		if err != nil {
+			return "", err
+		}
+		message := rpc.SendTxArgs{From: w.Address(), To: to, Data: data, AccessList: list}
+		if value != nil {
+			message.Value = "0x" + value.Text(16)
+		}
+		if err := applyFeeArgs(&message, ac.Args); err != nil {
+			return "", err
+		}
+
+		var quantity string
+		if err := client.Call(ctx, "eth_estimateGas", &quantity, message); err != nil {
+			return "", err
+		}
+		gas, err = strconv.ParseUint(strings.TrimPrefix(quantity, "0x"), 16, 64)
+		if err != nil {
+			return "", err
+		}
+	}
+	price, _ := hexQuantity(ac.Args["gasPrice"])
+	gasPrice, ok := new(big.Int).SetString(strings.TrimPrefix(price, "0x"), 16)
+	if !ok {
+		return "", fmt.Errorf("dsl: invalid gasPrice")
+	}
+	nonce, err := noncePointer(ac.Args["nonce"])
+	if err != nil {
+		return "", err
+	}
+	payload, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		return "", fmt.Errorf("dsl: data: %w", err)
+	}
+	if value == nil {
+		value = new(big.Int)
+	}
+	return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: payload, Gas: gas, GasPrice: gasPrice, Nonce: nonce, AccessList: list})
+}
+
+func localAccessList(deps *interp.Deps, raw any) ([]accounts.AccessTuple, error) {
+	encoded, err := json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+	var list []accounts.AccessTuple
+	decoder := json.NewDecoder(bytes.NewReader(encoded))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&list); err != nil {
+		return nil, fmt.Errorf("dsl: accessList: %w", err)
+	}
+	if list == nil {
+		return nil, fmt.Errorf("dsl: accessList must be an array")
+	}
+	for i := range list {
+		if list[i].StorageKeys == nil {
+			return nil, fmt.Errorf("dsl: accessList storageKeys must be an array")
+		}
+		address, err := ResolveAddress(deps, list[i].Address)
+		if err != nil {
+			return nil, err
+		}
+		list[i].Address = address
+	}
+	return list, nil
+}
+
+// sendDynamicOptions preserves explicit fields during gas estimation and signing.
+func sendDynamicOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
+	var list []accounts.AccessTuple
+	if raw, supplied := ac.Args["accessList"]; supplied {
+		decoded, err := localAccessList(ac.Deps, raw)
+		if err != nil {
+			return "", err
+		}
+		list = decoded
+	}
+	gas, explicit := hexQuantity(ac.Args["gas"])
+	if !explicit {
+		message := rpc.SendTxArgs{From: w.Address(), To: to, Data: data, AccessList: list}
+		if value != nil {
+			message.Value = "0x" + value.Text(16)
+		}
+		if err := applyFeeArgs(&message, ac.Args); err != nil {
+			return "", err
+		}
+		client, err := clientFor(ac.Deps, rpcURL)
+		if err != nil {
+			return "", err
+		}
+		if err := client.Call(ctx, "eth_estimateGas", &gas, message); err != nil {
+			return "", err
+		}
+	}
+	return sendWithAccessListGas(ctx, ac, w, to, value, data, gas, rpcURL, list)
 }

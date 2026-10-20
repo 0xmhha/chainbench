@@ -1,0 +1,126 @@
+{
+  "scope": "Actual original basic07 on owned Linux fleet with sweep retention hook, then metadata preservation and inactive DB reclamation. Not fullL1.",
+  "acceptedScope": true,
+  "fullL1Accepted": false,
+  "sourceDigest": "9a8520cb1f1729f4cce01bf5f5d25c10dbab77ac856d4fc3b1ef3cddc4b7519b",
+  "nativeProof": {
+    "path": "/private/tmp/cbui/sr-7oxtfq5j/reports/proof.json",
+    "sha256": "a0b4735f634560f3d31e83c7a3b587c850806889ea560bbd0d4993a39d9ae673",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060043560120728
+  },
+  "nativeSummary": {
+    "path": "/private/tmp/chainbench-sweep-retention-native-summary.json",
+    "sha256": "a0b4735f634560f3d31e83c7a3b587c850806889ea560bbd0d4993a39d9ae673",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060043560294642
+  },
+  "elapsedSeconds": 58.010943458997644,
+  "assertions": {
+    "path": "/private/tmp/cbui/sr-7oxtfq5j/reports/sessions/20261015-102627-48672/UTC-20261015-102627/tests/001_basic-wbft-consensus/assert.json",
+    "sha256": "9e0cbf9526883ddce854d77d1872fe1a794c2794a258c93330938d4dee5bb888",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060024679413355
+  },
+  "workspacePreserved": true,
+  "serversReclaimed": 5,
+  "remainingDatabasePaths": 0,
+  "retainedFiles": 57,
+  "inventory": {
+    "path": "/private/tmp/cbui/sr-7oxtfq5j/reports/inventory.json",
+    "sha256": "abc7ca9243d895405601042db8b9e1e8c303187f7bb2c481f3b5c86abe47d7b3",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060089848636227
+  },
+  "independentAudit": {
+    "path": "/private/tmp/cbui/sr-7oxtfq5j/reports/independent-audit.json",
+    "sha256": "c2a2fcdfd172dd68a931be8bad8d56d70757c070e152304b6b53a23c5a350c86",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792060089810568169
+  },
+  "unitRed": "Seven lifecycle tests fail against original sweep: missing hook, ignored retention failure, ignored stop failure, overwritten workspace, deleted passing evidence, omitted failed-case hook, unselectable pinned CLI.",
+  "unitGreen": "All seven pass plus two compatibility tests for ordinary success cleanup and ordinary failure evidence preservation. make check includes all nine.",
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-red.log",
+      "sha256": "c93eb00f60bdaa887b8c70e573726039dc5235c7a42b198e5405ffd95ff4de40",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059801736994163
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-green.log",
+      "sha256": "bee2beb26eaff8c902c1c696f98e7a9d2004e1005916cfc2b20d2dca681ae5df",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059840104260053
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-green2.log",
+      "sha256": "1794c7e444e023a2280cfe4e50d1e171927e7a02cf6740884a3c8be37ca37ea0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059962528110521
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-check.log",
+      "sha256": "33bf6c145aa024454aced424d6b6f117dbd26f2663b3eb8e32ac64d25ff1572e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059968516549198
+    }
+  ],
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-prepare.py",
+      "sha256": "4c77c2d665532def3072bb42c2512641dfc3a9d79f08f9dcfbea78617af08d02",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059889291999055
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-run.py",
+      "sha256": "3a5bad7d43132b97bc4d884b9de012940de64aa4f4c035eaa7ff23ff1b32a953",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059914885116126
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-retain-hook",
+      "sha256": "45938f9e3bb9c516c4fa5bca39c27bb64f28c4b834779c22ac3bba0432e94077",
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792059914878155797
+    },
+    {
+      "path": "/private/tmp/chainbench-sweep-retention-evidence.py",
+      "sha256": "7bc45fccb3e697d8432eeed425d13a26435248fbcfe5c8e2a0eade37fa5b0b4e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792060087320781471
+    }
+  ],
+  "publicationCheck": {
+    "passed": true,
+    "path": "/private/tmp/chainbench-sweep-retention-publication-check.log",
+    "sha256": "34908052cf380b4412f48fab00f382066516c5c473ebc4f1630951f800215eb9"
+  }
+}

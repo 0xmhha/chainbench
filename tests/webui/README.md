@@ -287,3 +287,95 @@ the browser, saves it, creates a workspace, edits the server-set through the
 form, re-pins the workspace, exports the workspace bundle, re-imports it and
 deploys four native nodes on the edited ports. `verify.sh --criterion WEB-02`
 reruns it with the preset and asset pinning proofs.
+
+Runtime maintenance is opt-in. `python3 scripts/webui_storage.py cleanup
+--created-after 2026-10-09T00:58:00+09:00` only reports a plan. Add `--evidence
+<archive-directory-or-jsonl>` for every external RED archive, campaign receipt,
+and compression audit; pass each separately. Only `--delete` removes candidates.
+An unreadable inventory refuses maintenance. References take priority over newer
+rechecks; equal creation timestamps retain both. Unknown names, session-old or
+recent files, links, active processes, and open files are protected. Immediately
+before each removal the tool inventories references and activity again. Stop
+proof writers and node launchers before applying: an idle check is an observation,
+not an interprocess lock against a new launch.
+
+`python3 scripts/webui_storage.py compress-wal --compress --audit <audit.jsonl>`
+transparently compresses only idle etcd WALs of at least 40 MiB on macOS. Without
+`--compress` it lists candidates. It verifies bytes, mode, owner, mtime, flags,
+extended attributes and ACL before atomic replacement, and records the original
+SHA-256 and saved allocation. Hard links and already compressed files are skipped.
+`PYTHONDONTWRITEBYTECODE=1 python3 tests/webui/storage_probe.py` explicitly tests
+real open-file protection, native compression, reference retention and isolated
+deletion. It also checks the 56 receipts in the retained refactor campaign audit;
+the real acceptance runtime root is inspected without deletion. It needs macOS
+process/open-file inventory access and that campaign's retained audit paths.
+
+New proof runtimes now use `runtime_storage.create_runtime`: a 20 GiB free-space
+preflight runs before creation, and a private ownership marker distinguishes these
+fixtures from historical or user data. Successful criterion captures reclaim only
+unreferenced `chaindata`, `lightchaindata` and `etcd` directories beneath numbered
+nodes. Development proofs assembled into a criterion are reclaimed one by one.
+Configuration, logs, binaries, process ledgers, source, receipts, exported snapshots
+and sessions remain available to the unchanged validators. Failed standalone jobs
+also finalize after their owned processes exit; failed captures reclaim through
+partial evidence, and failed independent reproductions discard staged dependencies.
+Partial JSON/JSONL evidence, failure logs and explicitly cited databases survive;
+the failed verdict and original assertion are preserved. A process/open-file inventory failure or activity refuses
+cleanup; every deletion has a durable `storage-audit.jsonl` inside its runtime.
+
+Independent reproductions also discard their staged `source/node_modules`,
+`source/web/node_modules` and `source/tests/webui/node_modules` after termination;
+the staged source and fresh receipts remain. macOS stages large files and native
+binaries with APFS copy-on-write rather than hard links: writes to the copy cannot
+change its input. Other filesystems use independent ordinary copies. Historical
+unmarked runtimes remain subject to the explicit maintenance command above.
+`PYTHONDONTWRITEBYTECODE=1 WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3
+ tests/webui/runtime_storage_probe.py` checks three bounded 128 MiB fixtures with
+real open-file protection, repeated reclamation, metadata retention, APFS isolation
+and hashes of existing runtime JSON proofs. Its report is kept under `/private/tmp`.
+Add `--failures` to exercise three deliberate failures, preserve their incomplete
+results and original exceptions, and verify the same bounded storage behavior.
+This uses a separate report so the earlier successful proof is not overwritten.
+`PYTHONDONTWRITEBYTECODE=1 WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3
+ tests/webui/dependency_storage_probe.py` copies the installed Playwright package
+three times, protects an open dependency, then deliberately fails each reproduction
+and checks that dependency copies disappear while locks, partial verdicts and all
+existing JSON proof bytes, modes and mtimes remain unchanged. It writes a separate
+`/private/tmp/chainbench-browser-dependency-proof.json` report.
+
+Docker-gated regression preparation requires `CHAINBENCH_DOCKER_SERVERS` to name
+the same generated build directory as the Go tests. The preparation helper uses
+the real server-set/local-map loaders and checks the selected Compose service,
+container ID, running state, bridge address and loopback SSH publication before
+writing. Existing fixture bytes, types, ownership and permissions must match;
+conflicts are refused and preserved. Only missing fixtures are installed, and
+private staging is removed. Run `make fixture-test` for the Docker-free contracts.
+
+Acceptance prerequisites run with native/Docker test gates removed; their actual
+native proof children keep the explicitly supplied settings. SPA prerequisite
+builds use disposable copies of `web/` and must reproduce the reviewed embedded
+assets byte for byte. They never update the checkout; a mismatch fails acceptance
+and requires a separately reviewed rebuild. Ordinary Go checks run from the
+checkout, preserving Git-dependent tests. WEB-14 alone opens the mandatory live
+gates for its serial, uncached (`-count=1`) full race run with a three-hour
+per-package upper bound. E2E vet is not reported as E2E execution.
+
+All native fixture builders use the existing `WEBUI_SELECTED_BINARIES` manifest
+(default `.ouroboros/web-ui-analysis/selected-binaries/manifest.json`). It must
+contain exactly one StableNet, WBFT and WEMIX profile with `binary`, `repository`,
+`embeddedCommit`, `sha256` and, for WEB-01, `dialect`. Each binary's checksum,
+embedded commit, source family and host compatibility are verified before any
+fixture copies are made. Missing or stale selections fail instead of falling
+back to a developer's old local build. Recheck carries the same explicit selection.
+
+When a native binary omits the legacy `Git Commit` version line, selection must
+verify its exact Git revision and `vcs.modified=false` through `go version -m`.
+The observed identity method and build-info digest are retained. A conflicting
+version stamp or modified/missing Go VCS metadata is refused.
+
+Independent recheck gives its source copy a private Git view: refs, configuration
+and index (including a split-index base) belong to that copy. Shared object
+alternates only read the original objects. The source working bytes and
+untracked inputs are preserved, inherited Git location overrides are removed,
+and hooks are disabled in the private view. Tracked-tree checks therefore run
+instead of skipping, while index refreshes cannot update the original index.

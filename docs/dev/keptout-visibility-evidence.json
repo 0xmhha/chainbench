@@ -1,0 +1,277 @@
+{
+  "scope": "R5 keptOut receipt visibility, not completion of all R5 or task 9",
+  "logs": {
+    "red": {
+      "path": "/private/tmp/chainbench-keptout-visibility-red.log",
+      "sha256": "bc248d3aa5cdceeff71ea08b031f60df97641a569e57d51b8672a3f2f179194d"
+    },
+    "green": {
+      "path": "/private/tmp/chainbench-keptout-visibility-green.log",
+      "sha256": "e5a4eb9340fbc2295bdf458f8122f84f689c1407da6a80d78632bb61e7c9cfa4"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-keptout-visibility-check.log",
+      "sha256": "c2aadd18ad96307e577e95e0aeb8d9f7eff86aa1c9ac96010778606d36980ac4"
+    },
+    "race": {
+      "path": "/private/tmp/chainbench-keptout-visibility-race.log",
+      "sha256": "2e91767227c939660120e11a2deb4c16068e7841a0ea209908df8b28e4d7e4b4"
+    },
+    "native": {
+      "path": "/private/tmp/chainbench-keptout-visibility-native.jsonl",
+      "sha256": "c56914f82aa004aa326df7863def999ccf12c24adc03c95bb133613e057d0599"
+    }
+  },
+  "nativeElapsedSeconds": 252.948,
+  "nativeRawSubmissions": 108,
+  "nativeQueuedTransactions": 6,
+  "nativeGenuineRejections": 12,
+  "nativeOtherAcceptedTransactions": 90,
+  "proofs": [
+    {
+      "chain": "stablenet",
+      "proofPath": "/private/tmp/cbui/endpoint-native-4005792712/proof.json",
+      "proofSHA256": "23f9acbe96ef7647f3f914cb49bde97975f90a21550dc90cc518cb3d4c1bc22e",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "cliSession": "/private/tmp/cbui/endpoint-native-4005792712/cli-reports/20261013-174107-77655/UTC-20261013-174120",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-4005792712/mcp-reports/20261013-174107-77655/UTC-20261013-174147",
+      "authenticatedRawTransactions": 36,
+      "observedBlocksPerPendingStep": 2,
+      "queuedTransactions": [
+        {
+          "accessList": [
+            {
+              "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "storageKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001"
+              ]
+            }
+          ],
+          "blockHash": null,
+          "blockNumber": null,
+          "chainId": "0x205b",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gas": "0x11170",
+          "gasPrice": "0x2b4abd176000",
+          "hash": "0xbb64c235d7eb0c025b0b50c5e709eecd50f701b07139e7f95a66b9643f8900be",
+          "input": "0xab",
+          "maxFeePerGas": "0x2b4abd176000",
+          "maxPriorityFeePerGas": "0x2b4abd176000",
+          "nonce": "0x73",
+          "r": "0x1cc124408d96f253e33012c78c898b3030bf146cb7c31f6e7c2a2177d421082e",
+          "s": "0x1a4bc65d5345d4d4045e7a0df3b98fdce770e54c8558e2e451d0b084f15d088",
+          "to": "0x000000000000000000000000000000000000dead",
+          "transactionIndex": null,
+          "type": "0x2",
+          "v": "0x1",
+          "value": "0x2",
+          "yParity": "0x1"
+        },
+        {
+          "accessList": [
+            {
+              "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "storageKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001"
+              ]
+            }
+          ],
+          "blockHash": null,
+          "blockNumber": null,
+          "chainId": "0x205b",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gas": "0x11170",
+          "gasPrice": "0x2b4abd176000",
+          "hash": "0x420a405dd02d28753a03b2c8d75a661bf5fa3b34d5c8d4bb4fbe91a88696a5b3",
+          "input": "0xab",
+          "maxFeePerGas": "0x2b4abd176000",
+          "maxPriorityFeePerGas": "0x2b4abd176000",
+          "nonce": "0x82",
+          "r": "0x37793fb7283207f18364c5e0830917935d0dc2c1b97ae92a3654922e16482580",
+          "s": "0x48f77c7ed8cb1db697b9ccfddbfa378019ac20c824c976b8fbe9e22086bf670a",
+          "to": "0x000000000000000000000000000000000000dead",
+          "transactionIndex": null,
+          "type": "0x2",
+          "v": "0x0",
+          "value": "0x2",
+          "yParity": "0x0"
+        }
+      ],
+      "receiptQueries": "native eth_getTransactionReceipt returned null and eth_getTransactionByHash returned pending blockHash/blockNumber after the CLI/MCP observation window",
+      "endedDatabasesRemaining": 0,
+      "sources": {
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/testhelper/outcome.go": "b895f35d7d7d05ed313579c79c0a7fa16f9100b5f2e726c637ea4c09b518dd71",
+        "endpoint_profile_native_test.go": "cb6ddec37af7ef340c7fc9ae18e1e39787a43c4334de73768a621c012ca5843d",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      }
+    },
+    {
+      "chain": "wbft",
+      "proofPath": "/private/tmp/cbui/endpoint-native-4137339941/proof.json",
+      "proofSHA256": "a825cfe8935d0d0c5e8c3dd15384fbc9f9981f47abcbf30a58359efaebabbd99",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "cliSession": "/private/tmp/cbui/endpoint-native-4137339941/cli-reports/20261013-174107-77655/UTC-20261013-174218",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-4137339941/mcp-reports/20261013-174107-77655/UTC-20261013-174235",
+      "authenticatedRawTransactions": 36,
+      "observedBlocksPerPendingStep": 2,
+      "queuedTransactions": [
+        {
+          "accessList": [
+            {
+              "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "storageKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001"
+              ]
+            }
+          ],
+          "blockHash": null,
+          "blockNumber": null,
+          "chainId": "0x205c",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gas": "0x11170",
+          "gasPrice": "0x174b3c056f",
+          "hash": "0x766efcd569ffb45d6dec3b4a5bd6edd002ac6eacb0ff2841232944ec28ed01a8",
+          "input": "0xab",
+          "maxFeePerGas": "0x174b3c056f",
+          "maxPriorityFeePerGas": "0x174b3c056f",
+          "nonce": "0x73",
+          "r": "0xc0022ba4965e0dd2f8dd77ee19aab2b341d835b118aa3df7872c54f3bbd4889c",
+          "s": "0x588d7ee9edbf6904244b2015cf446d557ee75cf7c35f5fd55cfd4b03debab9ac",
+          "to": "0x000000000000000000000000000000000000dead",
+          "transactionIndex": null,
+          "type": "0x2",
+          "v": "0x0",
+          "value": "0x2",
+          "yParity": "0x0"
+        },
+        {
+          "accessList": [
+            {
+              "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "storageKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001"
+              ]
+            }
+          ],
+          "blockHash": null,
+          "blockNumber": null,
+          "chainId": "0x205c",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gas": "0x11170",
+          "gasPrice": "0x1748af2bb2",
+          "hash": "0x9c436f6496e291e5ca7fe9eeb355c0dc4703af889e40e4f29703becfccd11ad9",
+          "input": "0xab",
+          "maxFeePerGas": "0x1748af2bb2",
+          "maxPriorityFeePerGas": "0x1748af2bb2",
+          "nonce": "0x82",
+          "r": "0x882f9d81b3a3b4d643f899e5be2f8146f2550ce794d7e54c495dd18dbafed81",
+          "s": "0x21d3f6ef23ed0c2db7b0caa8c44559487a2fcf9de0fa0b51d933feba65bc32f6",
+          "to": "0x000000000000000000000000000000000000dead",
+          "transactionIndex": null,
+          "type": "0x2",
+          "v": "0x1",
+          "value": "0x2",
+          "yParity": "0x1"
+        }
+      ],
+      "receiptQueries": "native eth_getTransactionReceipt returned null and eth_getTransactionByHash returned pending blockHash/blockNumber after the CLI/MCP observation window",
+      "endedDatabasesRemaining": 0,
+      "sources": {
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/testhelper/outcome.go": "b895f35d7d7d05ed313579c79c0a7fa16f9100b5f2e726c637ea4c09b518dd71",
+        "endpoint_profile_native_test.go": "cb6ddec37af7ef340c7fc9ae18e1e39787a43c4334de73768a621c012ca5843d",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      }
+    },
+    {
+      "chain": "wemix",
+      "proofPath": "/private/tmp/cbui/endpoint-native-1556545390/proof.json",
+      "proofSHA256": "43f9978c612e318854f10dd5aec3c04477b08bf843d0d782b2693ae28255652b",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "cliSession": "/private/tmp/cbui/endpoint-native-1556545390/cli-reports/20261013-174107-77655/UTC-20261013-174413",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-1556545390/mcp-reports/20261013-174107-77655/UTC-20261013-174438",
+      "authenticatedRawTransactions": 36,
+      "observedBlocksPerPendingStep": 2,
+      "queuedTransactions": [
+        {
+          "accessList": [
+            {
+              "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "storageKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001"
+              ]
+            }
+          ],
+          "blockHash": null,
+          "blockNumber": null,
+          "chainId": "0x205d",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gas": "0x11170",
+          "gasPrice": "0x174876e801",
+          "hash": "0xd935ac55b75b43391d03845671c43c6302709734bbbf4c376ff23c88b2659d96",
+          "input": "0xab",
+          "maxFeePerGas": "0x174876e801",
+          "maxPriorityFeePerGas": "0x174876e801",
+          "nonce": "0x73",
+          "r": "0x9c9c7ccc1f5a5de84375c69a3a55d4c646090bcc35d441d62f2ecd544aa7ed64",
+          "s": "0x64dfbdb4f22bd412c5f527a1f77a904dec6b1634fa7dd731200a1d9c17458641",
+          "to": "0x000000000000000000000000000000000000dead",
+          "transactionIndex": null,
+          "type": "0x2",
+          "v": "0x1",
+          "value": "0x2"
+        },
+        {
+          "accessList": [
+            {
+              "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+              "storageKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001"
+              ]
+            }
+          ],
+          "blockHash": null,
+          "blockNumber": null,
+          "chainId": "0x205d",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gas": "0x11170",
+          "gasPrice": "0x174876e801",
+          "hash": "0x8b85bf5a9cad882fed162dd9de13eda378249406b7578b7b1131cc799a4f48d8",
+          "input": "0xab",
+          "maxFeePerGas": "0x174876e801",
+          "maxPriorityFeePerGas": "0x174876e801",
+          "nonce": "0x82",
+          "r": "0xc09bc86ef6c42cc6c34fcbb0c87d25cd828ca573094453c4a2b6b41ee07c7614",
+          "s": "0x4d8dee5b3184258e6fed68a3b0dd4d958b6f6a5974a657f114328be7e4086d70",
+          "to": "0x000000000000000000000000000000000000dead",
+          "transactionIndex": null,
+          "type": "0x2",
+          "v": "0x0",
+          "value": "0x2"
+        }
+      ],
+      "receiptQueries": "native eth_getTransactionReceipt returned null and eth_getTransactionByHash returned pending blockHash/blockNumber after the CLI/MCP observation window",
+      "endedDatabasesRemaining": 0,
+      "sources": {
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/testhelper/outcome.go": "b895f35d7d7d05ed313579c79c0a7fa16f9100b5f2e726c637ea4c09b518dd71",
+        "endpoint_profile_native_test.go": "cb6ddec37af7ef340c7fc9ae18e1e39787a43c4334de73768a621c012ca5843d",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      }
+    }
+  ],
+  "unitSourceSHA256": "cec6ad97c4f63f01c4ccf7560f41bbda00368c9903a2844154589af5db356972",
+  "limitations": [
+    "Receipt RPC/HTTP failures are proven through local HTTP fault tests; native chain fixtures prove the healthy absent-receipt path, not injected native transport faults.",
+    "Each native observation is bounded to two blocks. It does not claim permanent non-inclusion or finality.",
+    "Blacklist local-guard cases, P2/P3 and affected R5/L1 case coverage remain pending.",
+    "R3/R4 remainders, R1/R6, Linux L1, tasks 10–14 and frozen Web14 acceptance remain pending."
+  ]
+}

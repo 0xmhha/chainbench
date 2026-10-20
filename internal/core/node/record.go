@@ -26,8 +26,8 @@ type Record struct {
 	// endpoint may be switched to "snap" or "archive" so a large-gap re-sync
 	// exercises that path. Empty means the config's own default.
 	SyncMode string `json:"syncMode,omitempty"`
-	// Server names the server-set entry whose machine this node runs on, when
-	// the pool spread the network across a set ("--all-servers"). Empty means
+	// Server names the remote server-set entry whose machine this node runs on,
+	// when pinned or spread across a set ("--all-servers"). Empty means
 	// the node lives on the workspace's single target. Every per-node file
 	// write, init, and launch resolves this name through the resource module,
 	// so each node's material lands on ITS machine, not the first one's.

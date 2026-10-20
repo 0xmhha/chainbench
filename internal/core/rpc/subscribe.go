@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -14,6 +16,8 @@ type Subscription struct {
 	conn          *websocket.Conn
 	id            string
 	notifications chan json.RawMessage
+	closed        chan struct{}
+	closeOnce     sync.Once
 }
 
 // ID returns the server-assigned subscription id.
@@ -27,54 +31,89 @@ func (s *Subscription) Notifications() <-chan json.RawMessage { return s.notific
 // streams each notification's result. The caller must Close it; cancelling ctx
 // also ends the stream.
 func Subscribe(ctx context.Context, wsURL string, params ...any) (*Subscription, error) {
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+	return SubscribeWithHeaders(ctx, wsURL, nil, params...)
+}
+
+// SubscribeWithHeaders opens a subscription with caller-resolved authentication.
+func SubscribeWithHeaders(ctx context.Context, wsURL string, headers http.Header, params ...any) (*Subscription, error) {
+	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, headers)
 	if err != nil {
 		return nil, fmt.Errorf("rpc: dial %s: %w", wsURL, err)
 	}
+	sub := &Subscription{conn: conn, notifications: make(chan json.RawMessage, 16), closed: make(chan struct{})}
+	// Cancellation must also cover the acknowledgement, before the read loop
+	// starts. Explicit close terminates this watcher even for a background ctx.
+	go func() {
+		select {
+		case <-ctx.Done():
+			_ = sub.Close()
+		case <-sub.closed:
+		}
+	}()
 	req := map[string]any{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": params}
 	if err := conn.WriteJSON(req); err != nil {
-		_ = conn.Close()
+		_ = sub.Close()
 		return nil, fmt.Errorf("rpc: send eth_subscribe: %w", err)
 	}
 	var resp struct {
-		Result string `json:"result"`
-		Error  *struct {
-			Message string `json:"message"`
+		JSONRPC string `json:"jsonrpc"`
+		ID      int    `json:"id"`
+		Result  string `json:"result"`
+		Error   *struct {
+			Code    int             `json:"code"`
+			Message string          `json:"message"`
+			Data    json.RawMessage `json:"data"`
 		} `json:"error"`
 	}
 	if err := conn.ReadJSON(&resp); err != nil {
-		_ = conn.Close()
+		_ = sub.Close()
 		return nil, fmt.Errorf("rpc: read subscribe response: %w", err)
 	}
-	if resp.Error != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("rpc: eth_subscribe rejected: %s", resp.Error.Message)
+	if resp.JSONRPC != "2.0" || resp.ID != 1 {
+		_ = sub.Close()
+		return nil, fmt.Errorf("rpc: uncorrelated subscription acknowledgement")
 	}
-
-	sub := &Subscription{conn: conn, id: resp.Result, notifications: make(chan json.RawMessage, 16)}
-	// Cancelling ctx closes the conn, which unblocks the blocking read below.
-	go func() { <-ctx.Done(); _ = conn.Close() }()
+	if resp.Error != nil {
+		_ = sub.Close()
+		return nil, fmt.Errorf("rpc: eth_subscribe rejected: %w", &ServerError{Method: "eth_subscribe", Code: resp.Error.Code, Message: resp.Error.Message, Data: resp.Error.Data})
+	}
+	if resp.Result == "" {
+		_ = sub.Close()
+		return nil, fmt.Errorf("rpc: unusable subscription acknowledgement")
+	}
+	sub.id = resp.Result
 	go sub.readLoop()
 	return sub, nil
 }
 
 func (s *Subscription) readLoop() {
 	defer close(s.notifications)
+	defer func() { _ = s.Close() }()
 	for {
 		var msg struct {
-			Method string `json:"method"`
-			Params struct {
-				Result json.RawMessage `json:"result"`
+			JSONRPC string `json:"jsonrpc"`
+			Method  string `json:"method"`
+			Params  struct {
+				Subscription string          `json:"subscription"`
+				Result       json.RawMessage `json:"result"`
 			} `json:"params"`
 		}
 		if err := s.conn.ReadJSON(&msg); err != nil {
 			return
 		}
-		if msg.Method == "eth_subscription" && len(msg.Params.Result) > 0 {
-			s.notifications <- msg.Params.Result
+		if msg.JSONRPC == "2.0" && msg.Method == "eth_subscription" && msg.Params.Subscription == s.id && len(msg.Params.Result) > 0 {
+			select {
+			case s.notifications <- msg.Params.Result:
+			case <-s.closed:
+				return
+			}
 		}
 	}
 }
 
 // Close ends the subscription and closes the WebSocket.
-func (s *Subscription) Close() error { return s.conn.Close() }
+func (s *Subscription) Close() error {
+	var err error
+	s.closeOnce.Do(func() { close(s.closed); err = s.conn.Close() })
+	return err
+}

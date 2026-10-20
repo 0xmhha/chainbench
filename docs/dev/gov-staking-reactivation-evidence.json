@@ -1,0 +1,489 @@
+{
+  "scope": "GOV-019 exact active list, subsequent decided candidate/validator return and Staked event. The original below-minimum/no-revert expectation remains unresolved. Not full wemix4 sufficiency or final Web acceptance.",
+  "red": "The weak address-only assertion passed with inherited stabilizing validators; the strengthened assertion failed after 45 seconds with stabilizing=true, stakers=4, validators=4.",
+  "fixtureFailure": "Initial overlay nested genesis one level too deep; no funds reached the operators. This attempt failed and is retained, not counted as GREEN.",
+  "green": {
+    "tests": [
+      "TestWemixGovernanceReactivateE2E",
+      "TestWemixGovValidatorSelectionScenarioE2E",
+      "TestWemixGovernanceEmergencyModeE2E",
+      "TestWemixGovernanceFeeChangeDelayedE2E"
+    ],
+    "skipped": 0,
+    "frozenSource": "d2f13df18f73710fe391d5a3f6a9f86d80564c1698c71844471aa2a1f61656ae",
+    "epochTransitions": [
+      {
+        "boundary": 40,
+        "active": true,
+        "candidates": 3,
+        "validators": 3
+      },
+      {
+        "boundary": 50,
+        "active": false,
+        "candidates": 2,
+        "validators": 2
+      },
+      {
+        "boundary": 60,
+        "active": true,
+        "candidates": 3,
+        "validators": 3
+      }
+    ],
+    "assertions": [
+      "exact contract active list, with duplicate and padding rejection",
+      "subsequent epoch boundary after each state change, not a stale matching epoch",
+      "stabilizing=false and exact candidate/validator identities",
+      "successful receipt with exact transaction hash",
+      "Staked emitter, indexed staker and exact amount"
+    ],
+    "belowMinimum": "eth_call returns JSON-RPC server error 3: execution reverted: amount is less than minimum staking. Inactive state and zero subject stake remain unchanged; no mined below-minimum transaction claimed."
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "09a3cd01fc9aff773f16c995a3f3d03340e7bd96129a9c1aa90e94e117363bf2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791968108497976075
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_scenario_e2e_test.go",
+      "sha256": "f7825423a65b84ea3ea0a0f04352ef7883501065d7b423996d603746b8bdb665",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380069985283296
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_epoch_e2e_test.go",
+      "sha256": "af710b7ed38462c080bc595767ce6d00ad5521f977c19f86bd54e71a13b03fc8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380069984933505
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go",
+      "sha256": "b23988313b322f62a303eb9e533c79a42179fa35d5accaed4020e5f91d1d0ee9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791960744121975896
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/tc/wemix4.0/01-test-scenarios.md",
+      "sha256": "81d8638066f00515b02fb12c6d2c9bb03cb60a721eea1f573080c33f8b84fd4f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070025190903
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/wemixgov/governance-contract/contracts-wbft/v1/GovStaking.sol",
+      "sha256": "5b5286484ab2e7764dfc47e812a654e2c8503d73b231f3fe9c714af624e530cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397551714135
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/wemixgov/governance-wbft/governance.go",
+      "sha256": "1b05fa7685f01b1ee7d597828bb1163390b8601b869b983f0321212b92684945",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397557198674
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-gov-reactivate-check.log",
+      "sha256": "cbba444e5e34886be7fae46ac88386f5ac1acda88b8b4ec64c2cc310ed2b5ae9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791967666457226830
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-reactivate-final-tagged-race.log",
+      "sha256": "5d8dd973902d7bebd2b3873c14b1285513a92c92db6a015fabddd96fab0a2b96",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791968116211412775
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-reactivate-receipt.json",
+      "sha256": "d52df232b23af4ab7bdc7b35aed8606fe33a82faa1aadd656f2d4dd4bbdb50c7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791968270060668932
+    },
+    {
+      "path": "/private/tmp/chainbench-wemix4-assertion-graph-gov019.json",
+      "sha256": "b497125b7df2b24545157e44ee5200e124bbbbc0534469184ccca21126046a13",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791968309461714673
+    },
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    }
+  ],
+  "attempts": [
+    {
+      "label": "red",
+      "summary": {
+        "path": "/private/tmp/chainbench-gov-reactivate-red-summary.json",
+        "sha256": "9bba854c8484f9b11c6e835ca67a0d6d364beaca28f423882af2aabc73404134",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791967290363336982
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-gov-reactivate-red-native.jsonl",
+        "sha256": "4d6ffe21fcfa146147d4bd2e8f7059dadbe99ab8e7e5011599536869a7c4dabe",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791967289938964635
+      },
+      "exitCode": 0,
+      "sourceBefore": "3418d75823d13659f8ac72b7c42b4464f6997d531789ad9e0da7de7661052a63",
+      "sourceAfter": "3418d75823d13659f8ac72b7c42b4464f6997d531789ad9e0da7de7661052a63",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovernanceReactivateE2E"
+      ],
+      "failed": [],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-p9_v0_ek"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-p9_v0_ek": []
+      }
+    },
+    {
+      "label": "red-stabilized",
+      "summary": {
+        "path": "/private/tmp/chainbench-gov-reactivate-red-stabilized-summary.json",
+        "sha256": "64744676da64b324f6ac157ecd7f091ca0673530f85672e492e2b7bcde47392b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791967466213340670
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-gov-reactivate-red-stabilized-native.jsonl",
+        "sha256": "cab409068f1f04dc3e16aa20565f05b740121dacb6a6c425a69360afa85bf2e6",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791967465623123143
+      },
+      "exitCode": 1,
+      "sourceBefore": "65bed6ea7b43897cfdf3b18fe470118c48e4a808c5571388be19fa662c89f089",
+      "sourceAfter": "65bed6ea7b43897cfdf3b18fe470118c48e4a808c5571388be19fa662c89f089",
+      "sourceUnchanged": true,
+      "passed": [],
+      "failed": [
+        "TestWemixGovernanceReactivateE2E"
+      ],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-9dtpsboa"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-9dtpsboa": []
+      }
+    },
+    {
+      "label": "green",
+      "summary": {
+        "path": "/private/tmp/chainbench-gov-reactivate-green-summary.json",
+        "sha256": "379377c6fe967228fde27d9658632697496d86031836c105eb38348ac9358f61",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968082586712792
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-gov-reactivate-green-native.jsonl",
+        "sha256": "701ed3e3a8284fd515787abd92703d1444511254e05381cf7477a2e2c0810dc1",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968082091646906
+      },
+      "exitCode": 1,
+      "sourceBefore": "fcfc386260b37fcab76830dc6e6d7cc15676c4b1d1d70627fe5b7841e6c56e80",
+      "sourceAfter": "fcfc386260b37fcab76830dc6e6d7cc15676c4b1d1d70627fe5b7841e6c56e80",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovValidatorSelectionScenarioE2E",
+        "TestWemixGovernanceEmergencyModeE2E",
+        "TestWemixGovernanceFeeChangeDelayedE2E"
+      ],
+      "failed": [
+        "TestWemixGovernanceReactivateE2E"
+      ],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-4fb9mvp5",
+        "/private/tmp/cbui/hf-9hrkpj92",
+        "/private/tmp/cbui/hf-bq5wka59",
+        "/private/tmp/cbui/hf-fu_421gd",
+        "/private/tmp/cbui/hf-wzje5utx"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-4fb9mvp5": [],
+        "/private/tmp/cbui/hf-9hrkpj92": [],
+        "/private/tmp/cbui/hf-bq5wka59": [],
+        "/private/tmp/cbui/hf-fu_421gd": [],
+        "/private/tmp/cbui/hf-wzje5utx": []
+      }
+    },
+    {
+      "label": "green-final",
+      "summary": {
+        "path": "/private/tmp/chainbench-gov-reactivate-green-final-summary.json",
+        "sha256": "b876e11d2dae55af96e66db15e4faa3e5ad2d3700347dbeb625779a4609913b2",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968251503481254
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-gov-reactivate-green-final-native.jsonl",
+        "sha256": "724a03c45d5d31155a7073d71b40a9aa964676155b865575107aa81ad652b9ba",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968251023241822
+      },
+      "exitCode": 0,
+      "sourceBefore": "d2f13df18f73710fe391d5a3f6a9f86d80564c1698c71844471aa2a1f61656ae",
+      "sourceAfter": "d2f13df18f73710fe391d5a3f6a9f86d80564c1698c71844471aa2a1f61656ae",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovernanceReactivateE2E"
+      ],
+      "failed": [],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-sq905pz0"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-sq905pz0": []
+      }
+    },
+    {
+      "label": "related-final",
+      "summary": {
+        "path": "/private/tmp/chainbench-gov-reactivate-related-final-summary.json",
+        "sha256": "69f203ac26e669283e934419b763d37486172b591aaed34fa8cdea1d25b28576",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968560360844414
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-gov-reactivate-related-final-native.jsonl",
+        "sha256": "89e9fa6d5800b5e01afd18ef8410513eeaa1037c4aeaedf579deb4f194af56f5",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968559867109955
+      },
+      "exitCode": 0,
+      "sourceBefore": "d2f13df18f73710fe391d5a3f6a9f86d80564c1698c71844471aa2a1f61656ae",
+      "sourceAfter": "d2f13df18f73710fe391d5a3f6a9f86d80564c1698c71844471aa2a1f61656ae",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestWemixGovValidatorSelectionScenarioE2E",
+        "TestWemixGovernanceEmergencyModeE2E",
+        "TestWemixGovernanceFeeChangeDelayedE2E"
+      ],
+      "failed": [],
+      "skipped": [],
+      "runtimes": [
+        "/private/tmp/cbui/hf-832z6542",
+        "/private/tmp/cbui/hf-c8w6valv",
+        "/private/tmp/cbui/hf-l59lnf9h"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/hf-832z6542": [],
+        "/private/tmp/cbui/hf-c8w6valv": [],
+        "/private/tmp/cbui/hf-l59lnf9h": []
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/hf-4fb9mvp5",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-4fb9mvp5/reports/gov-reactivate-inventory.json",
+        "sha256": "8318a42f8c49705644dd800f6f813789c598c8b523c2fe7b9c2fdf87f1394b2c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653441727141
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-832z6542",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-832z6542/reports/gov-reactivate-inventory.json",
+        "sha256": "ff2175d1a9e6bbce94a9a08152e765317c26a09d9cc425b4d3ed5a8946501aa4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653498746972
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-9dtpsboa",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-9dtpsboa/reports/gov-reactivate-inventory.json",
+        "sha256": "97cc0f2ee3d1f6e3e80ea93419830d8956ea121bb7aa27d3a056c549241d467a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653551905807
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-9hrkpj92",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-9hrkpj92/reports/gov-reactivate-inventory.json",
+        "sha256": "680f1a6f2dd0a71e0ec13fe343a6b4a0238589a5dcc1b8ee2448887bf06f03d2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653600578535
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-bq5wka59",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-bq5wka59/reports/gov-reactivate-inventory.json",
+        "sha256": "4407b3648386da52cdd1fc6656f43a7f1825dd71aa4b364a97b4a3b907836bd2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653649066476
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-c8w6valv",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-c8w6valv/reports/gov-reactivate-inventory.json",
+        "sha256": "f9f79a7309b495419169561021ca70a04273528210baade42efd8db1ab3dc462",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653704782587
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-fu_421gd",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-fu_421gd/reports/gov-reactivate-inventory.json",
+        "sha256": "23cd507ffcffb6185421ff70516a408d6da42effa10cd8efbf75f71e72c780ae",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653760661068
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-l59lnf9h",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-l59lnf9h/reports/gov-reactivate-inventory.json",
+        "sha256": "4a3bfcb800f110f81be3907324b15aba6ea0fcac6d5f65252f9499b816b34547",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653799511478
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-p9_v0_ek",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-p9_v0_ek/reports/gov-reactivate-inventory.json",
+        "sha256": "a15bd77b339f63ce7ab7f0f3ee9a5898108bb17defb76e39b5771baa18f89595",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653853351922
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-sq905pz0",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-sq905pz0/reports/gov-reactivate-inventory.json",
+        "sha256": "fc51b118bc038511ab089de62b7fa471b5cec1ee0ada65656532d103abff024d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653910964698
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-wzje5utx",
+      "remainingDatabases": 0,
+      "active": false,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-wzje5utx/reports/gov-reactivate-inventory.json",
+        "sha256": "2d4ed7cef7db9f519c2826a162c04547491e30785ebbae98efb1a5306f82fa59",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791968653949813483
+      }
+    }
+  ]
+}

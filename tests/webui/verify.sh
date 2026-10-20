@@ -19,8 +19,15 @@ case "$criterion" in
   *) echo "unsupported criterion: $criterion" >&2; exit 2 ;;
 esac
 export PYTHONDONTWRITEBYTECODE=1
+proof_status=0
 if [[ "$capture" == true ]]; then
-  python3 tests/webui/capture.py "$criterion" "$output"
+  python3 tests/webui/capture.py "$criterion" "$output" || proof_status=$?
 else
-  python3 tests/webui/recheck.py "$criterion" "$output"
+  python3 tests/webui/recheck.py "$criterion" "$output" || proof_status=$?
 fi
+storage_status=0
+python3 tests/webui/after_proof_storage.py "$criterion" "$output" || storage_status=$?
+if ((proof_status != 0)); then
+  exit "$proof_status"
+fi
+exit "$storage_status"

@@ -1,0 +1,608 @@
+{
+  "scope": "RPC-019 managed BP4/EN1: exact four peers, every id/remoteAddress/protocols nonempty, remote node IDs matched. Public assertions and independently parsed single response on three local native families. Not complete87/mainnet/Linux/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Four malformed peer structures passed old count/ID checks; E2E RPC failure hidden as count0.",
+  "unitGreen": "Valid and malformed public peer responses checked; typed RPC error code/reason preserved separately from empty count.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "cb17d43508cd1e2f43d103e0520a25ce84caef93aaea14f4db5673f0685457db",
+    "sourceAfter": "cb17d43508cd1e2f43d103e0520a25ce84caef93aaea14f4db5673f0685457db",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativePeerFields/stablenet",
+      "TestNativePeerFields/wbft",
+      "TestNativePeerFields/wemix",
+      "TestNativePeerFields"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-atia2v73",
+      "/private/tmp/cbui/txfail-dvu41qhv",
+      "/private/tmp/cbui/txfail-ivazy41i"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-atia2v73/reports/peer-fields-proof.json",
+      "/private/tmp/cbui/txfail-dvu41qhv/reports/peer-fields-proof.json",
+      "/private/tmp/cbui/txfail-ivazy41i/reports/peer-fields-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-atia2v73": [],
+      "/private/tmp/cbui/txfail-dvu41qhv": [],
+      "/private/tmp/cbui/txfail-ivazy41i": []
+    },
+    "elapsedSeconds": 167.636,
+    "log": {
+      "path": "/private/tmp/chainbench-peer-fields-native-native.jsonl",
+      "sha256": "fd0efc21e196da390bec022afdd716c692008358abfcd7b6497f0a621cdf6de1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792006277756379741
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-peer-fields-native-summary.json",
+      "sha256": "477a9c85ff586b7a361ad976064367d03fe1ea44665a84491bf9cf419a633af4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792006278221666586
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-peer-fields-native-start.json",
+      "sha256": "dabcf5403518f179379ebe54aa20e06b0d6da0f2fe197e307250653f03457b0a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792006107541874976
+    }
+  },
+  "families": [
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-atia2v73/reports/peer-fields-proof.json",
+        "sha256": "d55bf09642a831012664113889922aa43476f8e65d8c6ab6ad1acae5596930b2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006149829934139
+      },
+      "peers": [
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://a172e91aed88e8f7bca1d2dc2ec139a7c7446ba4a854d1ee032c06a230e0390ecd3e2b018ce5f3fae817286dba68131f582634bada5e4127ecfb91b86742a162@127.0.0.1:62598",
+          "id": "16b5662ebef5f62fcdd172e55400d8b543eaf6738c7b44799623bea88fd0f5ee",
+          "name": "Gstable/v1.1.0-stable-0937ac5c/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62598",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://401168b1b868e5d0ba70cc1de873b5c5634b68f56e5ca0d19538a6bd2f191f572daa9a3a15adc38f060ce6fa81ee958409fcdba3951c8121b23c646d020f4906@127.0.0.1:62647",
+          "id": "c6a139ea14f61b0850fc68308c4a10b9108d49b9d23f764464090831d9c17764",
+          "name": "Gstable/v1.1.0-stable-0937ac5c/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62647",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://3e9a15eb1488c5620ede1babc0ff277c5bbf3556f23d64e6e182c946e8cba213b00a1d24f40ff2c5b9fc533600efd5df636948010d5305c607869ec1f3e07e4c@127.0.0.1:31010?discport=0",
+          "id": "e7666e00b36d8772900465852493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+          "name": "Gstable/v1.1.0-stable-0937ac5c/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": false,
+            "localAddress": "127.0.0.1:62587",
+            "remoteAddress": "127.0.0.1:31010",
+            "static": true,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://124c20ddda04e5de3fb3606b12861d1b695eef3032346dbfc9f35cb84e28634da485d9a9f05b93f22543b55521e7a57a35a3aef0e92df6d11d06c44b984231d5@127.0.0.1:62594",
+          "id": "f998ebb636941e331e2cc2c18eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+          "name": "Gstable/v1.1.0-stable-0937ac5c/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62594",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        }
+      ],
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-atia2v73/reports/20261014-192830-29693/UTC-20261014-192830/tests/001_basic-peers/assert.json",
+        "sha256": "85dc09fe7bbfc1b824a2bf50f51960d1fd806bc337b554a94f8c96ef3921b238",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006149817243021
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-atia2v73/reports/20261014-192830-29693/UTC-20261014-192830/tests/001_basic-peers/steps.json",
+        "sha256": "55eaf97ec8fe2d1493a9a704748adfff41ca4ddfab5c5f30c251e81dfa3a9e5e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006149755866017
+      },
+      "assertionCount": 18,
+      "runtime": "/private/tmp/cbui/txfail-atia2v73",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 239,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-atia2v73/reports/peer-fields-inventory.json",
+        "sha256": "408a8f2a12362147dd5e129725179af8f4c5fb2c16c4ca3d8c6b4e9afb45d6cd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006329394694117
+      }
+    },
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-dvu41qhv/reports/peer-fields-proof.json",
+        "sha256": "0ebb8f21da84909d24052f263fae501ad53fe4b63db639dcbb4b46209e29de11",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006170918888795
+      },
+      "peers": [
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://a172e91aed88e8f7bca1d2dc2ec139a7c7446ba4a854d1ee032c06a230e0390ecd3e2b018ce5f3fae817286dba68131f582634bada5e4127ecfb91b86742a162@127.0.0.1:62699",
+          "id": "16b5662ebef5f62fcdd172e55400d8b543eaf6738c7b44799623bea88fd0f5ee",
+          "name": "gwemix/v1.0.0-alpha-7af50e45-20260811/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62699",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://401168b1b868e5d0ba70cc1de873b5c5634b68f56e5ca0d19538a6bd2f191f572daa9a3a15adc38f060ce6fa81ee958409fcdba3951c8121b23c646d020f4906@127.0.0.1:62691",
+          "id": "c6a139ea14f61b0850fc68308c4a10b9108d49b9d23f764464090831d9c17764",
+          "name": "gwemix/v1.0.0-alpha-7af50e45-20260811/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62691",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://3e9a15eb1488c5620ede1babc0ff277c5bbf3556f23d64e6e182c946e8cba213b00a1d24f40ff2c5b9fc533600efd5df636948010d5305c607869ec1f3e07e4c@127.0.0.1:31010?discport=0",
+          "id": "e7666e00b36d8772900465852493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+          "name": "gwemix/v1.0.0-alpha-7af50e45-20260811/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": false,
+            "localAddress": "127.0.0.1:62688",
+            "remoteAddress": "127.0.0.1:31010",
+            "static": true,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "istanbul/100",
+            "snap/1"
+          ],
+          "enode": "enode://124c20ddda04e5de3fb3606b12861d1b695eef3032346dbfc9f35cb84e28634da485d9a9f05b93f22543b55521e7a57a35a3aef0e92df6d11d06c44b984231d5@127.0.0.1:62692",
+          "id": "f998ebb636941e331e2cc2c18eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+          "name": "gwemix/v1.0.0-alpha-7af50e45-20260811/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62692",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "eth": {
+              "version": 68
+            },
+            "istanbul": {
+              "version": 68
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        }
+      ],
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-dvu41qhv/reports/20261014-192830-29693/UTC-20261014-192911/tests/001_basic-peers/assert.json",
+        "sha256": "63cb11b64cb4d7eb8da2e1ae6db3d7e56791cc82c39603ffd3563b7903c1a431",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006170908459010
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-dvu41qhv/reports/20261014-192830-29693/UTC-20261014-192911/tests/001_basic-peers/steps.json",
+        "sha256": "55eaf97ec8fe2d1493a9a704748adfff41ca4ddfab5c5f30c251e81dfa3a9e5e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006170847556588
+      },
+      "assertionCount": 18,
+      "runtime": "/private/tmp/cbui/txfail-dvu41qhv",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 239,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-dvu41qhv/reports/peer-fields-inventory.json",
+        "sha256": "9ebd2f4285b13c349434b65e0c33d802db93be39ab4065d2773c07d419592b59",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006329433447969
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-ivazy41i/reports/peer-fields-proof.json",
+        "sha256": "46b86d4ec095365191c75392b546fc50b0d0071f59852fb9067bd8aec8aff402",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006259734249240
+      },
+      "peers": [
+        {
+          "caps": [
+            "eth/68",
+            "mir/65",
+            "mir/66",
+            "snap/1"
+          ],
+          "enode": "enode://a172e91aed88e8f7bca1d2dc2ec139a7c7446ba4a854d1ee032c06a230e0390ecd3e2b018ce5f3fae817286dba68131f582634bada5e4127ecfb91b86742a162@127.0.0.1:62907",
+          "id": "16b5662ebef5f62fcdd172e55400d8b543eaf6738c7b44799623bea88fd0f5ee",
+          "name": "Gwemix/v0.10.15-stable/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": true,
+            "localAddress": "127.0.0.1:31000",
+            "remoteAddress": "127.0.0.1:62907",
+            "static": false,
+            "trusted": false
+          },
+          "protocols": {
+            "mir": {
+              "difficulty": 45,
+              "head": "0xb84faec3fbead25408b01cdcb30ea7b8778187c9091bc6fa814cc79c887dc55b",
+              "version": 66
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "mir/65",
+            "mir/66",
+            "snap/1"
+          ],
+          "enode": "enode://401168b1b868e5d0ba70cc1de873b5c5634b68f56e5ca0d19538a6bd2f191f572daa9a3a15adc38f060ce6fa81ee958409fcdba3951c8121b23c646d020f4906@127.0.0.1:31020?discport=0",
+          "id": "c6a139ea14f61b0850fc68308c4a10b9108d49b9d23f764464090831d9c17764",
+          "name": "Gwemix/v0.10.15-stable/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": false,
+            "localAddress": "127.0.0.1:62841",
+            "remoteAddress": "127.0.0.1:31020",
+            "static": true,
+            "trusted": false
+          },
+          "protocols": {
+            "mir": {
+              "difficulty": 45,
+              "head": "0xb84faec3fbead25408b01cdcb30ea7b8778187c9091bc6fa814cc79c887dc55b",
+              "version": 66
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "mir/65",
+            "mir/66",
+            "snap/1"
+          ],
+          "enode": "enode://3e9a15eb1488c5620ede1babc0ff277c5bbf3556f23d64e6e182c946e8cba213b00a1d24f40ff2c5b9fc533600efd5df636948010d5305c607869ec1f3e07e4c@127.0.0.1:31010?discport=0",
+          "id": "e7666e00b36d8772900465852493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+          "name": "Gwemix/v0.10.15-stable/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": false,
+            "localAddress": "127.0.0.1:62842",
+            "remoteAddress": "127.0.0.1:31010",
+            "static": true,
+            "trusted": false
+          },
+          "protocols": {
+            "mir": {
+              "difficulty": 42,
+              "head": "0x3ee137081ab399189b150d818e59905ef5a5b6880bc21d21e404ea8cdb3599fa",
+              "version": 66
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        },
+        {
+          "caps": [
+            "eth/68",
+            "mir/65",
+            "mir/66",
+            "snap/1"
+          ],
+          "enode": "enode://124c20ddda04e5de3fb3606b12861d1b695eef3032346dbfc9f35cb84e28634da485d9a9f05b93f22543b55521e7a57a35a3aef0e92df6d11d06c44b984231d5@127.0.0.1:31030?discport=0",
+          "id": "f998ebb636941e331e2cc2c18eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+          "name": "Gwemix/v0.10.15-stable/darwin-arm64/go1.25.2",
+          "network": {
+            "inbound": false,
+            "localAddress": "127.0.0.1:62840",
+            "remoteAddress": "127.0.0.1:31030",
+            "static": true,
+            "trusted": false
+          },
+          "protocols": {
+            "mir": {
+              "difficulty": 41,
+              "head": "0x893d114051a26213705cbba3194186ca87dee699e815791588241911ce64b346",
+              "version": 66
+            },
+            "snap": {
+              "version": 1
+            }
+          }
+        }
+      ],
+      "assertions": {
+        "path": "/private/tmp/cbui/txfail-ivazy41i/reports/20261014-192830-29693/UTC-20261014-192937/tests/001_basic-peers/assert.json",
+        "sha256": "d0bb2cc78d464b9888bb2fe5b72ce3577e17f8e9ee21e96b4b46bbf21470cd8e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006259726583787
+      },
+      "steps": {
+        "path": "/private/tmp/cbui/txfail-ivazy41i/reports/20261014-192830-29693/UTC-20261014-192937/tests/001_basic-peers/steps.json",
+        "sha256": "55eaf97ec8fe2d1493a9a704748adfff41ca4ddfab5c5f30c251e81dfa3a9e5e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006259667406781
+      },
+      "assertionCount": 18,
+      "runtime": "/private/tmp/cbui/txfail-ivazy41i",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 130,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-ivazy41i/reports/peer-fields-inventory.json",
+        "sha256": "f1874b3553bfe780f23854b75282db9b3e161c2b4d16ad2794246c860de194e0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792006329463203909
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-peer-fields-publication.json",
+    "sha256": "456051fc2ef81e2e77f6a0d525acd809eb4aa87baa81272c5eb0df77c5a73240",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792005960849609406
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-peer-fields-red.log",
+      "sha256": "d7ae73e15f636a4e283dba7775c7c092683c755cd92a019de8e5c9d036c3be40",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005845137535744
+    },
+    {
+      "path": "/private/tmp/chainbench-peer-fields-green.log",
+      "sha256": "af846dcfc39f46a227955153d44e783641d57f91aa96ec9ee3edeb20d1057d22",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005862989662197
+    },
+    {
+      "path": "/private/tmp/chainbench-peer-fields-related-race.log",
+      "sha256": "4ed18156b4c0b9c07531ae04ac9b70b63287b4e2a5e450b1397d76192914db2c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005956146311858
+    },
+    {
+      "path": "/private/tmp/chainbench-peer-fields-check.log",
+      "sha256": "3047c40422f3d5ad920c5d7a5594a772e214bb0c8a53bf042ce722872fb4bf32",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792006087827953784
+    },
+    {
+      "path": "/private/tmp/chainbench-peer-error-red.log",
+      "sha256": "d481a53818670d0f816780b90e7fd79c555b81b09a935b155ff06ee5f26ecf16",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005877321527330
+    },
+    {
+      "path": "/private/tmp/chainbench-peer-error-green.log",
+      "sha256": "6ef3c957fc787b2d26108d952f2797f7aade458dd929d29ddbdaa91a4f706031",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005902200338454
+    },
+    {
+      "path": "/private/tmp/chainbench-peer-error-final-green.log",
+      "sha256": "0e9b45dd8f2fb237b5362263fe67ad9bb5516e7aef02230e17ad6a60d2d2665f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792006090566566430
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

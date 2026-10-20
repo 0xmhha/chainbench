@@ -1,0 +1,194 @@
+{
+  "scope": "TX001 same actual locally signed type2 1WMX/21000 transfer after WEMIX-to-WBFT Croissant20. Controlled mining pause on four owned successors preserves P2P RPC; exact pending transaction and executable pool at all four endpoints before mining, then production resumes. Receipt-indexed inclusion in first resumed block, three further blocks, canonical agreement and exact value/base-plus-capped-tip fee ledger. New test wallet keys are never retained. Not proxy-topology/public DSL re-execution/full87/Linux/mainnet/legacy/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Mined-status-only model accepted twenty additional origin/pending/production-control/inclusion/confirmation/ledger faults; existing failed-status rejection remained active.",
+  "unitGreen": "Positive and twenty-one negative controls plus existing raw-refusal regressions.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "f308916db726874b31bf9495d939466ea16ce89a890b3fce5bceda17666fbd90",
+    "sourceAfter": "f308916db726874b31bf9495d939466ea16ce89a890b3fce5bceda17666fbd90",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixTransactionLifecycleE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-9fq1r3__"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-9fq1r3__": []
+    },
+    "elapsedSeconds": 77.027,
+    "log": {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-native-native.jsonl",
+      "sha256": "a05073cd14858d221457cd68b7eeacd7ae73bbc4a144e6feac67fc486d86e588",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040010326903904
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-native-summary.json",
+      "sha256": "cbe9a3f8871d9ac8f5466ed4dae91b82c4761aa25564c3bfe2615d0c4d554367",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792040010793560927
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-native-start.json",
+      "sha256": "149b900f6ec42b51ad10c1669fd3c17c5cadfd4ec20ce8840f9e6b2861d0feb8",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039930894683140
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/hf-9fq1r3__/reports/transaction-lifecycle-proof.json",
+    "sha256": "091d4ab0f69f1ffce92ab21d1448b1b0f6aa7ee0c48e8b2a55020c591884a8a5",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792040007253767751
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-transaction-lifecycle-evidence.py",
+    "sha256": "df4a9ae77bc8dd1464c01e9cc3b29f219a03a0fa0302299b09ed4315995d651d",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792039878211999515
+  },
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "minerContract": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/chain-analysis/gwbft/rpc-metrics-graph.md",
+      "sha256": "a8681f6bddb57b6edfae341b5ab98adfb466b734bfc61049aceba3c3680dcd36",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786461261166977243
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/eth/api_miner.go",
+      "sha256": "6c0a162519a8811e4701b7ef985046ea82cdb3d582e44e698f77cd01e3c7d297",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397423497618
+    }
+  ],
+  "transaction": {
+    "hash": "0xd23903ed1af245716a62126cf54c6dbc9f1faaaf7c51b38d28fef8f8beb614b3",
+    "heldHeight": 25,
+    "minedHeight": 26,
+    "confirmedHeight": 29,
+    "pendingEndpoints": 4,
+    "gasUsed": 21000,
+    "valueWei": "1000000000000000000",
+    "feeWei": "2100006402270000",
+    "effectiveGasPrice": "100000304870"
+  },
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-9fq1r3__",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 229,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-9fq1r3__/reports/transaction-lifecycle-inventory.json",
+        "sha256": "f925702dc70af58860db45aa9980ba1eb370c8908f1c442f74ea9542d1cefb41",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792040043484440274
+      }
+    }
+  ],
+  "retainedFiles": 229,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-review-before-transaction-lifecycle-publication.json",
+    "sha256": "ea0a6048f1350aabadc791f3df753c3b316fe46d6cb11c1046e2228060a7579f",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792039170407076495
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-red.log",
+      "sha256": "3cb669687eee3661cdd0e86780238658a289c473aca8836832f0cd2f6df94fdc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039554797144387
+    },
+    {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-green.log",
+      "sha256": "04132001bf4be2b7cf2fe89fca1ace53e70017ce07fe8eedfbc559c2d29ee66a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039620480500913
+    },
+    {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-green2.log",
+      "sha256": "420fd8bdb8cc5834c788115c71507d33a1bad2887ef13b62f37d295cf0c02cc8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039683278102277
+    },
+    {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-related-race.log",
+      "sha256": "9da9c834e0f58276cd54556ab64c6dfe32ce40cf3333b536da4b40cb77dfa385",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039824569117185
+    },
+    {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-check.log",
+      "sha256": "16edf4d7a893fe4b5f332bf7ead67eca0d0b0f1025f5bbe379b0862872337f4e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039822434871466
+    },
+    {
+      "path": "/private/tmp/chainbench-transaction-lifecycle-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792039727540448079
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

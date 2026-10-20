@@ -1,0 +1,263 @@
+{
+  "scope": "Recovered legacy TC-5-2-05 and TC-1-1-11/12 public DSL predicates on pinned current StableNet4d17eea0 Darwin BP4, Boho10. Exact code hashes, boundary balance, all four original positive storage slots and v2 getter; existing prealloc balance/nonce preserved. Not all254/87/Linux/mainnet/Web or S1 resolution.",
+  "sourceDigest": "414cc74dcfa6c3f4bc3d91daca8bf923918433cd6fe68b60da85c362f220ea3d",
+  "headAtProof": "2da2b059",
+  "sourceFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_code_state_test.go",
+      "sha256": "d2355dc2d632ee8c9df2e2a4a7fc39219b04d600fd1fdaefbf11fa0b8c97b50a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792097366922911732
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/legacy_code_state_native_test.go",
+      "sha256": "0cdd0090ae977ed723f68dc1774e2dd1a8a4ecd0073776c618ba68ee7f591246",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792097767076011277
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "c59b0df5a9bbab1c80180fb9711b1b081ba70012c83ec5dc6f0eac8166731972",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792097570297376408
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/02-govminter-v2-code.json",
+      "sha256": "d1ce30079472e44ecd78299e7eafe14d66ed1e10ffb23256ed66e8a43fe71d4b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792097392661808484
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/10-prealloc-preserved-across-boho.json",
+      "sha256": "6065e93af46461d482a20213af9010fdc3add4ed8187c8c6cc5809120845e39c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792097392662175109
+    }
+  ],
+  "originalSourceCommit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+  "originals": [
+    {
+      "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/common-all/tests/02-test-v2-code-only-hash.sh",
+      "gitBlob": "f20d9df5f83a74efe5ec82fdd39ffd782c2580c8",
+      "gitMode": "100755",
+      "capture": {
+        "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/common-all/tests/02-test-v2-code-only-hash.sh",
+        "sha256": "57d6b3237eed0831342c5038a59632f145efcd67eaac95a6e5fc47cda047dea8",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792088397260197282
+      }
+    },
+    {
+      "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/common-all/tests/10-test-govminter-bytecode-hash-state-preserved.sh",
+      "gitBlob": "cf67e3b7ce2f3167530e54efdae6fe285b142918",
+      "gitMode": "100755",
+      "capture": {
+        "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/common-all/tests/10-test-govminter-bytecode-hash-state-preserved.sh",
+        "sha256": "76c82f33c1adf6bcc5b6782d52120e94530bec8e548e1db1c0e4c0e1aa2b83dc",
+        "mode": "0o755",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792088397261955972
+      }
+    }
+  ],
+  "originalScriptsExecuted": false,
+  "fixtureDifference": "Original shell default BohoBlock100, overridable input. Current public fixture pins Boho10 and compares block9/10, not literal100/full historical environment. GovMinter balance was0 before/after; no funded-contract balance preservation claim. All four literal storage slots were positive.",
+  "unitRed": {
+    "log": {
+      "path": "/private/tmp/chainbench-legacy-code-state-red-20261016.log",
+      "sha256": "016c57ccb2965383464bf145ad01479e3df4c0b4d30c4a737900b4c7452667de",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097373412037107
+    },
+    "falsePassesDetected": 14,
+    "positiveControls": 2,
+    "reason": "Old public cases ignored exact code hashes, empty boundary code, boundary balances, independent slot mutations and v2 getter errors."
+  },
+  "unitGreen": {
+    "log": {
+      "path": "/private/tmp/chainbench-legacy-code-state-green-20261016.log",
+      "sha256": "1bcf44019113501a0bfa22907d6e166b37aeca5e0bd58bb4dbe5a2d54eacfa29",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097399415965863
+    },
+    "subtests": 16,
+    "positiveControls": 2,
+    "negativeControls": 14
+  },
+  "regression": {
+    "engineAndHelperRace": {
+      "path": "/private/tmp/chainbench-legacy-code-state-race-20261016.log",
+      "sha256": "f407d0d563bc761bd1e38d1206532a868a725b3e90a192ab0d6ae1bbe5093ca4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097623905041979
+    },
+    "initialCheckExpectedAddressBaselineFailure": {
+      "path": "/private/tmp/chainbench-legacy-code-state-check-20261016.log",
+      "sha256": "d8850bfbe5593460bc317162ad662b669a760dcf78d4fa02e3f5448288a5b13c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097547727023007
+    },
+    "addressUpdate": {
+      "path": "/private/tmp/chainbench-legacy-code-state-address-update-20261016.log",
+      "sha256": "d157f68c32f792f2846ab1dde30eb0becf8a2bb988f24249a3cfcf0b86112fb4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097570299409532
+    },
+    "oldAddressPositions": 900,
+    "newAddressPositions": 910,
+    "onlyTwoCasePrefixesChanged": true,
+    "finalCheckIncludingCache64": {
+      "path": "/private/tmp/chainbench-legacy-code-state-cache64-check-20261016.log",
+      "sha256": "7b26c38f8291a54efd986ba7ae6a3dd32c843828099b4903d352a6715afc6cbe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097878223254698
+    }
+  },
+  "native": {
+    "summary": {
+      "path": "/private/tmp/chainbench-legacy-code-state-20261016-summary.json",
+      "sha256": "b30ff91b998f6289c80899daaf60fdf09678e5d291b7a4a6b856f35a82f7d109",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097945175340413
+    },
+    "rawGoEvents": {
+      "path": "/private/tmp/chainbench-legacy-code-state-20261016-native.jsonl",
+      "sha256": "e65397efb54b193a46fd834912d4410a45927913c8a88e29be4227e748340ccd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097944108736153
+    },
+    "proof": {
+      "path": "/private/tmp/cbui/txfail-eoud5ycs/reports/legacy-code-state-proof.json",
+      "sha256": "b9968434f218015d3c8b66f7701917714d1e810c47d1696b25ab8d1b46745a14",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097941175742269
+    },
+    "goTestsPassed": [
+      "TestNativeLegacyGovMinterCodeAndState"
+    ],
+    "failed": [],
+    "skipped": [],
+    "elapsedSeconds": 24.048476208001375,
+    "casesPassed": 2,
+    "assertions": 14,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "runtimeCodeHashes": {
+      "v1": "0x3ea99dd77ff9bbc4a88b126e9aa06ddbf144f535a5b432040dbedadd66f3c759",
+      "v2": "0xf369fcc4edab330169f427fd2aedbe97432cf1cfa31200da06464034f3edaa05"
+    },
+    "codeBytes": {
+      "v1": 19124,
+      "v2": 19810
+    },
+    "storageSlots": {
+      "0x0000000000000000000000000000000000000000000000000000000000000004": {
+        "after": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "before": "0x0000000000000000000000000000000000000000000000000000000000000002"
+      },
+      "0x000000000000000000000000000000000000000000000000000000000000000c": {
+        "after": "0x0000000000000000000000000000000000000000000000000000000000000003",
+        "before": "0x0000000000000000000000000000000000000000000000000000000000000003"
+      },
+      "0x0000000000000000000000000000000000000000000000000000000000000032": {
+        "after": "0x0000000000000000000000000000000000000000000000000000000000001000",
+        "before": "0x0000000000000000000000000000000000000000000000000000000000001000"
+      },
+      "0x80497882cf9008f7f796a89e5514a7b55bd96eab88ecb66aee4fb0a6fd34811c": {
+        "after": "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "before": "0x000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8"
+      }
+    },
+    "getter": {
+      "block": "0xa",
+      "input": "0xb03d36cd0000000000000000000000000000000000000000000000000000000000000000",
+      "output": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "actualCache64Launches": 4
+  },
+  "independent": {
+    "report": {
+      "path": "/private/tmp/chainbench-legacy-code-state-20261016-independent.json",
+      "sha256": "d2df651bd7faf261c937f858372fc888542b2e04228f9f8e4491fe4f040dde4a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098049237429641
+    },
+    "retainedFiles": 206,
+    "remainingDatabases": 0,
+    "retainedTrieCacheBytes": 0,
+    "freshHostProcessAndOpenFileInventories": 2,
+    "metadataScope": "Exact bytes, mode, uid/gid, ns-mtime and local file set. No ACL/xattr claim."
+  },
+  "upstreamInput": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/upstream-pinned-build-evidence.json",
+    "sha256": "08847c9e5f73f5c726a3fb00fe87044f79d250cf32c8243449c11ce59f67b47a",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792095733214094265
+  },
+  "tools": [
+    {
+      "path": "/private/tmp/chainbench-legacy-code-state-run-20261016.py",
+      "sha256": "547323cc098f81fdb0f27ea677b6d924c7ee7c254b225f9371f8705a7281cfba",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792097542086493937
+    },
+    {
+      "path": "/private/tmp/chainbench-legacy-code-state-independent-20261016.py",
+      "sha256": "41087e775d34c95b60dc34322247886c01734dc1a8bc71b000f4bf8f3ac3a6cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792098047493428299
+    },
+    {
+      "path": "/private/tmp/chainbench-policy-keccak.go",
+      "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001507798664088
+    }
+  ],
+  "acceptedScope": true,
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "externalIssuesResolved": false
+}

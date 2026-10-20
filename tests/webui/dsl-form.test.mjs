@@ -109,3 +109,119 @@ test('an attached network offers its endpoints by position only',()=>{
  assert.deepEqual(nodes.filter(n=>n.startsWith('node')),['node1','node2'])
  assert.ok(!nodes.some(n=>/^(bp|en|pn)\d/.test(n)))
 })
+
+test('structured attach profiles expose only their declared role selectors and positions',()=>{
+ const doc={chainPreset:{attach:{endpoints:[{rpc:'http://a',role:'bp'},{rpc:'http://b',role:'en'},{rpc:'http://c'}]}},steps:[]}
+ const names=references(doc,['bp','en','pn']).nodes
+ for(const name of ['node1','node2','node3','bp','bp1','en','en1','en2'])assert.ok(names.includes(name),name)
+ for(const name of ['node4','bp2','pn','pn1'])assert.ok(!names.includes(name),name)
+})
+
+test('object constraints produce distinguishable required alternatives without changing values',()=>{
+ const schema={type:'object',additionalProperties:false,properties:{rpc:{type:'array'},endpoints:{type:'array'}},oneOf:[{title:'RPC URLs',required:['rpc'],not:{required:['endpoints']}},{title:'Profiles',required:['endpoints'],not:{required:['rpc']}}]}
+ const value={endpoints:[{rpc:'http://node'}]};const before=JSON.stringify(value)
+ const choices=variants(schema,{})
+ assert.equal(choices.length,2)
+ assert.equal(selectedVariant(choices,value),1)
+ assert.deepEqual(initial(choices[1],{}),{endpoints:[]})
+ assert.equal(JSON.stringify(value),before)
+})
+
+test('endpoint and auth constraints hide forbidden additions while preserving imported fields',async()=>{
+ const fs=await import('node:fs');const {forbiddenFields}=await import('../../web/src/dsl-form.js')
+ const contract=JSON.parse(fs.readFileSync(new URL('../../internal/dsl/schema/v2.schema.json',import.meta.url),'utf8'))
+ const attach=contract.$defs.envSpec.properties.attach
+ const choices=variants(attach,contract)
+ assert.equal(choices.length,2)
+ assert.deepEqual([...forbiddenFields(choices[0],{rpc:[]})],['endpoints'])
+ assert.deepEqual([...forbiddenFields(choices[1],{endpoints:[]})],['rpc'])
+ const auth=attach.properties.endpoints.items.properties.auth
+ const imported={type:'jwt',env:'TOKEN',header:'X-Ignored'};const before=JSON.stringify(imported)
+ assert.deepEqual([...forbiddenFields(auth,imported)],['header'])
+ assert.deepEqual([...forbiddenFields(auth,{type:'api-key',env:'TOKEN'})],[])
+ assert.equal(JSON.stringify(imported),before,'a forbidden imported field was discarded')
+})
+
+test('profile role selectors also follow the imported shared preset',()=>{
+ const external={schemaVersion:'2',kind:'chain-preset',id:'external',chain:'wbft',attach:{endpoints:[{rpc:'http://a',role:'bp'},{rpc:'http://b',role:'en'}]}}
+ const names=references({schemaVersion:'2',chainPreset:'external',steps:[]},['bp','en','pn'],{}, {external}).nodes
+ for(const name of ['node1','node2','bp1','en1'])assert.ok(names.includes(name),name)
+ assert.ok(!names.includes('node3'))
+})
+
+test('fee payer choices merge declared accounts and exclude node-signed identities',()=>{
+ const own={schemaVersion:'2',chainPreset:{extends:'base',accounts:{sponsor:{},node1:{},faucet:{},'0xdead':{}}}}
+ const inherited={base:{accounts:{payer:{keyFile:'${PAYER_KEY}'},sponsor:{keyFile:'${SPONSOR_KEY}'}}}}
+ const before=JSON.stringify({own,inherited})
+ assert.deepEqual(references(own,['bp','en'],{},inherited).accounts,['payer','sponsor'])
+ assert.equal(JSON.stringify({own,inherited}),before)
+})
+test('mutually exclusive transaction fields cannot be added together',async()=>{
+ const {forbiddenFields}=await import('../../web/src/dsl-form.js')
+ const schema={allOf:[{not:{required:['feePayer','feePayerKey']}},{not:{required:['feePayer','gasPrice']}}]}
+ assert.deepEqual([...forbiddenFields(schema,{feePayer:'sponsor'})],['feePayerKey','gasPrice'])
+ assert.deepEqual([...forbiddenFields(schema,{feePayerKey:'$key'})],['feePayer'])
+ assert.deepEqual([...forbiddenFields(schema,{})],[])
+})
+
+test('preset values are offered before hooks with deep-merge deletion and shadowing',()=>{
+ const base={values:{count:1,inherited:true,removed:'old'}}
+ const own={schemaVersion:'2',chainPreset:{extends:'base',values:{count:2,removed:null,recipient:'0xabc'}},hooks:{pre:[{do:'read',source:'blockNumber',save:'count'}]},steps:[{expect:'blockNumber',is:'$count'}]}
+ const before=JSON.stringify({base,own})
+ const choices=references(own,['bp'],{}, {base})
+ assert.deepEqual(choices.before.get('/content/hooks/pre/0'),['$count','$inherited','$recipient'])
+ assert.deepEqual(choices.before.get('/content/steps/0'),['$count','$inherited','$recipient'])
+ assert.equal(JSON.stringify({base,own}),before)
+ assert.ok(references({schemaVersion:'2',chainPreset:{values:{empty:null}},steps:[{expect:'blockNumber'}]}).before.get('/content/steps/0').includes('$empty'))
+})
+test('recursive preset JSON values expose a real null variant',async()=>{
+ const fs=await import('node:fs')
+ const root=JSON.parse(fs.readFileSync(new URL('../../internal/dsl/schema/v2.schema.json',import.meta.url),'utf8'))
+ const choices=variants({$ref:'#/$defs/presetValue'},root)
+ assert.equal(choices.length,6)
+ assert.equal(selectedVariant(choices,null),3)
+ assert.equal(initial(choices[3],root),null)
+})
+
+test('map fields use the engine pattern contract for declared chain identity',async()=>{
+ const {propertySchema}=await import('../../web/src/dsl-form.js')
+ const schema={patternProperties:{'^chainId$':{type:'integer',minimum:0,maximum:9007199254740991}},additionalProperties:{type:'string'}}
+ assert.equal(propertySchema(schema,'chainId').type,'integer')
+ assert.equal(propertySchema(schema,'other').type,'string')
+ assert.equal(initial(propertySchema(schema,'chainId'),{}),0)
+})
+
+test('prepared imports seed references and public exports exclude failure-only and private bindings',()=>{
+ const doc={schemaVersion:'2',prepared:{imports:{contract:{case:'setup',name:'address'}}},steps:[{do:'read',save:'receipt'},{do:'newAccount',save:'owner',saveKey:'ownerKey'}],hooks:{onFail:[{do:'read',save:'diagnostic'}]}}
+ const r=references(doc)
+ assert.ok(r.before.get('/content/steps/0').includes('$contract'))
+ const exported=r.before.get('/content/prepared/exports')
+ assert.ok(exported.includes('$contract')&&exported.includes('$receipt')&&exported.includes('$owner'))
+ assert.ok(!exported.includes('$ownerKey')&&!exported.includes('$diagnostic'))
+})
+
+test('prepared producer choices come only from unambiguous saved case exports',async()=>{
+ const {preparedChoices}=await import('../../web/src/dsl-form.js')
+ const doc={id:'consumer',prepared:{imports:{contract:{case:'setup',name:'address'}}}}
+ const saved=[{content:{id:'setup',prepared:{exports:{address:'$deployed',receipt:'$receipt'}}}},{content:{id:'consumer',prepared:{exports:{self:'$x'}}}},{content:{id:'empty'}},{content:{id:'ambiguous',prepared:{exports:{a:'$a'}}}},{content:{id:'ambiguous',prepared:{exports:{b:'$b'}}}}]
+ assert.deepEqual(preparedChoices(doc,saved),{preparedCases:['setup'],preparedNames:{contract:['address','receipt']}})
+})
+
+test('prepared aliases that resemble object prototype properties remain ordinary own names',async()=>{
+ const {preparedChoices}=await import('../../web/src/dsl-form.js')
+ const doc=JSON.parse('{"id":"consumer","prepared":{"imports":{"__proto__":{"case":"prepare","name":"public"}}}}')
+ const choices=preparedChoices(doc,[{content:{id:'prepare',prepared:{exports:{public:'$value'}}}}])
+ assert.ok(Object.hasOwn(choices.preparedNames,'__proto__'))
+ assert.deepEqual(choices.preparedNames.__proto__,['public'])
+ assert.equal(Object.getPrototypeOf(choices.preparedNames),Object.prototype)
+})
+
+test('catalog-tagged node references offer declared nodes and prior bindings',async()=>{
+ const {fieldSuggestions}=await import('../../web/src/dsl-form.js')
+ assert.equal(typeof fieldSuggestions,'function','schema-driven node references are missing')
+ const nodes=['node1','node2'],refs=['$previous','node1']
+ assert.deepEqual(fieldSuggestions({'x-suggestions':'nodes'},'reference','/content/steps/1/reference',nodes,refs),['node1','node2','$previous'])
+ assert.deepEqual(fieldSuggestions({},'on','/content/steps/1/on',nodes,refs),nodes)
+ assert.deepEqual(fieldSuggestions({},'onEach 1','/content/steps/1/onEach/0',nodes,refs),['all',...nodes])
+ assert.deepEqual(fieldSuggestions({},'value','/content/steps/1/value',nodes,refs),refs)
+})

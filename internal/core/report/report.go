@@ -46,9 +46,10 @@ type Report struct {
 // TestReport is one test's verdict and the session-relative paths to the
 // evidence that backs it (only files that exist are listed).
 type TestReport struct {
-	Seq int    `json:"seq"`
-	ID  string `json:"id"`
-	Env string `json:"env,omitempty"`
+	PresetID string `json:"presetId,omitempty"`
+	Seq      int    `json:"seq"`
+	ID       string `json:"id"`
+	Env      string `json:"env,omitempty"`
 	// Session names the run this test came from. It is empty in a single run's
 	// report, where the report itself names the session, and set in a combined
 	// one, where "seq 1" means nothing without it -- several runs each have a seq 1.
@@ -80,6 +81,7 @@ func Build(sessionDir string) (Report, error) {
 		}
 		rep.Tests = append(rep.Tests, TestReport{
 			Seq:      t.Seq,
+			PresetID: t.PresetID,
 			ID:       t.ID,
 			Env:      t.Env,
 			Status:   t.Status,

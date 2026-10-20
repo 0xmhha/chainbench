@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "live-block-receive",
-  "description": "CT-NODE-007 — 정상 운영 중인 노드가 새 블록을 전파로 받아 바로 반영한다 (기존 명세 RT-A-1-07, 절차는 docs/tc/common/06-detailed-procedures/01-node.md 의 CT-NODE-007). 생산하지 않는 종단 노드 en1 을 관찰한다. node1 의 높이를 읽고 en1 이 5초 안에 그 높이에 닿는지를 다섯 번 본다. 그다음 20블록을 더 지켜본 뒤 metric eth_fetcher_block_broadcasts_in 이 1 이상인지로 블록 전체를 전파로 받은 적이 있는지 본다. 생성 노드는 블록 전체를 피어 수의 제곱근만큼에게 보내고 나머지에는 해시만 알리므로, en1 이 어느 블록을 전체로 받을지는 확률이다. 20블록이면 한 번도 받지 못할 확률은 무시할 만하다. 로그 대신 metric 을 쓰는 이유는 CT-NODE-006 과 같다.",
+  "description": "CT-NODE-007 — 정상 운영 중인 종단 노드 en1이 새 블록을 전파로 받아 바로 반영한다. 생성 노드의 높이를 읽고 en1이 5초 안에 그 높이에 닿는지를 다섯 번 본다. 그다음 20블록을 더 지켜보고 전체 블록 전파(eth_fetcher_block_broadcasts_in) 또는 해시 통지 후 fetcher 조회(eth_fetcher_block_announces_in) 중 하나 이상의 수신을 확인한다. 생성 노드는 피어 목록 일부에 전체 블록을 보내고 나머지에는 해시를 알리므로 특정 EN이 전체 블록을 받는다는 확률 가정을 하지 않는다. 선언한 두 metric 모두 같은 EN의 유한값으로 읽어 출처를 기록한다. 따라잡은 높이의 블록 해시와 상태 루트도 생성 노드와 비교하여 수신 카운터만으로 상태 반영을 판단하지 않는다.",
   "requires": [
     "rpc"
   ],
@@ -134,7 +134,8 @@
         "$now",
         "20"
       ],
-      "save": "later"
+      "save": "later",
+      "format": "hex"
     },
     {
       "do": "waitFor",
@@ -151,7 +152,58 @@
       "on": "en1",
       "name": "eth_fetcher_block_broadcasts_in",
       "compare": "GreaterOrEqual",
-      "is": 1
+      "is": 1,
+      "alternatives": [
+        "eth_fetcher_block_announces_in"
+      ]
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$later",
+        false
+      ],
+      "select": "hash",
+      "save": "wantHash"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$later",
+        false
+      ],
+      "select": "stateRoot",
+      "save": "wantRoot"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "en1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$later",
+        false
+      ],
+      "select": "hash",
+      "compare": "Equal",
+      "is": "$wantHash"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "en1",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$later",
+        false
+      ],
+      "select": "stateRoot",
+      "compare": "Equal",
+      "is": "$wantRoot"
     }
   ]
 }

@@ -49,6 +49,15 @@ wrapper 를 통해서만 서버에 닿는다.
 app 은 기능 하나에 진입점 하나를 갖는다. core 모듈은 기구를 갖고, app 은 동사를 갖고,
 표면은 바인딩과 렌더링만 한다. 표면은 app 을 건너뛰지 않는다.
 
+**S2 구현 경로 (2026-10-13).** MCP의 등록된 동작은 `mcp → feature → app`으로 호출한다.
+`feature`는 [L5 바인딩 모듈](layers.md#l5-유스케이스)이며 동작을 구현하지 않는다.
+등록의 AST 검사는 각 binding이 실제 app 함수 하나에 연결되는지 확인하고,
+`TestFeatureBindingsCannotReachPastApp`은 이 모듈의 내부 의존성을 app으로 제한한다.
+MCP의 core·자원·SSH 직접 import 금지와 0건 래칫은 그대로 유지한다.
+도구 고유의 해독·응답 형식, RPC 배열 및 enum·range·required 대안은 보존하고,
+RPC·workspace·chain 공통 scalar 스키마는 등록된 입력 태그에서 소비한다.
+플러그인 핸들러를 가진 capability 카탈로그의 조립·조회는 기존 app façade를 사용한다.
+
 **왜 바꿨나.** 비대칭 규칙은 표면이 갈라지는 것을 막지 못했다. 2026-09-05 에 세 표면의
 등록 지점 157개를 AST 로 전수 조사하니, 손으로 확인한 32쌍 중 **22쌍이 서로 다른 경로로 가고
 있었다.** 양쪽이 모두 app 을 지나는 것은 4쌍뿐이다. `report` 는 CLI 가 `core/report` 를 직접

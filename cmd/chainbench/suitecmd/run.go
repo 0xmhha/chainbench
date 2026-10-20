@@ -82,13 +82,60 @@ func NewRun() *cobra.Command {
 		allowChainMismatch bool
 		planOnly           bool
 		presetRef          string
+		chainPresets       []string
 		sf                 resourcecmd.ServerFlags
 	)
+	inputFor := func(cmd *cobra.Command, args []string) (app.RunSuiteIn, error) {
+		in := app.RunSuiteIn{
+			SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: presetRef,
+			Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
+			ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
+			NodeMonitorTimeout: nodeMonitorT,
+		}
+		if cmd.Flags().Changed("keys") {
+			in.KeysDir = keysDir
+		}
+		if cmd.Flags().Changed("keys-source") {
+			in.KeysSource = keysSource
+		}
+		if cmd.Flags().Changed("bp") {
+			in.BPCount = bpCount
+		}
+		if cmd.Flags().Changed("artifact-root") {
+			in.ArtifactRoot = artifactRoot
+		}
+		if cmd.Flags().Changed("workspace-config") {
+			in.WorkspaceConfigPath = workspaceConfig
+		}
+		if len(binaryFor) > 0 {
+			in.BinaryOverrides = map[string]string{}
+			for _, pair := range binaryFor {
+				name, path, ok := strings.Cut(pair, "=")
+				if !ok || name == "" {
+					return in, fmt.Errorf("--binary-for %q: want name=path", pair)
+				}
+				in.BinaryOverrides[name] = path
+			}
+		}
+		in.ReadOnlyKeys = readOnlyKeys
+		return in, nil
+	}
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
 		Short: "Run DSL test specs (compose the declared network, or attach)",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(chainPresets) > 0 {
+				if attach || len(rpcURLs) > 0 || presetRef != "" {
+					return fmt.Errorf("--chain-presets selects every target; it cannot combine with --attach, --rpc or --chain-preset")
+				}
+				in, err := inputFor(cmd, args)
+				if err != nil {
+					return err
+				}
+				in.NoNodeControl = noNodeControl
+				return runMatrix(cmd, app.RunMatrixIn{RunSuiteIn: in, Presets: chainPresets, Plan: planOnly}, serverLogins, jsonOut, noSkips)
+			}
 			// Which of the four ways this run was asked to reach a network.
 			// The answer is a state, and it is worked out in one place that
 			// every surface shares — this switch used to be written here, in
@@ -109,12 +156,7 @@ func NewRun() *cobra.Command {
 				if planOnly {
 					return fmt.Errorf("plan is only available for composition")
 				}
-				// ${VAR} in a declared endpoint is expanded here because the
-				// surface owns the process environment. A committed case must
-				// not have to carry a machine's address.
-				if start.Declared != nil {
-					start.Declared.RPCURLs = expandEach(start.Declared.RPCURLs)
-				}
+				// AttachRun expands declared addresses identically for CLI and MCP.
 				// A flag's value is passed only when the flag was given, which
 				// is how "what the caller said outranks the document" is said
 				// to the layer that applies it.
@@ -125,38 +167,10 @@ func NewRun() *cobra.Command {
 					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips, allowChainMismatch,
 					attachReading{readOnlyKeys: readOnlyKeys, noNodeControl: noNodeControl, logins: serverLogins})
 			}
-			in := app.RunSuiteIn{
-				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: presetRef,
-				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
-				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
-				NodeMonitorTimeout: nodeMonitorT,
+			in, err := inputFor(cmd, args)
+			if err != nil {
+				return err
 			}
-			if cmd.Flags().Changed("keys") {
-				in.KeysDir = keysDir
-			}
-			if cmd.Flags().Changed("keys-source") {
-				in.KeysSource = keysSource
-			}
-			if cmd.Flags().Changed("bp") {
-				in.BPCount = bpCount
-			}
-			if cmd.Flags().Changed("artifact-root") {
-				in.ArtifactRoot = artifactRoot
-			}
-			if cmd.Flags().Changed("workspace-config") {
-				in.WorkspaceConfigPath = workspaceConfig
-			}
-			if len(binaryFor) > 0 {
-				in.BinaryOverrides = map[string]string{}
-				for _, pair := range binaryFor {
-					name, path, ok := strings.Cut(pair, "=")
-					if !ok || name == "" {
-						return fmt.Errorf("--binary-for %q: want name=path", pair)
-					}
-					in.BinaryOverrides[name] = path
-				}
-			}
-			in.ReadOnlyKeys = readOnlyKeys
 			if planOnly {
 				return showPlan(cmd, in, jsonOut, suite)
 			}
@@ -175,6 +189,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
+	cmd.Flags().StringArrayVar(&chainPresets, "chain-presets", nil, "run the same suite on each selected chain-preset (repeatable id or JSON path); targets run serially")
 	cmd.Flags().StringVar(&presetRef, "chain-preset", "", "compose: run every case on this chain-preset instead of the one it names (an id, or a path to a chain-preset file); what a case overrode is kept")
 	cmd.Flags().BoolVar(&planOnly, "plan", false, "compose: print the network the specs and flags resolve to, then stop without composing it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
@@ -266,29 +281,6 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 		return err
 	}
 	return printSession(cmd.OutOrStdout(), runReport{Session: root}, jsonOut, noSkips)
-}
-
-// expandEach resolves ${VAR} and ${VAR:-default} in each endpoint, the same
-// expansion a declared binary path gets. An endpoint is a fact about a machine,
-// and a committed case must not have to carry one.
-func expandEach(in []string) []string {
-	out := make([]string, len(in))
-	for i, s := range in {
-		out[i] = os.Expand(s, envOrDefault)
-	}
-	return out
-}
-
-// envOrDefault expands NAME or NAME:-fallback from the process environment.
-func envOrDefault(spec string) string {
-	name, fallback, hasDefault := strings.Cut(spec, ":-")
-	if v, ok := os.LookupEnv(name); ok && v != "" {
-		return v
-	}
-	if hasDefault {
-		return fallback
-	}
-	return ""
 }
 
 // runComposed composes the network the specs declare and runs them against

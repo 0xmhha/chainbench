@@ -22,7 +22,7 @@ func hardforkTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string", "description": "workspace of the running from-chain"},
+				"workspaceDir": commonProperty("workspaceDir", map[string]any{"description": "workspace of the running from-chain"}),
 				"toChain":      map[string]any{"type": "string"},
 				"toBinary":     map[string]any{"type": "string"},
 				"block":        map[string]any{"type": "integer"},
@@ -36,7 +36,7 @@ func hardforkTool() Tool {
 				return "", fmt.Errorf("chainbench_hardfork: workspaceDir is required")
 			}
 			toBinary := argString(args, "toBinary", "")
-			planned, err := app.HardforkPlan(ctx, app.Deps{}, app.HardforkPlanIn{
+			planned, err := invokeFeature[app.HardforkPlanIn, app.HardforkPlanOut](ctx, app.Deps{}, "hardfork.plan", app.HardforkPlanIn{
 				DataDir: dataDir, ToChain: argString(args, "toChain", ""),
 				ToBinary: toBinary, Block: int64(argInt(args, "block", 0)),
 			})
@@ -60,7 +60,7 @@ func hardforkTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			res, err := app.HardforkExecute(ctx, app.Deps{}, app.HardforkExecuteIn{
+			res, err := invokeFeature[app.HardforkExecuteIn, app.HardforkExecuteOut](ctx, app.Deps{}, "hardfork.execute", app.HardforkExecuteIn{
 				Plan: planned, DataDir: dataDir, Binary: bin,
 			})
 			if err != nil {

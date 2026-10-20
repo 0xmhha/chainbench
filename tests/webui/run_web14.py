@@ -2,6 +2,8 @@
 source, a reproducible SPA build served by the real Go server, every route
 navigated and refreshed in a browser, and the mandatory regression checks with
 every gated live Go test opened."""
+from prerequisite import check_environment
+from runtime_storage import create_runtime
 from runtime_contract import runtime_root, base_commit, source_digest, stage_sources
 
 import datetime
@@ -62,6 +64,8 @@ def run_checks(out, checkout, staged, evidence):
     missing = [name for name in LIVE_ENV if not os.environ.get(name)]
     if missing:
         raise RuntimeError('gated live Go tests would skip; set ' + ', '.join(missing))
+    if os.environ.get('CHAINBENCH_W4_PROOF') != '1':
+        raise RuntimeError('CHAINBENCH_W4_PROOF must be 1 so the diagnostic cannot skip')
     prepare = subprocess.run(['bash', 'tests/webui/fixtures/docker_regression_prepare.sh'], cwd=checkout, text=True, capture_output=True)
     (out / 'docker-prepare.log').write_text(prepare.stdout + prepare.stderr)
     if prepare.returncode:
@@ -69,7 +73,7 @@ def run_checks(out, checkout, staged, evidence):
     # Only the serial race run opens the live gates. Elsewhere packages test in
     # parallel, and a live network on default ports would collide with the
     # port checks of another package's unit tests.
-    plain = {k: v for k, v in os.environ.items() if k not in LIVE_ENV}
+    plain = check_environment()
     for command in CHECKS:
         # The web build writes the embedded SPA, so it runs in the staged copy.
         cwd = staged if command.startswith('npm') else checkout
@@ -125,8 +129,7 @@ def main():
     invocation = str(uuid.uuid4())
     started = now()
     before = source_digest(Path.cwd())
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(invocation)
     evidence = {'criterion': 'WEB-14', 'invocationId': invocation, 'sourceDigest': before, 'scenarios': [], 'checks': [], 'artifacts': []}
     failures, server, handles = [], None, []
     staged = stage_sources(Path.cwd(), runtime)

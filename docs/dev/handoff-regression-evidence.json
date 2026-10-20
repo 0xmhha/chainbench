@@ -1,0 +1,344 @@
+{
+  "scope": "All 20 existing WEMIX migration/governance native E2E regression tests pass at the frozen source. This does not close wemix4 requirement sufficiency, Linux L1, backlog task 11 or final Web acceptance.",
+  "sourceCommit": "fa83c3c7472bac089a3b6fff279e5026e4c3e8d7",
+  "summary": {
+    "sourceBefore": "0127073c4399a3b7d457a56c41cccd2d11e1a6f1cdea3853fb3ac74eb2fc6ef2",
+    "sourceAfter": "0127073c4399a3b7d457a56c41cccd2d11e1a6f1cdea3853fb3ac74eb2fc6ef2",
+    "sourceUnchanged": true,
+    "expectedTests": [
+      "TestWemixDataMigrationE2E",
+      "TestWemixGovernanceE2E",
+      "TestWemixGovernanceEpochDecidesTheValidatorSetE2E",
+      "TestWemixGovernanceNCPLifecycleE2E",
+      "TestWemixGovValidatorSelectionScenarioE2E",
+      "TestWemixGovernanceRegisterStakerE2E",
+      "TestWemixGovernanceDelegateE2E",
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceUnstakeMinimumGuardE2E",
+      "TestWemixGovernanceClaimGuardE2E",
+      "TestWemixGovernanceFeeChangeE2E",
+      "TestWemixGovernanceReactivateE2E",
+      "TestWemixGovernanceEmergencyModeE2E",
+      "TestWemixGovernanceBlockRewardE2E",
+      "TestWemixGovernanceOperatorClaimE2E",
+      "TestWemixGovernanceDelegatorClaimE2E",
+      "TestWemixGovernanceFeeChangeDelayedE2E",
+      "TestWemixGovernanceCredentialExpiryE2E",
+      "TestWemixGovernanceStabilizingE2E",
+      "TestWemixGovernanceNCPAddE2E"
+    ],
+    "passedTests": [
+      "TestWemixDataMigrationE2E",
+      "TestWemixGovernanceE2E",
+      "TestWemixGovernanceEpochDecidesTheValidatorSetE2E",
+      "TestWemixGovernanceNCPLifecycleE2E",
+      "TestWemixGovValidatorSelectionScenarioE2E",
+      "TestWemixGovernanceRegisterStakerE2E",
+      "TestWemixGovernanceDelegateE2E",
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceUnstakeMinimumGuardE2E",
+      "TestWemixGovernanceClaimGuardE2E",
+      "TestWemixGovernanceFeeChangeE2E",
+      "TestWemixGovernanceReactivateE2E",
+      "TestWemixGovernanceEmergencyModeE2E",
+      "TestWemixGovernanceBlockRewardE2E",
+      "TestWemixGovernanceOperatorClaimE2E",
+      "TestWemixGovernanceDelegatorClaimE2E",
+      "TestWemixGovernanceFeeChangeDelayedE2E",
+      "TestWemixGovernanceCredentialExpiryE2E",
+      "TestWemixGovernanceStabilizingE2E",
+      "TestWemixGovernanceNCPAddE2E"
+    ],
+    "failedTests": [],
+    "skippedTests": [],
+    "exitCode": 0,
+    "runtimes": [
+      "/private/tmp/cbui/hf-0h_qhxth",
+      "/private/tmp/cbui/hf-0xljmp1u",
+      "/private/tmp/cbui/hf-2sspyel6",
+      "/private/tmp/cbui/hf-2wh8dcjl",
+      "/private/tmp/cbui/hf-5_zvw_c0",
+      "/private/tmp/cbui/hf-5vgnbpwx",
+      "/private/tmp/cbui/hf-7gtij8rd",
+      "/private/tmp/cbui/hf-9i5vin0v",
+      "/private/tmp/cbui/hf-_67dgee0",
+      "/private/tmp/cbui/hf-cbs64qzg",
+      "/private/tmp/cbui/hf-ddbnn1_x",
+      "/private/tmp/cbui/hf-ebdk_387",
+      "/private/tmp/cbui/hf-fjhb0x4k",
+      "/private/tmp/cbui/hf-gg_gjj3p",
+      "/private/tmp/cbui/hf-hxrjsgqn",
+      "/private/tmp/cbui/hf-i56qv5ml",
+      "/private/tmp/cbui/hf-j3zyf8iq",
+      "/private/tmp/cbui/hf-nz9bkgk4",
+      "/private/tmp/cbui/hf-pz1uryo4",
+      "/private/tmp/cbui/hf-vcvpua6x",
+      "/private/tmp/cbui/hf-y3k1to52",
+      "/private/tmp/cbui/hf-z15edboh"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-0h_qhxth": [],
+      "/private/tmp/cbui/hf-0xljmp1u": [],
+      "/private/tmp/cbui/hf-2sspyel6": [],
+      "/private/tmp/cbui/hf-2wh8dcjl": [],
+      "/private/tmp/cbui/hf-5_zvw_c0": [],
+      "/private/tmp/cbui/hf-5vgnbpwx": [],
+      "/private/tmp/cbui/hf-7gtij8rd": [],
+      "/private/tmp/cbui/hf-9i5vin0v": [],
+      "/private/tmp/cbui/hf-_67dgee0": [],
+      "/private/tmp/cbui/hf-cbs64qzg": [],
+      "/private/tmp/cbui/hf-ddbnn1_x": [],
+      "/private/tmp/cbui/hf-ebdk_387": [],
+      "/private/tmp/cbui/hf-fjhb0x4k": [],
+      "/private/tmp/cbui/hf-gg_gjj3p": [],
+      "/private/tmp/cbui/hf-hxrjsgqn": [],
+      "/private/tmp/cbui/hf-i56qv5ml": [],
+      "/private/tmp/cbui/hf-j3zyf8iq": [],
+      "/private/tmp/cbui/hf-nz9bkgk4": [],
+      "/private/tmp/cbui/hf-pz1uryo4": [],
+      "/private/tmp/cbui/hf-vcvpua6x": [],
+      "/private/tmp/cbui/hf-y3k1to52": [],
+      "/private/tmp/cbui/hf-z15edboh": []
+    },
+    "outcome": "pass"
+  },
+  "logs": {
+    "native": {
+      "path": "/private/tmp/chainbench-handoff-regression-native.jsonl",
+      "sha256": "c8fa014c1fac3b9a0c8b655ba2e9623b777729b38da8e0cb4ccb07b0730894bc"
+    },
+    "driver": {
+      "path": "/private/tmp/chainbench-handoff-regression-driver.log",
+      "sha256": "5ce1579c0b5948379d412eca80460bfd6addb244418403fda51240975be4446b"
+    },
+    "runner": {
+      "path": "/private/tmp/chainbench-handoff-regression-run.py",
+      "sha256": "06bb513cfa21d3bc1e5af1b2588ae0f0685f6362efd2bf94dae7fcfa49eef7e3"
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-handoff-regression-summary.json",
+      "sha256": "561449b4a4a823270029e04c5abe4d8717343f5abe1229fff67cb0d3df5ea919"
+    }
+  },
+  "initialBlockedAttempts": [
+    {
+      "runtime": "/private/tmp/cbui/hf-2sspyel6",
+      "status": {
+        "id": "gov-handoff",
+        "seq": 1,
+        "result": "blocked",
+        "env": "env-2ecec60a1cf0",
+        "reason": "consensus capability unknown: rpc_probe_unavailable",
+        "presetId": "wemix-to-wbft"
+      },
+      "artifact": {
+        "path": "/private/tmp/cbui/hf-2sspyel6/reports/20261014-073630-93708/UTC-20261014-080313/tests/001_gov-handoff/status.json",
+        "sha256": "bbd18ddff459df107d049f061eabb22e1ff2b6fb4c8854d327c4274057374513"
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-9i5vin0v",
+      "status": {
+        "id": "gov-handoff",
+        "seq": 1,
+        "result": "blocked",
+        "env": "env-c70ff6c7184e",
+        "reason": "consensus capability unknown: rpc_probe_unavailable",
+        "presetId": "wemix-to-wbft"
+      },
+      "artifact": {
+        "path": "/private/tmp/cbui/hf-9i5vin0v/reports/20261014-073630-93708/UTC-20261014-074201/tests/001_gov-handoff/status.json",
+        "sha256": "f92ae81dcf8ce1423d95f146a2ba1d9db27dca59df498b8e0d904d7697d9bb63"
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/hf-0h_qhxth",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-0h_qhxth/reports/handoff-inventory.json",
+        "sha256": "e226edae73567dd4b21907faa86089a46353c0abf959d1a2aafa791524186731"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-0xljmp1u",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-0xljmp1u/reports/handoff-inventory.json",
+        "sha256": "08ba7c6cd8ee4d337c7992df842289530d1b8fd9bdba0446065af776090d94a3"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-2sspyel6",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-2sspyel6/reports/handoff-inventory.json",
+        "sha256": "3b53c483a2cc4101e9822df8612b863546b7e1d4de88d971be4b50a56cccb421"
+      },
+      "retainedFileCount": 226
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-2wh8dcjl",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-2wh8dcjl/reports/handoff-inventory.json",
+        "sha256": "d79e93359cda76904d87dbfc6662723fa3d9117668c1fdd854fece7b10bd2c49"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-5_zvw_c0",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-5_zvw_c0/reports/handoff-inventory.json",
+        "sha256": "e8bf3266eda4c306d730771d4f983b51396b1960559a3443207e10e683cce957"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-5vgnbpwx",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-5vgnbpwx/reports/handoff-inventory.json",
+        "sha256": "9b644587473a7d70c7a79340626ddbaf1d57e6bc0cf20c996781a43ae6c4bad8"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-7gtij8rd",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-7gtij8rd/reports/handoff-inventory.json",
+        "sha256": "5ce643ff214f98463b513b8a03b283ef59bf5703d8950b23a487e55295567724"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-9i5vin0v",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-9i5vin0v/reports/handoff-inventory.json",
+        "sha256": "35f7520c59f2cb81e465eb2f9482e8abd0a5283c155d9119323bc2af201919d4"
+      },
+      "retainedFileCount": 226
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-_67dgee0",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-_67dgee0/reports/handoff-inventory.json",
+        "sha256": "dff1e465a946877936723ebb90a008b7a18a73533cd0510a3c3543e0e4124a31"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-cbs64qzg",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-cbs64qzg/reports/handoff-inventory.json",
+        "sha256": "36c49eeab78e8660b0d16b03046128dcacf9792e1e0d6582ff478fb2f229b1e7"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-ddbnn1_x",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-ddbnn1_x/reports/handoff-inventory.json",
+        "sha256": "505f40e57bce2a23d7d3c3644291cf0ba92943fc2e299bc118026cb62dc6d29f"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-ebdk_387",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-ebdk_387/reports/handoff-inventory.json",
+        "sha256": "a85fc657c91b5325e56d34ad2beba8c03bf978803d448043cf99f8adf0ff1843"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-fjhb0x4k",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-fjhb0x4k/reports/handoff-inventory.json",
+        "sha256": "293ab2387a4637e016ca4009bc7a8202b0b6e953d401f9571dadec1184b65a2e"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-gg_gjj3p",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-gg_gjj3p/reports/handoff-inventory.json",
+        "sha256": "19ea751e0bb1f7f134f68826529f88f4e711f3688f85226c9631a90ef59ad385"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-hxrjsgqn",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-hxrjsgqn/reports/handoff-inventory.json",
+        "sha256": "74ea7b9e90365f8022c8c69f2bf3294fb2bd3077f29d351120018e1d7a414ded"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-i56qv5ml",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-i56qv5ml/reports/handoff-inventory.json",
+        "sha256": "7fa4b030d54658cd6e49dc1277473d55336cecb27699f9d38333e7ef4701311b"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-j3zyf8iq",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-j3zyf8iq/reports/handoff-inventory.json",
+        "sha256": "2f79e7818e8475738823042400f306d1714e193ebae5d4aab891c05f3efb8404"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-nz9bkgk4",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-nz9bkgk4/reports/handoff-inventory.json",
+        "sha256": "82d8e49cf3ca0557fdc3ee4d82322976980e58c7b1fe53f1292cf588b906af4d"
+      },
+      "retainedFileCount": 262
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-pz1uryo4",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-pz1uryo4/reports/handoff-inventory.json",
+        "sha256": "5ca79014bd4f5ab26f37e6b8a69987323db3395a2ffafbdc87d7343fc49ec91f"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-vcvpua6x",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-vcvpua6x/reports/handoff-inventory.json",
+        "sha256": "367976682f22a51a1dabcd724cedb1cf15ef46e1a378bdfd011866a78d6fa844"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-y3k1to52",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-y3k1to52/reports/handoff-inventory.json",
+        "sha256": "36573fc13f03f076f8185908f91f1a65b62c5faa7ab41fcbe3fbe395f2b3682f"
+      },
+      "retainedFileCount": 228
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-z15edboh",
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-z15edboh/reports/handoff-inventory.json",
+        "sha256": "be89e039348fa6b345606eb671795c97621ac95e22e017aed44b7a76471211d5"
+      },
+      "retainedFileCount": 228
+    }
+  ],
+  "binaries": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5"
+  },
+  "knownScopeGaps": [
+    "GOV-018 checks emergency flag clearing but not resumed staking/effect/event",
+    "GOV-019 checks activity/amount but not staker listing and epoch candidate return",
+    "GOV-019 original below-minimum wording conflicts with the active contract requiring rejection",
+    "NODE-002 only data recognition, not prefork transaction receipt preservation and continued operation",
+    "Remaining 87-scenario semantic mapping is pending"
+  ]
+}

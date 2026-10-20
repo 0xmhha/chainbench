@@ -6,6 +6,8 @@ existing env/docker fixture; this proof adds its own server2 and control
 containers, uses a data root of its own on both servers, and stops what it
 started when it ends. The browser drives the dashboard through one published
 loopback port. No Seed criterion is awarded."""
+from runtime_storage import clone_file
+from runtime_storage import create_runtime
 import datetime
 import hashlib
 import json
@@ -54,8 +56,7 @@ def main():
     for p in output.iterdir():
         if p.is_file():
             p.unlink()
-    runtime = runtime_root() / str(uuid.uuid4())
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime()
     invocation = uuid.uuid4().hex[:12]
     data_root = f'/data/chainbench/mh-{invocation}'
     started_server1 = False
@@ -76,7 +77,7 @@ def main():
         subprocess.run(['go', 'build', '-o', str(work / 'chainbench-dashboard'), './cmd/chainbench-dashboard'], env=env, check=True)
         subprocess.run(['go', 'build', '-o', str(work / 'chainbench'), './cmd/chainbench'], env=env, check=True)
         gstable = Path(os.environ.get('LINUX_GSTABLE_BIN', str(Path.home() / 'cbw/linuxbin/gstable')))
-        shutil.copy2(gstable, work / 'gstable')
+        clone_file(gstable, work / 'gstable')
         shutil.copytree('presets/keys', work / 'keys')
         shutil.copytree('presets/chain', work / 'presets')
         shutil.copytree('docs/chain-analysis', work / 'chain-analysis')

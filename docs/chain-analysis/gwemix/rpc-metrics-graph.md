@@ -1,5 +1,7 @@
 # gwemix — RPC API + Metrics Graph
 
+> Source-reference snapshot: `1350376a680489298b3203a44d9ebddb7747f9cc`. The separate CLI/help capture is pinned to `4538a9f5f2e4bcd2cb9515f8c466fabc24f73987` (2026-10-18). This RPC/metrics source analysis has not been re-audited or promoted to the new source snapshot.
+
 For test-result verification (logs / RPC / metrics). All `path:line` references are **relative to the repo root** `chain/go-wemix/`.
 
 ---

@@ -1,0 +1,277 @@
+{
+  "scope": "All87 original IDs inventoried and source/condition gaps reviewed; document/source guards and real-file independent replay complete. Not all87 native execution or full acceptance, legacy equivalence, Linux/mainnet, W3/W4 resolution or final Web acceptance.",
+  "reviewedHead": "0cf2b9ccd14b3e3a25bc9d01dd78ccec03ade229",
+  "criteria": 87,
+  "statusCounts": {
+    "partial": 70,
+    "confirmed_scope": 11,
+    "conflict": 3,
+    "not_verified": 1,
+    "merged": 2
+  },
+  "allCriteriaAccepted": false,
+  "sourceBoundReplay": {
+    "scope": "Source-bound real-file review validation and independent process replay. Existing native proofs are evidence references; this does not execute all87 or Web/Linux acceptance.",
+    "sourceBefore": "aad84c9e139196b926d1a8be3120ab12574224c5d18f01a1ec7ebc1c09a3abff",
+    "sourceAfter": "aad84c9e139196b926d1a8be3120ab12574224c5d18f01a1ec7ebc1c09a3abff",
+    "sourceUnchanged": true,
+    "runs": [
+      {
+        "phase": "capture",
+        "exitCode": 0,
+        "path": "/private/tmp/chainbench-tc-review-capture.json",
+        "sha256": "f707087f9699bc9e817af90cbc491602ae7c8d2c7e2733fa765705702253b90e",
+        "outcome": {
+          "errors": [],
+          "criteria": 87,
+          "statusCounts": {
+            "partial": 70,
+            "confirmed_scope": 11,
+            "conflict": 3,
+            "not_verified": 1,
+            "merged": 2
+          },
+          "allCriteriaAccepted": false
+        }
+      },
+      {
+        "phase": "independent",
+        "exitCode": 0,
+        "path": "/private/tmp/chainbench-tc-review-independent.json",
+        "sha256": "f707087f9699bc9e817af90cbc491602ae7c8d2c7e2733fa765705702253b90e",
+        "outcome": {
+          "errors": [],
+          "criteria": 87,
+          "statusCounts": {
+            "partial": 70,
+            "confirmed_scope": 11,
+            "conflict": 3,
+            "not_verified": 1,
+            "merged": 2
+          },
+          "allCriteriaAccepted": false
+        }
+      }
+    ]
+  },
+  "reviewGuards": [
+    "missing/duplicate/unknown IDs",
+    "false overall/partial acceptance",
+    "hidden conditions",
+    "stale original section/source/evidence",
+    "changed exact JSON assertion",
+    "missing AST function/method; comments/strings excluded",
+    "invalid/cyclic merge reference",
+    "status count drift",
+    "escaping paths",
+    "malformed document shapes"
+  ],
+  "targets": 82,
+  "jsonAssertionAnchors": 351,
+  "integration": "make tc-review is included in make check and existing CI test job; no reviewer assignment added.",
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/Makefile",
+      "sha256": "93933f487d6eb755f580d1fe4a4ce71288b9ac6dc90542704e19bfb8bea4cfa9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791999043964838157
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/.github/workflows/ci.yml",
+      "sha256": "6aaa8e8531f3842097380b8a628052986102c931d5774605dcea06d9a6e82245",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791999043989178096
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/tc_sufficiency.py",
+      "sha256": "fbd6440b0e7c8fbbaa6fa7b1dd135c869ab1b828858c15ef7ccfc24772e2ac44",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791999128859150449
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/test_tc_sufficiency.py",
+      "sha256": "134ba5d1f796847208fcb31642753fc956647a74e21da4f9c973902550b23e45",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791999109612889723
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/README.md",
+      "sha256": "73aa62f010271fcf259cebe398c147af040ff9d8c92231c8a153eec1a6f2a83e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791999044034667169
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/wemix4-tc-sufficiency-review.json",
+      "sha256": "51a4e473c5f0d2a3fb535edc7cf7ea6786bf20dc86c13990ed287abdc05f31fa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791998740484030975
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-tc-review-red.log",
+      "sha256": "bebfaed4b803ab0a489cf4003064c755e5f7d56493b0a25a77a48aeecb576446",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791998796028932222
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-green.log",
+      "sha256": "1dd5a3dc36c3855d506e8e3a81223a9125281425232b54621b32f0bbc965fd48",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791998853857956023
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-green-fixed.log",
+      "sha256": "45358b65e96d8905299e2f7414d7f3dc0bbd3483bcdad8788c7fd790bd73f42a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791998901154031732
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-ast-red.log",
+      "sha256": "0fe006f307e4d9c652699d38b3516285ef669724c27db7e51abbfd4cc0dfe2d6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791998978353314854
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-ast-green.log",
+      "sha256": "7175205d63cef5a6fbba3a20686a82898305a3ecf8e0f23fb2099f8f21b2afb1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999003055310450
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-malformed-red.log",
+      "sha256": "3c130e835b33c21d185f4105e337c08977d9d4f0c29c0641456123076b9fa696",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999112799858326
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-integrated-green.log",
+      "sha256": "370f6487dd6c918abb1d413c51c96feb883403a02e186d9876cb26c33c27d5cf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999132084749128
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-check.log",
+      "sha256": "6101ffd2ce1b55befc38d62b85cebc3c122e97eccd03b9798f453b3ae8500de8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999300193661436
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-inventory-regression.log",
+      "sha256": "6bd0264f651c5e08c107b144b6d4531ad18444e970a76554c7ca3bced0fa1eb4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999281874805375
+    },
+    {
+      "path": "/private/tmp/chainbench-tc-review-replay.log",
+      "sha256": "350f9878cf6c23dd62f35cb5cdc2af6f2a1aa0b30672cb1c15e4004646b8f0a6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999279930571497
+    }
+  ],
+  "supportingNativeEvidence": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/data-migration-evidence.json",
+      "sha256": "d7cd93bdcd75e9883e33e3245f39e44c706ee45089d16f1beb68b34c01b5d94a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791984687182680955
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/estimate-boundary-evidence.json",
+      "sha256": "3e1a7fbea362b3a5d40873fd0a5d1210103425d10f48e5f7a71a34cf204cdd25",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791992570177897148
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/gov-staking-resume-evidence.json",
+      "sha256": "248a1cec022501f81a83fa73b33c62e3aa61c4609d31c53ccea5e5af8f4d636d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791966257840100506
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/governance-rejection-events-evidence.json",
+      "sha256": "0ce70163836bfb35350476548f4dfbf2f1f3be1a42d89ffbb688a7a39931637f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791995129471741595
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/nonce-order-replacement-evidence.json",
+      "sha256": "de7034ea34b379bd1eb3f6af2186a0c4471f5952b7e880663d57d6897de1eaf2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791998321824094523
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/transaction-failure-evidence.json",
+      "sha256": "f0557f36bf47686596d313de860073245dd2aeaccdbd1b3a8b448cc3ecfe83e5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791986833862829378
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/wbft-header-integrity-evidence.json",
+      "sha256": "c321d7a3f0387059a48a88bdd2163880e977dac76b318aa35eae48080fb6c113",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791996006576402364
+    }
+  ],
+  "externalQA": "Auto-review rejected transmitting internal audit material to external Ouroboros QA; no retry or indirect transmission. Optional user approval pending.",
+  "failedAttempts": {
+    "red": "14 false review claims escaped the initial count-only guard",
+    "green": "Attempt failed because method receivers were not recognized; not acceptance",
+    "ast-red": "Comments/string falsely counted as declaration",
+    "malformed-red": "Malformed record shape crashed rather than returning errors"
+  },
+  "passedChecks": [
+    "green-fixed",
+    "ast-green",
+    "integrated-green",
+    "check",
+    "inventory-regression",
+    "source-bound capture and independent process replay"
+  ]
+}

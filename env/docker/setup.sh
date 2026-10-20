@@ -196,24 +196,37 @@ step_up() {
 }
 
 # build_one <repo dir> <target> <output> <image> -> prints the local artifact path
-build_one() {
+build_one() (
   local repo="$1" target="$2" out="$3" image="$4"
   local src="$CHAIN_SRC_ROOT/$repo"
   [ -d "$src" ] || die "$src does not exist (CHAIN_SRC_ROOT=$CHAIN_SRC_ROOT)"
 
-  mkdir -p "$ARTIFACT_DIR"
+  mkdir -p "$ARTIFACT_DIR" || die "cannot create $ARTIFACT_DIR"
+  # This name belongs to the function's subshell, rather than a local binding:
+  # Bash unwinds locals before its EXIT trap runs after die exits.
+  build_stage_dir=$(mktemp -d "$ARTIFACT_DIR/.build-$out.XXXXXX") || die "cannot create build staging directory"
+  # Only this invocation owns staging. Keep the previous published binary until
+  # the fresh host-visible output has passed validation, including on failure.
+  trap 'rm -rf -- "$build_stage_dir"' EXIT
   # The source is mounted read-only so a build cannot write into the clone.
   docker run --rm \
-    -v "$src:/src:ro" -v "$ARTIFACT_DIR:/out" \
+    -v "$src:/src:ro" -v "$build_stage_dir:/out" \
     -v "$GOCACHE_VOLUME:/gocache" -e GOCACHE=/gocache/build -e GOMODCACHE=/gocache/mod \
-    -w /src "$image" go build -o "/out/$out" "$target"
+    -e "GOMAXPROCS=${GOMAXPROCS:-2}" -e "GOFLAGS=${GOFLAGS:--p=2}" \
+    -w /src "$image" go build -o "/out/$out" "$target" || die "$repo: linux build failed -- previous artifact preserved"
 
   # Checked on the host, not in the container: a build that wrote somewhere the
   # host cannot see succeeds inside and leaves nothing here, which is exactly
   # the mount trap above and reads as a chainbench problem two steps later.
-  [ -f "$ARTIFACT_DIR/$out" ] || die "$repo: built $out is not visible at $ARTIFACT_DIR -- is that path shared with Docker Desktop?"
+  [ -f "$build_stage_dir/$out" ] || die "$repo: fresh $out is not visible at $build_stage_dir -- is that path shared with Docker Desktop?"
+  case "$(head -c4 "$build_stage_dir/$out" | od -An -c | tr -d ' ')" in
+    *ELF*) ;;
+    *) die "$repo: fresh $out is not ELF -- previous artifact preserved" ;;
+  esac
+  [ ! -d "$ARTIFACT_DIR/$out" ] || die "$ARTIFACT_DIR/$out is a directory"
+  mv -f "$build_stage_dir/$out" "$ARTIFACT_DIR/$out" || die "$repo: cannot publish fresh $out"
   printf '%s\n' "$ARTIFACT_DIR/$out"
-}
+)
 
 # place_one <local artifact> <output name>
 place_one() {

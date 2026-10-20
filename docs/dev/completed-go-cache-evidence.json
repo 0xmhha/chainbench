@@ -1,0 +1,588 @@
+{
+  "date": "2026-10-18",
+  "scope": "Reclaim rebuildable Go cache associated with proved completed source copies; preserve recent unrelated cache and all source/proof files. Not Web acceptance or closure of backlog1.",
+  "headAtProof": "8646d33ed1d5e7f08e97166d81eed97b43f92c36",
+  "workingTreeModifiedAtProof": true,
+  "red": {
+    "newModeUnavailable": 18,
+    "existingCacheContractsStillPassed": 24,
+    "runtimeFixtureFailures": [
+      "Real low-space preflight prevented the fake failed reproduction",
+      "After space was reclaimed, the same fake test reached a real Git-view check instead of its intended failed-subprocess seam"
+    ],
+    "storageContractsMissingFromCI": 1
+  },
+  "green": {
+    "cacheContracts": 48,
+    "maintenanceContracts": 23,
+    "runtimeContracts": 28,
+    "lowSpaceRuntimeContracts": 28,
+    "lowSpaceActualPreflightRejectionRetained": true,
+    "makeCheckExitCode": 0
+  },
+  "policy": [
+    "Default eight-hour minimum, fixed Go cache namespace, evidence identifiers, global Go/open-file refusal, byte budget and minimum retention remain unchanged.",
+    "Explicit --completed-runtime-cache may additionally select a recent entry only when every concrete runtime source prefix it contains has a valid owned marker and a completed dependency-reclamation record and is inactive.",
+    "Retain unrelated, unknown, active, unfinished or referenced recent entries and future timestamps. Recheck source/marker/journal identities, associations, cache identities, references and activity before deletion.",
+    "The association is a literal source-path observation in a rebuildable cache entry; it is not an independent attestation of which compiler produced that entry.",
+    "The simulated failure-cleanup unit isolates passed disk/Git prerequisites. Real free-space and Git-preservation checks remain separately tested. CI now runs both storage suites."
+  ],
+  "actual": {
+    "exitCode": 0,
+    "applied": true,
+    "deletedCount": 2011,
+    "removedSetMatchesAudit": true,
+    "retainedFiles": 17857,
+    "retainedMetadataAndBytesChanged": [],
+    "newEntries": [],
+    "allocatedBytesReclaimed": 1015865344,
+    "freeBytesAfter": 23941713920,
+    "preservedOldEvidenceIncludedInReferences": true,
+    "sourceOrProofFilesDeleted": false
+  },
+  "independentAudit": {
+    "accepted": true,
+    "scope": "Real completed-workspace and cold Go cache reclamation, not Web acceptance",
+    "sourceDigest": "4976c26d4cf36711810d8d734f3df41f64ce767622e39bd2a4ff879180a2fd98",
+    "deletedEntries": 2011,
+    "completedSourceEntries": 1958,
+    "coldEntries": 53,
+    "allocatedBytesReclaimed": 1015865344,
+    "retainedFilesIndependentlyMatched": 17857,
+    "completedSourceTreesAndMetadataPreserved": 14,
+    "currentSourceAndScriptMetadataPreserved": true,
+    "referenceAndBudgetControlsRetained": true,
+    "negativeControlsRejected": [
+      "failed-apply",
+      "not-applied",
+      "wrong-removed-set",
+      "retained-data-changed",
+      "new-cache-writer",
+      "false-all14-claim",
+      "changed-source",
+      "missing-deletion",
+      "wrong-byte-count",
+      "wrong-cache-root",
+      "wrong-runtime-root",
+      "exceeded-budget",
+      "wrong-closure-witness"
+    ],
+    "all14Accepted": false
+  },
+  "precedingColdReclamation": {
+    "exitCode": 0,
+    "applied": true,
+    "deletedCount": 1104,
+    "removedSetMatchesAudit": true,
+    "retainedFiles": 19852,
+    "retainedMetadataAndBytesChanged": [],
+    "newEntries": [],
+    "allocatedBytesReclaimed": 446230528,
+    "freeBytesAfter": 21920043008,
+    "preservedOldEvidenceIncludedInReferences": true,
+    "sourceOrProofFilesDeleted": false
+  },
+  "nativeSharingAttempt": {
+    "acceptedFilePreservation": true,
+    "verifiedReplacedFiles": 90,
+    "matchedPinnedNativeFamilies": 3,
+    "independentInodes": true,
+    "preservedCurrentCaptureVerifiers": [
+      "WEB-01",
+      "WEB-02"
+    ],
+    "preservedIndependentVerifier": [
+      "WEB-01"
+    ],
+    "sourceUnchanged": true,
+    "observedFreeBytesIncrease": 3047424,
+    "fiveGiBReclaimed": false,
+    "parentDirectoryMtimeIndependentlyCompared": false,
+    "parentDirectoryMtimeProcedureCoveredByUnitTest": true,
+    "all14Accepted": false
+  },
+  "nativeSharingLimit": "90 file contents and required metadata were preserved, but the immediate observed free-space increase was only 3,047,424 bytes. Do not claim the logical 5.3GiB duplication as reclaimed disk. Inode and ctime changed and are recorded. Actual parent-directory mtime was not independently compared; only the procedure and unit contract covered it.",
+  "nativePlanFirstReadError": "The first read-only plan used os.listxattr, unavailable in this Python build; the preserved corrected plan uses the macOS xattr command. No files were changed by that first attempt.",
+  "preservedPartialWeb": {
+    "acceptedPreservation": true,
+    "originals": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-8646d33e-web01-pair-web02-capture-storage-boundary",
+    "entries": 54,
+    "allContentAndMetadataMatch": true,
+    "sourceDigest": "868958962c39a3a11945e573d61bae3e672e39e58dba317752bca1c21ec898aa",
+    "acceptedPairs": [
+      "WEB-01"
+    ],
+    "captureOnly": [
+      "WEB-02"
+    ],
+    "boundary": "WEB02 independent reproduction was not started: free space fell below 20GiB; cleanup compatibility rejected three missing historical references; runtime cleanup unit also reached real low-space preflight. No criterion failure or full acceptance claimed.",
+    "independentIndex": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/independent-runtime-index-final-8646d33e.jsonl",
+    "all14Accepted": false
+  },
+  "compatibilityCleanup": "The compatibility wrapper refused three missing historical evidence files before deletion. It was not bypassed or treated as successful. Completed-cache cleanup separately scanned present repository and preserved evidence catalogs.",
+  "operations": {
+    "betweenProofs": "Run the opt-in completed-cache command only after the proof subprocess exits, with every external evidence root and a fresh private report path. Keep actual proofs serial and source immutable during proof/audit.",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/prune_go_cache.py --completed-runtime-cache --delete --evidence /private/tmp/chainbench-web-acceptance-preserved-1792275678158219000 --report <new-private-report.json>",
+    "runtimeIndexes": "The original eight-reference index is immutable. A separate epoch index retained the new independent source; start a new index for a subsequent source rather than append to a published snapshot."
+  },
+  "externalSourceAccess": "A read-only SSH presence check of the provided Kevin Mac path was refused by port22. No source or SSH trust configuration was changed; wbft-stablenet provenance remains open.",
+  "limits": [
+    "Historical receipt27 remains missing within the documented search scope.",
+    "WEB01 pair plus WEB02 capture belong only to source8689; they do not accept the changed cache-policy source.",
+    "Full current-source Web14, whole L1, whole live race/e2e and the other open backlog work remain.",
+    "The earlier whole-Python failures were not all rerun or declared resolved; this stage verifies the affected suites.",
+    "The two cache operations reclaimed 1,462,095,872 allocated bytes. Other changes in volume free space are not attributed to those operations."
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-completed-cache-red-20261018.log",
+      "sha256": "6c9209474ed4573310c9d86cf9589c81d44ecb0de9d3e43465c7bfdfad316080",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284594693518940
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-green-20261018.log",
+      "sha256": "d875ca2b27c5a088a85a76bf062fdb9dff843b4ff8ff924f6274c7524e9a5842",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284798579663277
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-check-final-20261018.log",
+      "sha256": "99763529687484d62ce15148138e57829c2b1c9b03ecd555d8e7a3638137e4e1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285146268709990
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-runtime-storage-20261018.log",
+      "sha256": "a0ae92eabadeaadf54f710faa2eabc0ab0e4c751a405d26549977ffc622159d9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284824615628815
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-ci-red-confirmed-20261018.log",
+      "sha256": "c377e1cd0ce29cc5a0230ab62efe2fe4a1effc0110d9a39cbd45ddeadda04fcd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284982330704844
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-ci-green-20261018.log",
+      "sha256": "8cb2b6bfb005a475779d72d6f4a15f5676eedb0df9c1d230a38fc94483141545",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284983013243210
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-low-space-unit-20261018.log",
+      "sha256": "855e954cb0287a0fea735b29e3b1cf59fe5b50b0716616fd6c901ab752b74c6e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285025389766186
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-plan-20261018.json",
+      "sha256": "9b7d09acba7693576b2f8f87ea49ffb176d8f953575f2df874d5a3721f50f7ed",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285186297505246
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-plan-20261018.log",
+      "sha256": "86c23057be696aa86a6f7b1ef255cbcb7307e89ec314862ab40e6412fc736add",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285186303440691
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-precheck-20261018.py",
+      "sha256": "3c42cf7ab8aa31b35a9838ee113ea9df8716d5eb323bf206e9d8fde82a375cb1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285241571751987
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-precheck-20261018.log",
+      "sha256": "5b247f1d911d7b9073d1a231a156444af817b5a1f9bdc259cfd677f5bc2cc253",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285251865089286
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-inputs-20261018.json",
+      "sha256": "5433ac8532489f27de983e50011c70ab511eef2e51f0dd0afb184268d2d88dc4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285251861139100
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-maintain-20261018.py",
+      "sha256": "0aabb71e31ba88837a269457d101126b7a221ce4785ee83875505ff3d2fa51c7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284895692561944
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-maintain-20261018.log",
+      "sha256": "d9145251d4a03916f1789cf5365eb1ab4f7ae8543b85c201e406f27484222c59",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285295203669585
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-maintenance-20261018.json",
+      "sha256": "e87941b0ad9366e4934765f4baab7dbd918ac6f5f4b12915f13230e589103df9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285295203515713
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-maintenance-20261018.before.json",
+      "sha256": "4ac6d2814bf9f8c6e2006364b6b8ff0108a5b902fa2c4bb460bd7d09c0f73a84",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285275337930979
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-maintenance-20261018-apply.json",
+      "sha256": "e28f1622b784280e5f2107dc38ec6c077ef1d7d3cb31b9355896c52196249352",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285290801074343
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-independent-20261018.py",
+      "sha256": "ab8ff1e1363783d86e02c7c1a66c34b4b9ef01b7c943b138a0cd5fed54cc38aa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285398371587181
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-independent-20261018.log",
+      "sha256": "43e97e7b32c1fa3b13f5c2294d48b14051366cd5f7eb2b5709ac0eae51420f62",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285412103326017
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-independent-20261018.json",
+      "sha256": "5401f5c3a698e9b2c0ac3bde93c68788a9ce6f03c3922d2b1829fdad4148b531",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285412102783401
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-run-20261018.py",
+      "sha256": "7531daa261309b92ee83f0513234301de4e42067bf8d55f6d0e09759fc54d097",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283338872975588
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-run-20261018.log",
+      "sha256": "4113bb8b2b6c20b4b587c7d8a171f30bde88b60d842431560b98d4b5a4373628",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283645476395651
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-runtime-index-20261018.py",
+      "sha256": "9d79cac409d8d5152a5f9274577386ee6fd92c63282773be830c5fa91ae9c80e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283339481232557
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cleanup-plan-20261018.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283681616753439
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cache-unit-20261018.log",
+      "sha256": "ce46357db9f154757757bec680a4a76db71df14d8466a2681fa2454a8929e797",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283874988672184
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cache-maintain-20261018.py",
+      "sha256": "13eec8639a839a3451c882e5778caf7296a666bc3167c09b7717743ba0c461a9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283875515317917
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cache-maintenance-20261018.json",
+      "sha256": "76e7838c0cbe84c3aaf5e333c90c897593d031bba6e955975f4910d97fbdb606",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283895543170973
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cache-maintenance-20261018.before.json",
+      "sha256": "3927172943284b47d9b7f8fca80289d334fbbe29e767fed2c04717c8d5b77886",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283885978816951
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cache-maintenance-20261018-apply.json",
+      "sha256": "471206b1ee50c0f60f261bf0689b82c807d07c859dc40a1405d76e564580e33b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283889541028517
+    },
+    {
+      "path": "/private/tmp/chainbench-final-8646d33e-cache-maintenance-20261018.log",
+      "sha256": "bde491fc79b84c8e8e08843067d78408ea1ae669193b7133da5163e609150eed",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283889550360074
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-plan-20261018.py",
+      "sha256": "bbae7b0bbeb062e884731ae979214271acc7301e0292b753b1ee9efbac3c916c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283992941216221
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-plan-v2-20261018.py",
+      "sha256": "ed50fa9071d67fc4151ed3494ca9b64ab3c91c04efce518c1c1ed3063776987c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284003273477513
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-plan-v2-20261018.log",
+      "sha256": "336d87793a9721f4504f6aea9181e1baee2b1c80b5c3e697d126cfe45f8437f1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284010826450057
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-plan-20261018.json",
+      "sha256": "f9a0449c9c870d8f007646d65fb56f126dda978d242262bd5b4a8b294e206df0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284010826273935
+    },
+    {
+      "path": "/private/tmp/chainbench_native_cow_20261018.py",
+      "sha256": "9f3fc9717cb56e7e6425adce56f1f0fda2ff4247d7d1edcf7b81193b7425d396",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284105714772841
+    },
+    {
+      "path": "/private/tmp/test_chainbench_native_cow_20261018.py",
+      "sha256": "61e74fb36a3ff69ec0819effbcbc7929d3b593d151b35e6505ed0bd1cf553705",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284105715005462
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-red-20261018.log",
+      "sha256": "149db186b014a34005140504700521cbdd81da2ee1ab7a8b68247cec4bd5fd51",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284070772156965
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-green-20261018.log",
+      "sha256": "2c519461ccba10ac70e27c0d85d3a512527c7e5868cd14472507b744317f1e79",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284106201106145
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-apply-20261018.py",
+      "sha256": "0a446f8a5ddc229a7a68665c770ca5da10041afd02dc9a53c4dd2b6eedaefa44",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284151779619002
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-apply-20261018.log",
+      "sha256": "26aca3abdea46ee9973884885b2b6825ff268ea926a201158b52fa1d57ce3682",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284214766980100
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-independent-20261018.py",
+      "sha256": "246398a149b9e427801d1dde826a1413e119cbbc16a8518aab37ff1614a84d61",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284309940948028
+    },
+    {
+      "path": "/private/tmp/chainbench-native-cow-independent-20261018.log",
+      "sha256": "e72ce9a405d8c1329bbf7dee36a71a9abb7b2cbaea1c558d6c02148977f7ee44",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284317769945960
+    },
+    {
+      "path": "/private/tmp/chainbench-preserve-final-8646d33e-20261018.py",
+      "sha256": "46acf13638f7ac3b6e9285b3ca01618798c064c27b0052a1864b45e0b49fe5c8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284507470288632
+    },
+    {
+      "path": "/private/tmp/chainbench-kevin-source-access-20261018.log",
+      "sha256": "d528f58d86bd63703809436cee4348aeb201d0c0fae466eb95ca1e8aa649711a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283439022067080
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-publish-20261018.py",
+      "sha256": "49a445f07a38f83d49663804fcddccab4063c17eb483d61ac357b62e31f50c7d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285518114265451
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/native-cow-allocation-20261018.json",
+      "sha256": "ec74c3033f801c7de71b9b795dc70e0d87219a37b091e275d410cd7c246595cc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284214766840227
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/native-cow-allocation-20261018.jsonl",
+      "sha256": "03506d99a6e2dc2d292c37a56fc78f7746af3c38385c10a047f280b1ab968af7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284207632548755
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/native-cow-independent-20261018.json",
+      "sha256": "7abc4bc87ea32cac984c9deb017ccc6a90dd84d7d5d58ab454c54dcc19915aa8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284317769829628
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-8646d33e-before.json",
+      "sha256": "3ba3a45e250a7a67746a4e248e25d7ab105ddcc83294befe3fa9891677f7b367",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284508150138459
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-8646d33e-preservation.json",
+      "sha256": "088368eb5164a10be36d53a5beb628830bab15b5067c8a96c010190ab04bc588",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792284508529743331
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-8646d33e-journal.jsonl",
+      "sha256": "d6162e3d279f2a51256345f4dc0287c220c5c655cc9c8f206c968f589a635e7c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283645474454613
+    },
+    {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/independent-runtime-index-final-8646d33e.jsonl",
+      "sha256": "e1b9307d4e3b693126b60f817f3a159b272d15b8bbaee7d5b39d567786f05b5b",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792283523990797060
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-missing-reference-observation-20261018.json",
+      "sha256": "59a824587c1562976e547dca06e3ee32de1d85a90a394040cbea2b36bacadff8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285582058654955
+    },
+    {
+      "path": "/private/tmp/chainbench-completed-cache-compatibility-refusal-20261018.log",
+      "sha256": "c334c8e831ea1e42b4d2f589c9c2e4ab19a91d52087acff69e20218de92a7036",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792285581546343114
+    }
+  ],
+  "all14Accepted": false,
+  "missingCompatibilityEvidence": [
+    {
+      "path": "/private/tmp/chainbench-frozen-refactor-publication-audit.json",
+      "exists": false,
+      "symlink": false
+    },
+    {
+      "path": "/private/tmp/chainbench-frozen-refactor-results.jsonl",
+      "exists": false,
+      "symlink": false
+    },
+    {
+      "path": "/private/tmp/chainbench-wal-compression-audit.jsonl",
+      "exists": false,
+      "symlink": false
+    }
+  ]
+}

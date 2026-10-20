@@ -1,0 +1,389 @@
+{
+  "scope": "Recovered original18 code-free EOA/distinct sender-receiver/one-wei baseline added to public authorization estimate case, preserving existing nine 0/1/2-authorization cost checks. Current native StableNet/WBFT owned BP4 only. Not original17 deployed delegate fixture, original EN topology, whole legacy254/87/L1 or final Web acceptance.",
+  "sourceDigest": "135b660ec2c6c0b46c67102ceafb4a9a13c8290c133caee0b1e47235e8a4f9c3",
+  "headAtProof": "d3c0f6e84a0bd110b79833cef53ddb1cbda591c7",
+  "implementation": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/17-estimategas-authorizationlist-cost.json",
+      "sha256": "efcbadcb41f6279f877df27b899795930b3e236857e9f7ac0bcac3d99ae8148e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792107000578255708
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/authorization_estimate_semantics_test.go",
+      "sha256": "d7e8c8824de60abcb9710e0ba80f89d130ff46d29ba98e4b2684d82b89702ca2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792106969301500993
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/authorization_estimate_native_test.go",
+      "sha256": "c0ae7b51fd08be9831adcce5169afad7e63158aab0e0eaf5f5576d6061aaa8e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792107552470737276
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/authorization_recorder_test.go",
+      "sha256": "d80853bcf40c1096fd6d545ce754f55eade5c96203ea36e7e9c0e04ba447cb8b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792107466147738583
+    }
+  ],
+  "originals": {
+    "repository": "/Users/0xtopaz/work/github/stablenet/packages",
+    "commit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+    "files": [
+      {
+        "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/common-all/tests/17-test-estimategas-authorizationlist-cost.sh",
+        "blobOID": "6468847703163d19cc1ea5f827737e85a932fcf8",
+        "sha256": "7c626454551e9dc94dce357239e1e945fcbcdd5f9733ee9d8fbba5cd89042c31",
+        "gitMode": "100755",
+        "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/common-all/tests/17-test-estimategas-authorizationlist-cost.sh",
+        "size": 8202
+      },
+      {
+        "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/common-all/tests/18-test-estimategas-no-authorizationlist.sh",
+        "blobOID": "8f1c31a0281a008ab9994a3b93b03f7b0cf3223f",
+        "sha256": "68f4b32b0da0c668727225352d2a63180b5165bf6a1a1911105ada415aa747c3",
+        "gitMode": "100755",
+        "capturedPath": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/common-all/tests/18-test-estimategas-no-authorizationlist.sh",
+        "size": 2446
+      }
+    ]
+  },
+  "originalDifferences": [
+    "Original18 uses EN1 sender and EN2 receiver; current fixture uses BP1 coinbase sponsor and a fresh distinct code-free EOA receiver. One-wei value and exact21000 no-authorization baseline are preserved.",
+    "Original17 estimates a same-address/value-omitted transaction and deploys/caches Simple7702Delegate. Current public cost fixture uses the original18 transfer baseline and a code-free fresh delegate address. Its deployed-delegate flow remains unverified.",
+    "Existing narrower 1.5-percent upper bounds46690/72065 and delta25690/51065 remain; recovered original17 uses47500/74000 and delta26500/53000. The proof does not relabel these as identical fixtures.",
+    "No foundry/cast/forge or original remote testnet script was executed. Actual public signing and estimation use the shared chainbench interpreter and owned nodes."
+  ],
+  "redGreen": {
+    "semanticControls": 11,
+    "redFailures": 5,
+    "falsePassesReproduced": 4,
+    "redFailuresDetails": [
+      "valid expected protocol revealed three same-address/value-omitted requests and no receiver-code read",
+      "receiver STOP code ignored",
+      "receiver delegation code ignored",
+      "receiver code missing ignored",
+      "receiver code RPC error ignored"
+    ],
+    "recorderControls": 2,
+    "recorderRed": "Gzip node response was silently discarded by the native recorder. Copy-only decoding and raw base64 preservation pass plain/gzip controls without mutating wire bytes.",
+    "allControlsGreen": true,
+    "relatedWholeRacePackages": [
+      "internal/testengine",
+      "internal/testhelper"
+    ],
+    "wholeCheckPassed": true,
+    "productionCodeChanged": false
+  },
+  "firstNativeTrial": {
+    "summary": {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-summary.json",
+      "sha256": "f87526e47f6c1530244aa0f31a2c9eb082ed74e78a0511414ec72e5896eec193",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107334011933441
+    },
+    "sourceDigest": "4da0cb2436e9c5a34773d35bedc1ebd5bd04f31c7e74b964e4e71f8f1cf4b02b",
+    "runtime": "/private/tmp/cbui/txfail-fwlyl12b",
+    "publicCasesPass": 1,
+    "publicAssertionsPass": 10,
+    "capturedRPCObservations": 0,
+    "overallNativeAccepted": false,
+    "retainedFiles": 215,
+    "remainingDatabases": 0,
+    "reason": "HTTP proxy forwarded gzip responses intact but its JSON recorder did not decode gzip. Kept as failed instrumentation trial; never promoted to acceptance."
+  },
+  "native": {
+    "exitCode": 0,
+    "passed": [
+      "TestNativeLegacyAuthorizationEstimates/stablenet",
+      "TestNativeLegacyAuthorizationEstimates/wbft",
+      "TestNativeLegacyAuthorizationEstimates"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/txfail-lp18lx4f",
+      "/private/tmp/cbui/txfail-nw4931u4"
+    ],
+    "elapsedSeconds": 21.14249766600551,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "presetFilesUnchanged": true
+  },
+  "independent": {
+    "acceptedScope": true,
+    "publicCases": 2,
+    "publicAssertions": 20,
+    "rpcObservations": 8,
+    "redactionNegativeControls": 18,
+    "retainedFiles": 430,
+    "priorTrialRetainedFiles": 215,
+    "remainingDatabases": 0,
+    "trieCacheBytesKept": 0,
+    "runtimes": [
+      {
+        "root": "/private/tmp/cbui/txfail-lp18lx4f",
+        "chain": "wbft",
+        "chainID": 8284,
+        "publicCases": 1,
+        "publicAssertions": 10,
+        "forwardedRPCObservations": 4,
+        "gas": [
+          21000,
+          46382,
+          71865
+        ],
+        "cache64Launches": 4,
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      },
+      {
+        "root": "/private/tmp/cbui/txfail-nw4931u4",
+        "chain": "stablenet",
+        "chainID": 8283,
+        "publicCases": 1,
+        "publicAssertions": 10,
+        "forwardedRPCObservations": 4,
+        "gas": [
+          21000,
+          46382,
+          71865
+        ],
+        "cache64Launches": 4,
+        "remainingDatabases": 0,
+        "trieCacheBytes": 0
+      }
+    ],
+    "checks": [
+      "Forwarded request JSON and gzip raw response base64 match decoded record",
+      "Same distinct from/to and value0x1 on all three requests; only authorizationList differs",
+      "Receiver code0x and exact21000 baseline",
+      "Authorization list0/1/2, same first authorization, chainID and fresh nonces",
+      "Nine numeric assertions independently recomputed from observed RPC gas values",
+      "Exact retained file set/SHA256/mode/uid/gid/nsmtime",
+      "Two fresh complete host process/FD inventories",
+      "45 preset key files unchanged",
+      "Prior failed trial215 files unchanged"
+    ],
+    "independentSignatureCryptographyClaimed": false
+  },
+  "evidence": [
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-attempt2-start.json",
+      "sha256": "f2c48bdb33a7842796217c699f317168919921c604392b78bec9580ce743ef95",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107651714351815
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-attempt2-native.jsonl",
+      "sha256": "ae3dd0170c4dba232653a6a90164086753ddd671d146ee3ae4e3cb700a352ca0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107672050049083
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-attempt2-summary.json",
+      "sha256": "31ea0b6414b3a059435892e82079f3a3db28a453c2dabd01de2f4f5cbe1d60cf",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107672990008788
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-attempt2-independent.json",
+      "sha256": "f04e2b5057150a0d1346dbc97730cea606cb01190433473b11602b944b50343c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107710722219877
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-start.json",
+      "sha256": "5b7aa62cded89d6405e8d5fd77f6a5f3eea8f650793323172353b0d57178b829",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107288739507758
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-native.jsonl",
+      "sha256": "e284bc2c8d1a6f9a0f340abf54d4df0c8b5325894994fad452051f1088f9b41f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107333054421979
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-summary.json",
+      "sha256": "f87526e47f6c1530244aa0f31a2c9eb082ed74e78a0511414ec72e5896eec193",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107334011933441
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-20261016-failure-independent.json",
+      "sha256": "df683da35da2da2f2528584d3d8fd213ab1e8e639cc45c9db3b6491a4093c251",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107407900958980
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-red-20261016.log",
+      "sha256": "aa5b81997469819066c5a2d58777723da1fc0f5a3f6502b68288c32c06d3612d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792106977988338392
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-green-20261016.log",
+      "sha256": "9de98f82d07a92cbd28fd6448dd53ddfec1ee6cd120c195cd73375b11ddba02b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107005681202244
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-race-20261016.log",
+      "sha256": "29e8fb86c682df7fc165be8722a71edf3b865b32a74384c0cad86016e9cf9e9c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107142695914079
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-race2-20261016.log",
+      "sha256": "c04eaa995640b8ea5a17629faca433408aaf78d1269de0a979bbd87273b24750",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107535532864111
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-check-20261016.log",
+      "sha256": "d1e5710b337cec3660d2c6752dae0ca091dd28a48a6e8d7c593a7fad7db2a321",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107256442144950
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-check2-20261016.log",
+      "sha256": "4e2d7f4f333f80c0b2391bcb97e3f585d489d05814a6d26912d8a1059b3ffd3d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107633444427054
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-driver-20261016.log",
+      "sha256": "29ca24c249d534fa0907b82d6447ee3bd4080804c6c4cd547e43ffb42ab51813",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107334012050107
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-driver2-20261016.log",
+      "sha256": "81b6a81a8ecbf5f9158d44b7b4e150328e9b01a6285dfbb93b01e3dad296b86e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107672990128661
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-failure-audit-20261016.log",
+      "sha256": "daca085b686f3270e8860b63b126df2c7c14b56879275d6089ed17d0f9472833",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107407901186105
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-independent2-20261016.log",
+      "sha256": "8574db5efdfd45f8627aa746d41aab38c3975ee3cdd4a3c42f6dc3830753c9fb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107710722511247
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-recorder-red-20261016.log",
+      "sha256": "bbc2a2b555ff2cf5ce088e6e2a5010dcb8757d0cc4783e3bc7eb797d5466f3e9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107471089163238
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-recorder-green-20261016.log",
+      "sha256": "a881562bc9c6e257a3123a47c380b603f99eecb90f773b969270f9b0769944c3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107486249183864
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-run-20261016.py",
+      "sha256": "aacb28ef327951f1a2c672aeca3c491f9f8b71aacac1ce19d99f234564cdf291",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107227970673829
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-run2-20261016.py",
+      "sha256": "c65676282da1fe788a3d53ce2fd8e030901b4a2c0efe4f1a2941c0a3e0f415eb",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107509353651290
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-independent-20261016.py",
+      "sha256": "de329dea67f723382d51f747ab7b553a05141462fafe43236908e931a6aab394",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107227978152861
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-independent2-20261016.py",
+      "sha256": "167271a76517b7922471c0f3c95bee1aef3ed2ef8dd28fccacbae4ed62decc17",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107509353982531
+    },
+    {
+      "path": "/private/tmp/chainbench-auth-estimate-failure-audit-20261016.py",
+      "sha256": "f5b0fdae23c370abcb286c0d53f3742bbe830a091f25c5cf06253994dac96368",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792107396698883747
+    }
+  ],
+  "original17FullFixtureAccepted": false,
+  "allLegacyAccepted": false,
+  "all87Accepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

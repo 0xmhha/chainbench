@@ -105,6 +105,13 @@ took a while. What a running container publishes right now is one command away:
 `./setup.sh binaries` does exactly what this section describes (name a chain for
 just one: `./setup.sh binaries go-wemix`). Below is what it does and why.
 
+Each build uses a separate temporary output directory. The script replaces the
+previous artifact and copies it to servers only after the build succeeds and a
+fresh ELF is visible on the host. Missing output or a failed build preserves the
+previous artifact and stops deployment; that build's temporary files are removed.
+`GOMAXPROCS` and `GOFLAGS` reach the builder container (defaults `2` and `-p=2`).
+For a small VM, use `GOMAXPROCS=2 GOFLAGS=-p=1 ./setup.sh binaries`.
+
 Each container needs the target chain's **Linux** binary in
 `/data/chainbench/bin/`. A build made on a Mac is Mach-O and will not run. Build
 it in a golang container and copy it in (settled on 2026-09-29).

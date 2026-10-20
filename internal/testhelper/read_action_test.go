@@ -85,6 +85,7 @@ type recordStub struct{ asserts []session.AssertResult }
 
 func (r *recordStub) Dir() string                     { return "" }
 func (r *recordStub) SetEnvRef(string)                {}
+func (r *recordStub) SetPresetID(string)              {}
 func (r *recordStub) Spec([]byte)                     {}
 func (r *recordStub) Step(int, session.StepResult)    {}
 func (r *recordStub) Assert(a session.AssertResult)   { r.asserts = append(r.asserts, a) }

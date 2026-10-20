@@ -23,6 +23,9 @@ func runTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
+				"chainId":         map[string]any{"anyOf": []any{map[string]any{"type": "integer", "minimum": 0, "maximum": 9007199254740991}, map[string]any{"type": "string", "pattern": `^(?:[0-9]+|0[xX][0-9A-Fa-f]+)$`}}, "description": "Compose chain ID, matching CLI --chain-id. Exact nonnegative int64; use decimal/hex strings above the JSON safe range."},
+				"chainPresets":    map[string]any{"type": "array", "items": map[string]any{"type": "string", "minLength": 1}, "minItems": 1, "description": "Run the same suite serially on every selected preset id or JSON path; report preset IDs and independent sessions."},
+				"noSkips":         map[string]any{"type": "boolean", "description": "matrix: count skipped tests as a failed run"},
 				"plan":            map[string]any{"type": "boolean", "description": "resolve the composed network without running it"},
 				"suite":           map[string]any{"type": "boolean", "description": "run or plan several cases as one suite on one network; otherwise sequence definitions"},
 				"binaryFor":       map[string]any{"type": "object", "additionalProperties": map[string]any{"type": "string"}, "description": "declared binary name to accepted executable path"},
@@ -31,8 +34,9 @@ func runTool() Tool {
 				"serverLogins":    map[string]any{"type": "string"},
 				"workspaceConfig": map[string]any{"type": "string"},
 				"artifactRoot":    map[string]any{"type": "string"},
-				"chain":           map[string]any{"type": "string"},
+				"chain":           commonProperty("chain", nil),
 				"rpc":             map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"baseDir":         map[string]any{"type": "string", "description": "Preset search directory for inline definitions; defaults to the process working directory."},
 				"spec":            map[string]any{"type": "string"},
 				"specs":           map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 				"dataDir":         map[string]any{"type": "string"},
@@ -56,9 +60,17 @@ func runTool() Tool {
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			specs := collectSpecs(args)
+			if _, matrix := args["chainPresets"]; matrix {
+				return runMatrixTool(ctx, args)
+			}
+			specs, resolutionErrors := readToolSpecs(args)
 			if len(specs) == 0 {
 				return "", fmt.Errorf("chainbench_run: provide spec or specs")
+			}
+			for i, err := range resolutionErrors {
+				if err != nil {
+					return "", fmt.Errorf("chainbench_run: spec[%d]: %w", i, err)
+				}
 			}
 			// The same four-way answer the CLI gets, from the same place.
 			// This used to be two branches here with no third: a spec that
@@ -99,7 +111,7 @@ func runAttached(ctx context.Context, args map[string]any, start app.Start, chai
 			return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
 		}
 	}
-	root, err := app.AttachRun(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), attachInput(args, start, chain, rpcURLs, dataDir, artifactRoot, specs))
+	root, err := invokeFeature[app.AttachRunIn, string](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "test.attach", attachInput(args, start, chain, rpcURLs, dataDir, artifactRoot, specs))
 	if err != nil {
 		return "", err
 	}
@@ -149,7 +161,7 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 	}
 	deps := app.Deps{}.WithLogins(argString(args, "serverLogins", ""))
 	if len(specs) > 1 && !argBool(args, "suite", false) {
-		out, err := app.RunSuites(ctx, deps, in)
+		out, err := invokeFeature[app.RunSuiteIn, app.RunSuitesOut](ctx, deps, "test.run-sequence", in)
 		if err != nil {
 			return "", err
 		}
@@ -162,7 +174,7 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 		}
 		return string(raw), nil
 	}
-	out, err := app.RunSuite(ctx, deps, in)
+	out, err := invokeFeature[app.RunSuiteIn, app.RunSuiteOut](ctx, deps, "test.run", in)
 	if err != nil {
 		return "", err
 	}
@@ -198,6 +210,28 @@ func collectSpecs(args map[string]any) [][]byte {
 	return specs
 }
 
+// readToolSpecs shares normalization between run and validate. An unresolved
+// definition retains its original bytes so validation can report every input.
+func readToolSpecs(args map[string]any) ([][]byte, []error) {
+	specs := collectSpecs(args)
+	resolutionErrors := make([]error, len(specs))
+	baseDir, valid := args["baseDir"].(string)
+	_, supplied := args["baseDir"]
+	for i, raw := range specs {
+		if supplied && !valid {
+			resolutionErrors[i] = fmt.Errorf("baseDir must be a directory string")
+			continue
+		}
+		resolved, err := app.ReadSpecContent(raw, baseDir)
+		if err != nil {
+			resolutionErrors[i] = err
+			continue
+		}
+		specs[i] = resolved
+	}
+	return specs, resolutionErrors
+}
+
 // formatRunSummary renders the session verdict as agent-readable text and
 // signals failure. The text names the session root so a caller can fetch the
 // full report with chainbench_report (WA6). A run with any failed or blocked
@@ -225,7 +259,12 @@ func formatRunSummary(root string) (string, error) {
 
 // composeInput binds the same accepted inputs that the CLI passes to the engine.
 func composeInput(args map[string]any, specs [][]byte, dataDir string) (app.RunSuiteIn, error) {
+	chainID, err := exactChainID(args)
+	if err != nil {
+		return app.RunSuiteIn{}, err
+	}
 	in := app.RunSuiteIn{
+		ChainID:     chainID,
 		SpecContent: specs,
 		DataDir:     dataDir,
 		Chain:       argString(args, "chain", ""),

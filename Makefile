@@ -16,7 +16,7 @@ GOLANGCI ?= $(BIN_DIR)/golangci-lint
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build $(CMDS) test test-race test-e2e cover lint lint-tool fmt fmt-check vet tidy secrets check clean
+.PHONY: help build $(CMDS) test test-race test-e2e tc-review sweep-test case-docs fixture-test cover lint lint-tool fmt fmt-check vet tidy secrets check clean
 
 help: ## list the targets
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -37,6 +37,31 @@ test-race: ## the same under -race
 
 test-e2e: ## e2e tests (they skip themselves without chain binaries)
 	$(GO) test -tags e2e $(PKGS)
+
+tc-review: ## validate original criterion coverage, source anchors and open conditions
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/inventory/test_tc_sufficiency.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/inventory/tc_sufficiency.py
+
+sweep-test: ## verify sweep retention and failure lifecycle contracts
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_proof_native_cow.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_prune_go_cache.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_tcsweep_retention.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_tcsweep_rounds.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_linux_retention_transport.py
+
+fixture-test: ## verify owned Docker fixture selection without Docker
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_after_proof_storage.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_docker_regression_prepare.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_prerequisite.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_native_selection.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_recheck_git.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_storage.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_runtime_storage.py
+	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_evidence_web14.py
+
+case-docs: ## verify every current public case has an up-to-date command entry
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_case_command_docs.py
 
 cover: ## coverage into coverage.html
 	$(GO) test -coverprofile=coverage.out $(PKGS)
@@ -101,7 +126,7 @@ tidy: ## go mod tidy
 secrets: ## scan the tree for secrets (pre-commit gate)
 	bash scripts/check-secrets.sh --all
 
-check: fmt-check vet lint test ## everything a commit should pass
+check: fmt-check vet lint test tc-review sweep-test case-docs fixture-test ## everything a commit should pass
 
 clean: ## remove build output
 	rm -rf $(BIN_DIR) coverage.out coverage.html

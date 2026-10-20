@@ -1,0 +1,737 @@
+{
+  "scope": "GOV012 exact registration rewardee, sole registered current validator, fifteen linked empty eligible blocks, fixed-height rewardee delta equals sum of per-height wemix_getBriocheBlockReward. No configured beneficiary deductions. Actual managed WEMIX\u2192WBFT handoff. Operator-vs-staker preview observation is diagnostic for separate GOV013 input question, not acceptance. Not full87/Linux/mainnet/legacy/public DSL/final Web acceptance.",
+  "originalAll87Complete": false,
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "9fddc3a76b17168e914f2a51e3501796a328b10c31bd4a6c7ed199766282ed5b",
+    "sourceAfter": "9fddc3a76b17168e914f2a51e3501796a328b10c31bd4a6c7ed199766282ed5b",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceBlockRewardE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-4dm7us7_"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-4dm7us7_": []
+    },
+    "elapsedSeconds": 91.38,
+    "summary": {
+      "path": "/private/tmp/chainbench-block-reward-fork-fixed-summary.json",
+      "sha256": "0aedf2481df455d02760de3087920cf3d95b7ac0f42be833e6c820d9945f90fb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792021386254917458
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-block-reward-fork-fixed-native.jsonl",
+      "sha256": "cc527366ad11a40b96a86407ad6b1590956266bc132987f890022f912fd107ab",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792021385604502565
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-block-reward-fork-fixed-start.json",
+      "sha256": "3e6dc148ba58d71375c9471bae91df726a914327fb9de041c4a26ed84df98d1c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792021291763527005
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-block-reward-observed.json",
+    "sha256": "cc39a0a81b56fb183ab957160f48acb5794d26729f116b29c093f759c8e7f8af",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792021394724364474
+  },
+  "sumReward": "15000000000000000000",
+  "before": "2000000000000000000",
+  "after": "17000000000000000000",
+  "start": 27,
+  "end": 42,
+  "previewDiagnostic": {
+    "operatorPending": "0",
+    "stakerPending": "17000000000000000000",
+    "acceptedGOV013": false
+  },
+  "genesis": [
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020162240963987
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/node1/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020162268383980
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/node4/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020163090703069
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/node3/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020162835073892
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/node2/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020162560155473
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/node5/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020163328853682
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/w/runs/20261014-232254/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020174739549330
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021294984137085
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/node1/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021295012576223
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/node4/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021295774938981
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/node3/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021295517257582
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/node2/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021295302381060
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/node5/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021296037360277
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/w/runs/20261014-234148/genesis.json",
+        "sha256": "4cdf059cc1f50f20e847913c917c72abbe49b0aac315d39e8febf653afa13dc3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021308515121646
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019508768456650
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/node1/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019508795791561
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/node4/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019509525088337
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/node3/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019509269700116
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/node2/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019509032887607
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/node5/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019509756791508
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-_30m90em/w/runs/20261014-231202/genesis.json",
+        "sha256": "50177726dc1887219ba8d4ea2e1ded5375b569a304a8b4c4417fde37e4f02529",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019522395645107
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018926152394224
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/node1/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018926185669127
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/node4/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018927076331119
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/node3/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018926824662382
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/node2/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018926526991105
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/node5/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018927350657839
+      },
+      "blockRewardBeneficiary": null
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/w/runs/20261014-230216/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792018936501314197
+      },
+      "blockRewardBeneficiary": null
+    }
+  ],
+  "actualAPIModules": {
+    "admin": "1.0",
+    "debug": "1.0",
+    "eth": "1.0",
+    "istanbul": "1.0",
+    "miner": "1.0",
+    "net": "1.0",
+    "personal": "1.0",
+    "rpc": "1.0",
+    "txpool": "1.0",
+    "web3": "1.0",
+    "wemix": "1.0"
+  },
+  "actualChainConfig": {
+    "applepieBlock": 0,
+    "berlinBlock": 0,
+    "brioche": {
+      "blockReward": 1000000000000000000
+    },
+    "briocheBlock": 0,
+    "byzantiumBlock": 0,
+    "chainId": 8285,
+    "constantinopleBlock": 0,
+    "croissantBlock": 20,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "homesteadBlock": 0,
+    "istanbulBlock": 0,
+    "londonBlock": 0,
+    "pangyoBlock": 0,
+    "petersburgBlock": 0
+  },
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-1wcyljy7",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-1wcyljy7/reports/block-reward-inventory.json",
+        "sha256": "09101672abedd4924fd4746f83f89374be2d88e9a6b3dbf006e7d4ebfac0fea0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021394769507966
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-4dm7us7_",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-4dm7us7_/reports/block-reward-inventory.json",
+        "sha256": "a41dc4263b6129fd96432d8ecca7ad91968af8696bc5117c9d05ed4dcf9f3d63",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021394808853712
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-_30m90em",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-_30m90em/reports/block-reward-inventory.json",
+        "sha256": "97d0bedd7228e14a6f502daef3339a3163e2080e39d24ece9164f9d41592f6fd",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021394849191139
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mia7vpov",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-mia7vpov/reports/block-reward-inventory.json",
+        "sha256": "4e08ad66e0bf3e198974f2fd447530fe1d3c5e91254a272e7c4fbeca3d5467aa",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792021394889923488
+      }
+    }
+  ],
+  "retainedFiles": 912,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-block-reward-publication.json",
+    "sha256": "e8b6233c2e56b6dfdc19cda4b9aec1327d50b160324261a1735bb9607e68cf73",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792020562271082096
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-block-reward-red.log",
+      "sha256": "62f031d8d488783f5c968b162c02a595bc65a2c838636492bc6c4f3df8cd53c0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018598596434201
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-green.log",
+      "sha256": "54d3f91f524a560768d0b9eb33bc9346d62835701c8bdf0822b604fd97cabae5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018637194624760
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-related-race.log",
+      "sha256": "f5f5f91ddea7cbb465bd1925782fe62f267585ea3b48971434fa75530d023846",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018780536869654
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-check.log",
+      "sha256": "359ff75291c012131007132e8709986700114c155bdbd7d5eca17b680bc11676",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792018867165487404
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-namespace-red.log",
+      "sha256": "cda55670864b85c9a094261d2f0a2a4f3d2b6ead394ddfac073bdb2d4a96c140",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792019260420360561
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-namespace-green.log",
+      "sha256": "9fa06913026b227498fea0ee71210b72d59971be1227551edc4e93c88bfed7c1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792019280938689395
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-namespace-related-race.log",
+      "sha256": "b6dab655501a0c608a1ead9f99492ca003d03a907c30e797522440dae1ac07a6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792019407011746461
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-namespace-check.log",
+      "sha256": "bf2104950d48503061c5c69f413a6f127885d541f273d220db5a0255ab2c731b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792019494127362022
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-explicit-related-race.log",
+      "sha256": "6a2f52030f5ba02481a6506bac613496578fe33b3fa29807b98bada5d042fcdd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792020055798424580
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-explicit-check.log",
+      "sha256": "109c94ab1b3990a320658befce48e82dd4828401a148239a2b89795314b1054f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792020146073603861
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-fork-supported-red.log",
+      "sha256": "c044a2427ec51e6d61e07ad30df641bc303c52a0341cff6235c5441a2ee4484b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792020651504001659
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-fork-supported-green.log",
+      "sha256": "43ae23776d6826ccfb1f3468fc7df4d2de8941500530987abc6e65e8e95f8dd8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792020654431392106
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-fork-final-related-race.log",
+      "sha256": "21f9d58b8e8a0027518eb3161d5e83380fd883313f18c8207783e7106b2b9c42",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792020890777585520
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-fork-final-check.log",
+      "sha256": "addb4fb141131aa48fd6000840e93faf2062646a070dbe5369b373cb7c41f03b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792021045140885576
+    },
+    {
+      "path": "/private/tmp/chainbench-block-reward-fork-final-check-refreshed.log",
+      "sha256": "7729e3baac430a7e19be34467dbca62647ede0dc2c333853c968f8ec00eabe9c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792021264817804967
+    }
+  ],
+  "priorFailureRuns": [
+    {
+      "summary": {
+        "path": "/private/tmp/chainbench-block-reward-native-summary.json",
+        "sha256": "16ae8cd015a246cdceedf931a6994745fb25dfb705da9f3390f4fd61f1ed4c24",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019012925191292
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-block-reward-native-native.jsonl",
+        "sha256": "2ae17ccdec507aa0cb3bed6f9eeeeda40f82e19bb4ed16b35752e1d4d680e01c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019012537288577
+      },
+      "accepted": false
+    },
+    {
+      "summary": {
+        "path": "/private/tmp/chainbench-block-reward-namespace-summary.json",
+        "sha256": "6744eb5e44e8b8eac3d5960137214e7079dc578d60bdf3a20eef9f499ebef3b1",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019598839061314
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-block-reward-namespace-native.jsonl",
+        "sha256": "445cc23e61723a43ff6e244fd86243562ecc52b486f33b0c32e0cd027dec8f91",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792019598402302228
+      },
+      "accepted": false
+    },
+    {
+      "summary": {
+        "path": "/private/tmp/chainbench-block-reward-explicit-summary.json",
+        "sha256": "583a151e9305b9fff4b8e61f9b7d63e9b6ff0222d31664f2d12b207e5f2549ca",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020251537399111
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-block-reward-explicit-native.jsonl",
+        "sha256": "24c7a6e465973081806085c723855eba913b6287b4945e7a896c6f49aef5601b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792020251049795560
+      },
+      "accepted": false
+    }
+  ],
+  "priorFailure": {
+    "summary": {
+      "path": "/private/tmp/chainbench-block-reward-native-summary.json",
+      "sha256": "16ae8cd015a246cdceedf931a6994745fb25dfb705da9f3390f4fd61f1ed4c24",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792019012925191292
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-block-reward-native-native.jsonl",
+      "sha256": "2ae17ccdec507aa0cb3bed6f9eeeeda40f82e19bb4ed16b35752e1d4d680e01c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792019012537288577
+    },
+    "accepted": false,
+    "reason": "Three actual failures preserved. Initial missing Brioche/API exposure; explicit declaration reached running config but module lost after handover. Handover bypassed recorded launch overrides; common scoped argv path restored and stable node scopes selected. No external source patch."
+  },
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "postForkRecordedArgv": [
+    {
+      "index": 1,
+      "role": "bp",
+      "httpAPI": "admin,eth,debug,miner,net,txpool,personal,web3,istanbul,wemix"
+    },
+    {
+      "index": 2,
+      "role": "bp",
+      "httpAPI": "admin,eth,debug,miner,net,txpool,personal,web3,istanbul,wemix"
+    },
+    {
+      "index": 3,
+      "role": "bp",
+      "httpAPI": "admin,eth,debug,miner,net,txpool,personal,web3,istanbul,wemix"
+    },
+    {
+      "index": 4,
+      "role": "bp",
+      "httpAPI": "admin,eth,debug,miner,net,txpool,personal,web3,istanbul,wemix"
+    }
+  ],
+  "productionSources": [
+    {
+      "path": "internal/chainsetup/crossfork_launch.go",
+      "sha256": "e4455028f70dda22ee7ffc1e89b5aa20035c40610d919a3153c168ca29315363"
+    },
+    {
+      "path": "internal/chainsetup/crossfork_launch_test.go",
+      "sha256": "e05cb42be151f330e9b57225cdee0b88d94de9958bd6eee515abb1073d7d2861"
+    },
+    {
+      "path": "internal/chainsetup/steps_crossfork.go",
+      "sha256": "118a3041579d454e1ba2c0f1faafef3d8ccc4d548c5cc6d6ec18d87faf2600c4"
+    }
+  ]
+}

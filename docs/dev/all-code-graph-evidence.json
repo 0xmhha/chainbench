@@ -1,0 +1,504 @@
+{
+  "scope": "Follow-up task 13: every owned code language/build configuration, including Go tests/build tags and embedded executable code, structural graph with zero missing/dangling edges; current netmap ownership, A8 and A7b reassessment. Not runtime coverage, type-resolved calls, all mainnet fidelity, wemix4 sufficiency, W3/W4 or final Web acceptance.",
+  "proof": {
+    "sourceBefore": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "sourceAfter": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "sourceUnchanged": true,
+    "graphReproduced": true,
+    "graphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "counts": {
+          "parsedFiles": 1922,
+          "languages": {
+            "toml": 1,
+            "yaml": 11,
+            "make": 1,
+            "go": 1270,
+            "json": 343,
+            "python": 112,
+            "gomod": 2,
+            "bash": 62,
+            "dockerfile": 1,
+            "gosum": 1,
+            "html": 3,
+            "css": 1,
+            "javascript": 89,
+            "svelte": 25
+          },
+          "nodes": 120391,
+          "edges": 128233,
+          "excluded": 312,
+          "missing": 0
+        },
+        "parsers": {
+          "go": "go version go1.26.8 darwin/arm64",
+          "python": "3.10.11",
+          "tree-sitter-language-pack": "0.13.0",
+          "tree-sitter": "0.25.2",
+          "PyYAML": "6.0.3",
+          "shfmt": "v3.12.0",
+          "frontend": {
+            "node": "v24.17.0",
+            "acorn": "8.17.0",
+            "svelte": "5.56.8",
+            "postcss": "8.5.23"
+          }
+        },
+        "embeddedASTs": 21
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "counts": {
+          "parsedFiles": 1922,
+          "languages": {
+            "toml": 1,
+            "yaml": 11,
+            "make": 1,
+            "go": 1270,
+            "json": 343,
+            "python": 112,
+            "gomod": 2,
+            "bash": 62,
+            "dockerfile": 1,
+            "gosum": 1,
+            "html": 3,
+            "css": 1,
+            "javascript": 89,
+            "svelte": 25
+          },
+          "nodes": 120391,
+          "edges": 128233,
+          "excluded": 312,
+          "missing": 0
+        },
+        "parsers": {
+          "go": "go version go1.26.8 darwin/arm64",
+          "python": "3.10.11",
+          "tree-sitter-language-pack": "0.13.0",
+          "tree-sitter": "0.25.2",
+          "PyYAML": "6.0.3",
+          "shfmt": "v3.12.0",
+          "frontend": {
+            "node": "v24.17.0",
+            "acorn": "8.17.0",
+            "svelte": "5.56.8",
+            "postcss": "8.5.23"
+          }
+        },
+        "embeddedASTs": 21
+      }
+    ]
+  },
+  "goTestFilesParsed": 670,
+  "areas": {
+    ".betterleaks.toml": 1,
+    ".github": 1,
+    ".golangci.yml": 1,
+    "Makefile": 1,
+    "cmd": 135,
+    "docs": 108,
+    "env": 5,
+    "examples": 23,
+    "go.mod": 1,
+    "go.sum": 1,
+    "install.sh": 1,
+    "accounts": 29,
+    "app": 193,
+    "internal": 40,
+    "chains": 23,
+    "chainsetup": 147,
+    "consensus": 27,
+    "core": 285,
+    "dashboard": 47,
+    "dsl": 48,
+    "feature": 18,
+    "mcp": 45,
+    "preset": 3,
+    "resource": 45,
+    "testengine": 106,
+    "testhelper": 70,
+    "webcli": 2,
+    "presets": 41,
+    "scripts": 19,
+    "server-set.sample.yaml": 1,
+    "setup.sh": 1,
+    "tests": 403,
+    "uninstall.sh": 1,
+    "web": 49,
+    "workspace-config.sample.yaml": 1
+  },
+  "nodeKinds": {
+    "file": 1922,
+    "call": 87286,
+    "target": 17,
+    "function": 5896,
+    "import": 8738,
+    "binding": 10708,
+    "type": 1259,
+    "method": 1638,
+    "dsl-operation": 2255,
+    "template-parameter": 7,
+    "selector": 421,
+    "package": 82,
+    "dependency": 162
+  },
+  "exclusionReasons": {
+    "documentation or non-executable data": 219,
+    "generated proof metadata, not executable source": 46,
+    "test data, not executable source": 47
+  },
+  "limitations": "Syntax-derived declarations/imports/calls; no type resolution, runtime coverage or complete dynamic call graph.",
+  "red": [
+    "Go-only baseline omitted non-Go sources/build-tagged test declarations and silently accepted invalid non-Go syntax",
+    "workflow/Docker programs initially opaque",
+    "embedded Python heredoc initially opaque and dependency endpoints dangling",
+    "A7b current-route table still named retired commands",
+    "new source-ast package missing from package-tree body; caught by full check"
+  ],
+  "a8": {
+    "nonMethodExportedSymbols": 1888,
+    "uses": {
+      "inside": 456,
+      "outside": 1168,
+      "test": 174,
+      "signature": 81,
+      "set": 9
+    },
+    "nowhere": 0,
+    "methodsNotMeasuredByThisReachabilityRule": true
+  },
+  "a7b": {
+    "decision": "Keep imperative existing-workspace hardfork and composition declaration surfaces distinct; UpgradeV2 already unifies concurrent/restart within the declaration. Retired extra-field counts are not current evidence.",
+    "existingWorkspaceInputs": [
+      "DataDir",
+      "ToChain",
+      "ToBinary",
+      "Block"
+    ],
+    "declarativeInputs": [
+      "Fork",
+      "At",
+      "From",
+      "To",
+      "Style",
+      "Carry"
+    ],
+    "deprecatedInput": "Template is refused"
+  },
+  "netmap": {
+    "placementOwner": "resource Pool/Assign/Inventory/Placement",
+    "nodeValues": "core/node Map/Role/Peering/Layout",
+    "declaration": "core/blueprint",
+    "roleVocabulary": [
+      "bp",
+      "en",
+      "pn"
+    ],
+    "retiredRoleSpellingsRefused": [
+      "validator",
+      "endpoint",
+      "boot"
+    ],
+    "sourceConsumption": "placement and key/materialization flow in chainsetup; no core/netmap or separate place/portplan package"
+  },
+  "nativeContext": {
+    "proof": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/setup-transition-evidence.json",
+      "sha256": "dd2d508bb7efa2bd78ccf11ebe96be6f730ee46bcf2a2231b216064b106b8e3a",
+      "mode": "0o644",
+      "mtimeNS": 1791969328946182874
+    },
+    "scope": "Earlier three current-HEAD external binary public CLI compose/seal/stop/rm proofs; no claim of a new runtime behavior in this tooling/document stage."
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/all_code_graph.py",
+      "sha256": "40c6ed9c1b3e336f1a917e38fa460f4700216fbb5f4ff373a543e16a9cc913a8",
+      "mode": "0o644",
+      "mtimeNS": 1791972051124062412
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/frontend_ast.mjs",
+      "sha256": "64269b531d462d2219225349f748f77b4f44c58bcf8f4353aead8ad0c5b0b786",
+      "mode": "0o644",
+      "mtimeNS": 1791972051123725873
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/source-ast/main.go",
+      "sha256": "201672f5f89605779e2dad7387b0aaf793eb87164a55774e69a6770f55328a3d",
+      "mode": "0o644",
+      "mtimeNS": 1791970651033601655
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/test_all_code_graph.py",
+      "sha256": "1def8e0ce313769e2fad98bdafa35a78b8d996c1fcb3126ed0aedf5166678881",
+      "mode": "0o644",
+      "mtimeNS": 1791971903837108018
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/inventory/ast-requirements.txt",
+      "sha256": "54fffad7740654f5e4e11c3e2b8cab65fc42eca7596ae4f480759a4dc5d5a007",
+      "mode": "0o644",
+      "mtimeNS": 1791971903843912956
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/e2e_commands_exist_test.go",
+      "sha256": "a8cdc0c1b9db260cb125fbd125958f028424df30933b45ce28e5e9a3217c2d83",
+      "mode": "0o644",
+      "mtimeNS": 1791971644590550330
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/node/role.go",
+      "sha256": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+      "mode": "0o644",
+      "mtimeNS": 1791380070070488418
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/node/peering.go",
+      "sha256": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+      "mode": "0o644",
+      "mtimeNS": 1791380070070151335
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/node/layout.go",
+      "sha256": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+      "mode": "0o644",
+      "mtimeNS": 1791380070069812794
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/resource/pool.go",
+      "sha256": "96905a674e7d21b1e0dd92fbe5ec8ca3bceb29cc7ba49de97098ca2873c124d1",
+      "mode": "0o644",
+      "mtimeNS": 1791882406682374202
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/resource/inventory.go",
+      "sha256": "e5016dff5cff9682c8f258157fb22788e476323fc70a96dd0a3f0b7f597ca99d",
+      "mode": "0o644",
+      "mtimeNS": 1791882480467969034
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/steps_compose.go",
+      "sha256": "9da2bf02e1191d3ce8899f6bd3ae0dc06cfa65b84d7ce551890b3cad25556172",
+      "mode": "0o644",
+      "mtimeNS": 1791882480449924576
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/steps_place.go",
+      "sha256": "072db0cacfd007dff091569e56dae646958b12416a9d879990fbd069a0b1e343",
+      "mode": "0o644",
+      "mtimeNS": 1791883361467739031
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/steps_genesis.go",
+      "sha256": "650594e4f3fd57fe67f3196f478f57ecebc05a8b7cdfe7cd7b9a836cd38aa126",
+      "mode": "0o644",
+      "mtimeNS": 1791407608560715328
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/steps_crossfork.go",
+      "sha256": "8ab86065f00933d79192977229dc95b92a1e3c8d0afe577e270140c4cd51e5d3",
+      "mode": "0o644",
+      "mtimeNS": 1791867258798831144
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/verb/verbs_hardfork.go",
+      "sha256": "de8c808bcfc0edb9ef05201359f4f90bb5f216cc890debf7110ebbf8ef4990d8",
+      "mode": "0o644",
+      "mtimeNS": 1791407608579433500
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/hardfork/hardfork.go",
+      "sha256": "9995c2b736ef6076766b627a5fc659251c901c075dc32393339cd7b9c7d4f420",
+      "mode": "0o644",
+      "mtimeNS": 1791971590572540784
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/dsl/spec_v2.go",
+      "sha256": "2448c21e72869e02ef8ca73d27661dfb72f01893cc8d47f5547b84e8ced7a42f",
+      "mode": "0o644",
+      "mtimeNS": 1791946808742914294
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-all-code-capture.json",
+      "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+      "mode": "0o644",
+      "mtimeNS": 1791972442316272530
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-independent.json",
+      "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+      "mode": "0o644",
+      "mtimeNS": 1791972446169720742
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-all-code-red.log",
+      "sha256": "23af1df0dcd3a328783629e6fb1d286cea3d611407b99fcbfd7b3f04884e720a",
+      "mode": "0o644",
+      "mtimeNS": 1791969729687333993
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-embedded-red.log",
+      "sha256": "c69a9fee50d7a6096a9a274e65c43d0294b5db3fc6547585449b1b924a55f582",
+      "mode": "0o644",
+      "mtimeNS": 1791970653527530662
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-integrity-red.log",
+      "sha256": "406469700290fa51e0e3ed5c227047602f550a550937c03d6da59f5b074e367f",
+      "mode": "0o644",
+      "mtimeNS": 1791970916432299947
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-provenance-contract.log",
+      "sha256": "aefb196e84b83fbf4dd88187a5b5a23cf36042f4bdac19e9d08cffc259006fc6",
+      "mode": "0o644",
+      "mtimeNS": 1791972054280350516
+    },
+    {
+      "path": "/private/tmp/chainbench-a7b-verified-red.log",
+      "sha256": "ed9018ec66c1c5e3998eeebc283b79d9fbedff2f5060759b5d3bb0a0aa799c6e",
+      "mode": "0o644",
+      "mtimeNS": 1791971779009308674
+    },
+    {
+      "path": "/private/tmp/chainbench-a7b-final-green.log",
+      "sha256": "811c563c606a298b5abde63fd9eb06b2dc28bb984051664d6d9311c51f2fc9e3",
+      "mode": "0o644",
+      "mtimeNS": 1791971647817686918
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-check.log",
+      "sha256": "89331b248606a8e8afb968299d27a139c4136491af047351bdc4a445d644eb80",
+      "mode": "0o644",
+      "mtimeNS": 1791972124369855957
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-final-check.log",
+      "sha256": "975cbb70f1736b570a607d791bb1a4a4499ec6e4a06636238a424c2e3bc81dbc",
+      "mode": "0o644",
+      "mtimeNS": 1791972359619064555
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-related-race.log",
+      "sha256": "6452dbe77f023d4bcd2c28f3e843203b859422cfb36f1dd13a416eaa36125642",
+      "mode": "0o644",
+      "mtimeNS": 1791972132744410881
+    },
+    {
+      "path": "/private/tmp/chainbench-all-code-proof-summary.json",
+      "sha256": "d5c113bdf66c2cdc4f362375a1e126854e9bb0291512e49c98d7332263cc1959",
+      "mode": "0o644",
+      "mtimeNS": 1791972446559003386
+    },
+    {
+      "path": "/private/tmp/chainbench-a8-final.json",
+      "sha256": "32f1898f57324e8e3934f479bbd37b7aeabc09b489f1e0ccab6635d6faacbddb",
+      "mode": "0o644",
+      "mtimeNS": 1791972276526427909
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools-install.log",
+      "sha256": "85402fac4ed576edfac8b7359d2c6dbf658f383d4cc13eeab383dca419c94740",
+      "mode": "0o644",
+      "mtimeNS": 1791969555087365743
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools-pin.log",
+      "sha256": "2a7fadaa2eabf7a293ee6bf8167908b7b8019f2aeb6a66aa381e3adeb7a6bb38",
+      "mode": "0o644",
+      "mtimeNS": 1791970155819856435
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-shfmt-install.log",
+      "sha256": "f535c1091b3d20fdeba0c4aa43e130092fe087241ac970447ba0fb9f7d86293d",
+      "mode": "0o644",
+      "mtimeNS": 1791970403103176528
+    }
+  ],
+  "parserLibraries": [
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so",
+      "sha256": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "mode": "0o755",
+      "mtimeNS": 1791970155764296674
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so",
+      "sha256": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "mode": "0o755",
+      "mtimeNS": 1791969554218460701
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so",
+      "sha256": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "mode": "0o755",
+      "mtimeNS": 1791969554213037665
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so",
+      "sha256": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "mode": "0o755",
+      "mtimeNS": 1791969554260848802
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so",
+      "sha256": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "mode": "0o755",
+      "mtimeNS": 1791969554357383978
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so",
+      "sha256": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "mode": "0o755",
+      "mtimeNS": 1791969554431461353
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so",
+      "sha256": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "mode": "0o755",
+      "mtimeNS": 1791969554431769348
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so",
+      "sha256": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "mode": "0o755",
+      "mtimeNS": 1791969554473942161
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so",
+      "sha256": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "mode": "0o755",
+      "mtimeNS": 1791969554542224589
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so",
+      "sha256": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "mode": "0o755",
+      "mtimeNS": 1791969554932390520
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so",
+      "sha256": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "mode": "0o755",
+      "mtimeNS": 1791969554209724718
+    }
+  ],
+  "shellParser": {
+    "binary": {
+      "path": "/private/tmp/chainbench-ast-tools/shfmt",
+      "sha256": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "mode": "0o755",
+      "mtimeNS": 1791970404960684203
+    },
+    "buildInfo": "/private/tmp/chainbench-ast-tools/shfmt: go1.26.8\n\tpath\tmvdan.cc/sh/v3/cmd/shfmt\n\tmod\tmvdan.cc/sh/v3\tv3.12.0\th1:ejKUR7ONP5bb+UGHGEG/k9V5+pRVIyD+LsZz7o8KHrI=\n\tdep\tgithub.com/google/renameio/v2\tv2.0.0\th1:UifI23ZTGY8Tt29JbYFiuyIU3eX+RNFtUwefq9qAhxg=\n\tdep\tgithub.com/rogpeppe/go-internal\tv1.14.1\th1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=\n\tdep\tgolang.org/x/sys\tv0.33.0\th1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=\n\tdep\tgolang.org/x/term\tv0.32.0\th1:DR4lr0TjUs3epypdhTOkMmuF5CDFJ/8pOnbzMZPQ7bg=\n\tdep\tmvdan.cc/editorconfig\tv0.3.0\th1:D1D2wLYEYGpawWT5SpM5pRivgEgXjtEXwC9MWhEY0gQ=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tDefaultGODEBUG=containermaxprocs=0,cryptocustomrand=1,decoratemappings=0,gotestjsonbuildtext=1,httpcookiemaxnum=0,multipathtcp=0,randseednop=0,rsa1024min=0,tlsmlkem=0,tlssecpmlkem=0,tlssha1=1,updatemaxprocs=0,urlmaxqueryparams=0,urlstrictcolons=0,x509rsacrt=0,x509sha256skid=0,x509usepolicies=0\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n"
+  },
+  "initialNativeCrash": "Exact cause not established. Compatible runtime pin and parser lifetime retention passed complete capture and independent rerun. Not counted as a successful attempt."
+}

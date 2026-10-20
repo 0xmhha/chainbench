@@ -1,0 +1,304 @@
+{
+  "date": "2026-10-18",
+  "scope": "Historical e9e28713 frozen source only: WEB01..04 capture plus independent reproduction passed; WEB05 blocked. No acceptance of subsequent changed source or all14.",
+  "sourceDigest": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+  "acceptedCriteriaOnThatSource": 4,
+  "criteriaDenominator": 14,
+  "pairs": [
+    {
+      "criterion": "WEB-01",
+      "phases": [
+        {
+          "summary": {
+            "criterion": "WEB-01",
+            "phase": "capture",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 68.91204190254211,
+            "log": "/private/tmp/chainbench-final-web-01-capture-1792275781894454000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-01-capture-1792275781894454000.json",
+            "sha256": "02a2ff5c97655b78b214799ed9c841f3ac5bff8fd60897b9d344d1be9511c3c6",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792275851590642512
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-01-capture-1792275781894454000.log",
+            "sha256": "b3ae2c181f3fb8dc90effb7dbc64b8dc57ef32332a74e9bc045fc43b26439a2c",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792275851378295971
+          }
+        },
+        {
+          "summary": {
+            "criterion": "WEB-01",
+            "phase": "recheck",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 113.81569409370422,
+            "log": "/private/tmp/chainbench-final-web-01-recheck-1792275857657285000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-01-recheck-1792275857657285000.json",
+            "sha256": "2a4046c009b84f16c8d7c1c0825a73eba3192a0e14818480a566a94ef11ba965",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792275971874924992
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-01-recheck-1792275857657285000.log",
+            "sha256": "407de24e763746a40f3819252672f7b05803738805ad278d755d6efda475aa42",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792275971652249752
+          }
+        }
+      ]
+    },
+    {
+      "criterion": "WEB-02",
+      "phases": [
+        {
+          "summary": {
+            "criterion": "WEB-02",
+            "phase": "capture",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 124.68905520439148,
+            "log": "/private/tmp/chainbench-final-web-02-capture-1792275998281481000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-02-capture-1792275998281481000.json",
+            "sha256": "f9c297a893820ad360627559492fa20a959a02c209ae9589146ce2d9a100c9b0",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276123382264200
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-02-capture-1792275998281481000.log",
+            "sha256": "e6cdc4a8fc0cabbaae3b95e7fffd9487409d1de59cdc5ca79bf5400734217e87",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276123193693689
+          }
+        },
+        {
+          "summary": {
+            "criterion": "WEB-02",
+            "phase": "recheck",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 140.34200239181519,
+            "log": "/private/tmp/chainbench-final-web-02-recheck-1792276298399261000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-02-recheck-1792276298399261000.json",
+            "sha256": "aa6a831e64367bc4141d68ce2952e2cf64610f09426810a16dd9a5825b120715",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276439449128378
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-02-recheck-1792276298399261000.log",
+            "sha256": "523a8ad3116c9d6ade4ad8c59dd3b2c093b6dfc1eb3dc27c59ac75000d6d04b7",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276439234547928
+          }
+        }
+      ]
+    },
+    {
+      "criterion": "WEB-03",
+      "phases": [
+        {
+          "summary": {
+            "criterion": "WEB-03",
+            "phase": "capture",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 14.891800165176392,
+            "log": "/private/tmp/chainbench-final-web-03-capture-1792276455122935000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-03-capture-1792276455122935000.json",
+            "sha256": "d54e7b3e032c2635beb5b3118f2d5b4539b226181211e61efe4d9af9f0ce9acb",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276470428087370
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-03-capture-1792276455122935000.log",
+            "sha256": "e32831e2943c9b9926446b460b4e38d36d9581a02a11d36057246e8f706d4fb9",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276470241151968
+          }
+        },
+        {
+          "summary": {
+            "criterion": "WEB-03",
+            "phase": "recheck",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 57.0185821056366,
+            "log": "/private/tmp/chainbench-final-web-03-recheck-1792276486996478000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-03-recheck-1792276486996478000.json",
+            "sha256": "04b9e1ca6b05179fcce7a66830364891aa086892036aa61b923a57e20a715125",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276544411881704
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-03-recheck-1792276486996478000.log",
+            "sha256": "50f0d324521b59ca23c3671ed85c45f646c5c95516598edbb3294970ec56c41e",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276544201340482
+          }
+        }
+      ]
+    },
+    {
+      "criterion": "WEB-04",
+      "phases": [
+        {
+          "summary": {
+            "criterion": "WEB-04",
+            "phase": "capture",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 31.34533381462097,
+            "log": "/private/tmp/chainbench-final-web-04-capture-1792276566848323000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-04-capture-1792276566848323000.json",
+            "sha256": "9c7e37d1defed9b36127131d75776c6c8b486a80e4430f96b1142bd76e680256",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276598588850208
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-04-capture-1792276566848323000.log",
+            "sha256": "a5225768c23c7d9f4b90f47dd509b4743c5e6b35c1faacebae2631ceed5376f5",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276598100797281
+          }
+        },
+        {
+          "summary": {
+            "criterion": "WEB-04",
+            "phase": "recheck",
+            "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+            "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+            "sourceUnchanged": true,
+            "trackedAndUserMetadataUnchanged": true,
+            "exitCode": 0,
+            "elapsedSeconds": 45.012324810028076,
+            "log": "/private/tmp/chainbench-final-web-04-recheck-1792276610483041000.log",
+            "all14Accepted": false
+          },
+          "artifact": {
+            "path": "/private/tmp/chainbench-final-web-04-recheck-1792276610483041000.json",
+            "sha256": "732a3c3c3ee0611b5c8b49e7c651701ab179f129e58fa2ce986b4bc26eae5e4a",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276655904149109
+          },
+          "log": {
+            "path": "/private/tmp/chainbench-final-web-04-recheck-1792276610483041000.log",
+            "sha256": "639285aedc602a52d82b27b30e7a19dd331fd6c9831f9763fb2401f4549e4650",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792276655668338126
+          }
+        }
+      ]
+    }
+  ],
+  "web05Failure": {
+    "criterion": "WEB-05",
+    "phase": "capture",
+    "head": "e9e28713212b06b6ed9d3351d8480d2b4a6073fd",
+    "sourceBefore": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+    "sourceAfter": "ef35faabf50b1f15439f7ff8a21524997433cdcfae3ad35bc9fb6ba2aa3010fd",
+    "sourceUnchanged": true,
+    "trackedAndUserMetadataUnchanged": true,
+    "exitCode": 1,
+    "elapsedSeconds": 375.03752994537354,
+    "log": "/private/tmp/chainbench-final-web-05-capture-1792276700213186000.log",
+    "all14Accepted": false
+  },
+  "failurePreservation": {
+    "acceptedPreservation": true,
+    "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-e9e28713-web01-04-pass-web05-blocked",
+    "entries": 168,
+    "allContentAndMetadataMatch": true,
+    "web01To04CaptureAndRecheckPassed": true,
+    "web05Accepted": false,
+    "web05Reason": "consensus preflight on four successor WBFT binaries queries istanbul before Croissant height120; error -32000; predecessor PoA passes",
+    "runtime": "/private/tmp/cbui/fb2d6c55-fb19-4545-b3f7-535f67e9e993",
+    "runtimeRemainingDBs": [],
+    "all14Accepted": false
+  },
+  "partialResultArchive": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/final-e9e28713-web01-04-pass-web05-blocked",
+  "all14Accepted": false
+}

@@ -2,6 +2,7 @@ package testengine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -31,6 +32,9 @@ type Deps struct {
 	// Applicable reports whether a spec applies to this run's target chain and,
 	// when it does not, whether the spec said so. Nil means always applicable.
 	Applicable func(spec dsl.Spec) Applicability
+	// RuntimeGate confirms capabilities against the reached environment. An empty
+	// status permits execution; unavailable probes block and unsupported APIs skip.
+	RuntimeGate func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string)
 	// PreSpec gates the environment right before each test runs on it (E6): a
 	// network left unfit by a prior fault test is waited on or restarted within
 	// limits, and a state needing a destructive remedy blocks the test. A
@@ -106,6 +110,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 	}()
 
 	e.emit(collector.PhaseTest, collector.KindInfo, "run started", map[string]any{"specs": len(specs)})
+	prepared := preparedScope{}
 
 	for i, raw := range specs {
 		seq := i + 1
@@ -121,12 +126,18 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 
 		rec := sess.Test(seq, spec.ID)
+		rec.SetPresetID(spec.PresetID)
 		rec.Spec(raw)
 		e.recordArtifacts(rec)
 
+		staleAfterRuntime := false
 		if e.deps.Applicable != nil {
-			switch a := e.deps.Applicable(spec); {
-			case a.Stale:
+			a := e.deps.Applicable(spec)
+			staleAfterRuntime = a.Stale && e.deps.RuntimeGate != nil
+			observation, _ := json.Marshal(map[string]any{"source": "declared_capabilities", "required": a.Required, "provided": a.Provided, "missing": a.Missing, "runs": a.Runs, "foreseen": a.Foreseen, "stale": a.Stale, "runtimeConfirmationPending": staleAfterRuntime, "reason": a.Reason})
+			rec.Observation("capability-gate.json", observation)
+			switch {
+			case a.Stale && !staleAfterRuntime:
 				// The spec says it skips here and it does not. Left alone, the
 				// declaration tells the next reader this test asks nothing on
 				// this chain while it is asking and answering.
@@ -139,20 +150,36 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 				// colour of a pass. The spec declared where it skips, and this
 				// is not one of those places.
 				rec.Status(session.StatusFail)
-				rec.Reason("this spec was skipped on a target its skipsOn does not name — the run asked nothing and would have reported no failure")
+				reason := "this spec was skipped on a target its skipsOn does not name — the run asked nothing and would have reported no failure"
+				if a.Reason != "" {
+					reason += ": " + a.Reason
+				}
+				rec.Reason(reason)
 				e.emit(collector.PhaseTest, collector.KindError, "undeclared skip", map[string]any{"seq": seq, "id": spec.ID})
 				continue
 			case !a.Runs:
 				rec.Status(session.StatusSkip)
 				// A skip with no reason reads as "this did not matter"; it
 				// usually means a capability the target does not advertise.
-				rec.Reason("does not apply to this target (chain or required capabilities)")
+				reason := a.Reason
+				if reason == "" {
+					reason = "does not apply to this target (chain or required capabilities)"
+				}
+				rec.Reason(reason)
 				e.emit(collector.PhaseTest, collector.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
 				continue
 			}
 		}
 
-		env, ok := sess.Environment(e.deps.Fingerprint(spec))
+		fingerprint := e.deps.Fingerprint(spec)
+		if err := prepared.inputs(&spec, fingerprint); err != nil {
+			rec.Status(session.StatusBlocked)
+			rec.Reason(err.Error())
+			data, _ := json.Marshal(map[string]any{"source": "ordered_case_results", "case": spec.ID, "environment": fingerprint, "imports": spec.Prepared.Imports, "status": "blocked", "published": 0, "reason": err.Error()})
+			rec.Observation("prepared-results.json", data)
+			continue
+		}
+		env, ok := sess.Environment(fingerprint)
 		if !ok {
 			var berr error
 			env, berr = sess.NewEnvironment(e.deps.Fingerprint(spec))
@@ -182,6 +209,23 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 
 		rec.SetEnvRef(env.ID())
+		if e.deps.RuntimeGate != nil {
+			status, reason := e.deps.RuntimeGate(ctx, spec, env, rec)
+			if status != "" {
+				rec.Status(status)
+				rec.Reason(reason)
+				e.emit(collector.PhaseSetup, collector.KindInfo, "runtime capability gate", map[string]any{"seq": seq, "id": spec.ID, "status": string(status), "reason": reason})
+				continue
+			}
+		}
+		if staleAfterRuntime {
+			// Only actual support can invalidate an expected runtime skip.
+			// A provided tag is a claim; the probe may still skip or block.
+			rec.Status(session.StatusFail)
+			rec.Reason("this spec declares it skips on this target and it does not — remove this chain from skipsOn")
+			e.emit(collector.PhaseTest, collector.KindError, "stale skipsOn", map[string]any{"seq": seq, "id": spec.ID})
+			continue
+		}
 		if e.deps.PreSpec != nil {
 			if gerr := e.deps.PreSpec(ctx, env); gerr != nil {
 				rec.Status(session.StatusBlocked)
@@ -195,6 +239,13 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		if runErr != nil {
 			rec.Status(session.StatusFail)
 			st = session.StatusFail
+		}
+		if st == session.StatusPass {
+			if err := prepared.publish(spec, fingerprint, rec); err != nil {
+				rec.Status(session.StatusFail)
+				rec.Reason(err.Error())
+				st = session.StatusFail
+			}
 		}
 		// A failed or blocked test gets its evidence gathered before the run moves
 		// on: the network it failed against may be gone or changed by the next

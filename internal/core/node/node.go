@@ -76,6 +76,9 @@ type Endpoints struct {
 // Node is one chain node, whether locally launched, remotely launched, or
 // attached to an already-running endpoint.
 type Node struct {
+	// Chain is the chain declared for this node's recorded binary. Empty on
+	// older records and bare attachments, which use the network's chain.
+	Chain string `json:"chain,omitempty"`
 	// Index is the 1-based node number within the set.
 	Index int `json:"index"`
 	// Role is the node's operational role.
@@ -114,6 +117,8 @@ type Node struct {
 	// Auth is the optional authentication descriptor for reaching a remote
 	// attached endpoint. Empty for local or unauthenticated nodes.
 	Auth Auth `json:"auth,omitempty"`
+	// APIs is the operator-declared open namespace list, not proof of support.
+	APIs []string `json:"apis,omitempty"`
 }
 
 // Auth is a node's authentication descriptor for reaching a remote attached

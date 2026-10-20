@@ -52,5 +52,6 @@ def stage_sources(workspace, runtime):
         if Path(directory).resolve() == workspace:
             excluded |= EXCLUDED - {'node_modules'}
         return excluded.intersection(names)
-    shutil.copytree(workspace, source, ignore=ignored, symlinks=True)
+    from runtime_storage import clone_file
+    shutil.copytree(workspace, source, ignore=ignored, symlinks=True, copy_function=clone_file)
     return source

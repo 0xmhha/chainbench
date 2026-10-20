@@ -1,4 +1,6 @@
 """Fresh WEB-10 browser + dedicated SSH acceptance, with no mock or skipped target."""
+from runtime_storage import create_runtime
+from prerequisite import run_check
 from runtime_contract import runtime_root, base_commit
 from browser_process import run_browser
 
@@ -58,15 +60,14 @@ def main():
             p.unlink()
     invocation = str(uuid.uuid4())
     started = now()
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(invocation)
     evidence = {'criterion': 'WEB-10', 'invocationId': invocation, 'scenarios': [], 'checks': []}
     failures = []
     server = sshd = None
     handles = []
     try:
         for command in ('npm --prefix web run build', 'go test -race ./internal/app ./internal/dashboard'):
-            run = subprocess.run(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            run = run_check(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             logfile = output / f'check-{len(evidence["checks"])}.log'
             logfile.write_text(run.stdout)
             evidence['checks'].append({'command': command, 'exitCode': run.returncode, 'log': str(logfile), 'sha256': digest(logfile)})

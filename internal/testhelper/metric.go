@@ -3,7 +3,12 @@ package testhelper
 import (
 	"context"
 	"fmt"
+	"maps"
+	"math"
+	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -19,7 +24,8 @@ const assertMetric = "metric"
 // metricAssertion scrapes a node's --metrics endpoint and compares one sample
 // to the spec's expected value.
 //
-// Spec: name (the Prometheus sample name, required), expected, compare
+// Spec: name (the Prometheus sample name, required), alternatives (optional
+// additional sample names; at least one must satisfy the comparison), expected, compare
 // (default GreaterOrEqual — counters and heights grow, so a floor is the
 // common check), on/onEach for targeting. The target node must have been
 // launched with a metrics port; a node without one is an explicit failure,
@@ -28,13 +34,28 @@ const assertMetric = "metric"
 type metricAssertion struct{}
 
 func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
-	res := session.AssertResult{Assert: assertMetric, Provenance: ac.Spec, Pass: true}
+	res := session.AssertResult{Assert: assertMetric, Provenance: maps.Clone(ac.Spec), Pass: true}
+	if res.Provenance == nil {
+		res.Provenance = map[string]any{}
+	}
+	observed := []map[string]any{}
+	res.Provenance["metricSamples"] = observed
 	name, _ := ac.Spec["name"].(string)
 	if name == "" {
 		err := fmt.Errorf("dsl: metric: \"name\" is required")
 		res.Pass, res.Actual = false, err.Error()
 		return res, err
 	}
+	names := []string{name}
+	if value, exists := ac.Spec["alternatives"]; exists {
+		values, err := metricAlternatives(value, name)
+		if err != nil {
+			res.Pass, res.Actual = false, err.Error()
+			return res, err
+		}
+		names = append(names, values...)
+	}
+
 	op := "GreaterOrEqual"
 	if o, ok := ac.Spec["compare"].(string); ok && o != "" {
 		op = o
@@ -58,6 +79,18 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 		return res, err
 	}
 	for _, t := range targets {
+		source := "recorded-endpoint"
+		if _, ok := machineReader(ac.Deps, t.node); ok {
+			source = "node-machine"
+		} else if t.node.MetricsURL == "" {
+			source = "derived-endpoint"
+		}
+		observations := make([]map[string]any, len(names))
+		for i, sampleName := range names {
+			observations[i] = map[string]any{"node": t.node.Index, "role": string(t.node.Role), "pid": t.node.PID, "source": source, "name": sampleName, "observedAt": time.Now().UTC().Format(time.RFC3339Nano), "status": "unavailable"}
+			observed = append(observed, observations[i])
+		}
+		res.Provenance["metricSamples"] = observed
 		// The composition records the endpoint this tool should dial, already
 		// translated for the target (a docker node publishes on loopback).
 		// Host+Ports is the node's OWN address, which is what peers use; building
@@ -78,20 +111,64 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
 		}
-		v, ok := samples[name]
-		if !ok {
-			err := fmt.Errorf("dsl: metric: %s does not expose %q", t.name, name)
-			res.Pass, res.Actual = false, err.Error()
-			return res, err
+		matched := false
+		var detail string
+		for i, sampleName := range names {
+			v, ok := samples[sampleName]
+			if !ok {
+				err := fmt.Errorf("dsl: metric: %s does not expose %q", t.name, sampleName)
+				res.Pass, res.Actual = false, err.Error()
+				return res, err
+			}
+			if math.IsInf(v, 0) || math.IsNaN(v) {
+				err := fmt.Errorf("dsl: metric: %s has a nonfinite sample for %q", t.name, sampleName)
+				res.Pass, res.Actual = false, err.Error()
+				return res, err
+			}
+			observations[i]["value"], observations[i]["status"] = v, "observed"
+			pass, sampleDetail := fn(v, expected)
+			if pass && !matched {
+				res.Actual = v
+			}
+			matched = matched || pass
+			detail = sampleDetail
 		}
-		res.Actual = v
-		if pass, detail := fn(v, expected); !pass {
+		if !matched {
 			res.Pass = false
 			res.Actual = fmt.Sprintf("%s: %s", t.name, detail)
 			return res, nil
 		}
 	}
 	return res, nil
+}
+
+// metricAlternatives names additional receive paths whose same comparator is
+// satisfied by at least one sample. All declared samples must be exposed and
+// finite; an unavailable alternative never turns a telemetry error into a pass.
+func metricAlternatives(value any, primary string) ([]string, error) {
+	var values []any
+	switch list := value.(type) {
+	case []any:
+		values = list
+	case []string:
+		for _, name := range list {
+			values = append(values, name)
+		}
+	}
+	if len(values) == 0 || len(values) > 31 {
+		return nil, fmt.Errorf("dsl: metric: alternatives must contain 1 to 31 distinct names")
+	}
+	seen := map[string]bool{primary: true}
+	names := make([]string, 0, len(values))
+	for _, value := range values {
+		name, ok := value.(string)
+		if !ok || strings.TrimSpace(name) == "" || seen[name] {
+			return nil, fmt.Errorf("dsl: metric: alternatives must contain nonempty distinct names, excluding name")
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+	return names, nil
 }
 
 // onMachineScrapeTimeoutSeconds bounds the request a scrape on the node's
@@ -110,15 +187,11 @@ const onMachineScrapeTimeoutSeconds = 10
 func scrapeNode(ctx context.Context, d *interp.Deps, n node.Node, url string) (map[string]float64, error) {
 	cmd, ok := machineReader(d, n)
 	if !ok {
-		return collector.ScrapeMetrics(ctx, url)
+		return scrapeWithRunClient(ctx, d, url)
 	}
-	samples, machineErr := scrapeOnMachine(ctx, cmd, n)
-	if machineErr == nil {
-		return samples, nil
-	}
-	samples, err := collector.ScrapeMetrics(ctx, url)
+	samples, err := scrapeOnMachine(ctx, cmd, n)
 	if err != nil {
-		return nil, fmt.Errorf("%w; on node%d's machine: %v", err, n.Index, machineErr)
+		return nil, fmt.Errorf("on node%d's machine: %w", n.Index, err)
 	}
 	return samples, nil
 }
@@ -150,7 +223,7 @@ func scrapeOnMachine(ctx context.Context, cmd interp.HostCommander, n node.Node)
 	const path = "/debug/metrics/prometheus"
 	url := collector.MetricsURL(n.Host, n.Ports.Metrics)
 	command := fmt.Sprintf(
-		"if command -v curl >/dev/null 2>&1; then timeout %d curl -s %s; "+
+		"if command -v curl >/dev/null 2>&1; then timeout %d curl -fsS %s; "+
 			"else timeout %d bash -c 'exec 3<>/dev/tcp/%s/%d && printf \"GET %s HTTP/1.0\\r\\nHost: %s\\r\\n\\r\\n\" >&3 && cat <&3'; fi",
 		onMachineScrapeTimeoutSeconds, url,
 		onMachineScrapeTimeoutSeconds, n.Host, n.Ports.Metrics, path, n.Host)
@@ -158,7 +231,22 @@ func scrapeOnMachine(ctx context.Context, cmd interp.HostCommander, n node.Node)
 	if err != nil {
 		return nil, err
 	}
-	return collector.ParseMetrics(strings.NewReader(httpBody(out)))
+	if strings.HasPrefix(out, "HTTP/") {
+		status := strings.Fields(strings.SplitN(out, "\n", 2)[0])
+		if len(status) < 2 {
+			return nil, fmt.Errorf("metric: malformed on-machine HTTP response")
+		}
+		code, err := strconv.Atoi(status[1])
+		if err != nil || code != http.StatusOK {
+			return nil, fmt.Errorf("metric: unsuccessful on-machine HTTP response")
+		}
+		body := httpBody(out)
+		if body == "" {
+			return nil, fmt.Errorf("metric: empty on-machine HTTP response")
+		}
+		out = body
+	}
+	return collector.ParseMetrics(strings.NewReader(out))
 }
 
 // httpBody drops a raw HTTP response's status line and headers, leaving the
@@ -200,4 +288,11 @@ func metricTargets(ac *interp.AssertCtx) []metricTarget {
 		}
 	}
 	return nil
+}
+
+func scrapeWithRunClient(ctx context.Context, d *interp.Deps, url string) (map[string]float64, error) {
+	if d != nil && d.HTTP != nil {
+		return collector.ScrapeMetricsWithClient(ctx, url, d.HTTP(url))
+	}
+	return collector.ScrapeMetrics(ctx, url)
 }

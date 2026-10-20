@@ -42,6 +42,16 @@ const (
 type blockHaltAssertion struct{}
 
 func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	for _, field := range []string{"within"} {
+		if err := validateDurationControl("blockHalt", field, ac.Spec); err != nil {
+			return session.AssertResult{Assert: "blockHalt", Actual: err.Error(), Provenance: ac.Spec}, err
+		}
+	}
+
+	if err := validateUnsignedControl("assertion", "blockHalt", "maxAdvance", ac.Spec); err != nil {
+		return session.AssertResult{Assert: "blockHalt", Actual: err.Error(), Provenance: ac.Spec}, err
+	}
+
 	res := session.AssertResult{Assert: assertBlockHalt, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -122,6 +132,12 @@ func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 type blockIntervalAssertion struct{}
 
 func (blockIntervalAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	for _, field := range []string{"blocks", "maxSeconds", "maxMillis", "minSeconds", "minMillis"} {
+		if err := validateUnsignedControl("assertion", "blockInterval", field, ac.Spec); err != nil {
+			return session.AssertResult{Assert: "blockInterval", Actual: err.Error(), Provenance: ac.Spec}, err
+		}
+	}
+
 	res := session.AssertResult{Assert: assertBlockInterval, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {

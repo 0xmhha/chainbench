@@ -107,7 +107,8 @@ func KeysOptsFor(blueprintPath, source string, nodes, validators int) (KeysOpts,
 // two states. Nothing here writes a ring: the choice is a decision, and
 // [Workspace.EnsureKeys] is what carries it out.
 func (w *Workspace) keySource(ctx context.Context, opts KeysOpts) (store.KeySource, keyWay, int, error) {
-	if _, err := w.plugin(); err != nil {
+	derivation, err := w.keyDerivation()
+	if err != nil {
 		return nil, "", 0, err
 	}
 	n := opts.Nodes
@@ -173,7 +174,7 @@ func (w *Workspace) keySource(ctx context.Context, opts KeysOpts) (store.KeySour
 		if validators <= 0 {
 			validators = w.state.BPCount
 		}
-		return store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}, wayGenerated, n, nil
+		return store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators, Derive: &derivation}, wayGenerated, n, nil
 	}
 	return nil, "", 0, lifecycle.Mark(errKeySourceUnknown,
 		fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
@@ -226,12 +227,11 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (preset.Key, err
 	if err != nil {
 		return preset.Key{}, err
 	}
-	// BLS material is derived for every family, which is what the generated
-	// source already does. Only wbft reads it, and asking the family instead
-	// would be the better answer, but there is no method that says so today and
-	// inventing one here would put the question in two places. Recorded as N3
-	// debt rather than guessed at.
-	set, err := blueprint.PresetFrom(r, derive.WithBLS, localKeyReader)
+	derivation, err := w.keyDerivation()
+	if err != nil {
+		return preset.Key{}, err
+	}
+	set, err := blueprint.PresetFrom(r, derivation, localKeyReader)
 	if err != nil {
 		return preset.Key{}, err
 	}
@@ -270,6 +270,10 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (preset.Key, []int
 		return preset.Key{}, nil, false, nil
 	}
 	sort.Ints(pinned)
+	derivation, err := w.keyDerivation()
+	if err != nil {
+		return preset.Key{}, nil, true, err
+	}
 
 	// Generate a full set once, to a throwaway dir, for the entropy of the nodes
 	// that name no key. Its keystores are not reused — DeclaredKeys re-writes
@@ -279,7 +283,7 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (preset.Key, []int
 		return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
-	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
+	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derivation}, nil)
 	if err != nil {
 		return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
 	}
@@ -301,7 +305,7 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (preset.Key, []int
 		} else {
 			key = gen.Nodes[i-1].Nodekey
 		}
-		id, derr := derive.Derive(key, derive.WithBLS)
+		id, derr := derive.Derive(key, derivation)
 		if derr != nil {
 			return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
 		}
@@ -463,4 +467,16 @@ func KeysFailure(err error) lifecycle.Status {
 		return lifecycle.ChainEnsureKeysFailKeyUnreadable
 	}
 	return lifecycle.FailStageUnclassified
+}
+
+// keyDerivation asks the registered family which validator identity it needs.
+func (w *Workspace) keyDerivation() (derive.Derivation, error) {
+	plugin, err := w.plugin()
+	if err != nil {
+		return derive.AccountOnly, err
+	}
+	if plugin.Family().ValidatorsCarryBLS() {
+		return derive.WithBLS, nil
+	}
+	return derive.AccountOnly, nil
 }

@@ -1,0 +1,247 @@
+{
+  "scope": "RPC023 actual same-node/same-endpoint validator true\u2192false\u2192true across registration/full unstake/reactivation following managed WEMIX\u2192WBFT handoff; no static role substitute. Related GOV019 conditions remain asserted. Not full87/Linux/mainnet/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "e9a5a2fbc436daa2e68369a0c25a2e5ad5fbb665b28e925dee42066f9f8a1a39",
+    "sourceAfter": "e9a5a2fbc436daa2e68369a0c25a2e5ad5fbb665b28e925dee42066f9f8a1a39",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceReactivateE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-mrunikem"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-mrunikem": []
+    },
+    "elapsedSeconds": 111.224,
+    "summary": {
+      "path": "/private/tmp/chainbench-validator-transition-native-summary.json",
+      "sha256": "ec8339ebf6e72fa314f68ea0f5effd8ecd967b2bad86eba636400591774c1d8c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015922256806354
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-validator-transition-native-native.jsonl",
+      "sha256": "7d994741a159587730edc842249e4e2334d3547c5041edff0db64ccb4f701825",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015921796652914
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-validator-transition-native-start.json",
+      "sha256": "5ff3fe7ebb9d395bd3b66d3ca0757efcebf53b6013b9918e066db7fb3c1f659f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015808386599321
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-validator-transition-observed.json",
+    "sha256": "5426b92dda5e11d15aa14afe772f3ee16b7b4403c2e86b8f3408d36ac42989ea",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792015930332519867
+  },
+  "observations": [
+    {
+      "URL": "http://127.0.0.1:8600",
+      "Address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Boundary": 40,
+      "Height": 41,
+      "Default": true,
+      "AtHeight": true,
+      "Validators": [
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+      ]
+    },
+    {
+      "URL": "http://127.0.0.1:8600",
+      "Address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Boundary": 50,
+      "Height": 51,
+      "Default": false,
+      "AtHeight": false,
+      "Validators": [
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+      ]
+    },
+    {
+      "URL": "http://127.0.0.1:8600",
+      "Address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Boundary": 60,
+      "Height": 62,
+      "Default": true,
+      "AtHeight": true,
+      "Validators": [
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+      ]
+    }
+  ],
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015811177423090
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/node1/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015811205216379
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/node4/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015812024265867
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/node3/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015811752082234
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/node2/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015811504760218
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/node5/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015812442963916
+    },
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem/w/runs/20261014-221025/genesis.json",
+      "sha256": "c4dc29da97cd60041c1f484181a3a1728418f5b1cc50cec66b5c7dc079c11ab7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015825980264464
+    }
+  ],
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-mrunikem",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-mrunikem/reports/validator-transition-inventory.json",
+        "sha256": "8fdad2ee8b4ee03477d8336038e72687e4d0f0a618bc50c9395614167127549b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792015930365888247
+      }
+    }
+  ],
+  "retainedFiles": 228,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-validator-transition-publication.json",
+    "sha256": "23daed14adf81573097cc72071f2292e8431841de2d15b44a807edde6b80c679",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792015621834877171
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-validator-transition-red.log",
+      "sha256": "740d548ab7d4a42e3f10545ab90bd01b0af302fc4acda89ed528df54baba6280",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015553208147272
+    },
+    {
+      "path": "/private/tmp/chainbench-validator-transition-green.log",
+      "sha256": "54d3f91f524a560768d0b9eb33bc9346d62835701c8bdf0822b604fd97cabae5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015583815725100
+    },
+    {
+      "path": "/private/tmp/chainbench-validator-transition-related-race.log",
+      "sha256": "887bf828b5a15e009742ac047f8036fdae01a03f856466d818794fbc71fda8d0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015718655213078
+    },
+    {
+      "path": "/private/tmp/chainbench-validator-transition-check.log",
+      "sha256": "9c73c86365f730c47210e982356a15750651bdb67371b6ca547907359f65ce97",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015799030075377
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/validator_transition_e2e_test.go",
+      "sha256": "d78835134a75d385896c3b55260520e4ee3a7b017802e372889a7b91d03fcc72",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792015621794412281
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792015579086170139
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

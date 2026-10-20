@@ -27,7 +27,7 @@ func fileUploadTool() Tool {
 			}
 			mode = os.FileMode(n)
 		}
-		out, err := app.Upload(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), app.UploadIn{
+		out, err := invokeFeature[app.UploadIn, app.UploadOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "file.upload", app.UploadIn{
 			Target:     app.TransferServer{ServerSet: argString(args, "serverSet", ""), Server: argString(args, "server", ""), WorkspaceConfigPath: argString(args, "workspaceConfig", ""), Docker: argBool(args, "docker", false)},
 			LocalPaths: argStrings(args, "localPaths"), Purpose: argString(args, "purpose", ""), RemotePath: argString(args, "remote", ""), SHA256: argString(args, "sha256", ""), Mode: mode, Force: argBool(args, "forceUpload", false),
 		})

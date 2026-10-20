@@ -1,0 +1,1742 @@
+{
+  "scope": "Metric source safety, explicit alternative receive paths, structured editor import/save/export, and 14 observable native sync cases. Task 10 remains incomplete: WEMIX CT-NODE-007 has an upstream exporter registration collision. This is not final WEB-01..14 acceptance.",
+  "contract": "A remote-machine scrape failure cannot fall back to another HTTP process. HTTP failures and selected nonfinite values reject. The direct HTTP client also rejects oversized bodies. All declared alternatives must expose finite samples on the same node and at least one must satisfy compare. Each sample retains node/role/PID/time/source/value/status.",
+  "logs": {
+    "metricSourceRed": {
+      "path": "/private/tmp/chainbench-metric-source-final-red.log",
+      "sha256": "2e5b560a7f43c7c780af2a84a10993c750fc026fcc7533ee211bb83a7a7492f6"
+    },
+    "alternativesRed": {
+      "path": "/private/tmp/chainbench-metric-alternatives-final-red.log",
+      "sha256": "8accc9a818f96981456ff44ff1d79856a7eb46f6aa554955f574af05b5191127"
+    },
+    "relatedRace": {
+      "path": "/private/tmp/chainbench-sync-path-final-race.log",
+      "sha256": "5f208346220022090a88f3b41dcb54cd45f0fd34303cafb8f7a43a63a3556670"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-sync-path-diagnostic-final-check.log",
+      "sha256": "98558a2962755f71b90bcec46ab4a9e58a242b6aaec52def25f975dce9c04c3b"
+    },
+    "fixtureRace": {
+      "path": "/private/tmp/chainbench-sync-path-diagnostic-fixture.log",
+      "sha256": "94fb1b0c71859fc2ebc458cfd0c3660ed3d8303152a5dd6c5370fa1e8d0d68f9"
+    },
+    "editorUnit": {
+      "path": "/private/tmp/chainbench-sync-path-editor-unit.log",
+      "sha256": "8e9d96eb4b3258276d965b3869300dd1d4170239da0111f7188142b49e45e95d"
+    },
+    "editorBrowser": {
+      "path": "/private/tmp/chainbench-sync-path-editor-browser.log",
+      "sha256": "d041ad0ce8a856dca7f9d27f4ba702788afdd9d0f1597c214ac65dbb11dfcd75"
+    },
+    "stablenetWbftNative": {
+      "path": "/private/tmp/chainbench-sync-path-wbft-final-native.jsonl",
+      "sha256": "07e344d099e5315c8968379550736f1fc2b9c801736600a349b6edbe68a2bf11"
+    },
+    "wemixNative": {
+      "path": "/private/tmp/chainbench-sync-path-wemix-final-native.jsonl",
+      "sha256": "495a16c9aae54870e3af9014ef6f5c926e7f57bc046e23b54193b159919425bf"
+    },
+    "broadcastOnlyFailure": {
+      "path": "/private/tmp/chainbench-sync-path-broadcast-only-red.jsonl",
+      "sha256": "b1916ee552a74adac9e1d076edccd6b4bc8b1f65a01f22bda8d53852f2773064"
+    },
+    "rpcQuantityFixtureFailure": {
+      "path": "/private/tmp/chainbench-sync-path-rpc-quantity-red.jsonl",
+      "sha256": "fde134e3fa9a83fd3a68362860c6a76feead431d9cc4c0993250d2ac46aaaba9"
+    },
+    "wemixExporterFailure": {
+      "path": "/private/tmp/chainbench-wemix-live-exporter-diagnostic.jsonl",
+      "sha256": "8dda7b88d1d798600c25ac19f758648b7511442affb86204c3881ccb274043f2"
+    },
+    "wemixInitializationTrace": {
+      "path": "/private/tmp/chainbench-wemix-metric-init-trace.txt",
+      "sha256": "4ce689204b06ec11b056a86ac03d7c2e70eba7597ad69f39ec9a82ee122f5072"
+    },
+    "wemixInitializationVersion": {
+      "path": "/private/tmp/chainbench-wemix-metric-init-version.txt",
+      "sha256": "9ee2543b77ad8aa23f007c01efb0bda5730523d7c848accf6968e7609b278e0f"
+    },
+    "finalArchitecture": {
+      "path": "/private/tmp/chainbench-sync-path-final-arch.log",
+      "sha256": "ec11b84b2a4adc1fb7024b60c5bac5bcc64711f488b6f556a9b8955dba7fae9b"
+    }
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/collector/metrics.go",
+      "sha256": "4cac6063d45daee23eeae2fbf65447744e12370f9ce3b23aa08375d802e60e8a"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/collector/metrics_limit_test.go",
+      "sha256": "eea438438042bd2a3a70146ec7a1aacfa5617b9b62176fe976384bd7b4517b56"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/metric.go",
+      "sha256": "141c4b8507c4a0c38f08da1907883c28c8de433f88886459d997d9b8d8b6e242"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/metric_host_test.go",
+      "sha256": "f8d8f624bd0cc1586a93e2da8dab7afc45457c4447327f5915a8ac51dae06600"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/metric_provenance_test.go",
+      "sha256": "1df77c844d383f35703538023dbfd5a2a73084c5ebc1744fe55e52b6ea4a41d2"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/arguments.go",
+      "sha256": "c65a37d079d376a0a0252f6a29dcb2adc67ea361b35e560073fe84357181aef7"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/editor_contract.go",
+      "sha256": "36c8934d14294f4a34e8d601382bc78841a2d060e79dc7f5a7167a8b031824b0"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/editor_contract_test.go",
+      "sha256": "5dff87eaa95c3f07c9ebf95e8064c12ad899eaf459b64d9928197c45cbc9f125"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/sync_path_native_test.go",
+      "sha256": "b7c78600f01199cbf3a215037ea10c93a67e6ac4663553e01f263f9cf2b3d341"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/node/CT-NODE-007-live-block-receive.json",
+      "sha256": "d52a7a989dbcceeba941df43383403713f2bef1b7c0179c85d01cf49c813eac5"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/browser_dsl_editor.mjs",
+      "sha256": "d676748dd6fe424e72d47600196d30022d8a7dff4d51f7bb36689891eb2f3ed5"
+    }
+  ],
+  "browserReceipt": {
+    "path": "/private/tmp/cbui/1da45228-7a46-43ec-94ed-fb67c1c0df1f/sync-path-editor-browser-proof/receipt.json",
+    "sha256": "5d2866a77d0b7c6ec3c6e45025ea37e82e368deea1ccec3b502c2cf475faf197"
+  },
+  "browserMetricPaths": {
+    "structuredList": true,
+    "duplicateRejected": true,
+    "saveExportPreserved": true
+  },
+  "nativeScope": {
+    "plannedCases": 15,
+    "passedObservableCases": 14,
+    "unresolvedUpstreamCases": 1,
+    "matchedSourceHashes": 70,
+    "metricObservations": 16,
+    "remainingNodeDatabases": 0,
+    "selectedCampaignSkips": 0,
+    "allFifteenPassed": false,
+    "remainingOwnedProcesses": 0
+  },
+  "nativeProofs": [
+    {
+      "path": "/private/tmp/cbui/sync-path-native-3308618214/proof.json",
+      "sha256": "5c4a9941b73c5ef57e34a0fba4a198fec1651a8f3a2e7f72aed5179f122ea3e1",
+      "chain": "stablenet",
+      "case": "node/CT-NODE-004-full-sync.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 42,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_headers_in",
+                "node": 5,
+                "observedAt": "2026-10-14T05:51:02.938868Z",
+                "pid": 13664,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 42
+              }
+            ],
+            "name": "eth_downloader_headers_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/chain-record.json",
+          "sha256": "8f590294da8738b651759f0ee03c69b61d390e7eaa427f57f1ec22de4941b2fc"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/logs/node1.log",
+          "sha256": "8df49038268d0a4bd74c62745781156630c00755fc75185471043029291b4ac9"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/logs/node2.log",
+          "sha256": "2c280f82a4e95871a820b72b4a7b9b7b55496562f96609765ed9227ec4490bca"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/logs/node3.log",
+          "sha256": "06f9314820cc9cf49f5854641732ce5b1b74144e87a83433bbd27b400dde3704"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/logs/node4.log",
+          "sha256": "13339800448609d56de738749b584093f545a867ddd0bd1098eb5c70aa45ff90"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/logs/node5.log",
+          "sha256": "a3abe2215be5dadf1c28eafa82e8237fc1f1c0a2db3bae71a255abbb70d0ebb9"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/node5-metrics-expvar.json",
+          "sha256": "8990bcc00d53c6ef7eb0eee537c29ee970317df7a53dfcd382aee4eb9857b16a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "f63747300e0aec799ce73fa532485da9c703e6d7bb361453d506c2454e2b07a6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/process.json",
+          "sha256": "b476b6f7c12b9a9944f74c68fec9a80451618cdf2fda10febf507cc7331b646b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/config_node5.toml",
+          "sha256": "21e5a3e0be42db1cd27a3be61c995f5ca20d133362b2dd6451f53f87147d104e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/genesis.json",
+          "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-3308618214/diagnostics/runs/20261014-054947/launch-commands.txt",
+          "sha256": "587bd0b952a8461d56cbb0bf35566bf93b175b6076393294d012d749b4af5a33"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-2174777609/proof.json",
+      "sha256": "8eda0830404e858888d60fdd088d7f85962198f5388a65f69587fe3e4536cee2",
+      "chain": "stablenet",
+      "case": "node/CT-NODE-005-snap-sync.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 2,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_receipts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T05:54:20.310978Z",
+                "pid": 21166,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 2
+              }
+            ],
+            "name": "eth_downloader_receipts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/chain-record.json",
+          "sha256": "12a4d5115fc6d028854f5c1fdde0224ba0a28ab560a40cd057a9451b50965891"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/logs/node1.log",
+          "sha256": "8d902fa6520f7cdb95600348d8be307a67ffefb0a45018c0d29d8f17e74800d2"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/logs/node2.log",
+          "sha256": "14207bb8fe831ae1fbb98bc74d47d8995498e9d87ce8922f24c48dd58b32dad6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/logs/node3.log",
+          "sha256": "c23682b32e7af35abb2e2dc7b26fee879168c73ec338dcc9be9335bf2ee4937b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/logs/node4.log",
+          "sha256": "64a1ce9f260b8c6b558f0455bda7f950481773d9672f9d786b3dc27642aa189a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/logs/node5.log",
+          "sha256": "f7f952a4b80f824f223b3953e6130fdeadbec32cb46557a60ebbecebc5a96efc"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/node5-metrics-expvar.json",
+          "sha256": "74614b8dff647eb896367785781f8a03445eb492e69607747e573e6e809a47b4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "b1f46d3a43e9ce3adb8071f9be376876247e6f15e6513a00941b1f8cf3a16fc6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/process.json",
+          "sha256": "142b4b21d5470832bcf0c6fe16a388b0d0de492d5f9ef73dce29fa251f9af624"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/config_node5.toml",
+          "sha256": "7c5c1b3e0a2aa593b61aafa3c4cfa3f4ebb557c0c236a9485d2faa3058e1bf67"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/genesis.json",
+          "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-2174777609/diagnostics/runs/20261014-055106/launch-commands.txt",
+          "sha256": "63b0f604dd7c75378864fd3510c48dfbef707a9e2dd08da9c810b6b85dca048c"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-571976223/proof.json",
+      "sha256": "547246c2df0cfe6f885907f4b02a99753fc4982d7e65ee0487e579dab10c960f",
+      "chain": "stablenet",
+      "case": "node/CT-NODE-006-missing-block-catch-up.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 71,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_headers_in",
+                "node": 5,
+                "observedAt": "2026-10-14T05:55:38.141157Z",
+                "pid": 25101,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 71
+              }
+            ],
+            "name": "eth_downloader_headers_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/chain-record.json",
+          "sha256": "1ed175af2fcdc77ddefb430b9e746e412823d4821d62b2b29781074254ea7e08"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/logs/node1.log",
+          "sha256": "02fa8844fcb3b5968c5c430ffecea0e2ad72ba94308de7d22efdc9e80c7f40db"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/logs/node2.log",
+          "sha256": "b0cefedfce6ae39f2a2c0cc1e53ef825fadb6ed0eeee26ca988a7a733e552718"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/logs/node3.log",
+          "sha256": "296a48e186aede22447b76e01dab27496b2507eedf972f1e6e26888ba50cf91c"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/logs/node4.log",
+          "sha256": "9f45496b1f09884675a515f4b05fa0b5849eddcafd994290e2da5fa4bddaea86"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/logs/node5.log",
+          "sha256": "6d2a66c11123e4218b0d8c84ffc6f7858e1df4a210a13db0a4b2f56481855af9"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/node5-metrics-expvar.json",
+          "sha256": "37c1717bac1192c7c11ffa937e44da5212be91745d5437ea52598d525966b650"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "47027392e1d28ca4ea4878b6c9f327f6d4a665db462589b88ab83977f72e5c74"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/process.json",
+          "sha256": "4571a96da9c1c84b03a735e5425263e195dfb1a9d4fa1d23764ee6e37455c071"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/config_node5.toml",
+          "sha256": "21e5a3e0be42db1cd27a3be61c995f5ca20d133362b2dd6451f53f87147d104e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/genesis.json",
+          "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-571976223/diagnostics/runs/20261014-055422/launch-commands.txt",
+          "sha256": "831734742409c73b6adf880b742a5e564d5626ae6936c2d2b3f4be550ac195f3"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-1299158517/proof.json",
+      "sha256": "67298405d58980e0b038c9fd22e1dbf42226aa922951563eff7e19edd5ac1a51",
+      "chain": "stablenet",
+      "case": "node/CT-NODE-007-live-block-receive.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 39,
+          "Pass": true,
+          "Provenance": {
+            "alternatives": [
+              "eth_fetcher_block_announces_in"
+            ],
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_fetcher_block_broadcasts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T05:56:21.965795Z",
+                "pid": 25361,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 39
+              },
+              {
+                "name": "eth_fetcher_block_announces_in",
+                "node": 5,
+                "observedAt": "2026-10-14T05:56:21.965803Z",
+                "pid": 25361,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 27
+              }
+            ],
+            "name": "eth_fetcher_block_broadcasts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/chain-record.json",
+          "sha256": "b291d526e16fb2e92735ba915738eabcf82c809df34b52a4de2f6eeaf922ec15"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/logs/node1.log",
+          "sha256": "f3e4acc16b681530fc5edd5390e093fe186940c20e4cd81e6321394b60e57d6e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/logs/node2.log",
+          "sha256": "f4d91b1a7f159f272ae73ccd47705d16dc5cf2a2e7e28d5b230fe464765a4763"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/logs/node3.log",
+          "sha256": "d7290b92df947424fa8c3909f9d26ee4bed2f590fb1e3dc4cc687a8de12f70fb"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/logs/node4.log",
+          "sha256": "bd82f54c9c12ffc74c345d9d27631c5c3338a366997059b0abbce32ade87fdef"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/logs/node5.log",
+          "sha256": "48327a4d60d8e6d42978954af53e7dfc8960c4167a421ae49ee26f0dde81f711"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/node5-metrics-expvar.json",
+          "sha256": "0ca0bc94ddbf6115df9180bdf821fa443835d13379348e564f206621008a6f0a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "f054bfa13a197f0cb3c5ee6b0db22ce7f7ea3dcc783ae73f95ce860a779028df"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/process.json",
+          "sha256": "16abbb78beabd482cfc469d26aad9a5f63ca3be11455636df5027680d3679b69"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/config_node5.toml",
+          "sha256": "21e5a3e0be42db1cd27a3be61c995f5ca20d133362b2dd6451f53f87147d104e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/genesis.json",
+          "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1299158517/diagnostics/runs/20261014-055540/launch-commands.txt",
+          "sha256": "dfa7e50b222556a40a1d830f2bb11b5276243c549b50e57b9d4af702a3783cbf"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-196441462/proof.json",
+      "sha256": "a49319f08789f140af81b4d79cf3f3a09426cc2a23ecfe1a9474c4f377a60633",
+      "chain": "stablenet",
+      "case": "fee/CT-FEE-009-snap-receipt-gas-price.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 2,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_receipts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:00:13.196589Z",
+                "pid": 35564,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 2
+              }
+            ],
+            "name": "eth_downloader_receipts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/chain-record.json",
+          "sha256": "df40aa60aaaf35b5c5531f7f535f6d0226bb29117a26e4f45f86297d80960ccb"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/logs/node1.log",
+          "sha256": "f7e8799895d6cb38ae3ab741511112568b8c047be7ca4f709982403349052352"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/logs/node2.log",
+          "sha256": "baccb7cf69fb81c06fdfce851aba61eec7d2f66220ecb90b98153ce47a32a104"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/logs/node3.log",
+          "sha256": "c1d9da588282203d87a690af0b060b5dc1bcb78105a18e4b1f43532159b99631"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/logs/node4.log",
+          "sha256": "fd2d8818308f3bb1b03a7f119063af5bd3fb4a9bb81fea2f18bdb77f4e66cae7"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/logs/node5.log",
+          "sha256": "917e21870681a0dd35b06366ca8652308a682f9b82d8d359929e9a7482be2ff8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/node5-metrics-expvar.json",
+          "sha256": "b9120639488d7920a85e5896bd6bff153a2685efe81a24267ac15cd3ac45e56b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "f9dde83ecdd01004726efc1d8c154b4a9a314a2cb04b9b7c4ca2195b3df069e9"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/process.json",
+          "sha256": "4cd4f09aa0ae3d72b5145bb26c94125cf2956d65eda1ddb5bd81601ab1c21196"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/config_node5.toml",
+          "sha256": "7c5c1b3e0a2aa593b61aafa3c4cfa3f4ebb557c0c236a9485d2faa3058e1bf67"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/genesis.json",
+          "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-196441462/diagnostics/runs/20261014-055624/launch-commands.txt",
+          "sha256": "3ea54c68bda0deaf2b812353d1969505f8cc85975feda2b9f981d0e61b5094eb"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-378220141/proof.json",
+      "sha256": "127cffd30b65839d760f1fd4c4859d74f24c81a406ba0d5de659f5faa7d1403b",
+      "chain": "wbft",
+      "case": "node/CT-NODE-004-full-sync.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 55,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_headers_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:01:06.546653Z",
+                "pid": 37436,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 55
+              }
+            ],
+            "name": "eth_downloader_headers_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/chain-record.json",
+          "sha256": "a27f1604c5a2fc4a87a3894a436105ed3d535e146f0c746d3ef80ffdbcdfa2d0"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/logs/node1.log",
+          "sha256": "d45a91c504977ccab10710f33a63f9827faccc085b3eca703e0bc658cd59e45b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/logs/node2.log",
+          "sha256": "c46b45f08dff1a87afded8706ac7ed420a51e12992162bd6e8c7ac2190585518"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/logs/node3.log",
+          "sha256": "ba4aa60cb59e069cee244e989cc6754998a67964ce6de4b5cfa68a7da6b30e08"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/logs/node4.log",
+          "sha256": "0943b53b32aa412cb765bd596943fab940565674a6882dc464c421383701a152"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/logs/node5.log",
+          "sha256": "0dddd87ec1852c90467b6c1a0ff6fc189002a56dab6ab956c0c6ccd28a9dd1b6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/node5-metrics-expvar.json",
+          "sha256": "1343a990f4b9ee54851a9fa1f10c69ba80ff62af1d99e3789ebbbb8002de78a0"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "1572093fa04346d48bc4af017091a382a0d7dfe67b727973306825d6a6709f08"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/process.json",
+          "sha256": "8b15617e77d2a920a5f9795e4ce3f64ae3e9a2f907493db3256bcfe1cf4e804f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/config_node5.toml",
+          "sha256": "21e5a3e0be42db1cd27a3be61c995f5ca20d133362b2dd6451f53f87147d104e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/genesis.json",
+          "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-378220141/diagnostics/runs/20261014-060016/launch-commands.txt",
+          "sha256": "62060b8880ed770797f135d9ad80cf8363f125b9a29a4ec9ef2a44a27b129d03"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-650250626/proof.json",
+      "sha256": "6a2a1c5cea123a1656b8644ccf6d1df374a9c958ad5ad754e1b4e1fadf6ac740",
+      "chain": "wbft",
+      "case": "node/CT-NODE-005-snap-sync.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 2,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_receipts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:04:53.236744Z",
+                "pid": 46149,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 2
+              }
+            ],
+            "name": "eth_downloader_receipts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/chain-record.json",
+          "sha256": "b94fd4a7fdda76e440c3e53700c937259a08e4b24eccad8a7cef8944451ee0a7"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/logs/node1.log",
+          "sha256": "b3b6c49116d762d6e015da65a5a96fc74a8165d1660278206c7b84c7a97c1fba"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/logs/node2.log",
+          "sha256": "d5c215d0630193dd47e44515ad96b4dee9f8cba9fe0ae3b030f5bb75ccc28648"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/logs/node3.log",
+          "sha256": "b2480db17bca2766ebc252d30ca02aa2e763b437fdbe6a8aa434d59c67e4a7d6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/logs/node4.log",
+          "sha256": "777f0d334ccc2987a6ebaf7cda5d9a821696df0ce9e57e5bf1f70921f71debf8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/logs/node5.log",
+          "sha256": "242101d7770372f4b184603a2b316ff6dab1fec274c860e373054b0ebc5ac3c6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/node5-metrics-expvar.json",
+          "sha256": "913038674511d1a088a01d7d28479746562dbb005af78de93980608e28a211fa"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "e030e6e0879fbd4d317b39b0f819aa1b20a8ef232b4132af8d05b37c0834bca7"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/process.json",
+          "sha256": "37b10f9d5729b3f74a6231672fae7bcef10d9355b3791fd16f2a26f58d2b4414"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/config_node5.toml",
+          "sha256": "7c5c1b3e0a2aa593b61aafa3c4cfa3f4ebb557c0c236a9485d2faa3058e1bf67"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/genesis.json",
+          "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-650250626/diagnostics/runs/20261014-060109/launch-commands.txt",
+          "sha256": "c0f3118df26c0a07231a965ffd8939395f28e655b63bf125356a2587eb7cc657"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-957748000/proof.json",
+      "sha256": "0bbebd8a70bdc54c8a42433d4c9a277237b586823867e30b8e2f82a7bd783bbb",
+      "chain": "wbft",
+      "case": "node/CT-NODE-006-missing-block-catch-up.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 74,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_headers_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:06:13.376551Z",
+                "pid": 49448,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 74
+              }
+            ],
+            "name": "eth_downloader_headers_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/chain-record.json",
+          "sha256": "495f4de477a36306a56a83a4e7fea547f1b0b39aaf947c811393e8382b02db2b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/logs/node1.log",
+          "sha256": "b3a17c810e9b8166c169cc498d287d8895b2295bdb0ff2eb7c11e468d1015e04"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/logs/node2.log",
+          "sha256": "515702f380e14575e6c0e99dc76901c8fe664457d40c0d6f4565ce0248016809"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/logs/node3.log",
+          "sha256": "123b9ac8611123a6153b2abe5dc4d860dfb3586432249897993861fa019fae88"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/logs/node4.log",
+          "sha256": "19fd2765ef51c21b5c4c536461140569be1ab230e47e52021362daf6a4964c14"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/logs/node5.log",
+          "sha256": "2e2b0b954a9c1b2eb0a02e7b87d1eebd27a70310701f3f14febbfb4eff915bc4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/node5-metrics-expvar.json",
+          "sha256": "c95c84cf44203d21daeffb2dc0968c4a5a0ea773e45935d2c43583006483b261"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "cc9f1d40cf3120958d0c6af7780cb5fa4b0a16a87bedd991af34b84268065ba2"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/process.json",
+          "sha256": "e62292d77ca4e515973c46bb70d8d1055e9a8d81b81c7a5d40775ccbe303efaa"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/config_node5.toml",
+          "sha256": "21e5a3e0be42db1cd27a3be61c995f5ca20d133362b2dd6451f53f87147d104e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/genesis.json",
+          "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-957748000/diagnostics/runs/20261014-060455/launch-commands.txt",
+          "sha256": "0faa82022e0ab6a7e6975ddba09b5aeacfcc06053deaa58480347b314d5f9993"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-966424410/proof.json",
+      "sha256": "adcd1efdb33022ea1781a2d32f865f3c894181d932d66d79eea554604c615b88",
+      "chain": "wbft",
+      "case": "node/CT-NODE-007-live-block-receive.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 44,
+          "Pass": true,
+          "Provenance": {
+            "alternatives": [
+              "eth_fetcher_block_announces_in"
+            ],
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_fetcher_block_broadcasts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:06:53.276091Z",
+                "pid": 51290,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 44
+              },
+              {
+                "name": "eth_fetcher_block_announces_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:06:53.276095Z",
+                "pid": 51290,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 36
+              }
+            ],
+            "name": "eth_fetcher_block_broadcasts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/chain-record.json",
+          "sha256": "8caa078d3b0215eeee32deea0214d208aaf273b0335aaf702dc706a7a8dc7245"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/logs/node1.log",
+          "sha256": "d438125b7fe8138389fddb96611216e4853b984c2cfcf30dd2dd1e163e0cc976"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/logs/node2.log",
+          "sha256": "d68aa94e07dda94b9ffdf171ee168905883dd56afd7ebcd74c7ef9a905e1eecb"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/logs/node3.log",
+          "sha256": "24c308e612a770cdc4c15c11bf739c90ff341cd46797072eda4388a8e8ad4a1b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/logs/node4.log",
+          "sha256": "f130538169034f6139bd9132287cd3a9453d69131851758053726c96e4a1d691"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/logs/node5.log",
+          "sha256": "1272754c87ff9107085f2ef6d0cce9075c8704d365196506fc2c0342e85d8df9"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/node5-metrics-expvar.json",
+          "sha256": "8c29aea28559c399a6a62a3800bfbafd54c662f9ac3bc632f6eb1cfcc7fc8046"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "41a8dab44b47d392fc2f19c782af88f2e482c83109c7bff91556488cfc50e78a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/process.json",
+          "sha256": "8782f1997aa704b5fa81512f1fc6b2332cfa347d19412337558b64fecf5c183a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/config_node5.toml",
+          "sha256": "21e5a3e0be42db1cd27a3be61c995f5ca20d133362b2dd6451f53f87147d104e"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/genesis.json",
+          "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-966424410/diagnostics/runs/20261014-060615/launch-commands.txt",
+          "sha256": "b661e82feb06c963f238127e7742edc640c2116756dc48066ebe3ce451a104e7"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-33640231/proof.json",
+      "sha256": "125d46e3832685887ae852305eed0789d94b4edafd5e211db0b97ac7a4aa7e19",
+      "chain": "wbft",
+      "case": "fee/CT-FEE-009-snap-receipt-gas-price.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 2,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_receipts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:10:10.360588Z",
+                "pid": 58608,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 2
+              }
+            ],
+            "name": "eth_downloader_receipts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/chain-record.json",
+          "sha256": "267a2ac2bb7a57ac422d9976bc0078d280970a208ad95762b8e224d3d55cd314"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/logs/node1.log",
+          "sha256": "c122a36f42fe52281c24eeac8f3b7cc6f4536c77b182ccbeab56af2a92b7b6be"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/logs/node2.log",
+          "sha256": "4f7c760b76d9403044b26674292381e615dfb23455bc849a1810a25ec5ff4b3d"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/logs/node3.log",
+          "sha256": "db51457690de021a0a38cae5bc5d68f7750a45e517f3cc16343e156e1b792f83"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/logs/node4.log",
+          "sha256": "189cad27c807eba51e40a325e86fcb1b65c4ac4753233e2d40173b1278d8fd9f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/logs/node5.log",
+          "sha256": "c2101e8dc16d7ed2cc7098c35ce93f166b3c000c1584d8d3f22843222e79355d"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/node5-metrics-expvar.json",
+          "sha256": "3bb90ff5f98da38270ee7c2e66f7442ffeb89e4614b05f46bf445928ee72ceca"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "0144c8a4eeba1039549a20602ecbe8bb0e912b15622725e71bb4e96858d30396"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/process.json",
+          "sha256": "3ae2bf954973e596744449bad7f5da6dcde67c842f381c31218643c0dc0cd0d9"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/config_node1.toml",
+          "sha256": "57ac03e7cd0005eac8129db63b5e328b221a22ad3052cbbf5184daed7d64e752"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/config_node2.toml",
+          "sha256": "d794fab9f175327093e010648111f22b1f6d1a34ffc4414c7ae2a3b917ecb2e4"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/config_node3.toml",
+          "sha256": "8256edc97df239fc414ed167f4aca6b1a6e4c9f350281256e6c374654ab51ed8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/config_node4.toml",
+          "sha256": "d3b14ddf6f6810674d87428c7f7bac92b9e784bb37b00314d6b02a4b162d74f1"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/config_node5.toml",
+          "sha256": "7c5c1b3e0a2aa593b61aafa3c4cfa3f4ebb557c0c236a9485d2faa3058e1bf67"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/genesis.json",
+          "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-33640231/diagnostics/runs/20261014-060656/launch-commands.txt",
+          "sha256": "c8d189c3a80d5fc23a40a4ef2cd504a59e3a46c75a4ecfb9c28c6e56df99c022"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-243597890/proof.json",
+      "sha256": "90a4998b7186d592e13f4990f3f1cb1c80dcbb9fc0065dc5d0c662e1b7ff2a4c",
+      "chain": "wemix",
+      "case": "node/CT-NODE-004-full-sync.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 90,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_headers_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:13:39.778656Z",
+                "pid": 66621,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 90
+              }
+            ],
+            "name": "eth_downloader_headers_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/chain-record.json",
+          "sha256": "6c36ebc5109e677127b2cfd94219175bad44f41588d92e8dddd599e5cc9aba19"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/logs/node1.log",
+          "sha256": "a011ae0ef9c1c612f643b31770626c6b3ddeb2ce1cfd7a93cdc0f6f32c8a8bc0"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/logs/node2.log",
+          "sha256": "44193e80f947d3bdf02e5a2832591231399d6618e488cfdec97b5f558746abff"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/logs/node3.log",
+          "sha256": "d6f1b6e638c57f2c2576fa2bfe88658d3cc22f17d6c16cbb26ecbc9b124b2b46"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/logs/node4.log",
+          "sha256": "10b571d5a0ced616a02b460e39e1ee1a1eadc293fafad61c29f8d194d234526c"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/logs/node5.log",
+          "sha256": "344f65d2945a8d7b36da570f9daab4726f351cad342e1da68ce90d5b79abc278"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/node5-metrics-expvar.json",
+          "sha256": "15172a07b6fbcc36c399c91f57398b5ca83db4d9a2a634cb1ed4fed6aa231f87"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "ae854d0464e21db0c4405851dfbf5d4ef4e62982e7314f74c33f85f482f78730"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/process.json",
+          "sha256": "74757a5004608b49b3c9ce6607ecb284f486fe05cba28e2fbd51099d64b1dadf"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/config_node1.toml",
+          "sha256": "c9c03ae74c8a8a2d170becf58a3e6db848f662d836410cbd45870fc87f86114f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/config_node2.toml",
+          "sha256": "bc48d97abe935dcd8329dd73ef5cf1098957d348bdb282fdc41eb32b4db3327f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/config_node3.toml",
+          "sha256": "72e9ef629beca68f941e7060658720ef4a7b81cecb2171551eb36ed455523f51"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/config_node4.toml",
+          "sha256": "52d4b1be975f5e6f2b4ad79b62d0426656401bb4eaed7247823880b2ca205d3f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/config_node5.toml",
+          "sha256": "33f901b990810bc6d30cf05977d4df744b69e92572293221d5c610c774ef06cb"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/genesis.json",
+          "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-243597890/diagnostics/runs/20261014-061256/launch-commands.txt",
+          "sha256": "3214c596eba8e423318f542c513636614e98481c0f6e1f33724b5cbcdc108ae9"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-445112033/proof.json",
+      "sha256": "efc082e89bfb1b0a3bf01d3e270b358c099dac7904a8f14c4b0d061e64a809a1",
+      "chain": "wemix",
+      "case": "node/CT-NODE-005-snap-sync.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 7,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_receipts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:17:56.814022Z",
+                "pid": 75668,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 7
+              }
+            ],
+            "name": "eth_downloader_receipts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/chain-record.json",
+          "sha256": "397a2d10890860875c6d759b14d93ee1a0f3195ceea61c6cb162a5ce58bc86f6"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/logs/node1.log",
+          "sha256": "a066bf6c28a8eea1fbd802fc139caa7b8b75df731cc28bcbaab53b81945cd53f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/logs/node2.log",
+          "sha256": "3dfb39848253b0633eaa6450b189bfba6a226428d1b4f12bb3d7959daee41cb5"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/logs/node3.log",
+          "sha256": "d02dd2ec1d5f467b3235f30ba3949635b1b72f04af42211f951471b98fc0935f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/logs/node4.log",
+          "sha256": "ec73309d025dda28af17e333ca651b907a8e6dc46ffea4aec2ec57a5ce8a849b"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/logs/node5.log",
+          "sha256": "4f50c91356303922c20d8dcff84b69a4092eb01696756d727566cc7e4fa5febc"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/node5-metrics-expvar.json",
+          "sha256": "8994a526a0ecc58346d9f59439d44d2ba14eb4522295cb0783ec7b88286f05ac"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "768871ab7ad0ff99187998259d9614b61c1d5a5df4c7a71102ca038be01f2a8c"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/process.json",
+          "sha256": "781a438fe3c903aef1a3cafa0adac97469dde3e06b6e8deb2eea0477b96de3bf"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/config_node1.toml",
+          "sha256": "c9c03ae74c8a8a2d170becf58a3e6db848f662d836410cbd45870fc87f86114f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/config_node2.toml",
+          "sha256": "bc48d97abe935dcd8329dd73ef5cf1098957d348bdb282fdc41eb32b4db3327f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/config_node3.toml",
+          "sha256": "72e9ef629beca68f941e7060658720ef4a7b81cecb2171551eb36ed455523f51"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/config_node4.toml",
+          "sha256": "52d4b1be975f5e6f2b4ad79b62d0426656401bb4eaed7247823880b2ca205d3f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/config_node5.toml",
+          "sha256": "b137de83ad071ca5cbe0081af83008de9878f772ec3d6e7b8fb2dbed1e84a514"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/genesis.json",
+          "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-445112033/diagnostics/runs/20261014-061505/launch-commands.txt",
+          "sha256": "d59cec5cebd481237cbf0644e159e8f371577bf3cebb79ef634209d6cffff144"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-1811511902/proof.json",
+      "sha256": "974b0ac71d4720de65e8aa5788e5905db0d8d378234a3e0521053e08eda61b8e",
+      "chain": "wemix",
+      "case": "node/CT-NODE-006-missing-block-catch-up.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 79,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_headers_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:20:34.515018Z",
+                "pid": 83271,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 79
+              }
+            ],
+            "name": "eth_downloader_headers_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/chain-record.json",
+          "sha256": "3a40d20d75eba2f23941c164294a929ce25d5dac97dc3cd0e63a2011653d0bf8"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/logs/node1.log",
+          "sha256": "66b26af0bc5cbe502975ed443a93d48c2905ffe1df98a27a8cbaac526340a543"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/logs/node2.log",
+          "sha256": "2e7650842b13ef923c2646f16a733d85a4dcc756dbf1d80a0b3c07b56e7f3e91"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/logs/node3.log",
+          "sha256": "40c2f36d672e268bbf308bcf9261a50ee5c229353aa268175987789687b2bc5f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/logs/node4.log",
+          "sha256": "a5b57f7478b2a8d6838c9ef4143d93219bd33f0e7ee605cb78f3a03f5e755c6a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/logs/node5.log",
+          "sha256": "a567fee563bbc2df48c3f54142f2c690d3b269ad27e6c1cc26afdec66dbdde57"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/node5-metrics-expvar.json",
+          "sha256": "abcac01c15d5d4cf73eea2f1ee3d0ee7e865c16562805fe20fe07694c87cd460"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "0c7ffaa54871aedcdc641dcd3d66aaeea3ecc541c3c43e42284c22bf4d3b520d"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/process.json",
+          "sha256": "380c36ea3bf4f52a4b11d1a6589dc71317e30a30599be87009d592790c92de14"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/config_node1.toml",
+          "sha256": "c9c03ae74c8a8a2d170becf58a3e6db848f662d836410cbd45870fc87f86114f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/config_node2.toml",
+          "sha256": "bc48d97abe935dcd8329dd73ef5cf1098957d348bdb282fdc41eb32b4db3327f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/config_node3.toml",
+          "sha256": "72e9ef629beca68f941e7060658720ef4a7b81cecb2171551eb36ed455523f51"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/config_node4.toml",
+          "sha256": "52d4b1be975f5e6f2b4ad79b62d0426656401bb4eaed7247823880b2ca205d3f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/config_node5.toml",
+          "sha256": "33f901b990810bc6d30cf05977d4df744b69e92572293221d5c610c774ef06cb"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/genesis.json",
+          "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-1811511902/diagnostics/runs/20261014-061927/launch-commands.txt",
+          "sha256": "698da4ed00b40959f5518d4ab6473f631a6356ff0bbb05b1b0d482888549e5b6"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/cbui/sync-path-native-228355861/proof.json",
+      "sha256": "5c03db2958ed554075d3d597e6856a7924710a77a6c4f8e1247b46ba524b3a38",
+      "chain": "wemix",
+      "case": "fee/CT-FEE-009-snap-receipt-gas-price.json",
+      "summary": {
+        "pass": 1,
+        "fail": 0,
+        "blocked": 0,
+        "skip": 0
+      },
+      "metricAssertions": [
+        {
+          "ID": "",
+          "Source": "",
+          "On": "",
+          "Assert": "metric",
+          "Expected": 1,
+          "Actual": 7,
+          "Pass": true,
+          "Provenance": {
+            "assert": "metric",
+            "compare": "GreaterOrEqual",
+            "expected": 1,
+            "metricSamples": [
+              {
+                "name": "eth_downloader_receipts_in",
+                "node": 5,
+                "observedAt": "2026-10-14T06:24:58.045861Z",
+                "pid": 95301,
+                "role": "en",
+                "source": "recorded-endpoint",
+                "status": "observed",
+                "value": 7
+              }
+            ],
+            "name": "eth_downloader_receipts_in",
+            "on": "en1"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/chain-record.json",
+          "sha256": "0e5abb322ef40be7fd651b4b1698a17979287201e23ac83c17268092e6ceed2d"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/logs/node1.log",
+          "sha256": "1747a16ee80842ed5c761d956933e545bf842a65a5ddba7251bd48ee1c25c656"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/logs/node2.log",
+          "sha256": "c9e108deadd953cab364cb060089883d3285c7a549a279696bd8a91133db4a36"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/logs/node3.log",
+          "sha256": "25739f813fd9b547dbb798414f1ac4ffdb0b382e1e281a003afae1972e960591"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/logs/node4.log",
+          "sha256": "0cb6ab4d5926d9514b6f6a658734ef0ffe0424486e3fe632993ef2185d215f2a"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/logs/node5.log",
+          "sha256": "cdd4015cf3d7ac42331d0fa3ed8f019b1f58590390fe96555ce02f60711e6677"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/node5-metrics-expvar.json",
+          "sha256": "2449f3ad721b60e99a5f36f17bbe28d92628b3df45c8d25bc27876facda2e4db"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/node5-metrics-prometheus.txt",
+          "sha256": "741765b71aa27d23fa3e370b44c26bb9a154fba2094799d4dd7e134aec027c77"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/process.json",
+          "sha256": "af5e15c4739fbe954928c3120bd9f845f56dc6cc88e7249cb13054b8452fca78"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/config_node1.toml",
+          "sha256": "c9c03ae74c8a8a2d170becf58a3e6db848f662d836410cbd45870fc87f86114f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/config_node2.toml",
+          "sha256": "bc48d97abe935dcd8329dd73ef5cf1098957d348bdb282fdc41eb32b4db3327f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/config_node3.toml",
+          "sha256": "72e9ef629beca68f941e7060658720ef4a7b81cecb2171551eb36ed455523f51"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/config_node4.toml",
+          "sha256": "52d4b1be975f5e6f2b4ad79b62d0426656401bb4eaed7247823880b2ca205d3f"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/config_node5.toml",
+          "sha256": "b137de83ad071ca5cbe0081af83008de9878f772ec3d6e7b8fb2dbed1e84a514"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/genesis.json",
+          "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269"
+        },
+        {
+          "path": "/private/tmp/cbui/sync-path-native-228355861/diagnostics/runs/20261014-062158/launch-commands.txt",
+          "sha256": "7f1baeb5ad65905e3b797d4e33992837221c8ec8e8694310b37b18ba1054e811"
+        }
+      ]
+    }
+  ],
+  "upstreamFetcherCollision": {
+    "chainSourceCommit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+    "binary": {
+      "path": "/private/tmp/chainbench-head-native/gwemix",
+      "sha256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e"
+    },
+    "proof": {
+      "path": "/private/tmp/cbui/sync-path-native-1171682116/proof.json",
+      "sha256": "95a90eef3ff7727d718b1086fa736e3671cf4fc2a58df1dfafabf5f30bc11104"
+    },
+    "rawPrometheus": {
+      "path": "/private/tmp/cbui/sync-path-native-1171682116/diagnostics/node5-metrics-prometheus.txt",
+      "sha256": "ddceb83604c903dcf9fdf63dd67a6f75acb5868570f855e5c1c7933fb7403a6c"
+    },
+    "rawExpvar": {
+      "path": "/private/tmp/cbui/sync-path-native-1171682116/diagnostics/node5-metrics-expvar.json",
+      "sha256": "91cb81a8f14b1bd71ea2d944e59530cba82ddc248fc64a08ce5608ac8b0809a0"
+    },
+    "sources": [
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/eth/fetcher/block_fetcher.go",
+        "sha256": "e3cb9a7259ac8162e4cbe98a04e3736a7f99281148d18285ac12af3ce681b030"
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/les/fetcher/block_fetcher.go",
+        "sha256": "cf99d40898ead93d2a3f30f17fdb9bd3b65e3b2124d66d4edc9399980c3688a0"
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/metrics/meter.go",
+        "sha256": "5430f8acce593b1bee3fea51de37add8b236b3d447d2e939334f33cf6bfa2e4b"
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/metrics/registry.go",
+        "sha256": "ee1f2dc1ad2c7027e2b9d9ae304060f9680de5649e515a02ed8b01f791bbd31d"
+      }
+    ],
+    "initializationOrder": [
+      "les/fetcher",
+      "eth/fetcher"
+    ],
+    "observed": "Raw exporters expose zero ETH fetcher receive counters while imported blocks and matching hash/stateRoot assertions pass. LES initializes first. The two packages register identical names; NewRegisteredMeter ignores DuplicateMetric and returns the unregistered ETH meter.",
+    "status": "unresolved; external chain source not modified; full strict native campaign remains failing at this case"
+  },
+  "metricSourceReferences": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/chain-analysis/gstable/rpc-metrics-graph.md",
+      "sha256": "05ee1f69060d9e2033d1bcb658a2088ae77fb164b613530f75c74747b5b767e4"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/chain-analysis/gwbft/rpc-metrics-graph.md",
+      "sha256": "a8681f6bddb57b6edfae341b5ab98adfb466b734bfc61049aceba3c3680dcd36"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/chain-analysis/gwemix/rpc-metrics-graph.md",
+      "sha256": "56b0f6b7a551763011801be6c81c1ecf9414a6ca1dedfef398a3d42e3af434f7"
+    }
+  ],
+  "limitations": [
+    "Local native builds only; fresh Linux fleet/L1, broader tasks 9/11-14 and frozen full Web acceptance remain pending.",
+    "RPC quantity failure was added case wiring and is not counted as functional metric RED.",
+    "Transient admin_wemixInfo bootstrap errors were preserved, not treated as W3 reproduction."
+  ],
+  "latestPinnedWemixRecheck": {
+    "path": "docs/dev/wemix-w4-latest-evidence.json",
+    "sha256": "9ae3e65322716174eb6a368175cc35f56cffd08a6293716c72c81ba0fb4dee2f",
+    "chainSourceCommit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+    "strictCaseAccepted": false,
+    "issueResolved": false,
+    "scope": "2026-10-15 pinned-source diagnostic recheck, not current remote HEAD claim. CT-NODE007 exact metric failure; actual EN71→91 with4 peers, canonical hash/root match, both raw exporters zero, LES-before-ETH init, source AST duplicate-registration anchors. No external source modification."
+  }
+}

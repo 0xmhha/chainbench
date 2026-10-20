@@ -1,0 +1,464 @@
+{
+  "scope": "Refresh all owned code syntax graphs after strict block comparisons and bounded consensus diagnostics. Two full graphs and two A8 inventories match. No parser implementation change or new feature RED claimed.",
+  "headAtProof": "1d8f7c9731fcd59fc0cab56ccfcffb1f5f36f645",
+  "proof": {
+    "acceptedCapture": true,
+    "sourceBefore": "f0c94ef520242634cc1dd7e88238a10ba95b88e6966fec2bc5e36c759be46619",
+    "sourceAfter": "f0c94ef520242634cc1dd7e88238a10ba95b88e6966fec2bc5e36c759be46619",
+    "sourceUnchanged": true,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-ast-probe-refresh-run-20261016.py": "c2da988efae012e51a982423058eb88373b790d16260ea5e9d475c0dfb6bb170",
+      "/private/tmp/chainbench-ast-probe-refresh-independent-20261016.py": "c74bf44bfa3162ee9ff248419e23c34c7d2b1b9187344f5ad40de7e8633bf812",
+      "/private/tmp/chainbench-ast-stdin-red-20261016.log": "e1db9a7976fc2942a1def26d38bd51dfa4200ee834b0da4969e4a5e0a765eacb",
+      "/private/tmp/chainbench-ast-stdin-option-red-20261016.log": "623d0808abe9edfd0c21d4aea64b580bca57d66e3de65fffc8884bd5577ca049",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/opt/homebrew/Cellar/go/1.25.2/libexec/bin/go": "c53f8fc2adf87f99d866f791f01ccf526a3698a247245ddc29a9d993a2447b29",
+      "/opt/homebrew/Cellar/node/24.4.1/bin/node": "b7528958c987d80526094f313761acf530d3e242bc1d062d534c5d89c93cbfe7",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-ast-probe-refresh-run-20261016.py": "c2da988efae012e51a982423058eb88373b790d16260ea5e9d475c0dfb6bb170",
+      "/private/tmp/chainbench-ast-probe-refresh-independent-20261016.py": "c74bf44bfa3162ee9ff248419e23c34c7d2b1b9187344f5ad40de7e8633bf812",
+      "/private/tmp/chainbench-ast-stdin-red-20261016.log": "e1db9a7976fc2942a1def26d38bd51dfa4200ee834b0da4969e4a5e0a765eacb",
+      "/private/tmp/chainbench-ast-stdin-option-red-20261016.log": "623d0808abe9edfd0c21d4aea64b580bca57d66e3de65fffc8884bd5577ca049",
+      "/private/tmp/chainbench-ast-tools/shfmt": "effb8a8c9e9ae1061139106f07fb5931fc48ef53fa2fc006e6265ef2b4d2c6b5",
+      "/private/tmp/chainbench-ast-tools/tree_sitter/_binding.cpython-310-darwin.so": "6f3937059adf14dc1b253c50684fe9c1b8119ce6ac1741066eff6e52691ee289",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_c_sharp/_binding.abi3.so": "245be74e81b41b3fa0efdddb56c7842b3b5ac489a3fdc1cd199257a334b35030",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_embedded_template/_binding.abi3.so": "c19e5602c37937acba1b04de85b9a1b73edffbb9df22c9879db29da751a24c51",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/bash.abi3.so": "708249a7a6046a4542515d97a335f09eed1660815c7ea8f8d127834f8909f741",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/dockerfile.abi3.so": "94ac5ab340ef2d7a5469fc822a3083bdf978595e1b3f97d9a6344828c533366e",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gomod.abi3.so": "6c2d75f44adead8702e5d6a9b3fa71f7bd7c1decd7a1f83e86c6037704473629",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/gosum.abi3.so": "284fbb8cafac04205f9bd91396edafee534e010e9675692adced6f23171e9e71",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/html.abi3.so": "1948ec232d882ad7dfb920e49496a2c17a06dec319cdc4669a5c56321cbfe835",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/make.abi3.so": "5f3f385bc68aec9494120a08148d25936784148f46babec14e4fb56e8b617fa9",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_language_pack/bindings/toml.abi3.so": "a31013f98091481ef45dd21189024564f19fe09cab420d41126f7e744c2abe72",
+      "/private/tmp/chainbench-ast-tools/tree_sitter_yaml/_binding.abi3.so": "c14530dadcd836c415baed4446bcd9efc232caa364505235decfca968d1b226f",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/acorn/dist/acorn.js": "b373ccd10e9deb63654289f73216eeefcaf0405d9ee24289aabf596b91b4c318",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/svelte/compiler/index.js": "0fab72c03d8b1fe69b56f4c95ba618cf893c86fe73b2bed7d51359d0689a26f1",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parser.js": "5ac73eb5da16ec8f998a1a5aac28b15815c892c2a3957ab06ee8333f8718be6e",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/tokenize.js": "ddfcaaa01f5eac9e4e8652044df1401ce6cc70295fd3f9fbb214ca66fb2bec72",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/node_modules/postcss/lib/parse.js": "7662c5ad1fd5f97a7c1615f0e5e7bc268e762916bcf6fb7bf9dda45537493764",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/web/package-lock.json": "573f5c77d64c1822548ec17815eaad71ed1c440504a0078d740cf61a9b1ab979",
+      "/opt/homebrew/Cellar/go/1.25.2/libexec/bin/go": "c53f8fc2adf87f99d866f791f01ccf526a3698a247245ddc29a9d993a2447b29",
+      "/opt/homebrew/Cellar/node/24.4.1/bin/node": "b7528958c987d80526094f313761acf530d3e242bc1d062d534c5d89c93cbfe7",
+      "/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10": "72956ad35cff7691dfed9e04c9593de825ffd5b2fa7e8bc9ae96ce9a1af65621"
+    },
+    "helperInputsUnchanged": true,
+    "outputs": [
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-capture.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792136999971799149
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent.json",
+        "sha256": "8e88b6b6d8b85e1ac6a18f1bdda4c086fae73820707d57dc8a34a75ca7f6f2c3",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137004433274071
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005179823187
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792137005790788886
+      }
+    ],
+    "historicalGraphs": [
+      {
+        "path": "/private/tmp/chainbench-all-code-capture.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972442316272530
+      },
+      {
+        "path": "/private/tmp/chainbench-all-code-independent.json",
+        "sha256": "284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791972446169720742
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-capture.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114751432316136
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-independent.json",
+        "sha256": "909cdd7cc89225c78131aa1bdccf8856131de287618d6418bf9295e92749d07e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114755879193901
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114757449689724
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-refresh-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792114758289212495
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-capture.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131969863093145
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-independent.json",
+        "sha256": "0741c968a0a823d36c6d83b11967247510580080754bdd7f23a09dd16454b909",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131977940134824
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-capture.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131979550767488
+      },
+      {
+        "path": "/private/tmp/chainbench-ast-stdin-20261016-a8-independent.json",
+        "sha256": "a8c270d0802fdf457099d3c1e9cbf2736cd8def922c4828c2259dc14b8bc6e91",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792131981167091555
+      }
+    ],
+    "elapsedSeconds": 11.26110908400733,
+    "fullRuntimeCoverageAccepted": false,
+    "finalWebAccepted": false
+  },
+  "independentAudit": {
+    "accepted": true,
+    "sourceDigest": "f0c94ef520242634cc1dd7e88238a10ba95b88e6966fec2bc5e36c759be46619",
+    "graphReproduced": true,
+    "counts": {
+      "parsedFiles": 2070,
+      "languages": {
+        "toml": 1,
+        "yaml": 11,
+        "make": 1,
+        "go": 1398,
+        "json": 352,
+        "python": 123,
+        "gomod": 2,
+        "bash": 62,
+        "dockerfile": 1,
+        "gosum": 1,
+        "html": 3,
+        "css": 1,
+        "javascript": 89,
+        "svelte": 25
+      },
+      "nodes": 135880,
+      "edges": 145019,
+      "excluded": 412,
+      "missing": 0
+    },
+    "ownedPaths": 2482,
+    "goTestFilesParsed": 793,
+    "embeddedASTs": 38,
+    "dynamicProgramInputs": 36,
+    "areas": {
+      ".betterleaks.toml": 1,
+      ".github": 1,
+      ".golangci.yml": 1,
+      "Makefile": 1,
+      "cmd": 180,
+      "docs": 109,
+      "env": 5,
+      "examples": 23,
+      "go.mod": 1,
+      "go.sum": 1,
+      "install.sh": 1,
+      "accounts": 31,
+      "app": 194,
+      "internal": 41,
+      "chains": 23,
+      "chainsetup": 149,
+      "consensus": 29,
+      "core": 287,
+      "dashboard": 47,
+      "dsl": 48,
+      "feature": 18,
+      "mcp": 47,
+      "preset": 3,
+      "resource": 46,
+      "testengine": 151,
+      "testhelper": 91,
+      "webcli": 2,
+      "presets": 42,
+      "scripts": 27,
+      "server-set.sample.yaml": 1,
+      "setup.sh": 1,
+      "tests": 417,
+      "uninstall.sh": 1,
+      "web": 49,
+      "workspace-config.sample.yaml": 1
+    },
+    "nodeKinds": {
+      "file": 2070,
+      "call": 99607,
+      "dynamic-program-input": 36,
+      "target": 20,
+      "function": 6442,
+      "import": 10066,
+      "binding": 11141,
+      "type": 1365,
+      "method": 1658,
+      "dsl-operation": 2792,
+      "template-parameter": 7,
+      "selector": 421,
+      "package": 82,
+      "dependency": 173
+    },
+    "exclusionReasons": {
+      "documentation or non-executable data": 221,
+      "generated proof metadata, not executable source": 144,
+      "test data, not executable source": 47
+    },
+    "auditNegativeControlsRejected": [
+      "omitted owned source",
+      "stale source digest",
+      "duplicate graph node",
+      "dangling edge",
+      "parser failure hidden by success count",
+      "zero parsed syntax",
+      "embedded identity absent",
+      "false summary count",
+      "nested input origin forged",
+      "unclassified exclusion",
+      "Docker capture program omitted",
+      "nested deletion call omitted"
+    ],
+    "a8": {
+      "nonMethodExportedSymbols": 1890,
+      "uses": {
+        "inside": 454,
+        "outside": 1171,
+        "test": 176,
+        "signature": 80,
+        "set": 9
+      },
+      "nowhere": 0,
+      "methodsNotMeasuredByThisReachabilityRule": true
+    },
+    "criticalRuntimeScript": {
+      "path": "internal/testengine/transaction_failure_native_test.go",
+      "language": "python",
+      "sha256": "1c64d0ce637f45c4100f15694cf494b6e59a2b8530e1346083671c7af85c8deb",
+      "reclaimCallObserved": true
+    },
+    "transportPrograms": {
+      "CAPTURE": "cfe0850187fa74fc08796ba810314bff58ae452ce8292ca5b85e0bf64d69ccb3",
+      "DELETE": "179f8a462a134802d62891712aace0bb63d2447b4e110ae06cb72fb0cc8317ee",
+      "NESTED_DELETE": "48033bd685a9cf1022e5800f81af65e7e1ca2b50692e3333b7a2a36719ec7bbe"
+    },
+    "transportProgramCount": 3,
+    "historicalGraphsPreserved": true,
+    "historicalSourceDigest": "94ccd1faffe15ef537a1f431cc0ac632da07103a03e6cd5c415c7443f453f640",
+    "parserVersions": {
+      "go": "go version go1.26.8 darwin/arm64",
+      "python": "3.10.11",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter": "0.25.2",
+      "PyYAML": "6.0.3",
+      "shfmt": "v3.12.0",
+      "frontend": {
+        "node": "v24.4.1",
+        "acorn": "8.17.0",
+        "svelte": "5.56.8",
+        "postcss": "8.5.23"
+      }
+    },
+    "fullDynamicCoverageAccepted": false,
+    "runtimeCoverageAccepted": false,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "verification": {
+    "parserContracts": 15,
+    "parserContractsLog": {
+      "path": "/private/tmp/chainbench-ast-probe-refresh-contracts-20261016.log",
+      "sha256": "3db04c83775e66f0af9b44f0e6b60f451292a60f4cabe0cafd4195884a9665e7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136971340981749
+    },
+    "newImplementationREDClaimed": false,
+    "auditMutationsRejected": 12,
+    "historicalGraphsPreserved": 10
+  },
+  "sources": [
+    {
+      "path": "scripts/inventory/all_code_graph.py",
+      "sha256": "8f075451fde2d4336a20328122c2023491a67f2e1020b1b0fa1bbfca1fac633c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792131768110294510
+    },
+    {
+      "path": "scripts/inventory/inline_python.py",
+      "sha256": "a352329867d4f8f64265f5bb65cfbc97e59b5167d01e27de6029489136e4bfd9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792131914053373991
+    },
+    {
+      "path": "scripts/inventory/test_all_code_graph.py",
+      "sha256": "a75c4805ef2ba390fe73b5cd5e940055b855c2f969ab144b73734209a3716077",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792131895217096516
+    },
+    {
+      "path": "internal/testhelper/blockassert.go",
+      "sha256": "67fd4a87f4a5ca199798af9868c2610834060250fde4081339cbd79549d082fe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792134001882099654
+    },
+    {
+      "path": "internal/testhelper/sameblockhash_test.go",
+      "sha256": "054b56475a81cc14184d949dd21af3c8f7c643a3b3d6442c12a70aeead7a0f27",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792134049343122748
+    },
+    {
+      "path": "internal/testhelper/outcome.go",
+      "sha256": "9f9f88ab524667a7b9fb70a6677ade209a7f4ac61422b12e854f7b392d4cbedb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792134391541806318
+    },
+    {
+      "path": "internal/testengine/capability_probe.go",
+      "sha256": "8100d28b7a96544897e9b2d2afef01d42255586a7aacd516c2d0caa73606f805",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792133434571177117
+    },
+    {
+      "path": "internal/testengine/capability_probe_failure_test.go",
+      "sha256": "4176623ad156788478ca93a8fbf1af04dfea4df85920054a2339c08a5380d086",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792133408396603547
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-start.json",
+      "sha256": "53ff8a6dfcf1fc6cf239e051fad1fbdf28ac73720d75f56ef2f1b4314fcbca9c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136995456084533
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-summary.json",
+      "sha256": "06eff7389a71b7cc9c862f4b3d9f8cecbdf7d2fd8ad8693ca56b14c065335a15",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137006718050775
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-probe-refresh-20261016-independent-audit.json",
+      "sha256": "796ac95141a18d21339016f51fb53ff882e8f17880e7899caa7440d3dc80cd8e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792137028157276171
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-probe-refresh-run-20261016.py",
+      "sha256": "c2da988efae012e51a982423058eb88373b790d16260ea5e9d475c0dfb6bb170",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136961054426464
+    },
+    {
+      "path": "/private/tmp/chainbench-ast-probe-refresh-independent-20261016.py",
+      "sha256": "c74bf44bfa3162ee9ff248419e23c34c7d2b1b9187344f5ad40de7e8633bf812",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792136961056191411
+    }
+  ],
+  "limits": [
+    "Structural AST/lexical dependency graph, not a type-resolved complete call graph.",
+    "36 dynamic program inputs remain explicit; no full dynamic execution coverage claimed.",
+    "A8 measures1890 non-method exported symbols; methods are outside that reachability rule.",
+    "The source fingerprint is the pre-publication frozen source. Publishing this evidence and worklist changes the full fingerprint while parsed implementation hashes remain bound.",
+    "Historical source cuts are preserved, not combined into a full native run.",
+    "Full L1, original/legacy adequacy, external issues and WEB01-14 remain open."
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false
+}

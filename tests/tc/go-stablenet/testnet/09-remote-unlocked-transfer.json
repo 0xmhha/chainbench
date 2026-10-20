@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "remote-unlocked-transfer",
+  "description": "Legacy remote/tx-send: submit exactly1wei using the node account via eth_sendTransaction, not a local signer. Set values.remoteSender/remoteRecipient to addresses owned/approved for this endpoint. Sender must be funded and unlocked; optional personal_unlockAccount is a separate explicit preparation. Empty inputs fail rather than claiming a skipped transaction passed.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-testnet",
+    "values": {
+      "remoteSender": "",
+      "remoteRecipient": ""
+    }
+  },
+  "steps": [
+    {
+      "expect": "balanceAt",
+      "address": "$remoteSender",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$remoteRecipient",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$remoteSender",
+      "save": "remoteNonce"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_sendTransaction",
+      "params": [
+        {
+          "from": "$remoteSender",
+          "to": "$remoteRecipient",
+          "value": "0x1",
+          "gas": "0x5208"
+        }
+      ],
+      "save": "remoteHash"
+    },
+    {
+      "do": "waitFor",
+      "source": "txStatus",
+      "hash": "$remoteHash",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$remoteHash"
+      ],
+      "select": "hash",
+      "compare": "Equal",
+      "is": "$remoteHash"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$remoteHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$remoteHash"
+      ],
+      "select": "from",
+      "compare": "EqualCI",
+      "is": "$remoteSender"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$remoteHash"
+      ],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$remoteRecipient"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$remoteHash"
+      ],
+      "select": "value",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$remoteSender",
+      "compare": "Greater",
+      "is": "$remoteNonce"
+    }
+  ]
+}

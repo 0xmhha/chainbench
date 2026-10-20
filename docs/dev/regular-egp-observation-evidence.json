@@ -1,0 +1,653 @@
+{
+  "date": "2026-10-20",
+  "scope": "Distinguishing observation with non-authorized sender, high requested priority tip, same transaction/inclusion block and real snap-received receipt. This records a criterion conflict, not completion of original regular EGP formula.",
+  "headAtProof": "60c118eac297221fd0a7f791879d33d46e61e125",
+  "workingTreeModifiedAtProof": true,
+  "sourceAtNativeProof": "7045fcd884e79bb55a8e02f340a3f73d8e6fb636012153608e69ef69aeaa3c28",
+  "implementationFiles": [
+    "internal/testengine/regular_egp_native_test.go",
+    "internal/testengine/regular_egp_witness_test.go"
+  ],
+  "red": {
+    "witnessValidatorFalseAccepts": 13,
+    "upfrontBudgetRegression": 1,
+    "priorityCapRegression": 1,
+    "realDecimalHeaderWireRegression": 1,
+    "templatePreparationFailureExcludedFromSemanticRed": true,
+    "lintFailureSeparate": true
+  },
+  "unitAndFullCheckLogs": [
+    {
+      "path": "/private/tmp/chainbench-regular-egp-witness-red-20261020.log",
+      "sha256": "16e56d8194195050be8abb8d833aff1c1685ae6aecc7012f2763bbfe4981270d",
+      "bytes": 2418,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792422841428384523
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-budget-red-20261020.log",
+      "sha256": "b97286d80427e5fc9d38d45aeb86231e751a8e441d5ecdbd15c337f45e892485",
+      "bytes": 251,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792423382615605859
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-tip-cap-red-20261020.log",
+      "sha256": "fad74dce293ab3bded84c8d64104af72b9eed20f525f6f052a81cfa8cdf1c815",
+      "bytes": 217,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792423777304892073
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-tip-cap-red-v2-20261020.log",
+      "sha256": "76d634ad123d56d57ba8fcb631de09b995cfc637161e21e5a8fb00814a2cf49b",
+      "bytes": 262,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792423805598144626
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-header-wire-red-20261020.log",
+      "sha256": "ccf7e1a4cf5759492ba34ecbf55be539e5ebffb7f96dca86653cb7e0bdb5c6d7",
+      "bytes": 304,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424344930278620
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-header-wire-green-20261020.log",
+      "sha256": "9f928630de68085a2741af3a73876f1702971bb351cd6f551181e1f5f3b65532",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424375414166622
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-final-green-20261020.log",
+      "sha256": "fad795f3f6f5eab624e35f3625379607ff12e4a78490cf157a3906a6e59e8f07",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424538967190260
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-related-race-v5-20261020.log",
+      "sha256": "f19fa91c21bce7b25dd4e589019ccc147a48b0e95f23de28ab4616bb8d65babf",
+      "bytes": 61,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424382991956755
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-make-check-v5-20261020.log",
+      "sha256": "09ecb1cabb860a58b5e6f89d3073ee688525de015f90c54bb748d0415bb56bac",
+      "bytes": 398,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424417449942611
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-make-check-v6-20261020.log",
+      "sha256": "876791785ebed5e91f7996b772bb32ef58194ad6a734b84f83a389f433800d92",
+      "bytes": 8631,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424664049240782
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-publication-check-20261020.log",
+      "sha256": "052f3b6f98ae6f214625855982e7d1b5086189ff0afd101d69d7191194c3dc9c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425178452048484
+    }
+  ],
+  "native": {
+    "exitCode": 0,
+    "actualProofPassed": true,
+    "sourceBefore": "7045fcd884e79bb55a8e02f340a3f73d8e6fb636012153608e69ef69aeaa3c28",
+    "sourceAfter": "7045fcd884e79bb55a8e02f340a3f73d8e6fb636012153608e69ef69aeaa3c28",
+    "sourceUnchanged": true,
+    "binaryInputsUnchanged": true,
+    "keysUnchanged": true,
+    "runtimes": [
+      "/private/tmp/cbui/txfail-j1zujyjv"
+    ],
+    "runtimeCount": 1,
+    "testPasses": [
+      "TestNativeRegularEGPDistinguishingWitness"
+    ],
+    "testFailures": [],
+    "testSkips": [],
+    "eventLog": {
+      "path": "/private/tmp/chainbench-regular-egp-native-v4-20261020-events.jsonl",
+      "sha256": "7ee82f79dbc1bc3d08bacb4e33a46db2d121f4828f0e650511bbf3b3ff8f1b5c",
+      "bytes": 1877,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424952475928385
+    },
+    "stderr": {
+      "path": "/private/tmp/chainbench-regular-egp-native-v4-20261020-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424724025859978
+    },
+    "elapsedSeconds": 229.78601908683777,
+    "freeBytesAfter": 25575284736,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "independent": {
+    "acceptedPreservationScope": true,
+    "acceptedDistinguishingObservation": true,
+    "originalFormulaAccepted": false,
+    "sourceDigest": "7045fcd884e79bb55a8e02f340a3f73d8e6fb636012153608e69ef69aeaa3c28",
+    "partial": false,
+    "priorFailedFilesPreserved": 739,
+    "outcomes": [
+      {
+        "observed": 47600000000000,
+        "original": 158000000000001,
+        "txTip": 138000000000001,
+        "headerTip": 27600000000000,
+        "baseFee": 20000000000000,
+        "receiptMetric": 2
+      }
+    ],
+    "retainedFiles": 267,
+    "closedRuntimes": [
+      {
+        "runtime": "/private/tmp/cbui/txfail-j1zujyjv",
+        "reclaimedDatabases": 10,
+        "remainingDatabases": 0
+      }
+    ],
+    "freshInventories": [
+      {
+        "attempt": 1,
+        "processes": 435,
+        "openedNames": 11327,
+        "allInactive": true
+      },
+      {
+        "attempt": 2,
+        "processes": 435,
+        "openedNames": 11323,
+        "allInactive": true
+      },
+      {
+        "attempt": 3,
+        "processes": 434,
+        "openedNames": 11323,
+        "allInactive": true
+      }
+    ],
+    "independentControlsRejected": [
+      "wrong sender",
+      "wrong snap hash",
+      "authorized sender",
+      "ambiguous tip",
+      "forged original formula",
+      "missing snap metric",
+      "unaccepted scope"
+    ],
+    "remainingDatabases": 0,
+    "fullLegacyAccepted": false,
+    "fullL1Accepted": false,
+    "all14Accepted": false
+  },
+  "proofArtifacts": [
+    {
+      "path": "/private/tmp/chainbench-regular-egp-native-v4-20261020-start.json",
+      "sha256": "cd989bbbb518c6f80e468a79621416135ad34664c36ea42b3a21d17f44606c4e",
+      "bytes": 49865,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424724025716895
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-native-v4-20261020-summary.json",
+      "sha256": "cfc0af8c72034d17d28f0da3cdec360796e1bfe10b3541cb29818ee61074b2b8",
+      "bytes": 1200,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424953812023007
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-native-v4-20261020-independent.json",
+      "sha256": "86a40877033a24ffa864a1aefb19725f0d923c526503181d65b1f4f55ed23f25",
+      "bytes": 82654,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792425016780996123
+    },
+    {
+      "path": "/private/tmp/chainbench-regular-egp-native-build-v6-20261020.json",
+      "sha256": "ec660e7b5d40efed8455e95f7f8dcccd5adb985f7591de8e90fa0f19f2490185",
+      "bytes": 387,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792424562572772631
+    }
+  ],
+  "priorFailedAttempts": [
+    {
+      "native": {
+        "exitCode": 1,
+        "actualProofPassed": false,
+        "sourceBefore": "7ee5b7ce27998459ec55c2170adc49d19a886f2786d954d26c021b8a31483829",
+        "sourceAfter": "7ee5b7ce27998459ec55c2170adc49d19a886f2786d954d26c021b8a31483829",
+        "sourceUnchanged": true,
+        "binaryInputsUnchanged": true,
+        "keysUnchanged": true,
+        "runtimes": [
+          "/private/tmp/cbui/txfail-t5e7efui"
+        ],
+        "runtimeCount": 1,
+        "testPasses": [],
+        "testFailures": [
+          {
+            "Time": "2026-10-20T00:21:43.262253+09:00",
+            "Action": "fail",
+            "Package": "github.com/0xmhha/chainbench/internal/testengine",
+            "Test": "TestNativeRegularEGPDistinguishingWitness",
+            "Elapsed": 28.51
+          },
+          {
+            "Time": "2026-10-20T00:21:43.265322+09:00",
+            "Action": "fail",
+            "Package": "github.com/0xmhha/chainbench/internal/testengine",
+            "Elapsed": 29.207
+          }
+        ],
+        "testSkips": [],
+        "eventLog": {
+          "path": "/private/tmp/chainbench-regular-egp-native-20261020-events.jsonl",
+          "sha256": "8328a24937df41e23c214e0570f55bf8ceb8a04c2c6594d475c1bb3c0eef34df",
+          "bytes": 1863,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423303265357014
+        },
+        "stderr": {
+          "path": "/private/tmp/chainbench-regular-egp-native-20261020-stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423274032388472
+        },
+        "elapsedSeconds": 31.302504062652588,
+        "freeBytesAfter": 25662361600,
+        "fullL1Accepted": false,
+        "all14Accepted": false
+      },
+      "preservation": {
+        "acceptedPreservationScope": true,
+        "acceptedDistinguishingObservation": false,
+        "originalFormulaAccepted": false,
+        "sourceDigest": "7ee5b7ce27998459ec55c2170adc49d19a886f2786d954d26c021b8a31483829",
+        "partial": true,
+        "outcomes": [],
+        "retainedFiles": 236,
+        "closedRuntimes": [
+          {
+            "runtime": "/private/tmp/cbui/txfail-t5e7efui",
+            "reclaimedDatabases": 10,
+            "remainingDatabases": 0
+          }
+        ],
+        "freshInventories": [
+          {
+            "attempt": 1,
+            "processes": 470,
+            "openedNames": 11686,
+            "allInactive": true
+          },
+          {
+            "attempt": 2,
+            "processes": 469,
+            "openedNames": 11683,
+            "allInactive": true
+          },
+          {
+            "attempt": 3,
+            "processes": 469,
+            "openedNames": 11684,
+            "allInactive": true
+          }
+        ],
+        "independentControlsRejected": [],
+        "remainingDatabases": 0,
+        "fullLegacyAccepted": false,
+        "fullL1Accepted": false,
+        "all14Accepted": false
+      },
+      "artifacts": [
+        {
+          "path": "/private/tmp/chainbench-regular-egp-native-20261020-summary.json",
+          "sha256": "c960f3767892452515dcebcd8d14586f85613ac9be1332dc127f9541cde3c054",
+          "bytes": 1564,
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423305333083578
+        },
+        {
+          "path": "/private/tmp/chainbench-regular-egp-native-20261020-independent-preservation.json",
+          "sha256": "f05a2b5e65d91d296619835b2509e9d87f938eddaab4a7ffb11a32f4c4e4e357",
+          "bytes": 73229,
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423338820647239
+        }
+      ]
+    },
+    {
+      "native": {
+        "exitCode": 1,
+        "actualProofPassed": false,
+        "sourceBefore": "ce25dabd0efec694e6d2d362bedaa861a0f72a9020349dc65e750ec18019d93b",
+        "sourceAfter": "ce25dabd0efec694e6d2d362bedaa861a0f72a9020349dc65e750ec18019d93b",
+        "sourceUnchanged": true,
+        "binaryInputsUnchanged": true,
+        "keysUnchanged": true,
+        "runtimes": [
+          "/private/tmp/cbui/txfail-28wmko8p"
+        ],
+        "runtimeCount": 1,
+        "testPasses": [],
+        "testFailures": [
+          {
+            "Time": "2026-10-20T00:28:24.552239+09:00",
+            "Action": "fail",
+            "Package": "github.com/0xmhha/chainbench/internal/testengine",
+            "Test": "TestNativeRegularEGPDistinguishingWitness",
+            "Elapsed": 62.02
+          },
+          {
+            "Time": "2026-10-20T00:28:24.55433+09:00",
+            "Action": "fail",
+            "Package": "github.com/0xmhha/chainbench/internal/testengine",
+            "Elapsed": 62.656
+          }
+        ],
+        "testSkips": [],
+        "eventLog": {
+          "path": "/private/tmp/chainbench-regular-egp-native-v2-20261020-events.jsonl",
+          "sha256": "c2178cc29c02a5c7bd41647a78714fd6f068e75067e2b69c0d75d25cf992ac55",
+          "bytes": 1860,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423704554378841
+        },
+        "stderr": {
+          "path": "/private/tmp/chainbench-regular-egp-native-v2-20261020-stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423641889838829
+        },
+        "elapsedSeconds": 64.02111506462097,
+        "freeBytesAfter": 25478660096,
+        "fullL1Accepted": false,
+        "all14Accepted": false
+      },
+      "preservation": {
+        "acceptedPreservationScope": true,
+        "acceptedDistinguishingObservation": false,
+        "originalFormulaAccepted": false,
+        "sourceDigest": "ce25dabd0efec694e6d2d362bedaa861a0f72a9020349dc65e750ec18019d93b",
+        "partial": true,
+        "priorFailedFilesPreserved": 236,
+        "outcomes": [],
+        "retainedFiles": 236,
+        "closedRuntimes": [
+          {
+            "runtime": "/private/tmp/cbui/txfail-28wmko8p",
+            "reclaimedDatabases": 10,
+            "remainingDatabases": 0
+          }
+        ],
+        "freshInventories": [
+          {
+            "attempt": 1,
+            "processes": 411,
+            "openedNames": 10886,
+            "allInactive": true
+          },
+          {
+            "attempt": 2,
+            "processes": 410,
+            "openedNames": 10854,
+            "allInactive": true
+          },
+          {
+            "attempt": 3,
+            "processes": 411,
+            "openedNames": 10864,
+            "allInactive": true
+          }
+        ],
+        "independentControlsRejected": [],
+        "remainingDatabases": 0,
+        "fullLegacyAccepted": false,
+        "fullL1Accepted": false,
+        "all14Accepted": false
+      },
+      "artifacts": [
+        {
+          "path": "/private/tmp/chainbench-regular-egp-native-v2-20261020-summary.json",
+          "sha256": "b029b9bedac0bab8e8ae33733abad9a1706a56a1cd9fbf82af9a37fa68f3f3c9",
+          "bytes": 1568,
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423705911263493
+        },
+        {
+          "path": "/private/tmp/chainbench-regular-egp-native-v2-20261020-independent-preservation.json",
+          "sha256": "4b48130daf648e2b35de049848abb3cf287e75bb24590f69104f3f84c309aa55",
+          "bytes": 73247,
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792423719318531918
+        }
+      ]
+    },
+    {
+      "native": {
+        "exitCode": 1,
+        "actualProofPassed": false,
+        "sourceBefore": "cd8a7bc5da9580e108e98a18174b38d8108566f56027c5199bfd718b10aa65c1",
+        "sourceAfter": "cd8a7bc5da9580e108e98a18174b38d8108566f56027c5199bfd718b10aa65c1",
+        "sourceUnchanged": true,
+        "binaryInputsUnchanged": true,
+        "keysUnchanged": true,
+        "runtimes": [
+          "/private/tmp/cbui/txfail-yp42nz8d"
+        ],
+        "runtimeCount": 1,
+        "testPasses": [],
+        "testFailures": [
+          {
+            "Time": "2026-10-20T00:36:50.617305+09:00",
+            "Action": "fail",
+            "Package": "github.com/0xmhha/chainbench/internal/testengine",
+            "Test": "TestNativeRegularEGPDistinguishingWitness",
+            "Elapsed": 198.03
+          },
+          {
+            "Time": "2026-10-20T00:36:50.619231+09:00",
+            "Action": "fail",
+            "Package": "github.com/0xmhha/chainbench/internal/testengine",
+            "Elapsed": 198.603
+          }
+        ],
+        "testSkips": [],
+        "eventLog": {
+          "path": "/private/tmp/chainbench-regular-egp-native-v3-20261020-events.jsonl",
+          "sha256": "4f43bcccfbbb9dc04b552dfa3cf0a2b6f8bec192cb6239d64a46f5f810f9811a",
+          "bytes": 1807,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792424210619252852
+        },
+        "stderr": {
+          "path": "/private/tmp/chainbench-regular-egp-native-v3-20261020-stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0,
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792424011996152126
+        },
+        "elapsedSeconds": 199.9656481742859,
+        "freeBytesAfter": 26425360384,
+        "fullL1Accepted": false,
+        "all14Accepted": false
+      },
+      "preservation": {
+        "acceptedPreservationScope": true,
+        "acceptedDistinguishingObservation": false,
+        "originalFormulaAccepted": false,
+        "sourceDigest": "cd8a7bc5da9580e108e98a18174b38d8108566f56027c5199bfd718b10aa65c1",
+        "partial": true,
+        "priorFailedFilesPreserved": 472,
+        "outcomes": [],
+        "retainedFiles": 267,
+        "closedRuntimes": [
+          {
+            "runtime": "/private/tmp/cbui/txfail-yp42nz8d",
+            "reclaimedDatabases": 10,
+            "remainingDatabases": 0
+          }
+        ],
+        "freshInventories": [
+          {
+            "attempt": 1,
+            "processes": 458,
+            "openedNames": 11343,
+            "allInactive": true
+          },
+          {
+            "attempt": 2,
+            "processes": 458,
+            "openedNames": 11343,
+            "allInactive": true
+          },
+          {
+            "attempt": 3,
+            "processes": 458,
+            "openedNames": 11343,
+            "allInactive": true
+          }
+        ],
+        "independentControlsRejected": [],
+        "remainingDatabases": 0,
+        "fullLegacyAccepted": false,
+        "fullL1Accepted": false,
+        "all14Accepted": false
+      },
+      "artifacts": [
+        {
+          "path": "/private/tmp/chainbench-regular-egp-native-v3-20261020-summary.json",
+          "sha256": "0c780c6f917c025c990aa07a8ba708d5cf532c36f7412f75ce8fd41670166036",
+          "bytes": 1571,
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792424211962027402
+        },
+        {
+          "path": "/private/tmp/chainbench-regular-egp-native-v3-20261020-independent-preservation.json",
+          "sha256": "764e7f10032607923420f9d203e053f09a0bba36bc20eaadf2cec1e3ac78dc56",
+          "bytes": 82272,
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792424264089028612
+        }
+      ]
+    }
+  ],
+  "storedThirdAttemptObservation": {
+    "acceptedStoredObservationOnly": true,
+    "nativeProducerExitCode": 1,
+    "nativeProducerAccepted": false,
+    "publicSnapPredicatesPass": 4,
+    "sourceDigest": "cd8a7bc5da9580e108e98a18174b38d8108566f56027c5199bfd718b10aa65c1",
+    "values": {
+      "transactionHash": "0xb7f72cf3173b30bdf34f535a4f41d1ac779b97b1652e33d466d33e9de56a1387",
+      "block": "0x14",
+      "baseFee": 20000000000000,
+      "headerTip": 27600000000000,
+      "txTip": 138000000000001,
+      "feeCap": 300000000000000,
+      "observedPrice": 47600000000000,
+      "originalFormulaPrice": 158000000000001,
+      "snapReceiptDownloadCount": 2
+    },
+    "negativeControlsRejected": [
+      "wrong sender",
+      "authorized sender",
+      "wrong EN receipt",
+      "ambiguous tip",
+      "wrong EN price",
+      "missing download"
+    ],
+    "retainedFiles": 267,
+    "remainingDatabases": 0,
+    "originalCriterionAccepted": false,
+    "fullLegacyAccepted": false,
+    "all14Accepted": false
+  },
+  "storedThirdAttemptObservationArtifact": {
+    "path": "/private/tmp/chainbench-regular-egp-raw-observation-20261020.json",
+    "sha256": "5c7ad9c61d5ff8137ca86376c6c5cc6f950464482f9551090564eda0854d65c1",
+    "bytes": 921,
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792424298708544403
+  },
+  "publicCaseModified": false,
+  "fixtureDifference": "Derived CT-FEE-009 keeps reset from genesis,150 subsequent blocks, real receipt-download metric and same-receipt4 predicates; only id/description, high tip5x+1 and fixed cap3e14 differ.",
+  "originalCriterionDecision": "pending user response to concrete observed conflict; public original02 remains unchanged",
+  "originalFormulaAccepted": false,
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "all14Accepted": false,
+  "publicationCheckPassed": true
+}

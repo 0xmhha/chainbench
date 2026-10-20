@@ -5,7 +5,7 @@
  import StatementEditor from './DSLStatementEditor.svelte'
  import {declarationDiff,duplicateCase} from './dsl-tree.mjs'
  import {selection} from './selection.svelte.js'
- import {references,finishedGenesisRef,caseAssetRefs,presetIds,sameDeclaration} from './dsl-form.js'
+ import {references,preparedChoices,finishedGenesisRef,caseAssetRefs,presetIds,sameDeclaration} from './dsl-form.js'
  import {topologyChoices,draftChain} from './chain-contract.mjs'
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
  const role=$derived(webSession?.user.role)
@@ -21,7 +21,7 @@
  // Node names come from the chain contract's roles and, when the selected
  // workspace has a recorded network, from its actual nodes as well.
  let workspaceNodes=$state([]),errorList=$state([]),importDiff=$state([])
- const suggestions=$derived.by(()=>{const r=references(document,topology.roles,topology.defaults);return {...r,nodes:[...new Set([...r.nodes,...workspaceNodes])]}})
+ const suggestions=$derived.by(()=>{const r=references(document,topology.roles,topology.defaults,presets);return {...r,...preparedChoices(document,savedCases),nodes:[...new Set([...r.nodes,...workspaceNodes])]}})
  $effect(()=>{const id=selection.workspaceId;workspaceNodes=[];if(webSession&&id)api('networks').then(v=>{if(selection.workspaceId===id)workspaceNodes=v.items.filter(n=>n.workspaceId===id).flatMap(n=>n.nodes.map(x=>x.id))}).catch(()=>{})})
  $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})
  const api=$derived(webApi(webSession))
@@ -72,22 +72,24 @@
  function duplicate(){editorKey++;const copy=duplicateCase($state.snapshot(document),savedCases.map(c=>c.name));original=null;savedId='';revision=0;presetRefs=[];importDiff=[];change(copy);status=`${copy.id}(으)로 복제했습니다. 검증하고 저장하면 새 공유 테스트가 됩니다`}
  function download(content,name){const url=URL.createObjectURL(new Blob([JSON.stringify(content,null,2)],{type:'application/json'}));const a=globalThis.document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 </script>
-<section aria-label="구조 DSL 편집기" class="dsl">
+<section aria-label="구조 DSL 편집기" aria-busy={busy} class="dsl">
  <h2>테스트 시나리오 편집기</h2><p>엔진 계약을 바탕으로 do/expect 문을 순서대로 만듭니다. 가져온 필드는 바꾸기 전까지 그대로 보입니다.</p>
  {#if webSession}
   <p>{role} · 등록된 동작, 단언, 읽기 {vocabulary?.entries.length??0}개</p>
-  <label>공유 테스트 <select aria-label="공유 테스트" value={savedId} onchange={e=>loadSaved(e.target.value)}><option value="">새 테스트</option>{#each savedCases as item}<option value={item.id}>{item.name} · revision {item.revision}</option>{/each}</select></label>
+  <label>공유 테스트 <select aria-label="공유 테스트" disabled={busy} value={savedId} onchange={e=>loadSaved(e.target.value)}><option value="">새 테스트</option>{#each savedCases as item}<option value={item.id}>{item.name} · revision {item.revision}</option>{/each}</select></label>
   {#if role!=='viewer'}
-  <button onclick={()=>{editorKey++;original=null;savedId='';revision=0;genesisBackup=null;change({schemaVersion:"2",kind:"case",id:"new-test",chainPreset:{chain:"stablenet",binaries:{default:"gstable"},topology:{bp:4}},steps:[{expect:"blockNumber",is:1}]})}}>새 테스트 시나리오</button>
-  <label>참조 프리셋 파일 <input aria-label="참조 프리셋 파일" type="file" multiple accept=".json,application/json" onchange={uploadPreset} /></label>
-  <label>테스트 JSON 가져오기 <input aria-label="테스트 JSON 가져오기" type="file" accept=".json,application/json" onchange={upload} /></label>
+  <button disabled={busy} onclick={()=>{editorKey++;original=null;savedId='';revision=0;genesisBackup=null;change({schemaVersion:"2",kind:"case",id:"new-test",chainPreset:{chain:"stablenet",binaries:{default:"gstable"},topology:{bp:4}},steps:[{expect:"blockNumber",is:1}]})}}>새 테스트 시나리오</button>
+  <label>참조 프리셋 파일 <input aria-label="참조 프리셋 파일" disabled={busy} type="file" multiple accept=".json,application/json" onchange={uploadPreset} /></label>
+  <label>테스트 JSON 가져오기 <input aria-label="테스트 JSON 가져오기" disabled={busy} type="file" accept=".json,application/json" onchange={upload} /></label>
   {#if document&&contract}
    {#if document.schemaVersion==='1'||typeof document.chainPreset==='object'}
     <label>테스트 완성 genesis 자료 <select aria-label="테스트 완성 genesis 자료" disabled={busy} value={selectedGenesis} onchange={e=>selectGenesis(e.target.value)}><option value="">기존 생성 설정 사용</option>{#each genesisAssets as asset}<option value={asset.id}>{asset.name} · {asset.checksum.slice(0,12)}</option>{/each}</select></label>
     <p>선택한 파일을 그대로 사용합니다. 선택을 해제하면 이전 생성 설정을 복원합니다.</p>
     {#if finishedGenesisRef(document)&&!selectedGenesis}<p>기존 선언 참조: {finishedGenesisRef(document)} · 실행하려면 등록된 자료를 선택하세요.</p>{/if}
    {/if}
-   {#key editorKey}<StatementEditor {document} {contract} errors={errorList} {suggestions} onchange={change} />{/key}
+   <fieldset class="document-fields" aria-label="테스트 선언 편집" disabled={busy}>
+    {#key editorKey}<StatementEditor {document} {contract} errors={errorList} {suggestions} onchange={change} />{/key}
+   </fieldset>
    {#if importDiff.length}<details open data-testid="import-diff"><summary>v1 가져오기에서 바뀐 곳 {importDiff.length}개</summary><ul>{#each importDiff as d}<li><code>{d.path}</code> · {({added:'추가됨',removed:'없어짐',changed:'바뀜'})[d.kind]}</li>{/each}</ul></details>{/if}
    <button disabled={busy} onclick={validate}>테스트 시나리오 검증</button>
    <button disabled={!valid||busy} onclick={()=>download(document,'test-case.json')}>테스트 시나리오 내보내기</button>
@@ -104,5 +106,6 @@
  <p role="status" aria-label="DSL 상태">{busy?'처리 중…':status}</p>
 </section>
 <style>
+.document-fields{border:0;padding:0;margin:0;min-width:0}
 .dsl{margin-top:24px;padding:24px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}p{color:var(--text-muted)}label{display:grid;gap:4px;margin:8px 0}input,select,button{font:inherit;padding:8px;background:var(--surface-raised);color:var(--text);border:1px solid var(--border);border-radius:6px}button{cursor:pointer;margin:4px}button:disabled{opacity:.4}pre{max-height:18rem;overflow:auto;background:var(--bg);padding:8px}
 </style>

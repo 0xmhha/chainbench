@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 from runtime_contract import source_digest
+from runtime_storage import reclaim_evidence
 
 RUNNERS = {
     'WEB-01': ('run_web01.py', 'evidence'),
@@ -53,7 +54,13 @@ def main():
         receipt['evidenceDigest'] = module.digest(evidence_path)
         receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
     if result.returncode:
+        # A failed criterion still wrote diagnostic evidence. Its owned runtime
+        # is no longer active; retain the failure and reclaim disposable DBs.
+        if directory.is_dir():
+            reclaim_evidence(directory)
         raise SystemExit(result.returncode)
+    verify_published(verifier, directory)
+    reclaim_evidence(directory)
     verify_published(verifier, directory)
     print(criterion + ' PASS (fresh published capture)')
 

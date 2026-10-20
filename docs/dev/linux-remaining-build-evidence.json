@@ -1,0 +1,322 @@
+{
+  "scope": "Remaining WBFT/WEMIX Linux ARM64 binaries from pinned local source revisions, exact source bind and source-copy verification, fresh setup.sh output, one owned server copy/hash/version. Combined with prior StableNet proof: three binaries on one server, not fleet15/fullL1/mainnet/final Web acceptance.",
+  "allThreeChainsBuilt": true,
+  "fleet15Ready": false,
+  "fullL1Accepted": false,
+  "stableNet": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/linux-fresh-build-evidence.json",
+    "sha256": "8744acab9fb3a1b70229174756b05a3aed8ca84b7018ca264cc0e4882ad042fd",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 20,
+    "mtimeNS": 1792053572839262886
+  },
+  "runs": [
+    {
+      "chain": "wbft",
+      "scope": "Actual WBFT Linux build with every selected source file verified inside read-only bind, fresh ELF publication through setup.sh, Docker copy/version/hash on one owned server. Not three-chain/fleet15/fullL1/Linux mainnet/Web acceptance.",
+      "sourceBefore": "541e48f37e852503d7e868358da59cbee7f1f7768043fecd93fa067bd7b3547c",
+      "sourceAfter": "541e48f37e852503d7e868358da59cbee7f1f7768043fecd93fa067bd7b3547c",
+      "sourceUnchanged": true,
+      "elapsedSeconds": 33.38678095897194,
+      "sourceRevision": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+      "selectedRegularFiles": 2215,
+      "selectedSymlinks": 0,
+      "trackedModified": false,
+      "worktreeModified": false,
+      "summary": {
+        "path": "/private/tmp/chainbench-linux-wbft-native-summary.json",
+        "sha256": "ca82edf3c04b01403afdd86ca5bb684127d43d1601c39546b1f3335b004378af",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054076784370310
+      },
+      "proof": {
+        "path": "/private/tmp/cbui/linux-build-2a9wvye7/reports/proof.json",
+        "sha256": "ca82edf3c04b01403afdd86ca5bb684127d43d1601c39546b1f3335b004378af",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054076782608034
+      },
+      "sourceInventory": {
+        "path": "/private/tmp/cbui/linux-build-2a9wvye7/reports/source-inventory.json",
+        "sha256": "1f35f0d269f52f841a2c6cc2473799e21e19a8d5049036234f8c0d42ce65ea47",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054037783628109
+      },
+      "runner": {
+        "path": "/private/tmp/chainbench-linux-wbft-run.py",
+        "sha256": "98009f1101cb9d450e8d33a344e68d0a2f44b7792bb303bfeec50596b3b10189",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792053812209482306
+      },
+      "artifact": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-2a9wvye7/gwbft",
+        "sha256": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "remoteSHA256": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+        "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=\nGOROOT=/usr/local/go\n",
+        "buildInfo": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-2a9wvye7/gwbft: go1.25.14\n\tpath\tgithub.com/ethereum/go-ethereum/cmd/gwemix\n\tmod\tgithub.com/ethereum/go-ethereum\tv1.0.1-alpha.0.20260811065317-7af50e45db4a\t\n\tdep\tgithub.com/DataDog/zstd\tv1.4.5\th1:EndNeuB0l9syBZhut0wns3gV1hL8zX8LIu6ZiVHWLIQ=\n\tdep\tgithub.com/VictoriaMetrics/fastcache\tv1.12.2\th1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjCM7NQbSmF7WI=\n\tdep\tgithub.com/beorn7/perks\tv1.0.1\th1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=\n\tdep\tgithub.com/bits-and-blooms/bitset\tv1.20.0\th1:2F+rfL86jE2d/bmw7OhqUg2Sj/1rURkBn3MdfoPyRVU=\n\tdep\tgithub.com/cespare/xxhash/v2\tv2.2.0\th1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=\n\tdep\tgithub.com/cockroachdb/errors\tv1.8.1\th1:A5+txlVZfOqFBDa4mGz2bUWSp0aHElvHX2bKkdbQu+Y=\n\tdep\tgithub.com/cockroachdb/logtags\tv0.0.0-20190617123548-eb05cc24525f\th1:o/kfcElHqOiXqcou5a3rIlMc7oJbMQkeLk0VQJ7zgqY=\n\tdep\tgithub.com/cockroachdb/pebble\tv0.0.0-20230928194634-aa077af62593\th1:aPEJyR4rPBvDmeyi+l/FS/VtA00IWvjeFvjen1m1l1A=\n\tdep\tgithub.com/cockroachdb/redact\tv1.0.8\th1:8QG/764wK+vmEYoOlfobpe12EQcS81ukx/a4hdVMxNw=\n\tdep\tgithub.com/cockroachdb/sentry-go\tv0.6.1-cockroachdb.2\th1:IKgmqgMQlVJIZj19CdocBeSfSaiCbEBZGKODaixqtHM=\n\tdep\tgithub.com/cockroachdb/tokenbucket\tv0.0.0-20230807174530-cc333fc44b06\th1:zuQyyAKVxetITBuuhv3BI9cMrmStnpT18zmgmTxunpo=\n\tdep\tgithub.com/consensys/gnark-crypto\tv0.18.1\th1:RyLV6UhPRoYYzaFnPQA4qK3DyuDgkTgskDdoGqFt3fI=\n\tdep\tgithub.com/cpuguy83/go-md2man/v2\tv2.0.2\th1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=\n\tdep\tgithub.com/crate-crypto/go-ipa\tv0.0.0-20231025140028-3c0104f4b233\th1:d28BXYi+wUpz1KBmiF9bWrjEMacUEREV6MBi2ODnrfQ=\n\tdep\tgithub.com/crate-crypto/go-kzg-4844\tv1.1.0\th1:EN/u9k2TF6OWSHrCCDBBU6GLNMq88OspHHlMnHfoyU4=\n\tdep\tgithub.com/davecgh/go-spew\tv1.1.1\th1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=\n\tdep\tgithub.com/deckarep/golang-set/v2\tv2.6.0\th1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80NsVHagjM=\n\tdep\tgithub.com/deepmap/oapi-codegen\tv1.6.0\th1:w/d1ntwh91XI0b/8ja7+u5SvA4IFfM0UNNLmiDR1gg0=\n\tdep\tgithub.com/dlclark/regexp2\tv1.7.0\th1:7lJfhqlPssTb1WQx4yvTHN0uElPEv52sbaECrAQxjAo=\n\tdep\tgithub.com/dop251/goja\tv0.0.0-20230806174421-c933cf95e127\th1:qwcF+vdFrvPSEUDSX5RVoRccG8a5DhOdWdQ4zN62zzo=\n\tdep\tgithub.com/fatih/color\tv1.16.0\th1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=\n\tdep\tgithub.com/ferranbt/fastssz\tv0.1.2\th1:Dky6dXlngF6Qjc+EfDipAkE83N5I5DE68bY6O0VLNPk=\n\tdep\tgithub.com/gballet/go-libpcsclite\tv0.0.0-20190607065134-2772fd86a8ff\th1:tY80oXqGNY4FhTFhk+o9oFHGINQ/+vhlm8HFzi6znCI=\n\tdep\tgithub.com/gballet/go-verkle\tv0.1.1-0.20231031103413-a67434b50f46\th1:BAIP2GihuqhwdILrV+7GJel5lyPV3u1+PgzrWLc0TkE=\n\tdep\tgithub.com/go-sourcemap/sourcemap\tv2.1.3+incompatible\th1:W1iEw64niKVGogNgBN3ePyLFfuisuzeidWPMPWmECqU=\n\tdep\tgithub.com/gofrs/flock\tv0.8.1\th1:+gYjHKf32LDeiEEFhQaotPbLuUXjY5ZqxKgXy7n59aw=\n\tdep\tgithub.com/gogo/protobuf\tv1.3.2\th1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=\n\tdep\tgithub.com/golang-jwt/jwt/v4\tv4.5.2\th1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXeUI=\n\tdep\tgithub.com/golang/protobuf\tv1.5.3\th1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg=\n\tdep\tgithub.com/golang/snappy\tv0.0.5-0.20220116011046-fa5810519dcb\th1:PBC98N2aIaM3XXiurYmW7fx4GZkL8feAMVq7nEjURHk=\n\tdep\tgithub.com/google/pprof\tv0.0.0-20230207041349-798e818bf904\th1:4/hN5RUoecvl+RmJRE2YxKWtnnQls6rQjjW5oV7qg2U=\n\tdep\tgithub.com/google/uuid\tv1.3.0\th1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=\n\tdep\tgithub.com/gorilla/websocket\tv1.4.2\th1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=\n\tdep\tgithub.com/graph-gophers/graphql-go\tv1.3.0\th1:Eb9x/q6MFpCLz7jBCiP/WTxjSDrYLR1QY41SORZyNJ0=\n\tdep\tgithub.com/hashicorp/go-bexpr\tv0.1.10\th1:9kuI5PFotCboP3dkDYFr/wi0gg0QVbSNz5oFRpxn4uE=\n\tdep\tgithub.com/holiman/billy\tv0.0.0-20240216141850-2abb0c79d3c4\th1:X4egAf/gcS1zATw6wn4Ej8vjuVGxeHdan+bRb2ebyv4=\n\tdep\tgithub.com/holiman/bloomfilter/v2\tv2.0.3\th1:73e0e/V0tCydx14a0SCYS/EWCxgwLZ18CZcZKVu0fao=\n\tdep\tgithub.com/holiman/uint256\tv1.3.2\th1:a9EgMPSC1AAaj1SZL5zIQD3WbwTuHrMGOerLjGmM/TA=\n\tdep\tgithub.com/huin/goupnp\tv1.3.0\th1:UvLUlWDNpoUdYzb2TCn+MuTWtcjXKSza2n6CBdQ0xXc=\n\tdep\tgithub.com/influxdata/influxdb-client-go/v2\tv2.4.0\th1:HGBfZYStlx3Kqvsv1h2pJixbCl/jhnFtxpKFAv9Tu5k=\n\tdep\tgithub.com/influxdata/influxdb1-client\tv0.0.0-20220302092344-a9ab5670611c\th1:qSHzRbhzK8RdXOsAdfDgO49TtqC1oZ+acxPrkfTxcCs=\n\tdep\tgithub.com/influxdata/line-protocol\tv0.0.0-20200327222509-2487e7298839\th1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=\n\tdep\tgithub.com/jackpal/go-nat-pmp\tv1.0.2\th1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=\n\tdep\tgithub.com/karalabe/usb\tv0.0.2\th1:M6QQBNxF+CQ8OFvxrT90BA0qBOXymndZnk5q235mFc4=\n\tdep\tgithub.com/klauspost/cpuid/v2\tv2.0.9\th1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBFYa4=\n\tdep\tgithub.com/kr/pretty\tv0.3.1\th1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=\n\tdep\tgithub.com/kr/text\tv0.2.0\th1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.13\th1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.20\th1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=\n\tdep\tgithub.com/mattn/go-runewidth\tv0.0.13\th1:lTGmDsbAYt5DmK6OnoV7EuIF1wEIFAcxld6ypU4OSgU=\n\tdep\tgithub.com/matttproud/golang_protobuf_extensions\tv1.0.2-0.20181231171920-c182affec369\th1:I0XW9+e1XWDxdcEniV4rQAIOPUGDq67JSCiRCgGCZLI=\n\tdep\tgithub.com/minio/sha256-simd\tv1.0.0\th1:v1ta+49hkWZyvaKwrQB8elexRqm6Y0aMLjCNsrYxo6g=\n\tdep\tgithub.com/mitchellh/mapstructure\tv1.4.1\th1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=\n\tdep\tgithub.com/mitchellh/pointerstructure\tv1.2.0\th1:O+i9nHnXS3l/9Wu7r4NrEdwA2VFTicjUEN1uBnDo34A=\n\tdep\tgithub.com/naoina/go-stringutil\tv0.1.0\th1:rCUeRUHjBjGTSHl0VC00jUPLz8/F9dDzYI70Hzifhks=\n\tdep\tgithub.com/naoina/toml\tv0.1.2-0.20170918210437-9fafd6967416\th1:shk/vn9oCoOTmwcouEdwIeOtOGA/ELRUw/GwvxwfT+0=\n\tdep\tgithub.com/olekukonko/tablewriter\tv0.0.5\th1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=\n\tdep\tgithub.com/opentracing/opentracing-go\tv1.1.0\th1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=\n\tdep\tgithub.com/peterh/liner\tv1.1.1-0.20190123174540-a2c9a5303de7\th1:oYW+YCJ1pachXTQmzR3rNLYGGz4g/UgFcjb28p/viDM=\n\tdep\tgithub.com/pkg/errors\tv0.9.1\th1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=\n\tdep\tgithub.com/prometheus/client_golang\tv1.12.0\th1:C+UIj/QWtmqY13Arb8kwMt5j34/0Z2iKamrJ+ryC0Gg=\n\tdep\tgithub.com/prometheus/client_model\tv0.2.1-0.20210607210712-147c58e9608a\th1:CmF68hwI0XsOQ5UwlBopMi2Ow4Pbg32akc4KIVCOm+Y=\n\tdep\tgithub.com/prometheus/common\tv0.32.1\th1:hWIdL3N2HoUx3B8j3YN9mWor0qhY/NlEKZEaXxuIRh4=\n\tdep\tgithub.com/prometheus/procfs\tv0.7.3\th1:4jVXhlkAyzOScmCkXBTOLRLTz8EeU+eyjrwB/EPq0VU=\n\tdep\tgithub.com/rivo/uniseg\tv0.2.0\th1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=\n\tdep\tgithub.com/rogpeppe/go-internal\tv1.12.0\th1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=\n\tdep\tgithub.com/rs/cors\tv1.7.0\th1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=\n\tdep\tgithub.com/russross/blackfriday/v2\tv2.1.0\th1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=\n\tdep\tgithub.com/shirou/gopsutil\tv3.21.4-0.20210419000835-c7a38de76ee5+incompatible\th1:Bn1aCHHRnjv4Bl16T8rcaFjYSrGrIZvpiGO6P3Q4GpU=\n\tdep\tgithub.com/status-im/keycard-go\tv0.2.0\th1:QDLFswOQu1r5jsycloeQh3bVU8n/NatHHaZobtDnDzA=\n\tdep\tgithub.com/supranational/blst\tv0.3.16\th1:bTDadT+3fK497EvLdWRQEjiGnUtzJ7jjIUMF0jqwYhE=\n\tdep\tgithub.com/syndtr/goleveldb\tv1.0.1-0.20210819022825-2ae1ddf74ef7\th1:epCh84lMvA70Z7CTTCmYQn2CKbY8j86K7/FAIr141uY=\n\tdep\tgithub.com/tklauser/go-sysconf\tv0.3.12\th1:0QaGUFOdQaIVdPgfITYzaTegZvdCjmYO52cSFAEVmqU=\n\tdep\tgithub.com/tklauser/numcpus\tv0.6.1\th1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+Fk=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.1.0\th1:5eUemwrMargf3BSLRRCalXT93Ns6pQJIjYQN2nyfOP8=\n\tdep\tgithub.com/urfave/cli/v2\tv2.25.7\th1:VAzn5oq403l5pHjc4OhD54+XGO9cdKVL/7lDjF+iKUs=\n\tdep\tgithub.com/xrash/smetrics\tv0.0.0-20201216005158-039620a65673\th1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=\n\tdep\tgo.uber.org/automaxprocs\tv1.5.2\th1:2LxUOGiR3O6tw8ui5sZa2LAaHnsviZdVOUZw4fvbnME=\n\tdep\tgolang.org/x/crypto\tv0.35.0\th1:b15kiHdrGCHrP6LvwaQ3c03kgNhhiMgvlhxHQhmg2Xs=\n\tdep\tgolang.org/x/exp\tv0.0.0-20231110203233-9a3e6036ecaa\th1:FRnLl4eNAQl8hwxVVC17teOw8kdjVDVAiFMtgUdTSRQ=\n\tdep\tgolang.org/x/net\tv0.25.0\th1:d/OCCoBEUq33pjydKrGQhw7IlUPI2Oylr+8qLx49kac=\n\tdep\tgolang.org/x/sync\tv0.11.0\th1:GGz8+XQP4FvTTrjZPzNKTMFtSXH80RAzG+5ghFPgK9w=\n\tdep\tgolang.org/x/sys\tv0.30.0\th1:QjkSwP/36a20jFYWkSue1YwXzLmsV5Gfq7Eiy72C1uc=\n\tdep\tgolang.org/x/text\tv0.22.0\th1:bofq7m3/HAFvbF51jz3Q9wLg3jkvSPuiZu/pD1XwgtM=\n\tdep\tgolang.org/x/time\tv0.3.0\th1:rg5rLMjNzMS1RkNLzCG38eapWhnYLFYXDXj2gOlr8j4=\n\tdep\tgoogle.golang.org/protobuf\tv1.27.1\th1:SnqbnDw1V7RiZcXPx5MEeqPv2s79L9i7BJUlG/+RurQ=\n\tdep\tgopkg.in/natefinch/lumberjack.v2\tv2.0.0\th1:1Lc07Kr7qY4U2YPouBjpCLxpiyxIVoxqXgkXLknAOE8=\n\tdep\tgopkg.in/yaml.v2\tv2.4.0\th1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tDefaultGODEBUG=containermaxprocs=0,decoratemappings=0,gotestjsonbuildtext=1,httpcookiemaxnum=0,multipathtcp=0,randseednop=0,rsa1024min=0,tlsmlkem=0,tlssha1=1,updatemaxprocs=0,urlmaxqueryparams=0,x509rsacrt=0,x509sha256skid=0,x509usepolicies=0\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=linux\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=7af50e45db4a48a2a77e565c7ff7bde0e8f95505\n\tbuild\tvcs.time=2026-08-11T06:53:17Z\n\tbuild\tvcs.modified=false\n",
+        "file": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-2a9wvye7/gwbft: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=fd02ce3d2bfac4734efbaf944836e08c3824c0a1, for GNU/Linux 3.7.0, with debug_info, not stripped",
+        "reference": {
+          "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-2a9wvye7/gwbft",
+          "sha256": "18c27359e73b946d7a3e5d5b356d3befccd84a182af84faea0c963fe82846aa6",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1792054072838393284
+        }
+      },
+      "builder": {
+        "id": "sha256:4e2219ca515d99610115539a96f733fa567f62941e31ac5bfb87c7ade6143bcc",
+        "repoDigests": [
+          "golang@sha256:699337d620559a59b4a2bb298ad59611e535d2ee755a34cf2d2a98f37578dc80"
+        ],
+        "goVersion": "go version go1.25.14 linux/arm64"
+      }
+    },
+    {
+      "chain": "wemix",
+      "scope": "Actual WEMIX Linux build with every selected source file verified inside read-only bind, fresh ELF publication through setup.sh, Docker copy/version/hash on one owned server. Not three-chain/fleet15/fullL1/Linux mainnet/Web acceptance.",
+      "sourceBefore": "541e48f37e852503d7e868358da59cbee7f1f7768043fecd93fa067bd7b3547c",
+      "sourceAfter": "541e48f37e852503d7e868358da59cbee7f1f7768043fecd93fa067bd7b3547c",
+      "sourceUnchanged": true,
+      "elapsedSeconds": 77.06627320795087,
+      "sourceRevision": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+      "selectedRegularFiles": 2050,
+      "selectedSymlinks": 1,
+      "trackedModified": false,
+      "worktreeModified": false,
+      "summary": {
+        "path": "/private/tmp/chainbench-linux-wemix-native-summary.json",
+        "sha256": "baab9d6e8dd96ca038dc4ee9e1c44016e33177528426e83b3e3c5035747383da",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054195158834642
+      },
+      "proof": {
+        "path": "/private/tmp/cbui/linux-build-z6q50_7c/reports/proof.json",
+        "sha256": "baab9d6e8dd96ca038dc4ee9e1c44016e33177528426e83b3e3c5035747383da",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054195156871820
+      },
+      "sourceInventory": {
+        "path": "/private/tmp/cbui/linux-build-z6q50_7c/reports/source-inventory.json",
+        "sha256": "28016dfd5c7bc70608bbd973e287a85475736395d99a197481335fff90291462",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054112951265403
+      },
+      "runner": {
+        "path": "/private/tmp/chainbench-linux-wemix-run.py",
+        "sha256": "6bd5fa2f367d92b02ae86ce690debaa6f67b5fb6da63470429de24735e421116",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054085224676369
+      },
+      "artifact": {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-z6q50_7c/gwemix",
+        "sha256": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c",
+        "remoteSHA256": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c",
+        "version": "Gwemix\nVersion: 0.10.15-stable\nArchitecture: arm64\nGo Version: go1.19.13\nOperating System: linux\nGOPATH=\nGOROOT=/usr/local/go\n",
+        "buildInfo": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-z6q50_7c/gwemix: go1.19.13\n\tpath\tgithub.com/ethereum/go-ethereum/cmd/gwemix\n\tmod\tgithub.com/ethereum/go-ethereum\t(devel)\t\n\tdep\tgithub.com/VictoriaMetrics/fastcache\tv1.6.0\th1:C/3Oi3EiBCqufydp1neRZkqcwmEiuRT9c3fqvvgKm5o=\n\tdep\tgithub.com/beorn7/perks\tv1.0.1\th1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=\n\tdep\tgithub.com/cespare/xxhash/v2\tv2.1.1\th1:6MnRN8NT7+YBpUIWxHtefFZOKTAPgGjpQSxqLNn0+qY=\n\tdep\tgithub.com/charlanxcc/logrot\tv0.0.0-20180713171554-0c22fa310dfe\th1:b5zv4kOXaJpcryXQb/SfdvPIkneLpqJd6FIwV3HkYP4=\n\tdep\tgithub.com/coreos/go-semver\tv0.3.0\th1:wkHLiw0WNATZnSG7epLsujiMCgPAc9xhjJ4tgnAxmfM=\n\tdep\tgithub.com/coreos/go-systemd/v22\tv22.3.2\th1:D9/bQk5vlXQFZ6Kwuu6zaiXJ9oTPe68++AzAJc1DzSI=\n\tdep\tgithub.com/davecgh/go-spew\tv1.1.1\th1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=\n\tdep\tgithub.com/deckarep/golang-set\tv1.8.0\th1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=\n\tdep\tgithub.com/deepmap/oapi-codegen\tv1.8.2\th1:SegyeYGcdi0jLLrpbCMoJxnUUn8GBXHsvr4rbzjuhfU=\n\tdep\tgithub.com/dlclark/regexp2\tv1.4.1-0.20201116162257-a2a8dda75c91\th1:Izz0+t1Z5nI16/II7vuEo/nHjodOg0p7+OiDpjX5t1E=\n\tdep\tgithub.com/dop251/goja\tv0.0.0-20220405120441-9037c2b61cbf\th1:Yt+4K30SdjOkRoRRm3vYNQgR+/ZIy0RmeUDZo7Y8zeQ=\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.0\th1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=\n\tdep\tgithub.com/edsrzf/mmap-go\tv1.0.0\th1:CEBF7HpRnUCSJgGUb5h1Gm7e3VkmVDrR8lvWVLtrOFw=\n\tdep\tgithub.com/fatih/color\tv1.7.0\th1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=\n\tdep\tgithub.com/form3tech-oss/jwt-go\tv3.2.3+incompatible\th1:7ZaBxOI7TMoYBfyA3cQHErNNyAWIKUMIwqxEtgHOs5c=\n\tdep\tgithub.com/gballet/go-libpcsclite\tv0.0.0-20190607065134-2772fd86a8ff\th1:tY80oXqGNY4FhTFhk+o9oFHGINQ/+vhlm8HFzi6znCI=\n\tdep\tgithub.com/go-sourcemap/sourcemap\tv2.1.3+incompatible\th1:W1iEw64niKVGogNgBN3ePyLFfuisuzeidWPMPWmECqU=\n\tdep\tgithub.com/go-stack/stack\tv1.8.0\th1:5SgMzNM5HxrEjV0ww2lTmX6E2Izsfxas4+YHWRs3Lsk=\n\tdep\tgithub.com/gogo/protobuf\tv1.3.2\th1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=\n\tdep\tgithub.com/golang-jwt/jwt/v4\tv4.3.0\th1:kHL1vqdqWNfATmA0FNMdmZNMyZI1U6O31X4rlIPoBog=\n\tdep\tgithub.com/golang/protobuf\tv1.5.2\th1:ROPKBNFfQgOUMifHyP+KYbvpjbdoFNs+aK7DXlji0Tw=\n\tdep\tgithub.com/golang/snappy\tv0.0.4\th1:yAGX7huGHXlcLOEtBnF4w7FQwA26wojNCwOYAEhLjQM=\n\tdep\tgithub.com/google/btree\tv1.0.1\th1:gK4Kx5IaGY9CD5sPJ36FHiBJ6ZXl0kilRiiCj+jdYp4=\n\tdep\tgithub.com/google/uuid\tv1.2.0\th1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs=\n\tdep\tgithub.com/gorilla/websocket\tv1.4.2\th1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=\n\tdep\tgithub.com/graph-gophers/graphql-go\tv1.3.0\th1:Eb9x/q6MFpCLz7jBCiP/WTxjSDrYLR1QY41SORZyNJ0=\n\tdep\tgithub.com/grpc-ecosystem/go-grpc-middleware\tv1.3.0\th1:+9834+KizmvFV7pXQGSXQTsaWhq2GjuNUt0aUU0YBYw=\n\tdep\tgithub.com/grpc-ecosystem/go-grpc-prometheus\tv1.2.0\th1:Ovs26xHkKqVztRpIrF/92BcuyuQ/YW4NSIpoGtfXNho=\n\tdep\tgithub.com/grpc-ecosystem/grpc-gateway\tv1.16.0\th1:gmcG1KaJ57LophUzW0Hy8NmPhnMZb4M0+kPpLofRdBo=\n\tdep\tgithub.com/hashicorp/go-bexpr\tv0.1.10\th1:9kuI5PFotCboP3dkDYFr/wi0gg0QVbSNz5oFRpxn4uE=\n\tdep\tgithub.com/hashicorp/golang-lru\tv0.5.5-0.20210104140557-80c98217689d\th1:dg1dEPuWpEqDnvIw251EVy4zlP8gWbsGj4BsUKCRpYs=\n\tdep\tgithub.com/holiman/bloomfilter/v2\tv2.0.3\th1:73e0e/V0tCydx14a0SCYS/EWCxgwLZ18CZcZKVu0fao=\n\tdep\tgithub.com/holiman/uint256\tv1.2.0\th1:gpSYcPLWGv4sG43I2mVLiDZCNDh/EpGjSk8tmtxitHM=\n\tdep\tgithub.com/huin/goupnp\tv1.0.3\th1:N8No57ls+MnjlB+JPiCVSOyy/ot7MJTqlo7rn+NYSqQ=\n\tdep\tgithub.com/influxdata/influxdb-client-go/v2\tv2.4.0\th1:HGBfZYStlx3Kqvsv1h2pJixbCl/jhnFtxpKFAv9Tu5k=\n\tdep\tgithub.com/influxdata/influxdb1-client\tv0.0.0-20220302092344-a9ab5670611c\th1:qSHzRbhzK8RdXOsAdfDgO49TtqC1oZ+acxPrkfTxcCs=\n\tdep\tgithub.com/influxdata/line-protocol\tv0.0.0-20210311194329-9aa0e372d097\th1:vilfsDSy7TDxedi9gyBkMvAirat/oRcL0lFdJBf6tdM=\n\tdep\tgithub.com/jackpal/go-nat-pmp\tv1.0.2\th1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=\n\tdep\tgithub.com/jedisct1/go-minisign\tv0.0.0-20190909160543-45766022959e\th1:UvSe12bq+Uj2hWd8aOlwPmoZ+CITRFrdit+sDGfAg8U=\n\tdep\tgithub.com/jonboulle/clockwork\tv0.2.2\th1:UOGuzwb1PwsrDAObMuhUnj0p5ULPj8V/xJ7Kx9qUBdQ=\n\tdep\tgithub.com/json-iterator/go\tv1.1.11\th1:uVUAXhF2To8cbw/3xN3pxj6kk7TYKs98NIrTqPlMWAQ=\n\tdep\tgithub.com/karalabe/usb\tv0.0.2\th1:M6QQBNxF+CQ8OFvxrT90BA0qBOXymndZnk5q235mFc4=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.8\th1:c1ghPdyEDarC70ftn0y+A/Ee++9zz8ljHG1b13eJ0s8=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.12\th1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=\n\tdep\tgithub.com/mattn/go-runewidth\tv0.0.9\th1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=\n\tdep\tgithub.com/matttproud/golang_protobuf_extensions\tv1.0.1\th1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=\n\tdep\tgithub.com/mitchellh/mapstructure\tv1.4.1\th1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=\n\tdep\tgithub.com/mitchellh/pointerstructure\tv1.2.0\th1:O+i9nHnXS3l/9Wu7r4NrEdwA2VFTicjUEN1uBnDo34A=\n\tdep\tgithub.com/modern-go/concurrent\tv0.0.0-20180306012644-bacd9c7ef1dd\th1:TRLaZ9cD/w8PVh93nsPXa1VrQ6jlwL5oN8l14QlcNfg=\n\tdep\tgithub.com/modern-go/reflect2\tv1.0.1\th1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9AWI=\n\tdep\tgithub.com/naoina/go-stringutil\tv0.1.0\th1:rCUeRUHjBjGTSHl0VC00jUPLz8/F9dDzYI70Hzifhks=\n\tdep\tgithub.com/naoina/toml\tv0.1.2-0.20170918210437-9fafd6967416\th1:shk/vn9oCoOTmwcouEdwIeOtOGA/ELRUw/GwvxwfT+0=\n\tdep\tgithub.com/olekukonko/tablewriter\tv0.0.5\th1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=\n\tdep\tgithub.com/opentracing/opentracing-go\tv1.1.0\th1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=\n\tdep\tgithub.com/pborman/uuid\tv1.2.1\th1:+ZZIw58t/ozdjRaXh/3awHfmWRbzYxJoAdNJxe/3pvw=\n\tdep\tgithub.com/peterh/liner\tv1.1.1-0.20190123174540-a2c9a5303de7\th1:oYW+YCJ1pachXTQmzR3rNLYGGz4g/UgFcjb28p/viDM=\n\tdep\tgithub.com/pkg/errors\tv0.9.1\th1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=\n\tdep\tgithub.com/prometheus/client_golang\tv1.11.0\th1:HNkLOAEQMIDv/K+04rukrLx6ch7msSRwf3/SASFAGtQ=\n\tdep\tgithub.com/prometheus/client_model\tv0.2.0\th1:uq5h0d+GuxiXLJLNABMgp2qUWDPiLvgCzz2dUR+/W/M=\n\tdep\tgithub.com/prometheus/common\tv0.26.0\th1:iMAkS2TDoNWnKM+Kopnx/8tnEStIfpYA0ur0xQzzhMQ=\n\tdep\tgithub.com/prometheus/procfs\tv0.6.0\th1:mxy4L2jP6qMonqmq+aTtOx1ifVWUgG/TAmntgbh3xv4=\n\tdep\tgithub.com/prometheus/tsdb\tv0.7.1\th1:YZcsG11NqnK4czYLrWd9mpEuAJIHVQLwdrleYfszMAA=\n\tdep\tgithub.com/rs/cors\tv1.7.0\th1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=\n\tdep\tgithub.com/shirou/gopsutil\tv3.21.4-0.20210419000835-c7a38de76ee5+incompatible\th1:Bn1aCHHRnjv4Bl16T8rcaFjYSrGrIZvpiGO6P3Q4GpU=\n\tdep\tgithub.com/sirupsen/logrus\tv1.9.0\th1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=\n\tdep\tgithub.com/soheilhy/cmux\tv0.1.5\th1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=\n\tdep\tgithub.com/spf13/pflag\tv1.0.5\th1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=\n\tdep\tgithub.com/status-im/keycard-go\tv0.0.0-20190316090335-8537d3370df4\th1:Gb2Tyox57NRNuZ2d3rmvB3pcmbu7O1RS3m8WRx7ilrg=\n\tdep\tgithub.com/syndtr/goleveldb\tv1.0.1-0.20210819022825-2ae1ddf74ef7\th1:epCh84lMvA70Z7CTTCmYQn2CKbY8j86K7/FAIr141uY=\n\tdep\tgithub.com/tklauser/go-sysconf\tv0.3.5\th1:uu3Xl4nkLzQfXNsWn15rPc/HQCJKObbt1dKJeWp3vU4=\n\tdep\tgithub.com/tklauser/numcpus\tv0.2.2\th1:oyhllyrScuYI6g+h/zUvNXNp1wy7x8qQy3t/piefldA=\n\tdep\tgithub.com/tmc/grpc-websocket-proxy\tv0.0.0-20201229170055-e5319fda7802\th1:uruHq4dN7GR16kFc5fp3d1RIYzJW5onx8Ybykw2YQFA=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.0.1-0.20181017060643-dbb3b84ba2ef\th1:wHSqTBrZW24CsNJDfeh9Ex6Pm0Rcpc7qrgKBiL44vF4=\n\tdep\tgithub.com/xiang90/probing\tv0.0.0-20190116061207-43a291ad63a2\th1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=\n\tdep\tgithub.com/yoseplee/vrf\tv0.0.0-20210814110709-d1caf509310b\th1:P+RO/IfYtPQHAm+8V8mwVsj6x0nwKR7/6nsWmyN3nYI=\n\tdep\tgo.etcd.io/bbolt\tv1.3.6\th1:/ecaJf0sk1l4l6V4awd65v2C3ILy7MSj+s/x1ADCIMU=\n\tdep\tgo.etcd.io/etcd/api/v3\tv3.5.2\th1:tXok5yLlKyuQ/SXSjtqHc4uzNaMqZi2XsoSPr/LlJXI=\n\tdep\tgo.etcd.io/etcd/client/pkg/v3\tv3.5.2\th1:4hzqQ6hIb3blLyQ8usCU4h3NghkqcsohEQ3o3VetYxE=\n\tdep\tgo.etcd.io/etcd/client/v2\tv2.305.2\th1:ymrVwTkefuqA/rPkSW7/B4ApijbPVefRumkY+stNfS0=\n\tdep\tgo.etcd.io/etcd/client/v3\tv3.5.2\th1:WdnejrUtQC4nCxK0/dLTMqKOB+U5TP/2Ya0BJL+1otA=\n\tdep\tgo.etcd.io/etcd/pkg/v3\tv3.5.2\th1:YZUojdoPhOyl5QILYnR8LTUbbNefu/sV4ma+ZMr2tto=\n\tdep\tgo.etcd.io/etcd/raft/v3\tv3.5.2\th1:uCC37qOXqBvKqTGHGyhASsaCsnTuJugl1GvneJNwHWo=\n\tdep\tgo.etcd.io/etcd/server/v3\tv3.5.2\th1:B6ytJvS4Fmt8nkjzS2/8POf4tuPhFMluE0lWd4dx/7U=\n\tdep\tgo.opentelemetry.io/contrib\tv0.20.0\th1:ubFQUn0VCZ0gPwIoJfBJVpeBlyRMxu8Mm/huKWYd9p0=\n\tdep\tgo.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc\tv0.20.0\th1:sO4WKdPAudZGKPcpZT4MJn6JaDmpyLrMPDGGyA1SttE=\n\tdep\tgo.opentelemetry.io/otel\tv0.20.0\th1:eaP0Fqu7SXHwvjiqDq83zImeehOHX8doTvU9AwXON8g=\n\tdep\tgo.opentelemetry.io/otel/exporters/otlp\tv0.20.0\th1:PTNgq9MRmQqqJY0REVbZFvwkYOA85vbdQU/nVfxDyqg=\n\tdep\tgo.opentelemetry.io/otel/metric\tv0.20.0\th1:4kzhXFP+btKm4jwxpjIqjs41A7MakRFUS86bqLHTIw8=\n\tdep\tgo.opentelemetry.io/otel/sdk\tv0.20.0\th1:JsxtGXd06J8jrnya7fdI/U/MR6yXA5DtbZy+qoHQlr8=\n\tdep\tgo.opentelemetry.io/otel/sdk/export/metric\tv0.20.0\th1:c5VRjxCXdQlx1HjzwGdQHzZaVI82b5EbBgOu2ljD92g=\n\tdep\tgo.opentelemetry.io/otel/sdk/metric\tv0.20.0\th1:7ao1wpzHRVKf0OQ7GIxiQJA6X7DLX9o14gmVon7mMK8=\n\tdep\tgo.opentelemetry.io/otel/trace\tv0.20.0\th1:1DL6EXUdcg95gukhuRRvLDO/4X5THh/5dIV52lqtnbw=\n\tdep\tgo.opentelemetry.io/proto/otlp\tv0.7.0\th1:rwOQPCuKAKmwGKq2aVNnYIibI6wnV7EvzgfTCzcdGg8=\n\tdep\tgo.uber.org/atomic\tv1.7.0\th1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=\n\tdep\tgo.uber.org/multierr\tv1.6.0\th1:y6IPFStTAIT5Ytl7/XYmHvzXQ7S3g/IeZW9hyZ5thw4=\n\tdep\tgo.uber.org/zap\tv1.17.0\th1:MTjgFu6ZLKvY6Pvaqk97GlxNBuMpV4Hy/3P6tRGlI2U=\n\tdep\tgolang.org/x/crypto\tv0.0.0-20210921155107-089bfa567519\th1:7I4JAnoQBe7ZtJcBaYHi5UtiO8tQHbUSXxL+pnGRANg=\n\tdep\tgolang.org/x/net\tv0.0.0-20211015210444-4f30a5c0130f\th1:OfiFi4JbukWwe3lzw+xunroH1mnC1e2Gy5cxNJApiSY=\n\tdep\tgolang.org/x/sync\tv0.0.0-20210220032951-036812b2e83c\th1:5KslGYwFpkhGh+Q16bwMP3cOontH8FOep7tGV86Y7SQ=\n\tdep\tgolang.org/x/sys\tv0.0.0-20220715151400-c0bba94af5f8\th1:0A+M6Uqn+Eje4kHMK80dtF3JCXC4ykBgQG4Fe06QRhQ=\n\tdep\tgolang.org/x/text\tv0.3.7\th1:olpwvP2KacW1ZWvsR7uQhoyTYvKAupfQrRGBFM352Gk=\n\tdep\tgolang.org/x/time\tv0.0.0-20210220033141-f8bda1e9f3ba\th1:O8mE0/t419eoIwhTFpKVkHiTs/Igowgfkj25AcZrtiE=\n\tdep\tgoogle.golang.org/genproto\tv0.0.0-20210602131652-f16073e35f0c\th1:wtujag7C+4D6KMoulW9YauvK2lgdvCMS260jsqqBXr0=\n\tdep\tgoogle.golang.org/grpc\tv1.38.0\th1:/9BgsAsa5nWe26HqOlvlgJnqBuktYOLCgjCPqsa56W0=\n\tdep\tgoogle.golang.org/protobuf\tv1.26.0\th1:bxAC2xTBsZGibn2RTntX0oH50xLsqy1OxA9tTL3p/lk=\n\tdep\tgopkg.in/natefinch/lumberjack.v2\tv2.0.0\th1:1Lc07Kr7qY4U2YPouBjpCLxpiyxIVoxqXgkXLknAOE8=\n\tdep\tgopkg.in/urfave/cli.v1\tv1.20.0\th1:NdAVW6RYxDif9DhDHaAortIu956m2c0v+09AZBPTbE0=\n\tdep\tgopkg.in/yaml.v2\tv2.4.0\th1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=\n\tdep\tsigs.k8s.io/yaml\tv1.2.0\th1:kr/MCeFWJWTwyaHoR9c8EjH9OumOmoF9YGiZd7lFm/Q=\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=linux\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=4538a9f5f2e4bcd2cb9515f8c466fabc24f73987\n\tbuild\tvcs.time=2026-10-08T05:40:28Z\n\tbuild\tvcs.modified=false\n",
+        "file": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-z6q50_7c/gwemix: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=033fe993bb49d3e421b8c474602555beef490ca2, for GNU/Linux 3.7.0, with debug_info, not stripped",
+        "reference": {
+          "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-build-z6q50_7c/gwemix",
+          "sha256": "0e15e4eb3a705546a0561875e308da09b41ac6fed2df098d0ca0f3a076badd9c",
+          "mode": "0o755",
+          "uid": 501,
+          "gid": 20,
+          "mtimeNS": 1792054188017917237
+        }
+      },
+      "builder": {
+        "id": "sha256:df70a71c3fbe29bde497ca937b8e0cb93d83e359f641209a7848e1d8cfffd8a0",
+        "repoDigests": [
+          "golang@sha256:3025bf670b8363ec9f1b4c4f27348e6d9b7fec607c47e401e40df816853e743a"
+        ],
+        "goVersion": "go version go1.19.13 linux/arm64"
+      }
+    }
+  ],
+  "sourceReplica": {
+    "path": "/private/tmp/cbui/linux-wemix-inputs-75niftj4/reports/source-replica.json",
+    "sha256": "09949a70db1dddf128b5bcf03984c4423afe86310eedeae10c25a7b7146347a5",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792053989232997220
+  },
+  "sourceReplicaCheckpoint": {
+    "path": "/private/tmp/chainbench-linux-wemix-source-replica.json",
+    "sha256": "8ef14507ca1f97ab83d9ff11f6551178d37732c500f7143eb1ac340e42d43075",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792053989233421101
+  },
+  "uninitializedGitlinksPreserved": 5,
+  "originalChainSourcesModified": false,
+  "cleanup": {
+    "cacheVolume": "cb-linux-build-5cytmp5i-go-cache",
+    "cacheOwner": {
+      "chainbench.purpose": "linux-head-binary-build",
+      "chainbench.runtime": "/private/tmp/cbui/linux-build-5cytmp5i"
+    },
+    "cacheBytes": 1531834368,
+    "activeReferences": 0,
+    "diskFreeBefore": 36800393216,
+    "removedImages": [
+      {
+        "tag": "golang:1.25",
+        "id": "sha256:4e2219ca515d99610115539a96f733fa567f62941e31ac5bfb87c7ade6143bcc",
+        "repoDigests": [
+          "golang@sha256:699337d620559a59b4a2bb298ad59611e535d2ee755a34cf2d2a98f37578dc80"
+        ],
+        "sizeBytes": 864098204
+      },
+      {
+        "tag": "golang:1.19",
+        "id": "sha256:df70a71c3fbe29bde497ca937b8e0cb93d83e359f641209a7848e1d8cfffd8a0",
+        "repoDigests": [
+          "golang@sha256:3025bf670b8363ec9f1b4c4f27348e6d9b7fec607c47e401e40df816853e743a"
+        ],
+        "sizeBytes": 947651806
+      }
+    ],
+    "cacheRemoved": true,
+    "diskFreeAfter": 39295868928,
+    "ledger": {
+      "path": "/private/tmp/cbui/linux-build-z6q50_7c/reports/owned-build-cache-cleanup.json",
+      "sha256": "ff7c970c2721a1fe66de148b9792b7c6ca01f86797dff00e87c83565c2672902",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792054365889175237
+    }
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-linux-remaining-build-evidence.py",
+    "sha256": "378472a0cb2efb87383a9b81f70f169b798f26dfb66079e46a43cf49b77a03bd",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792054356154338306
+  },
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/linux-build-2a9wvye7",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 6,
+      "inventory": {
+        "path": "/private/tmp/cbui/linux-build-2a9wvye7/reports/linux-remaining-build-inventory.json",
+        "sha256": "599bc34dd93ad2b853f62d7f17a8c785010e0aa12e96009a8e217ab552524ef8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054365897089858
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/linux-build-z6q50_7c",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 7,
+      "inventory": {
+        "path": "/private/tmp/cbui/linux-build-z6q50_7c/reports/linux-remaining-build-inventory.json",
+        "sha256": "aa3b1c49247d58863ecbf6fb1c53cf500a82d82de6c328ea2ba1fa1d9bd5949e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054365902421856
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/linux-wemix-inputs-75niftj4",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 3,
+      "inventory": {
+        "path": "/private/tmp/cbui/linux-wemix-inputs-75niftj4/reports/linux-remaining-build-inventory.json",
+        "sha256": "cca065ae96216b07cfaf043966b91a5baa1dc9c91a253570d649d48b3b78eb41",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792054365906725380
+      }
+    }
+  ],
+  "retainedFiles": 16,
+  "regressionPreflight": {
+    "path": "/private/tmp/chainbench-linux-remaining-build-preflight-unit.log",
+    "sha256": "6374a7816005544f066eb87410b3472c63af85985901005a3921461491c1eae6",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792053815841649993
+  },
+  "builderPullLogs": [
+    {
+      "path": "/private/tmp/chainbench-linux-builder-pull.log",
+      "sha256": "712723aebc4d73734c9351d30203584e3fbb0234f290798c5a62ac6d501f29e2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792052807689250227
+    },
+    {
+      "path": "/private/tmp/chainbench-linux-wemix-builder-pull.log",
+      "sha256": "439b12075fac0e5caab4752d05dbd32c21db1e75ff1640ed5f75438cec05bfe5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792053837048203027
+    }
+  ],
+  "sourceInputRelocation": {
+    "oldSharedPath": "/Users/0xtopaz/work/github/0xmhha/chainbench/env/docker/build/linux-wemix-inputs-75niftj4",
+    "preservedSourceRoot": "/private/tmp/chainbench-linux-wemix-inputs-75niftj4-source-evidence",
+    "referenceKeptAsSymlink": true,
+    "allEntriesPreserved": 2428,
+    "regularFiles": 2079,
+    "sameBytesModeUIDGIDMtimeAndInode": true,
+    "originalChainSourceModified": false,
+    "gofmtExitCode": 0,
+    "gofmtOutput": "",
+    "manifest": {
+      "path": "/private/tmp/cbui/linux-wemix-inputs-75niftj4/reports/source-relocation.json",
+      "sha256": "8b2a91115544c526ca5c6d23be5b038dced823f92b646e60b09374711b4cc90a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792055140823133609
+    },
+    "reason": "Generated external build input belongs outside project formatting traversal; existing proof paths still resolve and every original input byte/stat is preserved.",
+    "gitDirectoryMtimeRestoration": {
+      "path": "go-wemix/.git",
+      "observedMtimeNS": 1792054925042868428,
+      "restoredMtimeNS": 1792054358094910303,
+      "reason": "Restore captured directory metadata after Git status lock creation/removal; all file bytes and inodes already unchanged."
+    },
+    "independentPreservationRecheckPassed": true
+  },
+  "retainedFilesScope": "16 files at native closure excluding inventory manifests; source relocation ledger is additional publication evidence.",
+  "publicationPreparationFailures": [
+    {
+      "path": "/private/tmp/chainbench-linux-remaining-build-publication-check.log",
+      "sha256": "d058a2f6d3e9cbba940bb0730a8e452dabe3696e63d912c7ca57859eb1cba13c",
+      "reason": "Generated external input copy was included in gofmt traversal. External files were preserved, not formatted."
+    }
+  ]
+}

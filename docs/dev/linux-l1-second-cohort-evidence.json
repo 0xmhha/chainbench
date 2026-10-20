@@ -1,0 +1,476 @@
+{
+  "scope": "Second partial frozen-source Linux L1 cohort,32 actual rows across serial segments5/6/7,30PASS/1BLOCKED/1FAIL. Prior rows imported without rerunning or rewriting outcomes. Not full353 acceptance or S1 resolution.",
+  "sourceDigest": "908f853668e0eb1161b54f1f596b9914f992369b8274b845c300cc947a6ae58c",
+  "head": "e10af56889a012f5e27df08347da7faf66d10e3c",
+  "runtime": "/private/tmp/cbui/l1h-omwl3mgh",
+  "plannedFiles": 211,
+  "plannedCaseRuns": 353,
+  "reportedRows": 32,
+  "pass": 30,
+  "blocked": 1,
+  "fail": 1,
+  "notExecutedRows": 321,
+  "operatorInterruptedRows": 0,
+  "executionCompleted": false,
+  "fullL1Accepted": false,
+  "issueResolved": false,
+  "rows": [
+    {
+      "row": 1,
+      "verdict": "PASS",
+      "seconds": 53,
+      "chain": "stablenet",
+      "path": "tests/tc/basic/07-basic-wbft-consensus.json",
+      "originalLine": "[  1/353] PASS      53s stablenet  tests/tc/basic/07-basic-wbft-consensus.json"
+    },
+    {
+      "row": 2,
+      "verdict": "PASS",
+      "seconds": 73,
+      "chain": "stablenet",
+      "path": "tests/tc/basic/08-attached-chain-produces.json",
+      "originalLine": "[  2/353] PASS      73s stablenet  tests/tc/basic/08-attached-chain-produces.json"
+    },
+    {
+      "row": 3,
+      "verdict": "PASS",
+      "seconds": 83,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-001-deploy-and-call.json",
+      "originalLine": "[  3/353] PASS      83s stablenet  tests/tc/common/contract/CT-CONTRACT-001-deploy-and-call.json"
+    },
+    {
+      "row": 4,
+      "verdict": "PASS",
+      "seconds": 62,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-002-storage-write-and-read.json",
+      "originalLine": "[  4/353] PASS      62s stablenet  tests/tc/common/contract/CT-CONTRACT-002-storage-write-and-read.json"
+    },
+    {
+      "row": 5,
+      "verdict": "PASS",
+      "seconds": 64,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-003-view-call-leaves-state.json",
+      "originalLine": "[  5/353] PASS      64s stablenet  tests/tc/common/contract/CT-CONTRACT-003-view-call-leaves-state.json"
+    },
+    {
+      "row": 6,
+      "verdict": "PASS",
+      "seconds": 75,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-004-estimate-gas.json",
+      "originalLine": "[  6/353] PASS      75s stablenet  tests/tc/common/contract/CT-CONTRACT-004-estimate-gas.json"
+    },
+    {
+      "row": 7,
+      "verdict": "PASS",
+      "seconds": 144,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-005-eth-call-revert-returns-error.json",
+      "originalLine": "[  7/353] PASS     144s stablenet  tests/tc/common/contract/CT-CONTRACT-005-eth-call-revert-returns-error.json"
+    },
+    {
+      "row": 8,
+      "verdict": "PASS",
+      "seconds": 68,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json",
+      "originalLine": "[  8/353] PASS      68s stablenet  tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json"
+    },
+    {
+      "row": 9,
+      "verdict": "PASS",
+      "seconds": 67,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-007-out-of-gas-consumes-all.json",
+      "originalLine": "[  9/353] PASS      67s stablenet  tests/tc/common/contract/CT-CONTRACT-007-out-of-gas-consumes-all.json"
+    },
+    {
+      "row": 10,
+      "verdict": "PASS",
+      "seconds": 82,
+      "chain": "stablenet",
+      "path": "tests/tc/common/contract/CT-CONTRACT-008-finite-gas-boundary.json",
+      "originalLine": "[ 10/353] PASS      82s stablenet  tests/tc/common/contract/CT-CONTRACT-008-finite-gas-boundary.json"
+    },
+    {
+      "row": 11,
+      "verdict": "PASS",
+      "seconds": 61,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json",
+      "originalLine": "[ 11/353] PASS      61s stablenet  tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json"
+    },
+    {
+      "row": 12,
+      "verdict": "PASS",
+      "seconds": 110,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json",
+      "originalLine": "[ 12/353] PASS     110s stablenet  tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json"
+    },
+    {
+      "row": 13,
+      "verdict": "PASS",
+      "seconds": 145,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fault/CT-FAULT-003-two-producers-down.json",
+      "originalLine": "[ 13/353] PASS     145s stablenet  tests/tc/common/fault/CT-FAULT-003-two-producers-down.json"
+    },
+    {
+      "row": 14,
+      "verdict": "PASS",
+      "seconds": 423,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fault/CT-FAULT-004-network-partition.json",
+      "originalLine": "[ 14/353] PASS     423s stablenet  tests/tc/common/fault/CT-FAULT-004-network-partition.json"
+    },
+    {
+      "row": 15,
+      "verdict": "PASS",
+      "seconds": 147,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fault/CT-FAULT-005-hub-topology.json",
+      "originalLine": "[ 15/353] PASS     147s stablenet  tests/tc/common/fault/CT-FAULT-005-hub-topology.json"
+    },
+    {
+      "row": 16,
+      "verdict": "PASS",
+      "seconds": 233,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fault/CT-FAULT-006-txpool-leader-change.json",
+      "originalLine": "[ 16/353] PASS     233s stablenet  tests/tc/common/fault/CT-FAULT-006-txpool-leader-change.json"
+    },
+    {
+      "row": 17,
+      "verdict": "PASS",
+      "seconds": 105,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json",
+      "originalLine": "[ 17/353] PASS     105s stablenet  tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json"
+    },
+    {
+      "row": 18,
+      "verdict": "PASS",
+      "seconds": 89,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json",
+      "originalLine": "[ 18/353] PASS      89s stablenet  tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json"
+    },
+    {
+      "row": 19,
+      "verdict": "PASS",
+      "seconds": 149,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-007-effective-gas-price.json",
+      "originalLine": "[ 19/353] PASS     149s stablenet  tests/tc/common/fee/CT-FEE-007-effective-gas-price.json"
+    },
+    {
+      "row": 20,
+      "verdict": "PASS",
+      "seconds": 74,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json",
+      "originalLine": "[ 20/353] PASS      74s stablenet  tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json"
+    },
+    {
+      "row": 21,
+      "verdict": "PASS",
+      "seconds": 313,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-009-snap-receipt-gas-price.json",
+      "originalLine": "[ 21/353] PASS     313s stablenet  tests/tc/common/fee/CT-FEE-009-snap-receipt-gas-price.json"
+    },
+    {
+      "row": 22,
+      "verdict": "PASS",
+      "seconds": 60,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json",
+      "originalLine": "[ 22/353] PASS      60s stablenet  tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json"
+    },
+    {
+      "row": 23,
+      "verdict": "PASS",
+      "seconds": 117,
+      "chain": "stablenet",
+      "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+      "originalLine": "[ 23/353] PASS     117s stablenet  tests/tc/common/fee/CT-FEE-012-fee-history.json"
+    },
+    {
+      "row": 24,
+      "verdict": "PASS",
+      "seconds": 169,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-001-startup-block-production.json",
+      "originalLine": "[ 24/353] PASS     169s stablenet  tests/tc/common/node/CT-NODE-001-startup-block-production.json"
+    },
+    {
+      "row": 25,
+      "verdict": "PASS",
+      "seconds": 129,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-002-startup-15-nodes.json",
+      "originalLine": "[ 25/353] PASS     129s stablenet  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json"
+    },
+    {
+      "row": 26,
+      "verdict": "BLOCKED",
+      "seconds": 376,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-003-genesis-init.json",
+      "originalLine": "[ 26/353] BLOCKED  376s stablenet  tests/tc/common/node/CT-NODE-003-genesis-init.json"
+    },
+    {
+      "row": 27,
+      "verdict": "PASS",
+      "seconds": 98,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-004-full-sync.json",
+      "originalLine": "[ 27/353] PASS      98s stablenet  tests/tc/common/node/CT-NODE-004-full-sync.json"
+    },
+    {
+      "row": 28,
+      "verdict": "FAIL",
+      "seconds": 678,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-005-snap-sync.json",
+      "originalLine": "[ 28/353] FAIL     678s stablenet  tests/tc/common/node/CT-NODE-005-snap-sync.json"
+    },
+    {
+      "row": 29,
+      "verdict": "PASS",
+      "seconds": 135,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-006-missing-block-catch-up.json",
+      "originalLine": "[ 29/353] PASS     135s stablenet  tests/tc/common/node/CT-NODE-006-missing-block-catch-up.json"
+    },
+    {
+      "row": 30,
+      "verdict": "PASS",
+      "seconds": 77,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-007-live-block-receive.json",
+      "originalLine": "[ 30/353] PASS      77s stablenet  tests/tc/common/node/CT-NODE-007-live-block-receive.json"
+    },
+    {
+      "row": 31,
+      "verdict": "PASS",
+      "seconds": 66,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+      "originalLine": "[ 31/353] PASS      66s stablenet  tests/tc/common/node/CT-NODE-008-peers.json"
+    },
+    {
+      "row": 32,
+      "verdict": "PASS",
+      "seconds": 50,
+      "chain": "stablenet",
+      "path": "tests/tc/common/node/CT-NODE-009-head-hash-agreement.json",
+      "originalLine": "[ 32/353] PASS      50s stablenet  tests/tc/common/node/CT-NODE-009-head-hash-agreement.json"
+    }
+  ],
+  "segments": [
+    {
+      "proof": {
+        "path": "/private/tmp/chainbench-full-l1-native5-summary.json",
+        "sha256": "cb764233af26600784c995e3863e457b25466b3e84acace1de364a9e0a936364",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792090973834822220
+      },
+      "reportedRows": 26,
+      "importedActualRows": 0,
+      "elapsedSeconds": 6939.649612042005,
+      "operationalPause": {
+        "reason": "Unexpected non-passing case; audit before continuing. Original verdict unchanged. Current case retention/reclamation completed.",
+        "row": "[ 26/353] BLOCKED  376s stablenet  tests/tc/common/node/CT-NODE-003-genesis-init.json",
+        "workspace": "/private/tmp/cbui/l1h-omwl3mgh/work/c26"
+      },
+      "sourceUnchanged": true,
+      "helperInputsUnchanged": true
+    },
+    {
+      "proof": {
+        "path": "/private/tmp/chainbench-full-l1-native6-summary.json",
+        "sha256": "7cb7d1207c530a8c9ffdf60377992d7791325fa7e80348eae605e5c290ae0fb0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792092902593353089
+      },
+      "reportedRows": 28,
+      "importedActualRows": 26,
+      "elapsedSeconds": 1053.9751279159682,
+      "operationalPause": {
+        "reason": "Unexpected non-passing case; audit before continuing. Original verdict unchanged. Current case retention/reclamation completed.",
+        "row": "[ 28/353] FAIL     678s stablenet  tests/tc/common/node/CT-NODE-005-snap-sync.json",
+        "workspace": "/private/tmp/cbui/l1h-omwl3mgh/work/c28"
+      },
+      "sourceUnchanged": true,
+      "helperInputsUnchanged": true
+    },
+    {
+      "proof": {
+        "path": "/private/tmp/chainbench-full-l1-native7-summary.json",
+        "sha256": "4b92bd9879124ccedaca62a355a13ec2401476c72da73b7740512783da14d460",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792094338998489222
+      },
+      "reportedRows": 32,
+      "importedActualRows": 28,
+      "elapsedSeconds": 766.4100944999955,
+      "operationalPause": {
+        "reason": "Official remote dev heads advanced after original binary pin. Complete current case archival/reclamation, audit this cohort unchanged, then prepare pristine upstream inputs before the fresh HEAD acceptance cohort. Original verdicts remain unchanged.",
+        "requestedAtUTC": "2026-10-15T19:57:39.563074+00:00",
+        "newUpstreamHeads": {
+          "stable-net/go-stablenet": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+          "wemixarchive/go-wbft": "d535dd3d25110977ce19503d8fcbf7e9a5430562"
+        },
+        "externalSourceEditsAuthorized": false,
+        "forceSignalSent": false
+      },
+      "sourceUnchanged": true,
+      "helperInputsUnchanged": true
+    }
+  ],
+  "rawLogs": [
+    {
+      "path": "/private/tmp/cbui/l1h-omwl3mgh/reports/sweep.log",
+      "sha256": "4db102c40cf1cdc341851fbbd95fd4035ac66c36f3e009afa9168f699ca26609",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792090972726899848
+    },
+    {
+      "path": "/private/tmp/cbui/l1h-omwl3mgh/reports/sweep6.log",
+      "sha256": "953720880e0e436b9026c5db4f1f9a420fa8cb2cac9b49c9a8efab06267915d8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792092901355450169
+    },
+    {
+      "path": "/private/tmp/cbui/l1h-omwl3mgh/reports/sweep7.log",
+      "sha256": "a81286c71521f14cddc08bb37f22e180c85a23e51ac4d1994c199076f95b2dc8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792094335895251292
+    }
+  ],
+  "plan": {
+    "path": "/private/tmp/cbui/l1h-omwl3mgh/reports/plan.json",
+    "sha256": "238ea317fedf5affb5a1f8bf915f3bf4183bb85430121cee41f0334732386527",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792083990015530674
+  },
+  "independent": {
+    "report": {
+      "path": "/private/tmp/chainbench-full-l1-independent7/summary.json",
+      "sha256": "024ef7cd8a4e0723b48807a21a32694ea1353d8bad72c3a202ffdb7a18f954d7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792094615158180858
+    },
+    "archives": 157,
+    "archiveEntries": 10523,
+    "retainedLocalFiles": 2336,
+    "freshFleetAudits": 15,
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true,
+    "scope": "Independent PAX decoder against original filesystem inventories; exact bytes/mode/uid/gid/ns-mtime/type/link and local file-set preservation, fresh15 process/FD/binary/DB checks. No ACL/xattr preservation claim."
+  },
+  "observedFailures": [
+    {
+      "row": 26,
+      "verdict": "BLOCKED",
+      "overallCLISeconds": 376,
+      "reason": "Node readiness deadline reached after5m0s; four BP logs repeatedly reject previous prepared seals at parent3. The overall CLI includes preparation, not a separately measured gate duration.",
+      "testBodyReached": false
+    },
+    {
+      "row": 28,
+      "verdict": "FAIL",
+      "overallCLISeconds": 678,
+      "reason": "Source step12 (index11) waitFor node1 >=target171 exhausted600s; a successful transaction was mined at21. Four BPs repeatedly rejected parent119. Reader start at index13 was not reached. Final RPC context deadline does not establish persistent RPC unavailability.",
+      "receiptBlock": 21,
+      "targetBlock": 171,
+      "observedRejectedParent": 119,
+      "readerStartReached": false
+    }
+  ],
+  "operationalClassifiers": {
+    "purpose": "Continue only audited known observations while preserving original FAIL/BLOCKED; not acceptance exemptions. Unknown failures still stop.",
+    "policy6": {
+      "path": "/private/tmp/chainbench-l1-policy6.py",
+      "sha256": "20ff2728e9277e85933228d30815d5f8bd030da98b58111cd3719ccfd3c26abd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792091505434201788
+    },
+    "policy7": {
+      "path": "/private/tmp/chainbench-l1-policy7.py",
+      "sha256": "4b9299d90f0c9f096918916fee1818b5a18d06f53d9dfdfb5ae4c4f8c7a0dc9c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792093325907661721
+    },
+    "tests": [
+      {
+        "path": "/private/tmp/chainbench-l1-policy6-green.log",
+        "sha256": "feabb4add9e2ca3374e538560634d1ec97dc4f4ce89aab12f3d726e36ea9b2f6",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792091505511390670
+      },
+      {
+        "path": "/private/tmp/chainbench-l1-policy7-green.log",
+        "sha256": "74c03fc16fde9a2dfeff03db0ec8f472a5a8dfed04e9e982a912b4b7f64faee3",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792093325972473647
+      },
+      {
+        "path": "/private/tmp/chainbench-l1-resume7-binding.log",
+        "sha256": "5d8a174d448d59185fd227bcbab9c964e39b10a9c2e28965972cfb0c833dd854",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792093479832286661
+      },
+      {
+        "path": "/private/tmp/chainbench-l1-resume7-regression.log",
+        "sha256": "784503c2909f29d4d241e67c2386cace6b17fb6b68f2eace3345db87de060a89",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792093493879842928
+      }
+    ],
+    "genericRegressionDistinctTests": 18,
+    "genericRegressionExecutions": 29
+  },
+  "stopReason": "Official dev heads advanced. Completed current case retention/reclamation then paused at case boundary without a signal. New-head execution must remain separate; do not combine cohorts.",
+  "retentionRegression": {
+    "path": "/private/tmp/chainbench-upstream-retention-regression-20261016.log",
+    "sha256": "9ec9e3c52e7908b746c625587944c7e1eb71f90fc834fbb4527d510523684dd2",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792095407010778028
+  }
+}

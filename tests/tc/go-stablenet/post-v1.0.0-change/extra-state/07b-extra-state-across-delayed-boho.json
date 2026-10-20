@@ -2,10 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "extra-state-across-delayed-boho",
-  "description": "TC-4-5-10/11/12 — 하드포크가 지연돼도 alloc.Extra 가 AccountManager 에 반영되고 잔액은 보존된다",
+  "description": "TC-4-5-10/11/12: Boho6 전후 블록5/6에서 authorized 단독·blacklisted 단독·dual의 여섯 상태와 정확한 extra 비트, 세 계정의 잔액 보존을 확인한다. historical 블록을 고정해 latest 경합을 피한다.",
   "requires": [
     "rpc",
-    "contract:accountManager"
+    "contract:accountManager",
+    "fork:boho",
+    "contract:govMinter"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",
@@ -19,18 +21,34 @@
           "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65": {
             "balance": "0xDE0B6B3A7640000",
             "extra": "0x8000000000000000"
+          },
+          "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc": {
+            "balance": "0xDE0B6B3A7640000",
+            "extra": "0xc000000000000000"
           }
         },
         "config": {
-          "bohoBlock": 6
+          "bohoBlock": 6,
+          "boho": {
+            "systemContracts": {
+              "govMinter": {
+                "address": "0x0000000000000000000000000000000000001003",
+                "version": "v2"
+              }
+            }
+          }
         }
       }
+    },
+    "hardforks": {
+      "applepie": 0,
+      "boho": 6
     }
   },
   "steps": [
     {
       "do": "waitBlock",
-      "target": 3,
+      "target": 9,
       "timeout": "120s"
     },
     {
@@ -39,24 +57,9 @@
       "method": "eth_getBalance",
       "params": [
         "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
-        "latest"
+        "0x5"
       ],
-      "save": "authBalPre"
-    },
-    {
-      "do": "read",
-      "source": "rpcCall",
-      "method": "eth_getBalance",
-      "params": [
-        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
-        "latest"
-      ],
-      "save": "blackBalPre"
-    },
-    {
-      "do": "waitBlock",
-      "target": 9,
-      "timeout": "120s"
+      "save": "extra1Balance"
     },
     {
       "do": "read",
@@ -66,7 +69,123 @@
       "of": [
         "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
       ],
-      "save": "isAuthCall"
+      "save": "extra1Auth"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xfe575a87",
+      "of": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+      ],
+      "save": "extra1Black"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra1Auth"
+        },
+        "0x5"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra1Black"
+        },
+        "0x5"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getProof",
+      "params": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        [],
+        "0x5"
+      ],
+      "select": "extra",
+      "compare": "Equal",
+      "is": "0x4000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra1Auth"
+        },
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra1Black"
+        },
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getProof",
+      "params": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        [],
+        "0x6"
+      ],
+      "select": "extra",
+      "compare": "Equal",
+      "is": "0x4000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "$extra1Balance"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+        "0x5"
+      ],
+      "save": "extra2Balance"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xfe9fbb80",
+      "of": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+      ],
+      "save": "extra2Auth"
     },
     {
       "do": "read",
@@ -76,41 +195,209 @@
       "of": [
         "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
       ],
-      "save": "isBlackCall"
+      "save": "extra2Black"
     },
     {
-      "expect": "call",
-      "to": "accountManager",
-      "data": "$isAuthCall",
-      "compare": "Equal",
-      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "expect": "call",
-      "to": "accountManager",
-      "data": "$isBlackCall",
-      "compare": "Equal",
-      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "expect": "rpc",
-      "method": "eth_getBalance",
+      "expect": "rpcCall",
+      "method": "eth_call",
       "params": [
-        "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
-        "latest"
+        {
+          "to": "accountManager",
+          "data": "$extra2Auth"
+        },
+        "0x5"
       ],
       "compare": "Equal",
-      "is": "$authBalPre"
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
-      "expect": "rpc",
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra2Black"
+        },
+        "0x5"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getProof",
+      "params": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+        [],
+        "0x5"
+      ],
+      "select": "extra",
+      "compare": "Equal",
+      "is": "0x8000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra2Auth"
+        },
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra2Black"
+        },
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getProof",
+      "params": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+        [],
+        "0x6"
+      ],
+      "select": "extra",
+      "compare": "Equal",
+      "is": "0x8000000000000000"
+    },
+    {
+      "expect": "rpcCall",
       "method": "eth_getBalance",
       "params": [
         "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
-        "latest"
+        "0x6"
       ],
       "compare": "Equal",
-      "is": "$blackBalPre"
+      "is": "$extra2Balance"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+        "0x5"
+      ],
+      "save": "extra3Balance"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xfe9fbb80",
+      "of": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      ],
+      "save": "extra3Auth"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xfe575a87",
+      "of": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      ],
+      "save": "extra3Black"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra3Auth"
+        },
+        "0x5"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra3Black"
+        },
+        "0x5"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getProof",
+      "params": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+        [],
+        "0x5"
+      ],
+      "select": "extra",
+      "compare": "Equal",
+      "is": "0xc000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra3Auth"
+        },
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "accountManager",
+          "data": "$extra3Black"
+        },
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getProof",
+      "params": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+        [],
+        "0x6"
+      ],
+      "select": "extra",
+      "compare": "Equal",
+      "is": "0xc000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+        "0x6"
+      ],
+      "compare": "Equal",
+      "is": "$extra3Balance"
     }
   ]
 }

@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-// Bindings are the values earlier steps saved, keyed by the name given in a
-// step's "save" field. A binding scope is one test run (one Spec), so bindings
+// Bindings hold preset initial values and values earlier steps saved, keyed by a
+// declared value name or step's "save" field. A scope is one test run, so bindings
 // never leak between tests and the interpreter stays free of shared state.
 //
 // The DSL grammar (design §3.2b):
@@ -77,7 +77,7 @@ func resolveString(s string, b Bindings) (any, error) {
 	if m := wholeRefPattern.FindStringSubmatch(s); m != nil {
 		val, ok := b[m[1]]
 		if !ok {
-			return nil, fmt.Errorf("interp: unbound reference %q (no earlier step saved it)", s)
+			return nil, fmt.Errorf("interp: unbound reference %q (no preset value or earlier step saved it)", s)
 		}
 		return val, nil
 	}
@@ -91,7 +91,7 @@ func resolveString(s string, b Bindings) (any, error) {
 		val, ok := b[name]
 		if !ok {
 			if firstErr == nil {
-				firstErr = fmt.Errorf("interp: unbound reference %q in %q (no earlier step saved it)", name, s)
+				firstErr = fmt.Errorf("interp: unbound reference %q in %q (no preset value or earlier step saved it)", name, s)
 			}
 			return match
 		}
@@ -182,4 +182,38 @@ func BigString(v *big.Int) string {
 		return "0"
 	}
 	return v.String()
+}
+
+// initialBindings copies preset data for this run. An action may mutate an
+// object binding without changing the declaration or another case's scope.
+func initialBindings(values map[string]any) Bindings {
+	out := Bindings{}
+	for name, value := range values {
+		out[name] = copyBindingValue(value)
+	}
+	return out
+}
+
+func copyBindingValue(value any) any {
+	switch v := value.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(v))
+		for k, item := range v {
+			out[k] = copyBindingValue(item)
+		}
+		return out
+	case []any:
+		out := make([]any, len(v))
+		for k, item := range v {
+			out[k] = copyBindingValue(item)
+		}
+		return out
+	case *big.Int:
+		if v == nil {
+			return (*big.Int)(nil)
+		}
+		return new(big.Int).Set(v)
+	default:
+		return value
+	}
 }

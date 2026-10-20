@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // The v2 grammar: the types a declaration parses into, and the checks that are
@@ -69,7 +70,10 @@ type ChainPresetV2 struct {
 	// it is read, rather than in a file beside it.
 	Description string `json:"description,omitempty"`
 	Target      string `json:"target,omitempty"`
-	Chain       string `json:"chain"`
+	// Values are typed initial bindings for each case run. They do not change
+	// the network composition and are shadowed by later saved results.
+	Values map[string]any `json:"values,omitempty"`
+	Chain  string         `json:"chain"`
 	// Manifest is an external, project-supplied chain manifest JSON, run on the
 	// built-in family named by Chain; GenesisTemplate is its genesis template.
 	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
@@ -121,7 +125,10 @@ type AttachV2 struct {
 	// RPC are the endpoints, in the order a spec's node selectors address them.
 	// "${VAR:-default}" works here as it does for a binary, which is what keeps
 	// a machine's address out of a committed case.
-	RPC []string `json:"rpc"`
+	RPC []string `json:"rpc,omitempty"`
+	// Endpoints preserves external node roles and each reachable transport.
+	// It is exclusive with the legacy RPC-only list.
+	Endpoints []node.RPCEndpoint `json:"endpoints,omitempty"`
 	// KeysDir is the key set the running network was composed from. Without it
 	// a spec attached to a network cannot turn "node1" into an address — the
 	// run holds no key set of its own.
@@ -485,6 +492,7 @@ type CaseV2 struct {
 	Timeouts map[string]string `json:"timeouts,omitempty"`
 	Hooks    *HooksV2          `json:"hooks,omitempty"`
 	Steps    []map[string]any  `json:"steps"`
+	Prepared *PreparedV2       `json:"prepared,omitempty"`
 }
 
 // sniff reads just enough to route a raw spec to its grammar.

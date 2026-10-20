@@ -2,13 +2,13 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "claim-zero-refund-reverts",
-  "description": "TC-1-1-06 — refundableBalance 0 계정 claimBurnRefund revert 검증 (원본 post-v1.0.0-change/common-all/08-test-claim-refund-zero-revert)",
+  "description": "v2 burn/refund predicates: actual generated-key proposer, deposit and burn/refund ledgers, native custody/outflow and exact receipt event identity. Original fixture/topology/timing differences remain separately recorded. TC-1-1-06 — refundableBalance 0 계정 claimBurnRefund revert 검증 (원본 post-v1.0.0-change/common-all/08-test-claim-refund-zero-revert)",
   "requires": [
     "rpc",
     "contract:govMinter"
   ],
   "chainPreset": {
-    "extends": "stablenet-bp4",
+    "extends": "stablenet-bp4-boho",
     "capabilities": [
       "rpc"
     ]
@@ -30,7 +30,7 @@
     },
     {
       "do": "waitFor",
-      "on": "en1",
+      "on": "node1",
       "source": "rpcCall",
       "method": "eth_getTransactionReceipt",
       "params": [
@@ -43,19 +43,104 @@
       "pollInterval": "1s"
     },
     {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xb03d36cd",
+      "of": [
+        "$acct"
+      ],
+      "save": "refBalCall"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x98179c41",
+      "of": [
+        "$acct"
+      ],
+      "save": "burnBalanceCall"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$refBalCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$burnBalanceCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "govMinter",
+      "save": "govBeforeClaim"
+    },
+    {
+      "expect": "rpcError",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "govMinter",
+          "from": "$acct",
+          "data": "0x936834b9"
+        },
+        "latest"
+      ],
+      "reason": "execution reverted",
+      "errorData": "0xe49c14cb"
+    },
+    {
       "data": "0x936834b9",
       "do": "sendTx",
       "expect": "revert",
       "gas": "0xb71b0",
       "key": "$acctKey",
-      "on": "en1",
+      "on": "node1",
       "save": "claimHash",
       "to": "govMinter"
     },
     {
-      "expect": "txStatus",
-      "hash": "$fundHash",
-      "is": "0x1"
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$refBalCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "call",
+      "to": "govMinter",
+      "data": "$burnBalanceCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "govMinter",
+      "save": "govAfterClaim"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$govAfterClaim",
+        "$govBeforeClaim"
+      ],
+      "compare": "Equal",
+      "is": "0"
     }
   ]
 }

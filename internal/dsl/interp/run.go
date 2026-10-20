@@ -15,7 +15,7 @@ import (
 // independent of the verdict). It records each step/assertion and the final
 // status, and returns that status.
 //
-// Bindings are scoped to this call: a step that declares "save" binds its result
+// Bindings start from preset values and are scoped to this call. "save" binds a result
 // for later steps and assertions to reference as "$name" (see binding.go). The
 // scope is per-run, so nothing leaks between tests and the interpreter itself
 // stays free of shared state.
@@ -32,7 +32,12 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 		ctx, cancel = context.WithTimeout(ctx, d)
 		defer cancel()
 	}
-	binds := Bindings{}
+	binds := initialBindings(s.EnvValues)
+	if err := importPrepared(s, binds); err != nil {
+		rec.Reason(err.Error())
+		rec.Status(session.StatusBlocked)
+		return session.StatusBlocked, nil
+	}
 
 	// Pre-actions: a failure blocks the test (steps/assertions do not run).
 	for _, pa := range s.PreActions {
@@ -86,6 +91,12 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 
 	// Post-actions: recorded, but they do not change the verdict.
 	i.runRecorded(ctx, s.PostActions, env, rec, binds)
+	if status == session.StatusPass {
+		if err := exportPrepared(s, binds); err != nil {
+			rec.Reason(err.Error())
+			status = session.StatusFail
+		}
+	}
 
 	rec.Status(status)
 	return status, nil
@@ -171,7 +182,13 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 func (i *interpreter) dispatchStep(ctx context.Context, idx int, name string, act Action, on string, args map[string]any, env NodeTable, rec Recorder, binds Bindings) error {
 	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
 	runErr := act.Do(ctx, ac)
-	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt}
+	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt, Deployment: ac.Deployment}
+	if ac.Deployment != nil {
+		step.Signer = ac.Deployment.Deployer
+		if ac.Deployment.Nonce != nil {
+			step.Nonce = *ac.Deployment.Nonce
+		}
+	}
 	if runErr != nil {
 		step.Error = runErr.Error()
 	}

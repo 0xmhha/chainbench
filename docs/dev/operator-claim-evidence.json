@@ -1,0 +1,195 @@
+{
+  "scope": "Approved GOV013 current v1 criterion after actual WEMIX\u2192WBFT handoff, no delegators and non-validator funded operator. Original operator parent preview0 contrasted with actual staker share; exact Claimed/RewardPaid and no FeePaid; operator receipt-fee-adjusted credit, rewardee debit, nonce, original mapping. Related actual GOV014 nonzero-fee regression. Not full87/Linux/mainnet/legacy/public DSL/final Web acceptance.",
+  "originalAll87Complete": false,
+  "approvedCriterion": "User approved current contract on2026-10-15; original preview input/result retained as difference.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "b103570970f1a33cd0b5676100ab76c37641c3d7b6a4777446eb9f420d489a90",
+    "sourceAfter": "b103570970f1a33cd0b5676100ab76c37641c3d7b6a4777446eb9f420d489a90",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceOperatorClaimE2E",
+      "TestWemixGovernanceDelegatorClaimE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-rcvpmwlk",
+      "/private/tmp/cbui/hf-ybrde63h"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-rcvpmwlk": [],
+      "/private/tmp/cbui/hf-ybrde63h": []
+    },
+    "elapsedSeconds": 174.296,
+    "summary": {
+      "path": "/private/tmp/chainbench-operator-claim-native-summary.json",
+      "sha256": "9d6068e52bbbf72522f6866fafb6541fe136ce498484da932c362db7422e89b1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024007656306467
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-operator-claim-native-native.jsonl",
+      "sha256": "fcd7438c240ea703169d1b65110f55d740378ccfbe95f83d1ec1c8330c86fbf1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792024007165770504
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-operator-claim-native-start.json",
+      "sha256": "7f627f02b3c5fb1950f86b55a6c5d08c048bd39a4ccbff27c67e9b1f698be091",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023830471252200
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-operator-claim-observed.json",
+    "sha256": "d34e80c07ff9af59af08df784954ac36465dc80771295214e0f16b186b312657",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792024032017860084
+  },
+  "originalOperatorPreviewReward": "0",
+  "stakerPreviewReward": "12000000000000000000",
+  "gasFee": "14402303986268594",
+  "operatorCredit": "11985597696013731406",
+  "rewardeeDebit": "12000000000000000000",
+  "previewBlock": "0x25",
+  "minedBlock": "0x26",
+  "delegatorRegression": {
+    "gross": "6000000000000000000",
+    "fee": "150000000000000000",
+    "gas": "13515601289928864"
+  },
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-rcvpmwlk",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-rcvpmwlk/reports/operator-claim-inventory.json",
+        "sha256": "8943e30f16762fd9c8363d039482b8d3cf6b3ad9eb49958b7a1fe4c7f38b1683",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792024032059157072
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-ybrde63h",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-ybrde63h/reports/operator-claim-inventory.json",
+        "sha256": "799c39f7e221e0355d92167c56f26895b7fef4aed1b12cba116d66e27f4d95ac",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792024032096739481
+      }
+    }
+  ],
+  "retainedFiles": 456,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-operator-claim-publication.json",
+    "sha256": "0d17adb44394033d9164d37107a1a2172fec9775f2479fa0f4fc82145c67b09a",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792023712772475522
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-operator-claim-red.log",
+      "sha256": "47f3fcc49bc3138b4ff90897d60dbe5b4a0d3c65319002c6272a97c4def4bdd4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023565371665413
+    },
+    {
+      "path": "/private/tmp/chainbench-operator-claim-green.log",
+      "sha256": "e58e93ead863693aa288eaa64f9ab2c40d1ddb47e80883028e38f1b97c3230d7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023598425830889
+    },
+    {
+      "path": "/private/tmp/chainbench-operator-claim-related-race.log",
+      "sha256": "21a3a0c6cac2dead4612b6da23251248abe70d15663075c6c97afd75c902b2ab",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023744576707731
+    },
+    {
+      "path": "/private/tmp/chainbench-operator-claim-check.log",
+      "sha256": "7daf3b42e449526063f5658b3f5b0017aab8734874702654a864f5e399c7118c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023803444467311
+    },
+    {
+      "path": "/private/tmp/chainbench-operator-claim-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792023724290449208
+    }
+  ],
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/operator_claim_ledger_e2e_test.go",
+      "sha256": "5304081b8f19232b4278c4b8953b5e4f434acb1b99bf763efed443979c81f606",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792023594840026737
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "c763f67459b2ab1e17bf360a0a2a6738b06c84e205f977a9588c3fe286cabfca",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792023650904348247
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

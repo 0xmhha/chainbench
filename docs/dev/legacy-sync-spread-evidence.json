@@ -1,0 +1,231 @@
+{
+  "date": "2026-10-18",
+  "scope": "Restore original basic/sync maximum-minus-minimum height spread at both public BP4 EN1 checkpoints. Prepared read-only attachment after bounded actual per-endpoint validator readiness, preserving initial errors. No cold-start timing, external fix, full legacy/L1/Web acceptance.",
+  "headAtProof": "fc9a2c6d1859233ffcd6eebe7240fbf8f9ac1d76",
+  "workingTreeModifiedAtProof": true,
+  "sourceAtNativeProof": "1291449073913707730e8a55e20c82a3a26fa78cbbc4f267bfee8726ef047bd5",
+  "publicCase": "tests/tc/common/node/CT-NODE-009-head-hash-agreement.json",
+  "semanticRed": {
+    "falsePasses": 14,
+    "log": {
+      "path": "/private/tmp/chainbench-legacy-sync-semantic-red-exit-20261018.log",
+      "sha256": "df1d09b9b6e77ee65bec7c70621e23f7f1e6f20b91ad2fc0efead2153720cb04",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792293512311414412
+    }
+  },
+  "unitGreen": {
+    "semanticFixtures": 18,
+    "readinessContracts": "every endpoint, incomplete/duplicate/divergent/missing validator sets, RPC failures, deadline and cancellation",
+    "readinessRedWasMissingHelperCompileFailure": true,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-legacy-sync-green-20261018.log",
+        "sha256": "dac20155e44dc1c7e59f2d48aa66edcfabef19f33cd2da7cc712dbc68c865f62",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792293529751772779
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-sync-readiness-red-20261018.log",
+        "sha256": "0c45988c310fe5ebd7436dddacd79201f062e373fde398600c82a20f0425319c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296007919815746
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-sync-readiness-green-20261018.log",
+        "sha256": "4e48d3f1a2d53868d07e67cc58d67b2ee35daac88447d1ada091baed89ba077b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296286820447797
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-sync-readiness-related-race-corrected-20261018.log",
+        "sha256": "e984bd49b811a850a5ee5c88e3e601096e828e24dbb7a37134859cd229cde241",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296368993170808
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-sync-readiness-lint-20261018.log",
+        "sha256": "0e33bd574207903c717b58a44d1447507674d10457a86466f1bcc1b515651ec2",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296354725814278
+      },
+      {
+        "path": "/private/tmp/chainbench-legacy-sync-readiness-comments-20261018.log",
+        "sha256": "c625fd5f856243645c66b83f749f304623184d0d8a499332dcbd3961c7ea3267",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296375788444822
+      }
+    ]
+  },
+  "failedFirstNativeAttempt": {
+    "report": {
+      "path": "/private/tmp/chainbench-legacy-sync-native-1792294594484244000.json",
+      "sha256": "0762604c20c69bea1726f36ee87dd6d15244360a3488a1749fd90e3e3df807d4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792294789057218708
+    },
+    "accepted": false,
+    "result": "StableNet and WBFT pass; WEMIX blocked by initial endpoint consensus RPC nil-contract error. Preserved; no external source edits.",
+    "preservation": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/legacy-sync-first-native-blocked-v2-1792295431969175000/preservation.json",
+      "sha256": "753b7cdda255cbcb01bbfca40ba391b6498c55842b8611d0fcaad22c823e6105",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792295440272588737
+    }
+  },
+  "native": {
+    "report": {
+      "path": "/private/tmp/chainbench-legacy-sync-native-1792296397188960000.json",
+      "sha256": "3529c598f604f63dbaaaab40862bf6be11fe4aea18f72fa6e3ab2a8a079d5d68",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792296565649609955
+    },
+    "independentAudit": {
+      "path": "/private/tmp/chainbench-legacy-sync-native-1792296397188960000-independent.json",
+      "sha256": "56ac142293c971630c9bce2a0408af5375c200a17a266d73bc008f5dfb37029d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792296576604657540
+    },
+    "families": [
+      {
+        "chain": "wemix",
+        "nodes": 5,
+        "caseAssertions": 13,
+        "validatorProbeRounds": 17,
+        "initialProbeErrors": 16,
+        "minimum": 57,
+        "maximum": 57
+      },
+      {
+        "chain": "stablenet",
+        "nodes": 5,
+        "caseAssertions": 13,
+        "validatorProbeRounds": 2,
+        "initialProbeErrors": 5,
+        "minimum": 22,
+        "maximum": 22
+      },
+      {
+        "chain": "wbft",
+        "nodes": 5,
+        "caseAssertions": 13,
+        "validatorProbeRounds": 2,
+        "initialProbeErrors": 5,
+        "minimum": 22,
+        "maximum": 22
+      }
+    ],
+    "allNativeTestsPassed": true,
+    "skippedTests": [],
+    "tamperControlsRejected": 18,
+    "remainingDatabases": 0,
+    "repositoryUserNativeMetadataPreserved": true
+  },
+  "completedTrieCache": {
+    "redLog": {
+      "path": "/private/tmp/chainbench-triecache-runtime-red-20261018.log",
+      "sha256": "0f11a1218ad934c0a611d91b8a8390e6b1b89bbaf6ee9d62815453449620f821",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792295566012306835
+    },
+    "regressionContracts": {
+      "runtime": 32,
+      "storage": 23,
+      "goCache": 48
+    },
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-triecache-runtime-regression-20261018.log",
+        "sha256": "7b2be9daf129744d5ed1b6ba5c522f9df6c73201d4fe4a66ee4c3ab2f09d954b",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296310352700858
+      },
+      {
+        "path": "/private/tmp/chainbench-triecache-storage-regression-20261018.log",
+        "sha256": "516f73e1d45e978ca8237657c0ed7640c2b9de6ced6ab4a86240f755c1debcca",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296310451361251
+      },
+      {
+        "path": "/private/tmp/chainbench-triecache-go-cache-regression-20261018.log",
+        "sha256": "7c40a0bd98d494f32f2d9482a8c08be820ff5e66c2306fff4bf5b9a6d0228867",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792296310629578296
+      }
+    ],
+    "actualCleanup": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/triecache-actual-cleanup-1792295744995803000.json",
+      "sha256": "47523b89dfa458f4aeccba02e022b89550ba832be0dcc84f296ade6c79a998ca",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792295745003991405
+    },
+    "independentAudit": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/triecache-actual-cleanup-1792295744995803000-independent.json",
+      "sha256": "97bc6f78f281a2d63f2a774a9adff2835c4f388d33079d0c833585c38f15c69a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792295931780257228
+    },
+    "reclaimedAllocatedBytes": 2945024,
+    "preservedNonDatabaseProofFiles": 563,
+    "scope": "Only completed owned node triecache, never active/referenced/proof-purpose/user cache. Not the complete recurring storage-growth solution."
+  },
+  "all14Accepted": false,
+  "fullLegacyAccepted": false,
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "fullMakeCheck": {
+    "passed": true,
+    "log": {
+      "path": "/private/tmp/chainbench-legacy-sync-readiness-make-check-20261018.log",
+      "sha256": "c57a3f78ad94b38aecdd56b679d19cfcd6928ea66d27dee8f93229d643552b56",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792296912793172003
+    },
+    "nativeVariablesUnset": true,
+    "scope": "Full required ordinary checks, not final mandatory live/race/Web acceptance."
+  },
+  "nativeCodeBinding": {
+    "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/legacy-sync-code-binding-1792296920243161000.json",
+    "sha256": "feebde3f2e7831cd99302e867b19dfaef8af25ca8dfde07e188cb13ecfeb85a6",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792296920244994812
+  }
+}

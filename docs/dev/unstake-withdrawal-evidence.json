@@ -1,0 +1,172 @@
+{
+  "scope": "GOV004 same full-unstake credential after actual WEMIX\u2192WBFT handoff. Non-validator funded operator, configured fixture chain-time period, mined early exact refusal/fee/unchanged slot and pointers, mature same-index exact Withdrawn/principal/gas/contract debit/drained slot/pointers. Related actual expiry regression. Not mainnet7days/full87/Linux/legacy/public DSL/final Web.",
+  "originalAll87Complete": false,
+  "unitRed": "Success-only model accepted thirteen missing/time/slot/early-reason/payout controls.",
+  "unitGreen": "One positive and thirteen negative controls.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "418eda0aa6a50ece40b62bdc49611ca8bd1324c0cb89818e2813f844095fe457",
+    "sourceAfter": "418eda0aa6a50ece40b62bdc49611ca8bd1324c0cb89818e2813f844095fe457",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceCredentialExpiryE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-6z77m73r",
+      "/private/tmp/cbui/hf-xr6qpj1q"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-6z77m73r": [],
+      "/private/tmp/cbui/hf-xr6qpj1q": []
+    },
+    "elapsedSeconds": 184.238,
+    "summary": {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-native-summary.json",
+      "sha256": "f07dce7ee20e2b48fe5e086649deaf97946cd13a8f7969fa1083626d45e73ddf",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030276859876636
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-native-native.jsonl",
+      "sha256": "ca28559dea50e7ac4b13a97ec4051fe55bbc390f2a678efa507d960d4c3311ca",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030276325339670
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-native-start.json",
+      "sha256": "08afb464ed612ffc97c22cff017e77659002b444f80c444156cda98d9eec712c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792030088444392909
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-unstake-withdrawal-observed.json",
+    "sha256": "090c410ed704b737a54b3f97e6a0bcf9e49210452b572ea2704207e6bbce8b25",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792030308923375104
+  },
+  "amount": "20000000000000000000000000",
+  "fixtureDelaySeconds": 15,
+  "earlyTimestamp": 1792030166,
+  "maturityTimestamp": 1792030179,
+  "paidTimestamp": 1792030180,
+  "gasFee": "7037802222044594",
+  "runtimes": [
+    {
+      "root": "/private/tmp/cbui/hf-6z77m73r",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-6z77m73r/reports/unstake-withdrawal-inventory.json",
+        "sha256": "25cafcc0ab79ec056bf8e89c7e77afe26faa86523a8a797cfc11a01905dd6cab",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792030308959635105
+      }
+    },
+    {
+      "root": "/private/tmp/cbui/hf-xr6qpj1q",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-xr6qpj1q/reports/unstake-withdrawal-inventory.json",
+        "sha256": "cc5b4ba1552c7858d1968108295a4b4cc15aad36ff16cd0fee198b77eeaeeb04",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792030308995755943
+      }
+    }
+  ],
+  "retainedFiles": 456,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-unstake-withdrawal-publication.json",
+    "sha256": "ba1b6530d410c25b9bb4ab05ec9968b62443b91780566d97c965f7518773a6da",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792029796291753987
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-red.log",
+      "sha256": "c902a6ab0a3be26d256888578a0b2fb7ef256a6dcef387299321e2efa0c0b73f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029699555734127
+    },
+    {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-green.log",
+      "sha256": "65b60c1546fc8ab9804b9082bc9e7a897e84936f479056fe9e63c12a1eb2a824",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029722789914467
+    },
+    {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-related-race.log",
+      "sha256": "cb98baf952b261d03a1c97bc478c67391e5863c1ad465b290bd3467563cb5f13",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029869586788617
+    },
+    {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-check.log",
+      "sha256": "968f790e700909640d8fe532d1ec11398fef27819c03f7c8f3e7be51e92ce6f8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029882853653463
+    },
+    {
+      "path": "/private/tmp/chainbench-unstake-withdrawal-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792029797403711271
+    }
+  ],
+  "independentKeccak": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

@@ -31,7 +31,12 @@
     "capabilities": [
       "rpc",
       "ws"
-    ]
+    ],
+    "accounts": {
+      "webSponsor": {
+        "fund": "100000000000000000000"
+      }
+    }
   },
   "steps": [
     {
@@ -205,6 +210,177 @@
       ],
       "compare": "Greater",
       "is": "0"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "namedSenderBefore"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "webSponsor",
+      "save": "namedPayerBefore"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "feePayer": "webSponsor",
+      "to": "$payer",
+      "value": "2",
+      "save": "namedFeeSend"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$namedFeeSend"
+      ],
+      "select": "type",
+      "is": "0x16"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "namedSenderAfter"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$namedSenderBefore",
+        "$namedSenderAfter"
+      ],
+      "is": "2"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "webSponsor",
+      "compare": "Less",
+      "is": "$namedPayerBefore"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "bp1",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "node1",
+        "pending"
+      ],
+      "save": "nodeRawNonce"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "rawBase"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "rawTip"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$rawBase",
+        "$rawBase",
+        "$rawTip"
+      ],
+      "format": "hex",
+      "save": "rawCap"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "bp1",
+      "method": "eth_signTransaction",
+      "params": [
+        {
+          "from": "node1",
+          "to": "node3",
+          "nonce": "$nodeRawNonce",
+          "value": "0x1",
+          "gas": "0x5208",
+          "maxFeePerGas": "$rawCap",
+          "maxPriorityFeePerGas": "$rawTip"
+        }
+      ],
+      "select": "raw",
+      "save": "nodeRawSender"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "bp2",
+      "method": "eth_signRawFeeDelegateTransaction",
+      "params": [
+        {
+          "feePayer": "node2"
+        },
+        "$nodeRawSender"
+      ],
+      "select": "raw",
+      "save": "nodeRawEnvelope"
+    },
+    {
+      "do": "sendRawTampered",
+      "on": "bp1",
+      "raw": "$nodeRawEnvelope",
+      "which": "sender",
+      "reason": "fee delegation: invalid feePayer",
+      "save": "rawRefusal"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "bp1",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "node1",
+        "pending"
+      ],
+      "is": "$nodeRawNonce"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "bp1",
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "$nodeRawEnvelope"
+      ],
+      "save": "nodeRawAccepted"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$nodeRawAccepted"
+      ],
+      "select": "status",
+      "expected": "0x1",
+      "timeout": "60s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$nodeRawAccepted"
+      ],
+      "select": "type",
+      "is": "0x16"
     }
   ]
 }

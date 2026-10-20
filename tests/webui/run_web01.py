@@ -1,5 +1,7 @@
 """Create fresh, fail-closed WEB-01 receipts, even if a prerequisite fails."""
 from runtime_contract import runtime_root, base_commit
+from runtime_storage import create_runtime
+from prerequisite import run_check
 
 import datetime
 import json
@@ -30,14 +32,14 @@ def main():
     evidence = {'criterion': 'WEB-01', 'invocationId': invocation, 'scenarios': [], 'checks': []}
     failures = []
     for command in ('npm --prefix web run build', 'go test ./internal/app ./internal/dashboard ./internal/testengine ./internal/core/nodeconfig'):
-        run = subprocess.run(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        run = run_check(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         logfile = output / f'check-{len(evidence["checks"])}.log'
         logfile.write_text(run.stdout)
         evidence['checks'].append({'command': command, 'exitCode': run.returncode,
                                    'log': str(logfile), 'sha256': digest(logfile)})
         if run.returncode:
             failures.append(command + ' failed')
-    runtime = runtime_root() / invocation
+    runtime = create_runtime(invocation)
     process = None
     try:
         prepared = subprocess.run(['bash', 'tests/webui/prepare.sh', invocation], capture_output=True, text=True)

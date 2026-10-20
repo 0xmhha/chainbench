@@ -1,0 +1,1386 @@
+{
+  "date": "2026-10-20",
+  "status": "scoped_storage_contract_verified",
+  "scope": "Release read caches of recorded binaries without deleting evidence; preserve recorded AST artifacts using established transparent compression. Full sweep remains pending.",
+  "sourceDigest": "b2773db236653d5d2f1df08c83eff335d482e0fa81687b2a21f55d59b7f39c0b",
+  "headAtProof": "73851abd669c7a09bd5e13f8bd348e5c3d969026",
+  "implementationFiles": [
+    "tests/webui/linux_retention_transport.py",
+    "tests/webui/test_linux_retention_transport.py"
+  ],
+  "tdd": {
+    "meaningfulRedFailures": 4,
+    "greenContracts": 31,
+    "relatedPreservationContracts": 10,
+    "wholeCheckPassed": true,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-retention-binary-cache-red-20261020.log",
+        "sha256": "00d62b33710c7c439399a90cc6e272c397d82a9e48a848dce4b4d0165511ca37",
+        "bytes": 3608,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792433818639028057
+      },
+      {
+        "path": "/private/tmp/chainbench-retention-binary-cache-green-20261020.log",
+        "sha256": "1bf21080859b7a1204c7864ea3f2b79aeaf855603378e0fa9c6b432c1b65831a",
+        "bytes": 130,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792433829401362190
+      },
+      {
+        "path": "/private/tmp/chainbench-retention-binary-cache-related-20261020.log",
+        "sha256": "38eeff1237d74275801617a271eced659e08b1cad8069897d18e659ae40641d8",
+        "bytes": 109,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792433829470707385
+      },
+      {
+        "path": "/private/tmp/chainbench-retention-binary-cache-check-v2-20261020.log",
+        "sha256": "9dc877fe07fe7f195f880fb164e3510d9f45b996e57355cac91346542593d327",
+        "bytes": 8638,
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434002395274646
+      }
+    ]
+  },
+  "policy": {
+    "binaryHashBeforeEachFileCacheAdvice": true,
+    "cacheAdviceFailureAbortsCaptureBeforeDatabaseDeletion": true,
+    "fileCacheAdviceIsNotAGuaranteeOfPhysicalHostSpaceRelease": true,
+    "nativeFreeSpaceGateBytes": 21474836480,
+    "minimumGraphAgeSeconds": 3600,
+    "wholeCacheDeletion": false,
+    "dockerDesktopRestarted": false
+  },
+  "compression": {
+    "phases": [
+      {
+        "report": {
+          "accepted": true,
+          "scope": "Preservation-only maintenance of 134 recorded graphs and two published summary JSON files. Content, mode, uid/gid, mtime, non-compression xattrs/ACL/flags preserved. Native 20GiB start gate remains unchanged; no native acceptance performed.",
+          "sourceDigest": "0b7a13977c9c249724898fc85d90882980c8b73aa422ec6e28a6492dd8cc495d",
+          "recordedArtifacts": 136,
+          "recordedGraphs": 134,
+          "publishedSummaries": 2,
+          "selectedArtifacts": 18,
+          "results": [
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-capture.json",
+                "sha256": "f59f7585cf0f0b63fd5e68a1af2c3cc90400845df80eda0c0f82391cd1f6cab1",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792416913027201742
+              },
+              "oldInode": 90388421,
+              "newInode": 91118989,
+              "oldCtimeNS": 1792416913027201742,
+              "newCtimeNS": 1792433556339920939,
+              "allocatedBefore": 55783424,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50475008,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-legacy-fault-refresh-20261019-independent.json",
+                "sha256": "f59f7585cf0f0b63fd5e68a1af2c3cc90400845df80eda0c0f82391cd1f6cab1",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792416917940007869
+              },
+              "oldInode": 90388431,
+              "newInode": 91118994,
+              "oldCtimeNS": 1792416917940007869,
+              "newCtimeNS": 1792433557058062689,
+              "allocatedBefore": 55783424,
+              "allocatedAfter": 5287936,
+              "savedAllocatedBytes": 50495488,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-capture.json",
+                "sha256": "7c370e7230c83b136fe42b94ee2b209bda18a48f3fe90586300f908d486785bc",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792418688640516219
+              },
+              "oldInode": 90472377,
+              "newInode": 91118997,
+              "oldCtimeNS": 1792418688640516219,
+              "newCtimeNS": 1792433557608842830,
+              "allocatedBefore": 55861248,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50552832,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-code-p256-refresh-20261019-independent.json",
+                "sha256": "7c370e7230c83b136fe42b94ee2b209bda18a48f3fe90586300f908d486785bc",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792418693348192416
+              },
+              "oldInode": 90472401,
+              "newInode": 91119000,
+              "oldCtimeNS": 1792418693348192416,
+              "newCtimeNS": 1792433558153721719,
+              "allocatedBefore": 55861248,
+              "allocatedAfter": 5292032,
+              "savedAllocatedBytes": 50569216,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-capture.json",
+                "sha256": "0d48baba9b6248168ccf3b762c5a9557cc5ad076b7dc2d84b485686194983773",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792421548823969326
+              },
+              "oldInode": 90611240,
+              "newInode": 91119003,
+              "oldCtimeNS": 1792421548823969326,
+              "newCtimeNS": 1792433558715353573,
+              "allocatedBefore": 56147968,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50839552,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-burn-refund-refresh-20261019-independent.json",
+                "sha256": "0d48baba9b6248168ccf3b762c5a9557cc5ad076b7dc2d84b485686194983773",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792421560805531626
+              },
+              "oldInode": 90611315,
+              "newInode": 91119006,
+              "oldCtimeNS": 1792421560805531626,
+              "newCtimeNS": 1792433559290462932,
+              "allocatedBefore": 56147968,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50839552,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-capture.json",
+                "sha256": "e612d5eb5b0467a2602b9c4b8b931823bbbb14adb9db5dc6a41d76a20c1c6c45",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792423095427454484
+              },
+              "oldInode": 90683127,
+              "newInode": 91119009,
+              "oldCtimeNS": 1792423095427454484,
+              "newCtimeNS": 1792433559956179953,
+              "allocatedBefore": 56225792,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50917376,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-refresh-20261020-independent.json",
+                "sha256": "e612d5eb5b0467a2602b9c4b8b931823bbbb14adb9db5dc6a41d76a20c1c6c45",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792423100445669627
+              },
+              "oldInode": 90683183,
+              "newInode": 91119014,
+              "oldCtimeNS": 1792423100445669627,
+              "newCtimeNS": 1792433560525014060,
+              "allocatedBefore": 56225792,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50917376,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-capture.json",
+                "sha256": "6e9de2f5b53ed5ad134e9034dd27fe5616362bfea5802b89c07767daf9da03fd",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792423473126999732
+              },
+              "oldInode": 90705801,
+              "newInode": 91119018,
+              "oldCtimeNS": 1792423473126999732,
+              "newCtimeNS": 1792433561192939248,
+              "allocatedBefore": 56242176,
+              "allocatedAfter": 5308416,
+              "savedAllocatedBytes": 50933760,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v2-refresh-20261020-independent.json",
+                "sha256": "6e9de2f5b53ed5ad134e9034dd27fe5616362bfea5802b89c07767daf9da03fd",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792423486320542889
+              },
+              "oldInode": 90705896,
+              "newInode": 91119021,
+              "oldCtimeNS": 1792423486320542889,
+              "newCtimeNS": 1792433561877217110,
+              "allocatedBefore": 56242176,
+              "allocatedAfter": 5304320,
+              "savedAllocatedBytes": 50937856,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-capture.json",
+                "sha256": "4335ab0156779b94672a2acb0685d1fadc2a1f90e0b617535650f8153e4b960b",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792423904092131941
+              },
+              "oldInode": 90732660,
+              "newInode": 91119026,
+              "oldCtimeNS": 1792423904092131941,
+              "newCtimeNS": 1792433562703203155,
+              "allocatedBefore": 56250368,
+              "allocatedAfter": 5304320,
+              "savedAllocatedBytes": 50946048,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v3-refresh-20261020-independent.json",
+                "sha256": "4335ab0156779b94672a2acb0685d1fadc2a1f90e0b617535650f8153e4b960b",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792423909113346136
+              },
+              "oldInode": 90732669,
+              "newInode": 91119029,
+              "oldCtimeNS": 1792423909113346136,
+              "newCtimeNS": 1792433563279418015,
+              "allocatedBefore": 56250368,
+              "allocatedAfter": 5304320,
+              "savedAllocatedBytes": 50946048,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-capture.json",
+                "sha256": "6819ea17c524afbd95c701ae0731f56743f6969628d6bd0bf391fe37c9e44e7a",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792424455910946314
+              },
+              "oldInode": 90757710,
+              "newInode": 91119032,
+              "oldCtimeNS": 1792424455910946314,
+              "newCtimeNS": 1792433563829025530,
+              "allocatedBefore": 56254464,
+              "allocatedAfter": 5304320,
+              "savedAllocatedBytes": 50950144,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v4-refresh-20261020-independent.json",
+                "sha256": "6819ea17c524afbd95c701ae0731f56743f6969628d6bd0bf391fe37c9e44e7a",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792424460930207648
+              },
+              "oldInode": 90757816,
+              "newInode": 91119035,
+              "oldCtimeNS": 1792424460930207648,
+              "newCtimeNS": 1792433564381860672,
+              "allocatedBefore": 56254464,
+              "allocatedAfter": 5304320,
+              "savedAllocatedBytes": 50950144,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-capture.json",
+                "sha256": "8b67f67de2ce13d17371e6c8670bfa7482ccacb12796072c5b442b71c3c50a99",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792424616654728079
+              },
+              "oldInode": 90760228,
+              "newInode": 91119038,
+              "oldCtimeNS": 1792424616654728079,
+              "newCtimeNS": 1792433565063017908,
+              "allocatedBefore": 56254464,
+              "allocatedAfter": 5304320,
+              "savedAllocatedBytes": 50950144,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-regular-egp-v5-refresh-20261020-independent.json",
+                "sha256": "8b67f67de2ce13d17371e6c8670bfa7482ccacb12796072c5b442b71c3c50a99",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792424621973762056
+              },
+              "oldInode": 90760628,
+              "newInode": 91119043,
+              "oldCtimeNS": 1792424621973762056,
+              "newCtimeNS": 1792433565743953894,
+              "allocatedBefore": 56254464,
+              "allocatedAfter": 4415488,
+              "savedAllocatedBytes": 51838976,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-capture.json",
+                "sha256": "9b278120d95bf6e9eb3130f3a3a3d048f40e5bbd507a919e6d946a274eb1d648",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792427395056651601
+              },
+              "oldInode": 90902203,
+              "newInode": 91119047,
+              "oldCtimeNS": 1792427395056651601,
+              "newCtimeNS": 1792433566590793072,
+              "allocatedBefore": 56356864,
+              "allocatedAfter": 4423680,
+              "savedAllocatedBytes": 51933184,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-fault-lag-v2-refresh-20261020-independent.json",
+                "sha256": "9b278120d95bf6e9eb3130f3a3a3d048f40e5bbd507a919e6d946a274eb1d648",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792427399854329147
+              },
+              "oldInode": 90902213,
+              "newInode": 91119052,
+              "oldCtimeNS": 1792427399854329147,
+              "newCtimeNS": 1792433567302935612,
+              "allocatedBefore": 56356864,
+              "allocatedAfter": 4423680,
+              "savedAllocatedBytes": 51933184,
+              "contentAndMetadataUnchanged": true
+            }
+          ],
+          "savedAllocatedBytes": 917925888,
+          "volumeFreeBefore": 20730286080,
+          "volumeFreeAfter": 21650755584,
+          "allArtifactContentAndMetadataPreserved": true,
+          "sourcePublicationHelpersPreserved": true,
+          "error": null,
+          "inodeCtimeAndParentMtimeMayChange": true,
+          "all14Accepted": false
+        },
+        "independent": {
+          "accepted": true,
+          "report": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-l1-reserve-20261020-1792433555287348000.json",
+          "reportSHA256": "cebd5c97c9119d3a604c958cff7366a6b7a7b24a80afa88cf7e682d9c17f7fff",
+          "sourceDigest": "0b7a13977c9c249724898fc85d90882980c8b73aa422ec6e28a6492dd8cc495d",
+          "preservedArtifacts": 136,
+          "preservedGraphs": 134,
+          "preservedPublishedSummaries": 2,
+          "compressedArtifacts": 18,
+          "savedAllocatedBytes": 917925888,
+          "observedVolumeFreeChange": 920469504,
+          "negativeControlsRejected": [
+            "wrong path",
+            "wrong sha256",
+            "wrong mode",
+            "wrong uid",
+            "wrong gid",
+            "wrong mtimeNS",
+            "wrong extended metadata 0",
+            "wrong extended metadata 1",
+            "wrong extended metadata 2",
+            "wrong extended metadata 3",
+            "wrong extended metadata 4",
+            "wrong extended metadata 5",
+            "wrong extended metadata 6"
+          ],
+          "allBytesModeUIDGIDMtimeXattrsACLFlagsPreserved": true,
+          "freshOpenFileChecks": 136,
+          "sourcePublicationHelpersPreserved": true,
+          "inodeCtimeParentMtimeMayChange": true,
+          "all14Accepted": false
+        },
+        "artifacts": [
+          {
+            "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-l1-reserve-20261020-1792433555287348000.json",
+            "sha256": "cebd5c97c9119d3a604c958cff7366a6b7a7b24a80afa88cf7e682d9c17f7fff",
+            "bytes": 14470,
+            "mode": "0o600",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792433572152167212
+          },
+          {
+            "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-l1-reserve-20261020-1792433555287348000-independent.json",
+            "sha256": "b17ae6cc0047749658ad839b1d8a4d9dc380018191b5e41f9049a7b213d472df",
+            "bytes": 1119,
+            "mode": "0o600",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792433634151029545
+          }
+        ]
+      },
+      {
+        "report": {
+          "accepted": true,
+          "scope": "Preservation-only maintenance of 134 recorded graphs and two published summary JSON files. Content, mode, uid/gid, mtime, non-compression xattrs/ACL/flags preserved. Native 20GiB start gate remains unchanged; no native acceptance performed.",
+          "sourceDigest": "b2773db236653d5d2f1df08c83eff335d482e0fa81687b2a21f55d59b7f39c0b",
+          "recordedArtifacts": 136,
+          "recordedGraphs": 134,
+          "publishedSummaries": 2,
+          "selectedArtifacts": 2,
+          "results": [
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-remote-v2-refresh-20261020-capture.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-remote-v2-refresh-20261020-capture.json",
+                "sha256": "813b899e032f3cafa6565a066df02534ac2a4f405ce2c782fc6948de9f8ace21",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792430398699058397
+              },
+              "oldInode": 91007336,
+              "newInode": 91128387,
+              "oldCtimeNS": 1792430398699058397,
+              "newCtimeNS": 1792434100528260488,
+              "allocatedBefore": 56512512,
+              "allocatedAfter": 4431872,
+              "savedAllocatedBytes": 52080640,
+              "contentAndMetadataUnchanged": true
+            },
+            {
+              "event": "replace-complete",
+              "path": "/private/tmp/chainbench-ast-remote-v2-refresh-20261020-independent.json",
+              "compressed": true,
+              "expected": {
+                "path": "/private/tmp/chainbench-ast-remote-v2-refresh-20261020-independent.json",
+                "sha256": "813b899e032f3cafa6565a066df02534ac2a4f405ce2c782fc6948de9f8ace21",
+                "mode": "0o600",
+                "uid": 501,
+                "gid": 0,
+                "mtimeNS": 1792430404407240389
+              },
+              "oldInode": 91017876,
+              "newInode": 91128391,
+              "oldCtimeNS": 1792430404407240389,
+              "newCtimeNS": 1792434101110238183,
+              "allocatedBefore": 56512512,
+              "allocatedAfter": 4431872,
+              "savedAllocatedBytes": 52080640,
+              "contentAndMetadataUnchanged": true
+            }
+          ],
+          "savedAllocatedBytes": 104161280,
+          "volumeFreeBefore": 23584911360,
+          "volumeFreeAfter": 23688925184,
+          "allArtifactContentAndMetadataPreserved": true,
+          "sourcePublicationHelpersPreserved": true,
+          "error": null,
+          "inodeCtimeAndParentMtimeMayChange": true,
+          "all14Accepted": false
+        },
+        "independent": {
+          "accepted": true,
+          "report": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-l1-reserve-20261020-1792434099483033000.json",
+          "reportSHA256": "c641efb7a434718bbf2a0247d2ee4e9a6be0a8a5cab59d2e3b0c2218ddb8cf16",
+          "sourceDigest": "b2773db236653d5d2f1df08c83eff335d482e0fa81687b2a21f55d59b7f39c0b",
+          "preservedArtifacts": 136,
+          "preservedGraphs": 134,
+          "preservedPublishedSummaries": 2,
+          "compressedArtifacts": 2,
+          "savedAllocatedBytes": 104161280,
+          "observedVolumeFreeChange": 104013824,
+          "negativeControlsRejected": [
+            "wrong path",
+            "wrong sha256",
+            "wrong mode",
+            "wrong uid",
+            "wrong gid",
+            "wrong mtimeNS",
+            "wrong extended metadata 0",
+            "wrong extended metadata 1",
+            "wrong extended metadata 2",
+            "wrong extended metadata 3",
+            "wrong extended metadata 4",
+            "wrong extended metadata 5",
+            "wrong extended metadata 6"
+          ],
+          "allBytesModeUIDGIDMtimeXattrsACLFlagsPreserved": true,
+          "freshOpenFileChecks": 136,
+          "sourcePublicationHelpersPreserved": true,
+          "inodeCtimeParentMtimeMayChange": true,
+          "all14Accepted": false
+        },
+        "artifacts": [
+          {
+            "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-l1-reserve-20261020-1792434099483033000.json",
+            "sha256": "c641efb7a434718bbf2a0247d2ee4e9a6be0a8a5cab59d2e3b0c2218ddb8cf16",
+            "bytes": 2285,
+            "mode": "0o600",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792434105426334024
+          },
+          {
+            "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-l1-reserve-20261020-1792434099483033000-independent.json",
+            "sha256": "e21c34160cba4bfe4eacc686546930d0f2d60bd16f780902a274614fe90dbb73",
+            "bytes": 1118,
+            "mode": "0o600",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792434154516837726
+          }
+        ]
+      }
+    ],
+    "compressedGraphs": 20,
+    "savedAllocatedBytes": 1022087168,
+    "preservedGraphsPerPhase": 134,
+    "preservedPublishedSummariesPerPhase": 2,
+    "negativeControlsPerPhase": 13,
+    "inodeCtimeParentMtimeMayChange": true,
+    "historicalReceiptRecoveryAccepted": false
+  },
+  "guestReadCaches": {
+    "files": 90,
+    "containers": 15,
+    "beforeCachedKiB": 3257920,
+    "afterCachedKiB": 313600,
+    "allBytesVerifiedIndependently": true,
+    "metadataPrecision": "Device, inode, mode, uid/gid, size, mtime and ctime were compared; recorded mtime/ctime here have one-second precision. Archive metadata verification below uses nanoseconds.",
+    "hostSwapOrFreeSpaceChangeNotAttributedToThisAdvice": true
+  },
+  "native": {
+    "sourceBefore": "b2773db236653d5d2f1df08c83eff335d482e0fa81687b2a21f55d59b7f39c0b",
+    "runtime": "/private/tmp/cbui/rt-f859h39b",
+    "container": "chainbench-lf-xjdy6jeu-s1",
+    "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+    "fleetRuntime": "/private/tmp/cbui/lf-xjdy6jeu",
+    "helperInputsBefore": [
+      {
+        "path": "/private/tmp/chainbench-retention-cache-filesystem-20261020.py",
+        "sha256": "382dd6d4a9d390880d71ed8d086ab99932e7c1d66215e5165d29a3f938550bcf",
+        "mode": "0o700",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792433920708463252
+      },
+      {
+        "path": "/private/tmp/chainbench-retention-cache-filesystem-independent-20261020.py",
+        "sha256": "4410c8795587506b2fad8c26c727f5aec57687577e5dee429e4abdd2d4d0aaca",
+        "mode": "0o700",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792433920708871127
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/linux_retention.py",
+        "sha256": "75e4a5ae334d5c7d5017fc09b881029c5690f0ce8fb0b70aa395f01eb6349019",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1792122453071980166
+      },
+      {
+        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/linux_retention_transport.py",
+        "sha256": "cf972eec4f58bc51e10bde2fd3f9ffc7dd39df7fab633e9449f1bc2848acbced",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 20,
+        "mtimeNS": 1792433826429469563
+      },
+      {
+        "path": "/private/tmp/chainbench-l1-full-proc-probe-20261020.py",
+        "sha256": "88e09bf53e65941394e31632f84839f36fe762c89b11710234afc7fbf0dfc3bf",
+        "mode": "0o700",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792431863091899019
+      },
+      {
+        "path": "/private/tmp/chainbench-l1-full-proc-probe-20261020.sh",
+        "sha256": "3f5f8a801c95144c2afe6cbf4df70cc86eff5d4cb53acada4ece4e7490979e29",
+        "mode": "0o700",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792431863092772605
+      },
+      {
+        "path": "/private/tmp/chainbench-upstream-20261016/fleet-checkpoint.json",
+        "sha256": "574312e979c5e777836c67b715e1779f7e2b3a533e8b456bd6e398b5ad990f21",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792096044339177167
+      },
+      {
+        "path": "/private/tmp/chainbench-upstream-20261016/fleet-refresh/preparation.json",
+        "sha256": "b59b3a0e801b4ed2ca9fc028c975d738a2e7162ea4d3b8885a68054ba1fa154f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792096044334807671
+      }
+    ],
+    "kind": "real filesystem preservation/refusal tests; no simulated blockchain acceptance",
+    "nativeCasesExecuted": 0,
+    "acceptedScope": true,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false,
+    "faultedCaptureSHA256": "bd0db0ce5c58c9d43386fad369b8c12c6d27422eea2bd69378d9a5b67a78c1aa",
+    "productionCaptureSHA256": "176e62c450a692b930fc2e76601c400f74d6df19bffec3e9a80bf223b7d437af",
+    "cacheFaultCaptureSHA256": "e8f25365a1e11e2dd8639d50a4c4417c3c8a1c9ed5939f5691c4f54bec325ca8",
+    "positiveClosures": 7,
+    "negativeRefusals": 6,
+    "retentions": [
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c1/keys",
+          "rt-f859h39b/c1/logs/canary",
+          "rt-f859h39b/c1/node/canary/node1",
+          "rt-f859h39b/c1/runtime/canary",
+          "rt-f859h39b/c1/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c1/server1-metadata.tar.gz",
+        "archiveSHA256": "4d1d792f0e01eef975230ed74733dfde8ebb2793557ea7eb3699e45fb27866c8",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c1/server1-filesystem-before.json",
+        "metadataEntries": 10,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [
+          "/data/chainbench/rt-f859h39b/c1/node/canary/node1/gstable/chaindata"
+        ],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      },
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c2/keys",
+          "rt-f859h39b/c2/logs/canary",
+          "rt-f859h39b/c2/node/canary/node1",
+          "rt-f859h39b/c2/runtime/canary",
+          "rt-f859h39b/c2/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c2/server1-metadata.tar.gz",
+        "archiveSHA256": "638204b730a0762a277891d97159cf8bff3cb85149722a8f987605bdb06facb7",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c2/server1-filesystem-before.json",
+        "metadataEntries": 10,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [
+          "/data/chainbench/rt-f859h39b/c2/node/canary/node1/gstable/chaindata"
+        ],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      },
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c3/keys",
+          "rt-f859h39b/c3/logs/canary",
+          "rt-f859h39b/c3/node/canary/node1",
+          "rt-f859h39b/c3/runtime/canary",
+          "rt-f859h39b/c3/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c3/server1-metadata.tar.gz",
+        "archiveSHA256": "d5a55beee67b0e584cc44c669d2ac8fd056237bc785af74db5c21d39ac328061",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c3/server1-filesystem-before.json",
+        "metadataEntries": 10,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      },
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c4/keys",
+          "rt-f859h39b/c4/logs/canary",
+          "rt-f859h39b/c4/node/canary/node1",
+          "rt-f859h39b/c4/runtime/canary",
+          "rt-f859h39b/c4/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c4/server1-metadata.tar.gz",
+        "archiveSHA256": "d99daa19317301f5c6270ed0b26826beadd334b7add5ad6f9bc4c42a21698af0",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c4/server1-filesystem-before.json",
+        "metadataEntries": 11,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [
+          "/data/chainbench/rt-f859h39b/c4/node/canary/node1/gstable/chaindata"
+        ],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      },
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c5/keys",
+          "rt-f859h39b/c5/logs/canary",
+          "rt-f859h39b/c5/node/canary/node1",
+          "rt-f859h39b/c5/runtime/canary",
+          "rt-f859h39b/c5/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c5/server1-metadata.tar.gz",
+        "archiveSHA256": "a9634880d089f0e22bbb9d31cc3aff210773df30b788941e58224de5d40f3133",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c5/server1-filesystem-before.json",
+        "metadataEntries": 10,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [
+          "/data/chainbench/rt-f859h39b/c5/node/canary/node1/gstable/chaindata"
+        ],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      },
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c7/keys",
+          "rt-f859h39b/c7/logs/canary",
+          "rt-f859h39b/c7/node/canary/node1",
+          "rt-f859h39b/c7/runtime/canary",
+          "rt-f859h39b/c7/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c7/server1-metadata.tar.gz",
+        "archiveSHA256": "f5441dc2335d2b65868a0b68caa5c01a0d534b9c1c3dd4101edcb47948c6d5aa",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c7/server1-filesystem-before.json",
+        "metadataEntries": 10,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [
+          "/data/chainbench/rt-f859h39b/c7/node/canary/node1/gstable/chaindata"
+        ],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      },
+      {
+        "server": "server1",
+        "container": "chainbench-lf-xjdy6jeu-s1",
+        "selectedRoots": [
+          "rt-f859h39b/c6/keys",
+          "rt-f859h39b/c6/logs/canary",
+          "rt-f859h39b/c6/node/canary/node1",
+          "rt-f859h39b/c6/runtime/canary",
+          "rt-f859h39b/c6/.chainbench-owned-runtime.json"
+        ],
+        "missingRoots": [],
+        "archive": "/private/tmp/cbui/rt-f859h39b/reports/positive-c6/server1-metadata.tar.gz",
+        "archiveSHA256": "cef3f3de2013bedb489e4f53ad548a65fc547f305993e07fe31a9452c30d93f8",
+        "preArchiveFilesystem": "/private/tmp/cbui/rt-f859h39b/reports/positive-c6/server1-filesystem-before.json",
+        "metadataEntries": 10,
+        "filesystemBeforeArchiveAfterMatched": true,
+        "freshCompleteProcessInventories": 2,
+        "reclaimedPaths": [
+          "/data/chainbench/rt-f859h39b/c6/node/canary/node1/gstable/chaindata"
+        ],
+        "remainingDatabasePaths": [],
+        "batchedTransport": true,
+        "containerID": "77f41547769e4f7a144c20d8071c6b8df73928f2788be733eac0936b7885d9d6",
+        "remoteCaptureCalls": 1,
+        "remoteDeleteCalls": 1
+      }
+    ],
+    "refusals": [
+      {
+        "label": "wrong-binary",
+        "index": 2,
+        "error": "baseline binary changed",
+        "sentinelBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434184967791001,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        },
+        "sentinelAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434184967791001,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        }
+      },
+      {
+        "label": "file-named-database",
+        "index": 3,
+        "error": "batched capture exit 27; retain DB: ",
+        "sentinelBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 29,
+          "mtimeNS": 1792434187260791002,
+          "sha256": "b22012b63caca9b0869eea45a1a5bdf6db056f4131de3afa2d7737945a7b0453"
+        },
+        "sentinelAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 29,
+          "mtimeNS": 1792434187260791002,
+          "sha256": "b22012b63caca9b0869eea45a1a5bdf6db056f4131de3afa2d7737945a7b0453"
+        }
+      },
+      {
+        "label": "protected-snapshot",
+        "index": 4,
+        "error": "candidate outside disposable node database namespace",
+        "sentinelBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434189756791004,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        },
+        "sentinelAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434189756791004,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        }
+      },
+      {
+        "label": "failed-candidate-query",
+        "index": 5,
+        "error": "batched capture exit 42; retain DB: ",
+        "sentinelBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434192132791005,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        },
+        "sentinelAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434192132791005,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        }
+      },
+      {
+        "label": "failed-binary-cache-release",
+        "index": 7,
+        "error": "batched capture exit 43; retain DB: ",
+        "sentinelBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434194378791006,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        },
+        "sentinelAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434194378791006,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        }
+      },
+      {
+        "label": "active-working-directory",
+        "index": 6,
+        "error": "active process or open file references retained data",
+        "sentinelBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434196104791007,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        },
+        "sentinelAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 22,
+          "mtimeNS": 1792434196104791007,
+          "sha256": "b2d4098dda24577f42b7fe97671eae9d191967245359487ef525eb9ab0c02f31"
+        }
+      }
+    ],
+    "preservedCanaries": [
+      {
+        "source": "/data/chainbench/rt-f859h39b/c3/node/canary/node1/gstable/chaindata",
+        "destination": "/data/chainbench/rt-f859h39b/c3/evidence/refused-database-file",
+        "metadataBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 29,
+          "mtimeNS": 1792434187260791002,
+          "sha256": "b22012b63caca9b0869eea45a1a5bdf6db056f4131de3afa2d7737945a7b0453"
+        },
+        "metadataAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 29,
+          "mtimeNS": 1792434187260791002,
+          "sha256": "b22012b63caca9b0869eea45a1a5bdf6db056f4131de3afa2d7737945a7b0453"
+        }
+      },
+      {
+        "source": "/data/chainbench/rt-f859h39b/c4/node/canary/node1/snapshots/chaindata/sentinel",
+        "destination": "/data/chainbench/rt-f859h39b/c4/evidence/protected-export",
+        "metadataBefore": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 25,
+          "mtimeNS": 1792434189819791004,
+          "sha256": "72dc7c5675e5e548cdc6f21a6f3fbd66f060a6602121d6c86586a43d5a6b74f4"
+        },
+        "metadataAfter": {
+          "mode": 384,
+          "uid": 2001,
+          "gid": 2001,
+          "size": 25,
+          "mtimeNS": 1792434189819791004,
+          "sha256": "72dc7c5675e5e548cdc6f21a6f3fbd66f060a6602121d6c86586a43d5a6b74f4"
+        }
+      }
+    ],
+    "remainingDatabasePaths": 0,
+    "sourceAfter": "b2773db236653d5d2f1df08c83eff335d482e0fa81687b2a21f55d59b7f39c0b",
+    "sourceUnchanged": true,
+    "helperInputsUnchanged": true
+  },
+  "independent": {
+    "acceptedScope": true,
+    "sourceDigest": "b2773db236653d5d2f1df08c83eff335d482e0fa81687b2a21f55d59b7f39c0b",
+    "runtime": "/private/tmp/cbui/rt-f859h39b",
+    "positiveClosures": 7,
+    "negativeRefusals": 6,
+    "archives": [
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c1/server1-metadata.tar.gz",
+        "sha256": "4d1d792f0e01eef975230ed74733dfde8ebb2793557ea7eb3699e45fb27866c8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434184617707152
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c2/server1-metadata.tar.gz",
+        "sha256": "638204b730a0762a277891d97159cf8bff3cb85149722a8f987605bdb06facb7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434186055161154
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c3/server1-metadata.tar.gz",
+        "sha256": "d5a55beee67b0e584cc44c669d2ac8fd056237bc785af74db5c21d39ac328061",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434189387712136
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c4/server1-metadata.tar.gz",
+        "sha256": "d99daa19317301f5c6270ed0b26826beadd334b7add5ad6f9bc4c42a21698af0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434191672721858
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c5/server1-metadata.tar.gz",
+        "sha256": "a9634880d089f0e22bbb9d31cc3aff210773df30b788941e58224de5d40f3133",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434193866568835
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c7/server1-metadata.tar.gz",
+        "sha256": "f5441dc2335d2b65868a0b68caa5c01a0d534b9c1c3dd4101edcb47948c6d5aa",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434195602985584
+      },
+      {
+        "path": "/private/tmp/cbui/rt-f859h39b/reports/positive-c6/server1-metadata.tar.gz",
+        "sha256": "cef3f3de2013bedb489e4f53ad548a65fc547f305993e07fe31a9452c30d93f8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792434197841231037
+      }
+    ],
+    "archiveEntries": 71,
+    "localFilesPreserved": 70,
+    "freshIndependentInventories": 2,
+    "preservedCanaries": 2,
+    "remainingDatabasePaths": 0,
+    "nativeCasesExecuted": 0,
+    "fullL1Accepted": false,
+    "finalWebAccepted": false
+  },
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-retention-binary-cache-red-20261020.log",
+      "sha256": "00d62b33710c7c439399a90cc6e272c397d82a9e48a848dce4b4d0165511ca37",
+      "bytes": 3608,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433818639028057
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-binary-cache-green-20261020.log",
+      "sha256": "1bf21080859b7a1204c7864ea3f2b79aeaf855603378e0fa9c6b432c1b65831a",
+      "bytes": 130,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433829401362190
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-binary-cache-related-20261020.log",
+      "sha256": "38eeff1237d74275801617a271eced659e08b1cad8069897d18e659ae40641d8",
+      "bytes": 109,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433829470707385
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-binary-cache-check-v2-20261020.log",
+      "sha256": "9dc877fe07fe7f195f880fb164e3510d9f45b996e57355cac91346542593d327",
+      "bytes": 8638,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792434002395274646
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-filesystem-20261020-start.json",
+      "sha256": "83cfc1b64a3ba555cc47bfbefb21562e375455dd2bf83a17e1bd136dce2e6d47",
+      "bytes": 2760,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792434183787995897
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-filesystem-20261020-summary.json",
+      "sha256": "547eff1b2ac4ca599c05185545a77faa9d92a5ca2407da530094819c64f2ae0b",
+      "bytes": 16059,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792434198631106984
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-filesystem-20261020-independent.json",
+      "sha256": "b43fd9d1cbd4cc3d44456d0ae44dcf1515e7e84b601f4e2bd28c48078165f818",
+      "bytes": 2434,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792434209640826968
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-filesystem-20261020.py",
+      "sha256": "382dd6d4a9d390880d71ed8d086ab99932e7c1d66215e5165d29a3f938550bcf",
+      "bytes": 9466,
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433920708463252
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-filesystem-independent-20261020.py",
+      "sha256": "4410c8795587506b2fad8c26c727f5aec57687577e5dee429e4abdd2d4d0aaca",
+      "bytes": 4192,
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433920708871127
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-file-cache-maintenance-v3-20261020.py",
+      "sha256": "36f7dd70368904e0ade48c302d16066c3802f0b47cde6e16eb24f14f31d0e7eb",
+      "bytes": 2879,
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433630611979521
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-file-cache-maintenance-20261020.json",
+      "sha256": "ca580697531d709b622cfedaf55bccdd0eb1d4d07ac134ea260a754626f040d9",
+      "bytes": 57731,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433715494624799
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-file-cache-independent-20261020.py",
+      "sha256": "1e75375ab8f3231c2bd1c706ea677af2d0422eee972d53969865d27dd9c811ea",
+      "bytes": 1673,
+      "mode": "0o700",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433736063224134
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-file-cache-independent-20261020.json",
+      "sha256": "35140447649db20cfbb8cca588dd6b3aaa80ec9b7359bb6da9f6b88af631d878",
+      "bytes": 28392,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433744467658141
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-owned-idle-stop-20261020.json",
+      "sha256": "b1f413f933a28892371b77dd2f070dfff580b9dfcb261757f86025df88f62423",
+      "bytes": 430017,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433782671865450
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-fixture-start-20261020.json",
+      "sha256": "67808ce6e0f5afab7247bfd5f0be6fe5bab639a38295e406a4849f010db28a9a",
+      "bytes": 22739,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792434182937861801
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-full-v2-20261020-preflight-independent.json",
+      "sha256": "9dab1474b0b6961843806734e9bb4f3a67345bf556aa92cab0543080b5cc7f57",
+      "bytes": 35984,
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792432833075935502
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-full-controller-20261020.log",
+      "sha256": "9d99782c1fa682462e24eb1eb8fd8607e91b098f1e75ac09a338a2cf9353e530",
+      "bytes": 1631,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792432490441550810
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-reserve-artifact-maintenance-20261020.log",
+      "sha256": "7899cede07a5d45afcfbf61b7a40116d29d22da522863363ccfed8e46f761f35",
+      "bytes": 297,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433532769322422
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-file-cache-maintenance-20261020.log",
+      "sha256": "fea2d032b327b3b9d2e9aa1591450cd9a757e98489cbbd4673b3624755c5485d",
+      "bytes": 625,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433597188936950
+    },
+    {
+      "path": "/private/tmp/chainbench-l1-file-cache-maintenance-v2-20261020.log",
+      "sha256": "ab53a1896c6e8b7995fb76bb9b2421a8a70ec25cefb39998724f26927cdcc999",
+      "bytes": 623,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433616504202650
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-binary-cache-check-20261020.log",
+      "sha256": "521927bb58e9357c5389ee41a7d693c2636d0b8e18139be7f7906a6b1cf4f321",
+      "bytes": 6753,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433853264002867
+    },
+    {
+      "path": "/private/tmp/chainbench-retention-cache-parser-contract-20261020.log",
+      "sha256": "7fc2aa6eb17c7252c63d430726fd7ccced2352263964877c4b12623ef535beac",
+      "bytes": 4272,
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792433876521211131
+    }
+  ],
+  "knownPreflightFailure": {
+    "plannedRuns": 362,
+    "reportedBlockedRows": 2,
+    "chainRunInvocations": 0,
+    "chainNodesStarted": false,
+    "remainingDatabases": 0,
+    "emptyRecordHookFailurePreserved": true,
+    "fullL1Accepted": false
+  },
+  "preparationFailuresPreserved": [
+    "Initial graph idle query was denied by sandbox; retried with process inventory permission before any compression.",
+    "Two read-cache preparation attempts stopped before any mutation because the old Docker summary used a mapping and lowercase summary fields; corrected from actual structure.",
+    "First whole check could not open its local HTTP listener in sandbox; same check passed with permission.",
+    "First parser contracts used default Go cache; reran with approved explicit cache."
+  ],
+  "limitations": [
+    "The native storage proof uses real Linux fixture files and refusal canaries, not blockchain functional acceptance.",
+    "Seven successful retentions and six refusals preserve source and helper inputs; 71 archive entries, 70 local files and two canaries were independently compared.",
+    "Idle owned fifteen fixtures were stopped with configurations preserved; one owned fixture was subsequently started for this proof. Three original fixtures stayed stopped.",
+    "Old receipt gaps, full L1, actual external network inputs, W3/W4 and final Web acceptance remain open."
+  ],
+  "fullL1Accepted": false,
+  "finalWebAccepted": false,
+  "all14Accepted": false
+}

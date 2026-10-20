@@ -11,7 +11,8 @@
 # the case and is not a pass, and a BLOCKED run could not ask the question at
 # all, which is not the same as the case answering "no". The exit code says
 # which — 0 ran, 1 a case failed, 2 the run could not proceed — and the summary
-# line carries the counts.
+# line carries the counts. An operator-requested boundary stop exits 130; the
+# unattempted remainder is NOTRUN, never a completed passing sweep.
 #
 # Usage: scripts/tcsweep.sh <out.log> [pattern]
 set -uo pipefail
@@ -19,8 +20,21 @@ set -uo pipefail
 OUT="${1:?usage: tcsweep.sh <out.log> [pattern]}"
 PATTERN="${2:-}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BIN="$ROOT/bin/chainbench"
+BIN="${TCSWEEP_BIN:-$ROOT/bin/chainbench}"
 WS_BASE="${TCSWEEP_WS:-$HOME/cbw/sweep}"
+# An executable path, not a shell expression. The hook receives the stopped
+# workspace and the case's pass flag (1 or 0). It must preserve evidence and
+# reclaim only verified inactive disposable data, returning non-zero on doubt.
+# With this hook the sweep never calls chain rm or deletes the workspace.
+RETAIN_HOOK="${TCSWEEP_RETAIN_HOOK:-}"
+# Touch this optional marker to request a stop. It is checked only between
+# workspaces, after normal stop and the retention hook (when configured).
+# The sweep never reads marker contents, writes to it or deletes it.
+STOP_FILE="${TCSWEEP_STOP_FILE:-}"
+if [ -n "$RETAIN_HOOK" ] && [ ! -x "$RETAIN_HOOK" ]; then
+  echo "retention hook is not executable: $RETAIN_HOOK" >&2
+  exit 2
+fi
 # Extra flags for every `chainbench run`. A sweep against the docker fleet needs
 # five of them and they belong to the environment, not to this script:
 #   TCSWEEP_FLAGS="--server-set env/docker/build/server-set.yaml \
@@ -43,6 +57,29 @@ roundFlags() {
   name="TCSWEEP_FLAGS_$up"
   val="${!name:-}"
   if [ -n "$val" ]; then printf '%s' "$val"; else printf '%s' "${TCSWEEP_FLAGS:-}"; fi
+}
+
+# Attach runs reuse observation settings, never the host's composition flags.
+# In particular a caller's receipts must not escape to the default home store,
+# and no-skips must apply to the attached case as well as its managed host.
+attachedFlags() {
+  ATTACH_FLAGS=()
+  local index=0 arg value
+  while [ "$index" -lt "${#EXTRA[@]}" ]; do
+    arg=${EXTRA[$index]}
+    case "$arg" in
+      --artifact-root)
+        index=$((index + 1)); value=${EXTRA[$index]:-}
+        case "$value" in ''|--*) echo 'artifact-root requires a value before starting an attach host' >&2; return 2 ;; esac
+        ATTACH_FLAGS+=(--artifact-root "$value") ;;
+      --artifact-root=*)
+        value=${arg#--artifact-root=}
+        [ -n "$value" ] || { echo 'artifact-root requires a nonempty value' >&2; return 2; }
+        ATTACH_FLAGS+=(--artifact-root "$value") ;;
+      --no-skips|--no-skips=*) ATTACH_FLAGS+=("$arg") ;;
+    esac
+    index=$((index + 1))
+  done
 }
 
 [ -x "$BIN" ] || { echo "no $BIN — run make build" >&2; exit 2; }
@@ -82,15 +119,9 @@ PY
 
 # planGroups turns the selected cases into the invocations that will run them.
 #
-# One invocation per group, because `chainbench run` takes several definitions
-# and composes ONE network per distinct composition among them: measured
-# 2026-10-07, three rpc cases produced two networks, the two that share a
-# composition sharing one. Walking case by case paid for a bring-up every time.
-#
-# The trade is the one the header paragraph names: cases on a shared network
-# see each other's state, so one can decide another's verdict. That is why this
-# is a group of a FOLDER rather than of everything, and why the log says which
-# cases shared.
+# Groups organize folder headings and per-chain preset selection. Every case
+# still gets its own invocation and workspace: shared networks let an earlier
+# case change what the next one measures.
 #
 # tests/tc/common runs three times, one chain at a time, in the order
 # stablenet, wemix, wbft. A round overrides the chain-preset with the same
@@ -147,7 +178,24 @@ def sibling(preset, chain):
     for p in ("stablenet-", "wbft-", "wemix-"):
         if preset.startswith(p):
             cand = chain + "-" + preset[len(p):]
-            return cand if (root / "presets/chain" / (cand + ".json")).exists() else None
+            return cand if preset_chain(cand) == chain else None
+    return None
+
+
+def preset_chain(name):
+    """Verify the declaration, including inherited targets, not its filename."""
+    seen = set()
+    while isinstance(name, str) and name not in seen:
+        seen.add(name)
+        try:
+            value = json.loads((root / "presets/chain" / (name + ".json")).read_text())
+        except (OSError, ValueError):
+            return None
+        if not isinstance(value, dict):
+            return None
+        if "chain" in value:
+            return value["chain"]
+        name = value.get("extends")
     return None
 
 
@@ -164,11 +212,8 @@ def flush(key, specs):
         emit("-", "-", specs)
         return
     for chain in ROUNDS:
-        if chain == "stablenet":
-            # Already what every common case declares, so nothing to override:
-            # the engine composes one network per distinct composition.
-            emit(chain, "-", specs)
-            continue
+        # The default round needs an explicit sibling too: a common case may
+        # declare WBFT or WEMIX. A printed round label cannot choose its chain.
         by_preset = {}
         for s in specs:
             bp = base_preset(s)
@@ -215,7 +260,17 @@ PLAN
 endWorkspace() {
   local ws=$1 passed=$2
   [ -d "$ws" ] || return 0
-  "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+  if ! "$BIN" chain stop --workspace-dir "$ws" >>"$OUT" 2>&1; then
+    printf '          chain stop failed; kept workspace and halted sweep: %s\n' "$ws" | tee -a "$OUT"
+    return 1
+  fi
+  if [ -n "$RETAIN_HOOK" ]; then
+    if ! "$RETAIN_HOOK" "$ws" "$passed" >>"$OUT" 2>&1; then
+      printf '          retention failed; kept workspace and halted sweep: %s\n' "$ws" | tee -a "$OUT"
+      return 1
+    fi
+    return 0
+  fi
   if [ "$passed" = 1 ]; then
     if "$BIN" chain rm --workspace-dir "$ws" >/dev/null 2>&1; then
       rm -rf "$ws"
@@ -280,26 +335,22 @@ attachTarget() {
   # empty result then fell through to the preset's default endpoint, so an
   # attach case failed against 127.0.0.1:8600 with nothing saying why.
   local show
-  show=$("$BIN" chain show --workspace-dir "$1" --node 1 --json 2>&1) || {
+  show=$("$BIN" chain show --workspace-dir "$1" --node 1 --dial-rpc --json 2>&1) || {
     printf 'attachTarget: chain show failed for %s: %s\n' "$1" "$show" >&2
     return 1
   }
   [ -n "$show" ] || { printf 'attachTarget: chain show said nothing for %s\n' "$1" >&2; return 1; }
-  python3 - "$1" "$ROOT" "$show" ${EXTRA[@]+"${EXTRA[@]}"} <<'PY'
-import json, pathlib, re, sys
-ws, root, extra = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[4:]
+  python3 - "$1" "$ROOT" "$show" <<'PY'
+import json, pathlib, sys
+ws, root = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 e = json.loads(sys.argv[3])["entries"][0]
-host, port = e["host"], e["http"]
-if "--docker" in extra and "--server-set" in extra:
-    lm = pathlib.Path(extra[extra.index("--server-set") + 1]).parent / "localmap.yaml"
-    m = re.search(re.escape(host) + r":\s*\n\s*host:\s*(\S+)\s*\n\s*ports:\s*\{([^}]*)\}", lm.read_text())
-    if m:
-        ports = dict(p.split(":") for p in m.group(2).replace(" ", "").split(","))
-        host, port = m.group(1), ports.get(str(port), port)
+rpc = e.get("rpcURL")
+if not isinstance(rpc, str) or not rpc:
+    raise SystemExit("attachTarget: chain show returned no reachable RPC URL")
 keys = json.loads((ws / "chain-record.json").read_text()).get("keysDir", "")
 if keys and not pathlib.Path(keys).is_absolute():
     keys = str(root / keys)
-print(f"http://{host}:{port} {keys}")
+print(f"{rpc} {keys}")
 PY
 }
 
@@ -334,7 +385,7 @@ runAttach() {
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
     return 2
   fi
-  GSTABLE_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" 2>&1
+  GSTABLE_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" ${ATTACH_FLAGS[@]+"${ATTACH_FLAGS[@]}"} 2>&1
   local code=$?
   "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
   return $code
@@ -378,7 +429,7 @@ while IFS= read -r plan_line; do
   PLAN+=("$plan_line")
 done < <(planGroups "${CASES[@]}")
 
-pass=0 fail=0 blocked=0 skip=0 notrun=0 i=0 c=0
+pass=0 fail=0 blocked=0 skip=0 notrun=0 i=0 c=0 operator_stopped=0
 # The denominator is case-RUNS, not cases: tests/tc/common is walked once per
 # chain, so two cases there are six runs, and counting cases printed [3/2].
 # Runs and invocations are the same number, because one case is one
@@ -430,7 +481,12 @@ record() {
   [ "$verdict" = PASS ]
 }
 
+stopRequested() {
+  [ "$i" -lt "$total" ] && [ -n "$STOP_FILE" ] && { [ -e "$STOP_FILE" ] || [ -L "$STOP_FILE" ]; }
+}
+
 for plan_line in "${PLAN[@]}"; do
+  if stopRequested; then operator_stopped=1; break; fi
   kind=$(cut -f1 <<<"$plan_line")
   if [ "$kind" = UNMAPPED ]; then
     chain=$(cut -f2 <<<"$plan_line"); base=$(cut -f3 <<<"$plan_line"); spec=$(cut -f4 <<<"$plan_line")
@@ -481,7 +537,13 @@ for plan_line in "${PLAN[@]}"; do
   printf '          %s: %d case(s)%s\n' "$glabel" "${#SPECS[@]}" \
     "$([ "$override" != "-" ] && echo " on $override")" | tee -a "$OUT"
   for spec in "${SPECS[@]}"; do
-    c=$((c + 1)); ws="$WS_BASE/c$c"; rm -rf "$ws"
+    if stopRequested; then operator_stopped=1; break 2; fi
+    c=$((c + 1)); ws="$WS_BASE/c$c"
+    if [ -n "$RETAIN_HOOK" ] && { [ -e "$ws" ] || [ -L "$ws" ]; }; then
+      printf 'workspace already exists; refusing to overwrite evidence: %s\n' "$ws" | tee -a "$OUT" >&2
+      exit 2
+    fi
+    rm -rf "$ws"
     start=$SECONDS
     # Per case as well, and for a harder reason than the endpoint. A common
     # round overrides the chain-preset, so there the round IS the chain; a
@@ -492,6 +554,7 @@ for plan_line in "${PLAN[@]}"; do
     # today; nothing stops one from doing so tomorrow.
     label="$round"; [ "$label" = "-" ] && label="$(chainOf "$spec")"
     read -r -a EXTRA <<<"$(roundFlags "$label")"
+    attachedFlags || exit 2
     # Asked per case, never per group: a group is a folder and a folder may
     # hold both kinds. tests/tc/basic holds 07-basic-wbft-consensus, which
     # composes its own network, next to 08-attached-chain-produces, which
@@ -503,7 +566,7 @@ for plan_line in "${PLAN[@]}"; do
       if [ "${endpoint#*GSTABLE_RPC}" != "$endpoint" ]; then
         out=$(runAttach "$spec" "$ws")
       else
-        out=$("$BIN" run "$spec" 2>&1)
+        out=$("$BIN" run "$spec" ${ATTACH_FLAGS[@]+"${ATTACH_FLAGS[@]}"} 2>&1)
       fi
     else
       out=$("$BIN" run "$spec" --workspace-dir "$ws" \
@@ -511,21 +574,27 @@ for plan_line in "${PLAN[@]}"; do
     fi
     code=$?
     if record "$spec" "$out" $((SECONDS - start)) "$label" "$code"; then
-      endWorkspace "$ws" 1
+      endWorkspace "$ws" 1 || exit 2
     else
       tail -3 <<<"$out" | sed 's/^/          /' | tee -a "$OUT"
-      endWorkspace "$ws" 0
+      endWorkspace "$ws" 0 || exit 2
     fi
   done
 
 done
+
+if [ "$operator_stopped" -eq 1 ]; then
+  remaining=$((total - i))
+  notrun=$((notrun + remaining))
+  printf 'STOPPED at case boundary: attempted %d of %d; %d remaining NOTRUN\n' "$i" "$total" "$remaining" | tee -a "$OUT"
+fi
 
 {
   echo ""
   echo "=== TOTAL ==="
   printf '{"pass": %d, "fail": %d, "blocked": %d, "skip": %d, "notrun": %d}\n' \
     "$pass" "$fail" "$blocked" "$skip" "$notrun"
-  echo "DONE"
+  if [ "$operator_stopped" -eq 1 ]; then echo "STOPPED"; else echo "DONE"; fi
 } | tee -a "$OUT"
 
 # The exit code the header promises. It was never written, so every sweep ended
@@ -535,6 +604,9 @@ done
 #
 # A failure outranks a block: a case that answered "no" is a result, and one
 # that could not be asked is not, so a sweep with both reports the result.
+if [ "$operator_stopped" -eq 1 ]; then
+  exit 130
+fi
 if [ "$fail" -gt 0 ]; then
   exit 1
 fi

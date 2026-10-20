@@ -1,0 +1,644 @@
+{
+  "scope": "One public signature case on owned Linux BP4/EN2, old1.0.1 bf17 to pinned4d17 ENs. Full logs/history/head evidence, not original15 topology, all L1/legacy87/254 or final Web.",
+  "acceptedScope": true,
+  "headAtProof": "bd5157bdad20717308ee01a0e7bfe141777531bb",
+  "sourceDigest": "0fc117d001be52e65f4dd2946a49dcfb6e7559f94d620a02566fd0a87de0271c",
+  "sourceUnchangedThroughNativeClosureAndIndependentAudit": true,
+  "runtime": "/private/tmp/cbui/ss-xxt_9e4e",
+  "remoteDataRoot": "/data/chainbench/ss-xxt_9e4e",
+  "completion": {
+    "publicCases": 1,
+    "publicAssertions": 36,
+    "nativeNodes": 6,
+    "oldValidators": 4,
+    "upgradedENs": 2,
+    "liveExecutableHashesMatched": 6,
+    "independentRPCObservations": 18,
+    "rawTransactionBytesAndKeccakVerified": true,
+    "independentSecp256k1RecoveryClaimed": false,
+    "archiveEntries": 364,
+    "localFilesPreserved": 153,
+    "freshReclamationProcessInventories": 12,
+    "freshIndependentProcessInventories": 12,
+    "sharedRemoteKeysUnchanged": true,
+    "presetFilesUnchanged": 45,
+    "remainingDisposableDatabasePaths": 0,
+    "databaseNames": [
+      "chaindata",
+      "lightchaindata",
+      "etcd",
+      "triecache"
+    ]
+  },
+  "tdd": {
+    "logInputControls": 21,
+    "publicCaseControls": 19,
+    "publicHealthyControls": 2,
+    "publicFaultControls": 17,
+    "originalPublicFalsePasses": 14,
+    "additionalPublicFalsePasses": [
+      "three-block lag instead of original two-block bound",
+      "missing log represented as empty string",
+      "partial line hides signature-error prefix"
+    ],
+    "noTestsSelectedNotCountedAsRedOrGreen": "/private/tmp/chainbench-signature-empty-red-20261016.log",
+    "relatedWholeRacePackages": [
+      "internal/testhelper",
+      "internal/testengine",
+      "internal/app",
+      "internal/mcp"
+    ],
+    "wholeCheckPassed": true,
+    "independentNegativeControlsRejected": [
+      "missing assertion",
+      "hidden failed assertion",
+      "second EN version unchanged",
+      "head gap three",
+      "empty capture",
+      "forged zero for new error"
+    ],
+    "observerHTTPControls": 4,
+    "isolatedNamespaceControls": 5,
+    "publishedWholeCheckPassed": true
+  },
+  "nativeClosure": {
+    "originalCaptureAccepted": false,
+    "originalStopExitCode": 1,
+    "cause": "Private producer appended unsupported --json to chain stop. Product case itself exited0 with all36 assertions passed; no source changed.",
+    "originalFailurePreserved": true,
+    "recoveryStopExitCode": 0,
+    "sameExecutionCompletedAfterRecovery": true,
+    "secondCaseExecutionClaimed": false,
+    "recoveryEvidence": {
+      "path": "/private/tmp/chainbench-signature-20261016-recovery.json",
+      "sha256": "e271da732e8388f0830fdc5f88bccafbd2c49fc7d5928d4a1f30876c559fb799",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118885872594272
+    }
+  },
+  "originalSource": {
+    "commit": "13b5e12c4d550763aa43c015db0e49ceace5a8aa",
+    "scripts": [
+      {
+        "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/stand-alone/01-signature-compat-sync.sh",
+        "blobOID": "81153fa7d6dd043bd1d8f2be069e763b520aad4b",
+        "sha256": "b08e64724bf2386e5b6eb6ab075fe10b9f3aa47c7ef912f180bd15aec0374b73",
+        "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/stand-alone/01-signature-compat-sync.sh"
+      },
+      {
+        "gitPath": "chainbench/tests/stablenet/post-v1.0.0-change/stand-alone/tests/01-test-signature-compat-sync.sh",
+        "blobOID": "a275276adc1e32581aa4af2b10c758c8ed87fd73",
+        "sha256": "998993cc9dd53e6a55736cc5b4a157c2aa006e76cd1b736a230d6e684116379e",
+        "path": "/private/tmp/chainbench-legacy-source-13b5e12/tests/stablenet/post-v1.0.0-change/stand-alone/tests/01-test-signature-compat-sync.sh"
+      }
+    ],
+    "exactGitBlobBytesMatched": true
+  },
+  "binaryInputs": {
+    "default": {
+      "path": "/private/tmp/cbui/lb-gv2kmnbe/bin/gstable-boho-v101",
+      "sha256": "89e62a36028ef44302f119b44347f70b12fd074b162af9c89c7224052de7d83f",
+      "version": "Gstable\nVersion: 1.0.1-stable\nGit Commit: bf17c9607a6b893ea85e6301e1cdb02d55b218de\nGit Commit Date: 2026-03-19\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=/cache/gopath\nGOROOT=/usr/local/go\n",
+      "file": "/private/tmp/cbui/lb-gv2kmnbe/bin/gstable-boho-v101: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=709101a6be51a61ca18f4d215dfe6bc1720a33a7, for GNU/Linux 3.7.0, with debug_info, not stripped",
+      "goBuildInfo": "/private/tmp/cbui/lb-gv2kmnbe/bin/gstable-boho-v101: go1.25.14\n\tpath\tgithub.com/ethereum/go-ethereum/cmd/gstable\n\tmod\tgithub.com/ethereum/go-ethereum\t(devel)\t\n\tdep\tgithub.com/DataDog/zstd\tv1.4.5\th1:EndNeuB0l9syBZhut0wns3gV1hL8zX8LIu6ZiVHWLIQ=\n\tdep\tgithub.com/VictoriaMetrics/fastcache\tv1.12.2\th1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjCM7NQbSmF7WI=\n\tdep\tgithub.com/beorn7/perks\tv1.0.1\th1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=\n\tdep\tgithub.com/bits-and-blooms/bitset\tv1.20.0\th1:2F+rfL86jE2d/bmw7OhqUg2Sj/1rURkBn3MdfoPyRVU=\n\tdep\tgithub.com/cespare/xxhash/v2\tv2.2.0\th1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=\n\tdep\tgithub.com/cockroachdb/errors\tv1.8.1\th1:A5+txlVZfOqFBDa4mGz2bUWSp0aHElvHX2bKkdbQu+Y=\n\tdep\tgithub.com/cockroachdb/logtags\tv0.0.0-20190617123548-eb05cc24525f\th1:o/kfcElHqOiXqcou5a3rIlMc7oJbMQkeLk0VQJ7zgqY=\n\tdep\tgithub.com/cockroachdb/pebble\tv0.0.0-20230928194634-aa077af62593\th1:aPEJyR4rPBvDmeyi+l/FS/VtA00IWvjeFvjen1m1l1A=\n\tdep\tgithub.com/cockroachdb/redact\tv1.0.8\th1:8QG/764wK+vmEYoOlfobpe12EQcS81ukx/a4hdVMxNw=\n\tdep\tgithub.com/cockroachdb/sentry-go\tv0.6.1-cockroachdb.2\th1:IKgmqgMQlVJIZj19CdocBeSfSaiCbEBZGKODaixqtHM=\n\tdep\tgithub.com/cockroachdb/tokenbucket\tv0.0.0-20230807174530-cc333fc44b06\th1:zuQyyAKVxetITBuuhv3BI9cMrmStnpT18zmgmTxunpo=\n\tdep\tgithub.com/consensys/gnark-crypto\tv0.18.1\th1:RyLV6UhPRoYYzaFnPQA4qK3DyuDgkTgskDdoGqFt3fI=\n\tdep\tgithub.com/cpuguy83/go-md2man/v2\tv2.0.2\th1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=\n\tdep\tgithub.com/crate-crypto/go-ipa\tv0.0.0-20231025140028-3c0104f4b233\th1:d28BXYi+wUpz1KBmiF9bWrjEMacUEREV6MBi2ODnrfQ=\n\tdep\tgithub.com/crate-crypto/go-kzg-4844\tv1.1.0\th1:EN/u9k2TF6OWSHrCCDBBU6GLNMq88OspHHlMnHfoyU4=\n\tdep\tgithub.com/davecgh/go-spew\tv1.1.1\th1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=\n\tdep\tgithub.com/deckarep/golang-set/v2\tv2.6.0\th1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80NsVHagjM=\n\tdep\tgithub.com/deepmap/oapi-codegen\tv1.6.0\th1:w/d1ntwh91XI0b/8ja7+u5SvA4IFfM0UNNLmiDR1gg0=\n\tdep\tgithub.com/dlclark/regexp2\tv1.7.0\th1:7lJfhqlPssTb1WQx4yvTHN0uElPEv52sbaECrAQxjAo=\n\tdep\tgithub.com/dop251/goja\tv0.0.0-20230806174421-c933cf95e127\th1:qwcF+vdFrvPSEUDSX5RVoRccG8a5DhOdWdQ4zN62zzo=\n\tdep\tgithub.com/fatih/color\tv1.16.0\th1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=\n\tdep\tgithub.com/ferranbt/fastssz\tv0.1.2\th1:Dky6dXlngF6Qjc+EfDipAkE83N5I5DE68bY6O0VLNPk=\n\tdep\tgithub.com/gballet/go-libpcsclite\tv0.0.0-20190607065134-2772fd86a8ff\th1:tY80oXqGNY4FhTFhk+o9oFHGINQ/+vhlm8HFzi6znCI=\n\tdep\tgithub.com/gballet/go-verkle\tv0.1.1-0.20231031103413-a67434b50f46\th1:BAIP2GihuqhwdILrV+7GJel5lyPV3u1+PgzrWLc0TkE=\n\tdep\tgithub.com/go-sourcemap/sourcemap\tv2.1.3+incompatible\th1:W1iEw64niKVGogNgBN3ePyLFfuisuzeidWPMPWmECqU=\n\tdep\tgithub.com/gofrs/flock\tv0.8.1\th1:+gYjHKf32LDeiEEFhQaotPbLuUXjY5ZqxKgXy7n59aw=\n\tdep\tgithub.com/gogo/protobuf\tv1.3.2\th1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=\n\tdep\tgithub.com/golang-jwt/jwt/v4\tv4.5.2\th1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXeUI=\n\tdep\tgithub.com/golang/protobuf\tv1.5.3\th1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg=\n\tdep\tgithub.com/golang/snappy\tv0.0.5-0.20220116011046-fa5810519dcb\th1:PBC98N2aIaM3XXiurYmW7fx4GZkL8feAMVq7nEjURHk=\n\tdep\tgithub.com/google/pprof\tv0.0.0-20230207041349-798e818bf904\th1:4/hN5RUoecvl+RmJRE2YxKWtnnQls6rQjjW5oV7qg2U=\n\tdep\tgithub.com/google/uuid\tv1.3.0\th1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=\n\tdep\tgithub.com/gorilla/websocket\tv1.4.2\th1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=\n\tdep\tgithub.com/graph-gophers/graphql-go\tv1.3.0\th1:Eb9x/q6MFpCLz7jBCiP/WTxjSDrYLR1QY41SORZyNJ0=\n\tdep\tgithub.com/hashicorp/go-bexpr\tv0.1.10\th1:9kuI5PFotCboP3dkDYFr/wi0gg0QVbSNz5oFRpxn4uE=\n\tdep\tgithub.com/holiman/billy\tv0.0.0-20240216141850-2abb0c79d3c4\th1:X4egAf/gcS1zATw6wn4Ej8vjuVGxeHdan+bRb2ebyv4=\n\tdep\tgithub.com/holiman/bloomfilter/v2\tv2.0.3\th1:73e0e/V0tCydx14a0SCYS/EWCxgwLZ18CZcZKVu0fao=\n\tdep\tgithub.com/holiman/uint256\tv1.3.2\th1:a9EgMPSC1AAaj1SZL5zIQD3WbwTuHrMGOerLjGmM/TA=\n\tdep\tgithub.com/huin/goupnp\tv1.3.0\th1:UvLUlWDNpoUdYzb2TCn+MuTWtcjXKSza2n6CBdQ0xXc=\n\tdep\tgithub.com/influxdata/influxdb-client-go/v2\tv2.4.0\th1:HGBfZYStlx3Kqvsv1h2pJixbCl/jhnFtxpKFAv9Tu5k=\n\tdep\tgithub.com/influxdata/influxdb1-client\tv0.0.0-20220302092344-a9ab5670611c\th1:qSHzRbhzK8RdXOsAdfDgO49TtqC1oZ+acxPrkfTxcCs=\n\tdep\tgithub.com/influxdata/line-protocol\tv0.0.0-20200327222509-2487e7298839\th1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=\n\tdep\tgithub.com/jackpal/go-nat-pmp\tv1.0.2\th1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=\n\tdep\tgithub.com/jedisct1/go-minisign\tv0.0.0-20230811132847-661be99b8267\th1:TMtDYDHKYY15rFihtRfck/bfFqNfvcabqvXAFQfAUpY=\n\tdep\tgithub.com/karalabe/usb\tv0.0.2\th1:M6QQBNxF+CQ8OFvxrT90BA0qBOXymndZnk5q235mFc4=\n\tdep\tgithub.com/klauspost/cpuid/v2\tv2.0.9\th1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBFYa4=\n\tdep\tgithub.com/kr/pretty\tv0.3.1\th1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=\n\tdep\tgithub.com/kr/text\tv0.2.0\th1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.13\th1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.20\th1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=\n\tdep\tgithub.com/mattn/go-runewidth\tv0.0.13\th1:lTGmDsbAYt5DmK6OnoV7EuIF1wEIFAcxld6ypU4OSgU=\n\tdep\tgithub.com/matttproud/golang_protobuf_extensions\tv1.0.2-0.20181231171920-c182affec369\th1:I0XW9+e1XWDxdcEniV4rQAIOPUGDq67JSCiRCgGCZLI=\n\tdep\tgithub.com/minio/sha256-simd\tv1.0.0\th1:v1ta+49hkWZyvaKwrQB8elexRqm6Y0aMLjCNsrYxo6g=\n\tdep\tgithub.com/mitchellh/mapstructure\tv1.4.1\th1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=\n\tdep\tgithub.com/mitchellh/pointerstructure\tv1.2.0\th1:O+i9nHnXS3l/9Wu7r4NrEdwA2VFTicjUEN1uBnDo34A=\n\tdep\tgithub.com/naoina/go-stringutil\tv0.1.0\th1:rCUeRUHjBjGTSHl0VC00jUPLz8/F9dDzYI70Hzifhks=\n\tdep\tgithub.com/naoina/toml\tv0.1.2-0.20170918210437-9fafd6967416\th1:shk/vn9oCoOTmwcouEdwIeOtOGA/ELRUw/GwvxwfT+0=\n\tdep\tgithub.com/olekukonko/tablewriter\tv0.0.5\th1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=\n\tdep\tgithub.com/opentracing/opentracing-go\tv1.1.0\th1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=\n\tdep\tgithub.com/peterh/liner\tv1.1.1-0.20190123174540-a2c9a5303de7\th1:oYW+YCJ1pachXTQmzR3rNLYGGz4g/UgFcjb28p/viDM=\n\tdep\tgithub.com/pkg/errors\tv0.9.1\th1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=\n\tdep\tgithub.com/prometheus/client_golang\tv1.12.0\th1:C+UIj/QWtmqY13Arb8kwMt5j34/0Z2iKamrJ+ryC0Gg=\n\tdep\tgithub.com/prometheus/client_model\tv0.2.1-0.20210607210712-147c58e9608a\th1:CmF68hwI0XsOQ5UwlBopMi2Ow4Pbg32akc4KIVCOm+Y=\n\tdep\tgithub.com/prometheus/common\tv0.32.1\th1:hWIdL3N2HoUx3B8j3YN9mWor0qhY/NlEKZEaXxuIRh4=\n\tdep\tgithub.com/prometheus/procfs\tv0.7.3\th1:4jVXhlkAyzOScmCkXBTOLRLTz8EeU+eyjrwB/EPq0VU=\n\tdep\tgithub.com/rivo/uniseg\tv0.2.0\th1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=\n\tdep\tgithub.com/rogpeppe/go-internal\tv1.12.0\th1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=\n\tdep\tgithub.com/rs/cors\tv1.7.0\th1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=\n\tdep\tgithub.com/russross/blackfriday/v2\tv2.1.0\th1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=\n\tdep\tgithub.com/shirou/gopsutil\tv3.21.4-0.20210419000835-c7a38de76ee5+incompatible\th1:Bn1aCHHRnjv4Bl16T8rcaFjYSrGrIZvpiGO6P3Q4GpU=\n\tdep\tgithub.com/status-im/keycard-go\tv0.2.0\th1:QDLFswOQu1r5jsycloeQh3bVU8n/NatHHaZobtDnDzA=\n\tdep\tgithub.com/supranational/blst\tv0.3.16\th1:bTDadT+3fK497EvLdWRQEjiGnUtzJ7jjIUMF0jqwYhE=\n\tdep\tgithub.com/syndtr/goleveldb\tv1.0.1-0.20210819022825-2ae1ddf74ef7\th1:epCh84lMvA70Z7CTTCmYQn2CKbY8j86K7/FAIr141uY=\n\tdep\tgithub.com/tklauser/go-sysconf\tv0.3.12\th1:0QaGUFOdQaIVdPgfITYzaTegZvdCjmYO52cSFAEVmqU=\n\tdep\tgithub.com/tklauser/numcpus\tv0.6.1\th1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+Fk=\n\tdep\tgithub.com/tyler-smith/go-bip39\tv1.1.0\th1:5eUemwrMargf3BSLRRCalXT93Ns6pQJIjYQN2nyfOP8=\n\tdep\tgithub.com/urfave/cli/v2\tv2.25.7\th1:VAzn5oq403l5pHjc4OhD54+XGO9cdKVL/7lDjF+iKUs=\n\tdep\tgithub.com/xrash/smetrics\tv0.0.0-20201216005158-039620a65673\th1:bAn7/zixMGCfxrRTfdpNzjtPYqr8smhKouy9mxVdGPU=\n\tdep\tgo.uber.org/automaxprocs\tv1.5.2\th1:2LxUOGiR3O6tw8ui5sZa2LAaHnsviZdVOUZw4fvbnME=\n\tdep\tgolang.org/x/crypto\tv0.35.0\th1:b15kiHdrGCHrP6LvwaQ3c03kgNhhiMgvlhxHQhmg2Xs=\n\tdep\tgolang.org/x/exp\tv0.0.0-20231110203233-9a3e6036ecaa\th1:FRnLl4eNAQl8hwxVVC17teOw8kdjVDVAiFMtgUdTSRQ=\n\tdep\tgolang.org/x/net\tv0.25.0\th1:d/OCCoBEUq33pjydKrGQhw7IlUPI2Oylr+8qLx49kac=\n\tdep\tgolang.org/x/sync\tv0.11.0\th1:GGz8+XQP4FvTTrjZPzNKTMFtSXH80RAzG+5ghFPgK9w=\n\tdep\tgolang.org/x/sys\tv0.30.0\th1:QjkSwP/36a20jFYWkSue1YwXzLmsV5Gfq7Eiy72C1uc=\n\tdep\tgolang.org/x/text\tv0.22.0\th1:bofq7m3/HAFvbF51jz3Q9wLg3jkvSPuiZu/pD1XwgtM=\n\tdep\tgolang.org/x/time\tv0.3.0\th1:rg5rLMjNzMS1RkNLzCG38eapWhnYLFYXDXj2gOlr8j4=\n\tdep\tgoogle.golang.org/protobuf\tv1.27.1\th1:SnqbnDw1V7RiZcXPx5MEeqPv2s79L9i7BJUlG/+RurQ=\n\tdep\tgopkg.in/natefinch/lumberjack.v2\tv2.0.0\th1:1Lc07Kr7qY4U2YPouBjpCLxpiyxIVoxqXgkXLknAOE8=\n\tdep\tgopkg.in/yaml.v2\tv2.4.0\th1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-ldflags=\"-X github.com/ethereum/go-ethereum/internal/version.gitCommit=bf17c9607a6b893ea85e6301e1cdb02d55b218de -X github.com/ethereum/go-ethereum/internal/version.gitDate=2026-03-19\"\n\tbuild\tDefaultGODEBUG=containermaxprocs=0,decoratemappings=0,gotestjsonbuildtext=1,httpcookiemaxnum=0,multipathtcp=0,randseednop=0,rsa1024min=0,tlsmlkem=0,tlssha1=1,updatemaxprocs=0,urlmaxqueryparams=0,x509rsacrt=0,x509sha256skid=0,x509usepolicies=0\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=linux\n\tbuild\tGOARM64=v8.0\n",
+      "goAutomaticVCSClaimed": false,
+      "revisionSource": "Git-verified archive plus official internal/version linker variables; exact Linux source hashes before and after actual read-only build."
+    },
+    "upgrade": {
+      "path": "/private/tmp/chainbench-upstream-20261016/linux/gstable",
+      "sha256": "9ca995c38dc9fc3c0921577c7f91860f956189c9e34618d9004797337e863a47",
+      "revision": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+      "sourceInventory": "/private/tmp/chainbench-upstream-20261016/stablenet-source-inventory.json",
+      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 4d17eea018c8dd579409db30bfd27de79c4f4121\nGit Commit Date: 20261013\nArchitecture: arm64\nGo Version: go1.25.14\nOperating System: linux\nGOPATH=/go\nGOROOT=\n"
+    }
+  },
+  "limitations": [
+    "Original topology and EN8/11 are not reproduced: fixture is BP4/EN2 with both ENs replaced.",
+    "Old 1.0.1 bf17c960 to pinned1.1.0 4d17eea0 on Linux only; not every binary pair, Mac, all L1/legacy87/254 or final Web acceptance.",
+    "Raw signed bytes, their Keccak hash and signature fields/from agree across the actual nodes; separate secp256k1 cryptographic recovery was not implemented.",
+    "No new browser interaction was executed for these DSL options; existing generic editor vocabulary contracts and CLI execution were tested.",
+    "Generated evidence and worklist publication follow the fixed source proof; the source digest names that earlier immutable cut.",
+    "Frozen private producer is retained for forensic reproduction, including its invalid stop flag. Use the recorded corrected chain stop command; do not rerun it unchanged.",
+    "No S1, ProcessExtraSeal panic, W3 or W4 resolution is claimed."
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/derived_log.go",
+      "sha256": "5478082b277f18260be3f0e6905fab23d4940f0b87ace062ba8f9fa721fdfb14",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792117308610418369
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/derived.go",
+      "sha256": "9d6c4fcf565ce524e72aa9fe5842fbc8c0f983f0b3ab57693d711ca631211258",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792115452415537269
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/fault.go",
+      "sha256": "7b36e00cb99c496b4a981a325a68e35d3aebb8964dae2b4280744234488f239b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792117308587350694
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/arguments.go",
+      "sha256": "ef231ddc8c90a16aa63e85a58858fa6cf8a4b4f116ba25aded82152ffcf8f4dd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792115452477506964
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/editor_contract.go",
+      "sha256": "38e4636a3eed759ed4c568a570954d37d76a192189ad8477724f415c5273d12a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792115452505555419
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/signature_log_semantics_test.go",
+      "sha256": "4249c671e98a7000167d7242ba3ea869e2dbacbb0dd70d0412e5c889065ec2d0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792117237538818164
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/signature_sufficiency_test.go",
+      "sha256": "526bb92f4f8180a882bc7083b8f3d1dfc4953522d1c48690b27808dc49c9d8cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792117240226234618
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/presets/chain/stablenet-bp4-en2-default-upgrade.json",
+      "sha256": "ac08448e28ad12c5d75f02c3ca7c9cfba4857173a84851937e770707fefd077b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792115689565796678
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json",
+      "sha256": "51bca8b13ad0ae948b391838ec5e483ad5d0984c7c35a1e983031a9ba08c78d0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792115977210720610
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/guide/dsl-authoring.md",
+      "sha256": "4d0a82b44338904157c70c21774f633359fa49be674fd7042d44b650a049b780",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792117308628855410
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/architecture/package-tree.md",
+      "sha256": "6e42f3825bb8514cae0023e270a194e34e407f60d6c5e7ae85333d843253cd7c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792117311326687762
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/chainbench-signature-20261016-start.json",
+      "sha256": "84202e43bffbd5b77073e90790e0f8e91a802d36af74be36125d34025d79455c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118392009936317
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-20261016-summary.json",
+      "sha256": "3c6bf8e44a8485f40685b255505e0f2ac75b1f0b86f00370916d1f941c14693a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118545422647726
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-20261016-stop-recovery.json",
+      "sha256": "aa422c5ba4115b32667c2a1c947d3b21ddad001e22f4bf1708d74544d157063d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118668955059330
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-20261016-recovery-inputs.json",
+      "sha256": "024b136f554387fd0bc991e028f0b95ef57f4007c367a15aac4d4341285f666d",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118824142423291
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-20261016-recovery.json",
+      "sha256": "e271da732e8388f0830fdc5f88bccafbd2c49fc7d5928d4a1f30876c559fb799",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118885872594272
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-20261016-independent2.json",
+      "sha256": "4c18a131fb7dcc61e90837b3affdf836b3bf84c66836fcced1aeecf3c64630ee",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792119058673163357
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-origin-20261016.json",
+      "sha256": "332bc6d329ee0f9e82e3ee8b49f06772da41105fc9fbf44813167cca4f72a2c7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792119724685790878
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-run-20261016.py",
+      "sha256": "1201c2c3b46adea3aae1570ea2acfb7ec09a2a9da68f63c3491a67e07cb77f1f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118331856148443
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-independent-20261016.py",
+      "sha256": "622fd420d73b1883f56a5ac20978a4cdd6721980d883339312bbc8815d9a1e1e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792117906351575395
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-independent2-20261016.py",
+      "sha256": "90ba8bbb83f45da5ffa94d18dc3e2290d5537b1736301803010850c01b1fae13",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792119048072922372
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-reclaim-recovery-20261016.py",
+      "sha256": "ebedc8f5875755fffbc67e0a10eb24a01211faced4fa7da1ffbf67d4d07045dc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118823183593068
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-retention-20261016.py",
+      "sha256": "46ffe7de67494eaad66b18a7e8c55efcaa7ade982ae8a62513490ff950154291",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118021584585837
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-rpc-observer-20261016.go",
+      "sha256": "a9ee0bdf6625b7eaa75b62e1821147be4291555848e38f2927fd35fb01b356a2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792116658731856219
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-observer-test-20261016.py",
+      "sha256": "478bb1f4f79391ba8087a488ec65fa7dc9e44abfdb5474e43caa8682025e9245",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118115952066490
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/sessions/20261016-024107-56497/UTC-20261016-024107/tests/001_signature-compat-across-swap/assert.json",
+      "sha256": "008b5f235e5ec45587c0ea3c10741c689a95f305c56992796756d4abffaa1994",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118530676598653
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/sessions/20261016-024107-56497/UTC-20261016-024107/tests/001_signature-compat-across-swap/steps.json",
+      "sha256": "719f858a298e92b6af3bbe9f6081949043c5f65cfc11cca250724b57fc0e0b23",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118530673150192
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/independent-rpc.json",
+      "sha256": "dac2a64679ee7594d07b364a2eebcf30a13a4ef20e0fafa98f6f64536b7d89ad",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118544486395462
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention.json",
+      "sha256": "496042e5fa224cf9dc85fd6a01e38952962a3f9d643db3fef69da25573d82483",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118882162652919
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention/server1-metadata.tar.gz",
+      "sha256": "eae58f281f32fa5c33561932af734b53ffd34e37536d6ece968184f1e631a31c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118847226745771
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention/server2-metadata.tar.gz",
+      "sha256": "c4a1d05b2d49ea75bfd11ba280ef0e44da120bf162eb2a07fb9bf87d977852dc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118855772618661
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention/server3-metadata.tar.gz",
+      "sha256": "02494b7f35164d4f72059c0a5d972568e294a20aa7717992eb2bb1f7ef251f99",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118862929343997
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention/server4-metadata.tar.gz",
+      "sha256": "136410a7c476659298f6335034205e86b42231916a1b63dfb0efe9dcb956bd06",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118868552071360
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention/server5-metadata.tar.gz",
+      "sha256": "159639969660ab22a371b2132ead5661256f48635aa5f7b031c88c202521a95c",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118874433054946
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/retention/server6-metadata.tar.gz",
+      "sha256": "703e5d51fc87849c82ac115b87985e538b884cc064ead70a650c716c29e06754",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118881111554165
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/plan.stdout.json",
+      "sha256": "29138e211e167da7f937b28d58c6a4fce3d93d012680bcb8693c2f043ed019fd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118466198486292
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/plan.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118465527857639
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/run.stdout.json",
+      "sha256": "30968d5fa0a1cc8c0c388925c5d47fd5a20f2ede3fa3c602d0703db9d86c64a8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118531567319244
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/run.stderr.log",
+      "sha256": "604c05bb8ee63ed4ba887b08dc16b04a93d305db3e77725363b79d77a2db833d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118531566464983
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/stop.stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118544486514713
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/stop.stderr.log",
+      "sha256": "1ed618c38923bf62f916fb6c97b2ebca08662206e95e96cedfc0acd00f7084ec",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118544525654888
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/stop-recovery.stdout.log",
+      "sha256": "a3318b684657fd8a4067352713f020450efdc11254516aa3d4bd4e820b45ed82",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118666962218075
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/stop-recovery.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118656801951544
+    },
+    {
+      "path": "/private/tmp/cbui/ss-xxt_9e4e/reports/inputs.json",
+      "sha256": "5cbfae2f0a1395defa72d04da69a2fccdc27c3724996ca288c196accf9946fcc",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118444669071557
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-signature-log-red-20261016.log",
+      "sha256": "883494dcd5e7426ed0467f336d6191ad0286f1b4cc0d2e5ad84a4b17ad131314",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792115400678615861
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-log-green-20261016.log",
+      "sha256": "0a1d08bec1dc78ace4615c67a2686c402c7a0f905d51a6548b2099555eed5252",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792115457007806203
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-case-red-20261016.log",
+      "sha256": "e289983574c55ee011e5e31cabd334b671a0a660385955620b990e0f98fcfac4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792115579733560525
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-case-green-20261016.log",
+      "sha256": "48c34a3b4951d087ddc8e9257b9c0a1de7cd4d422847ccb069720d429ca8fdc6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792115692240275188
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-lag-red-20261016.log",
+      "sha256": "87eebc7aef7578e87f798da5f5738cfa368830797d8365b339858aa8d397f1cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792115920872857700
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-empty-red-20261016.log",
+      "sha256": "71bf586d94693fa8da683656316a5394217e0afd8e69491a6f250286db951910",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792117087400366958
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-empty-red2-20261016.log",
+      "sha256": "24838e7817a899005a065578bee1e0c3ca4fa759968800a62ca280e3a4dbc564",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792117112362802033
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-boundary-red-20261016.log",
+      "sha256": "cc721cef5dfb63391b7005bf2a9c1cd9c51d3174afd6943e246a16aea4d735d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792117245012476562
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-ready-focused-20261016.log",
+      "sha256": "9d4240afedfc2d53c367a6d828e7abfe5343a16f5e9095e97a14e0441860a466",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792115987585568728
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-ready-race-20261016.log",
+      "sha256": "59d15f9aba6be6f1b3c424cc8380cc039d04f9110ca7d47d4ba96ee8115eff6f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792116138858399404
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-ready-race2-20261016.log",
+      "sha256": "0478f47d4d3de40ba720681e8acc2a9d352179590cd5d31bbe06a68030ba3a57",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792117392365472973
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-ready-check-20261016.log",
+      "sha256": "d42645cc3367ac712a57c64f7813e61b7c8c0c14fcfe49714cca1d8442179f8a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792116160207093488
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-ready-check2-20261016.log",
+      "sha256": "4ab30def9d4f8765f667e4b1579e59a712330d044257ff6bcb64ffab3f849c18",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792116490179337468
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-ready-check3-20261016.log",
+      "sha256": "fff3757c758d83c5364976107200a86f87eadcab646db543838d2afc4b1a7095",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792117574470431368
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-retention-test-20261016.log",
+      "sha256": "53fdd3f49222259020a5ebdcf85ec4f028b43e56723e66b76c180a233c485616",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118021733265640
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-observer-test-20261016.log",
+      "sha256": "eec12498d22d25fbb50439517c6987be59671798844a42c6f1c8ec6223229b0d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118118503287902
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-driver-20261016.log",
+      "sha256": "8047fea45759c662aae0d545706c1a5af92c71c678c805d6275e9ed8dbf2c867",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118545433428116
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-reclaim-recovery-20261016.log",
+      "sha256": "00b98810ba80fa7473eeea302f9d83afe050e8ac0c9541dd5e00a0feca5458cd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792118885875438517
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-independent2-20261016.log",
+      "sha256": "782615d149cb6255e2595a53a997e0b187a536fa7d5e981451d9bc22a2e42434",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792119058673502653
+    },
+    {
+      "path": "/private/tmp/chainbench-signature-published-check-20261016.log",
+      "sha256": "974db0a80bc8f34bc426b6af384ab21a45bca06753b3db33a8a626010d5466a6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792120328650120119
+    }
+  ]
+}

@@ -16,6 +16,8 @@ import sys
 import uuid
 from evidence import digest
 from runtime_contract import base_commit, runtime_root, source_digest
+from runtime_storage import reclaim_evidence
+from prerequisite import run_check
 
 
 def now():
@@ -40,7 +42,7 @@ def run(criterion, proofs, required, checks, scenarios, source_patterns, verify)
     failures = []
     try:
         for command in checks:
-            result = subprocess.run(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            result = run_check(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             log = output / f'check-{len(evidence["checks"])}.log'
             log.write_text(result.stdout)
             evidence['checks'].append({'command': command, 'exitCode': result.returncode, 'log': str(log), 'sha256': digest(log)})
@@ -65,6 +67,7 @@ def run(criterion, proofs, required, checks, scenarios, source_patterns, verify)
             receipts[name] = receipt
             for file in ['receipt.json'] + files:
                 shutil.copy2(development / file, output / f'{name}-{file}')
+            reclaim_evidence(development)
             evidence['proofs'].append({'name': name, 'startedAt': proof_started, 'runtime': receipt['runtime'], 'dashboardSHA256': receipt['dashboardSHA256'], 'browserVersion': receipt.get('browserVersion'), 'binaries': receipt.get('binaries')})
         observed = now()
         evidence['scenarios'] = scenarios(receipts, output)

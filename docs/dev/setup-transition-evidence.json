@@ -1,0 +1,320 @@
+{
+  "scope": "b-5 reassessment: retired setup/net command premise, current composition consumers, public CLI start/sealing/stop/removal on three chains. Does not close Linux fleet, all mainnet fidelity, wemix4 sufficiency, W3/W4 or final Web acceptance.",
+  "red": "The real CLI has no setup/net command or alias, but the b-5 row still marked a transition between them as pending.",
+  "currentRoutes": {
+    "CLI": "chain up -> app.ChainUp -> verb.ChainUp -> composeFrom",
+    "MCP": "chainbench_chain_up -> feature chain.up -> app.ChainUp -> verb.ChainUp",
+    "Web": "CLI subprocess chain up (web_compose_cli.go and manifest_setup.go)",
+    "DSL": "composeWorkspace -> verb.ChainUpComparing -> composition"
+  },
+  "native": {
+    "exitCode": 0,
+    "sourceBefore": "b01c5c1311ef58c2d28f922f4df886ac39fab54492e82341b1872deff1ea95eb",
+    "sourceAfter": "b01c5c1311ef58c2d28f922f4df886ac39fab54492e82341b1872deff1ea95eb",
+    "sourceUnchanged": true,
+    "expected": [
+      "TestNativeBlueprintPinnedGeneration/stablenet",
+      "TestNativeBlueprintPinnedGeneration/wbft",
+      "TestNativeBlueprintPinnedGeneration/wemix"
+    ],
+    "passed": [
+      "TestNativeBlueprintPinnedGeneration/stablenet",
+      "TestNativeBlueprintPinnedGeneration/wbft",
+      "TestNativeBlueprintPinnedGeneration/wemix"
+    ],
+    "failed": [],
+    "skipped": [],
+    "proofs": [
+      "/private/tmp/cbui/n3-native-1775333061/proof.json",
+      "/private/tmp/cbui/n3-native-3731795932/proof.json",
+      "/private/tmp/cbui/n3-native-4095032783/proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/n3-native-1775333061/proof.json": [],
+      "/private/tmp/cbui/n3-native-3731795932/proof.json": [],
+      "/private/tmp/cbui/n3-native-4095032783/proof.json": []
+    }
+  },
+  "records": [
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/n3-native-1775333061/proof.json",
+        "sha256": "99681941c7289ebab28c10a7190c8ad990a5f49ecc0254d2b0d3cdccccea45a0",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791969201206236010
+      },
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "readings": {
+        "blockNumber": 33,
+        "chainId": 8285,
+        "peerCount": 3,
+        "syncing": false
+      },
+      "steps": [
+        "new: wemix: family poa, chain id 8285, bootstrap governance-etcd; keys /private/tmp/cbui/n3-native-1775333061/keys; target local /private/tmp/cbui/n3-native-1775333061/w",
+        "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: /private/tmp/cbui/n3-native-1775333061/server-set.yaml[local]; p2p from 30303, http from 8545",
+        "keys: generated:/private/tmp/cbui/n3-native-1775333061/keys: 4 identities, 4 declared validators",
+        "genesis: 1508 bytes at /private/tmp/cbui/n3-native-1775333061/w/genesis.json, 4 validator(s)",
+        "config: 4 config(s) under /private/tmp/cbui/n3-native-1775333061/w",
+        "build: 4 argv(s) assembled",
+        "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+        "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gwemix",
+        "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/n3-native-1775333061/w/runs/20261014-091320"
+      ],
+      "nodeCount": 4,
+      "retainedWorkspaceMetadata": true,
+      "recordedNodesAfterRemoval": 0,
+      "remainingDatabases": 0,
+      "active": false,
+      "inventory": {
+        "path": "/private/tmp/cbui/n3-native-1775333061/b5-inventory.json",
+        "sha256": "f91083a7bc79b93e89c23afff5fef2b9dc9555bb6528c9f2e8cbe0a4fa763751",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791969328920237380
+      },
+      "retainedFiles": 40
+    },
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/n3-native-3731795932/proof.json",
+        "sha256": "60c65ec56a14416a09b82308722a4f30c4c60ae49b07dc56fb994aff9b88fd54",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791969087374399730
+      },
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "readings": {
+        "blockNumber": 2,
+        "chainId": 8283,
+        "peerCount": 3,
+        "syncing": false
+      },
+      "steps": [
+        "new: stablenet: family wbft, chain id 8283, bootstrap static; keys /private/tmp/cbui/n3-native-3731795932/keys; target local /private/tmp/cbui/n3-native-3731795932/w",
+        "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: /private/tmp/cbui/n3-native-3731795932/server-set.yaml[local]; p2p from 30303, http from 8545",
+        "keys: generated:/private/tmp/cbui/n3-native-3731795932/keys: 4 identities, 4 declared validators",
+        "genesis: 6069 bytes at /private/tmp/cbui/n3-native-3731795932/w/genesis.json, 4 validator(s)",
+        "config: 4 config(s) under /private/tmp/cbui/n3-native-3731795932/w",
+        "build: 4 argv(s) assembled",
+        "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+        "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gstable",
+        "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/n3-native-3731795932/w/runs/20261014-091126"
+      ],
+      "nodeCount": 4,
+      "retainedWorkspaceMetadata": true,
+      "recordedNodesAfterRemoval": 0,
+      "remainingDatabases": 0,
+      "active": false,
+      "inventory": {
+        "path": "/private/tmp/cbui/n3-native-3731795932/b5-inventory.json",
+        "sha256": "ad6d0304175f0d6039cd5b79808ea7ebca0ae2c608971cf80608fd6371b3b675",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791969328930764542
+      },
+      "retainedFiles": 43
+    },
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/n3-native-4095032783/proof.json",
+        "sha256": "0b1889eb7d9c27787b85781c68bfab8b53b4da89ca3d07dfa48ef045fae2dd70",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791969127218750173
+      },
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "readings": {
+        "blockNumber": 37,
+        "chainId": 8284,
+        "peerCount": 3,
+        "syncing": false
+      },
+      "steps": [
+        "new: wbft: family wbft, chain id 8284, bootstrap static; keys /private/tmp/cbui/n3-native-4095032783/keys; target local /private/tmp/cbui/n3-native-4095032783/w",
+        "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: /private/tmp/cbui/n3-native-4095032783/server-set.yaml[local]; p2p from 30303, http from 8545",
+        "keys: generated:/private/tmp/cbui/n3-native-4095032783/keys: 4 identities, 4 declared validators",
+        "genesis: 3970 bytes at /private/tmp/cbui/n3-native-4095032783/w/genesis.json, 4 validator(s)",
+        "config: 4 config(s) under /private/tmp/cbui/n3-native-4095032783/w",
+        "build: 4 argv(s) assembled",
+        "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+        "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gwbft",
+        "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/n3-native-4095032783/w/runs/20261014-091130"
+      ],
+      "nodeCount": 4,
+      "retainedWorkspaceMetadata": true,
+      "recordedNodesAfterRemoval": 0,
+      "remainingDatabases": 0,
+      "active": false,
+      "inventory": {
+        "path": "/private/tmp/cbui/n3-native-4095032783/b5-inventory.json",
+        "sha256": "a546644686a6b50ff6da137843a7647c80cf6cf38139bcb0d24b623be8f2a14a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791969328940138597
+      },
+      "retainedFiles": 43
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/root.go",
+      "sha256": "11f91c0d8646f29fc08ba166ddcf0a1068a46a08a71ab203cd36aea3747223b3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380069981441968
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/chaincmd/up.go",
+      "sha256": "8aad575d00d0ceb1f98c3100ef5d73f6ddbf27f0b4b7a656fd2ab042fec527b9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791867258782991130
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/e2e_commands_exist_test.go",
+      "sha256": "cb7ec6e988fbc1b80ded441c40540eb9371cf8be81315ce10aaa4f5cb13423ee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791968794714526847
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/app/net.go",
+      "sha256": "b40fd92d245c13970359644519834d8c244db17fed42a2177c51edf5c8003a57",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791867258790963221
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/verb/verbs_up.go",
+      "sha256": "38118339c87a3ba5a609bcc4d73868a70e6c236641db8cc23f878d16aaf95a7f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791867258799284436
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/verb/compare.go",
+      "sha256": "abf49b10a268406a7e184a1d09d7153fb09bb6f7f82f80f434f077877dc920ab",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791407608581300292
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/attach_workspace.go",
+      "sha256": "b13bc07d0b8c2436e5941f12a3031bfb134176a7a76971ee05a60922e2dd25f8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791962768689137211
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/app/web_compose_cli.go",
+      "sha256": "d874717385ce1cfeb51371f9981162f54cb3eb5b1ebb3a74a6f96d8cc140b699",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791867258792167555
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/app/manifest_setup.go",
+      "sha256": "21cc81dcf0ffd14f23c58feb7f616b304715810bcb93d23b3e3eea0748cd9c41",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791867258790492387
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/feature/operations.go",
+      "sha256": "bd02e7cbb1f51209861e1a1aee8efd9484d9bdaa6c7b540cf3347c40f3dca6b8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791873650982340033
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/mcp/chain_tools.go",
+      "sha256": "223916b9d6bdc1fe95099f62abae1b7aea8af4dfee8a1cb3a3ac1488a0edc3a5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791877594347919416
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/chainsetup/family_keys_native_test.go",
+      "sha256": "9daf4e90c4f8c863128a53c1411cf758789a031004273cdef1240336d2e762ba",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791884093411984754
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-b5-red.log",
+      "sha256": "a53632c0293fae517b1eb2daaeb8874d2d314a2ac36cd59bb0e7b780c7498998",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791968798976303674
+    },
+    {
+      "path": "/private/tmp/chainbench-b5-green-race.log",
+      "sha256": "1720a90b398e528f6846e9492ad4f9d0c6f3fc3b70c1f1979bed0d09806cad16",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791969024892819877
+    },
+    {
+      "path": "/private/tmp/chainbench-b5-check.log",
+      "sha256": "5ae2b65e6cf5792043c9bdafd1be434d5078c481c0e1e985c2bb42fa0c23025c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791968974885527609
+    },
+    {
+      "path": "/private/tmp/chainbench-b5-native.jsonl",
+      "sha256": "b59b82a60916b3c75d7dec53922466236936d143e138fdeea77aa925e29a7302",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791969216736895683
+    },
+    {
+      "path": "/private/tmp/chainbench-b5-native-summary.json",
+      "sha256": "f5a713cf5ef76f5e40789ea4a8e906ab25281b45130654cacae8536eb12bd78c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791969217176674513
+    },
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    }
+  ]
+}

@@ -68,16 +68,16 @@ func TestMetricAssertion_WithoutAMachineTheScrapeErrorStands(t *testing.T) {
 	}
 }
 
-// TestMetricAssertion_BothPathsFailingNamesBoth: when the machine cannot be
-// read either, the error says what each path answered.
-func TestMetricAssertion_BothPathsFailingNamesBoth(t *testing.T) {
+// TestMetricAssertion_MachineFailureNamesTheVerifiedSource: failure on the
+// node's machine cannot be replaced by a response from the harness loopback.
+func TestMetricAssertion_MachineFailureNamesTheVerifiedSource(t *testing.T) {
 	ctrl := &hostControl{err: errors.New("ssh: connection refused")}
 	d := interp.Deps{Nodes: ctrl}
 	_, err := metricAssertion{}.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{unreachableMetricsNode()}, Spec: map[string]any{
 		"assert": assertMetric, "name": "x", "expected": 1,
 	}})
-	if err == nil || !strings.Contains(err.Error(), "ssh: connection refused") || !strings.Contains(err.Error(), "127.0.0.1:1") {
-		t.Fatalf("err = %v, want both the scrape and the on-machine failure", err)
+	if err == nil || !strings.Contains(err.Error(), "ssh: connection refused") || !strings.Contains(err.Error(), "node5's machine") {
+		t.Fatalf("err = %v, want the verified node's source failure", err)
 	}
 }
 

@@ -1,0 +1,345 @@
+{
+  "scope": "User-approved GOV004 current-v1 withdraw(0) early no-payout and mature full withdrawal; GOV011 explicit30s/70s delegated lifecycle plus actual getter/storage verification of separately configured72h/7d values. Full unstake/removal, exact indexed events, input/receipt hashes, power, principal/gas/nonce, slot/pointers and independent state-diff checks. Related6 native race cases; not all37 WEMIX functions, full87/Linux/mainnet/legacy/public DSL/final Web.",
+  "acceptedScope": true,
+  "all87Accepted": false,
+  "fullMainnetAccepted": false,
+  "externalSourceModified": false,
+  "originalEarlyRevertExpectationAccepted": false,
+  "run": {
+    "exitCode": 0,
+    "helperHashesBefore": {
+      "/private/tmp/chainbench-approved-unbonding-run.py": "340441d9316a6f7b46ee71ca488855c86663857a62d1e9457948ddd33d6b3106",
+      "/private/tmp/chainbench-head-native/provenance.json": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "/private/tmp/chainbench-w3-head-native/provenance.json": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd"
+    },
+    "helperHashesAfter": {
+      "/private/tmp/chainbench-approved-unbonding-run.py": "340441d9316a6f7b46ee71ca488855c86663857a62d1e9457948ddd33d6b3106",
+      "/private/tmp/chainbench-head-native/provenance.json": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "/private/tmp/chainbench-w3-head-native/provenance.json": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd"
+    },
+    "helperInputsUnchanged": true,
+    "sourceBefore": "ecb87e6302b83a0a36e714318b0864a74232f14821345695d4ec637b48be5da7",
+    "sourceAfter": "ecb87e6302b83a0a36e714318b0864a74232f14821345695d4ec637b48be5da7",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceAutoWithdrawalE2E",
+      "TestWemixGovernanceOriginalUnbondingConfigurationE2E",
+      "TestWemixGovernanceDelegationWithdrawalE2E",
+      "TestWemixGovernanceDelegateE2E",
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceCredentialExpiryE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-1nubsk05",
+      "/private/tmp/cbui/hf-4ajdifxl",
+      "/private/tmp/cbui/hf-as8breru",
+      "/private/tmp/cbui/hf-f8sfceu8",
+      "/private/tmp/cbui/hf-irome808",
+      "/private/tmp/cbui/hf-tlksm641"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-1nubsk05": [],
+      "/private/tmp/cbui/hf-4ajdifxl": [],
+      "/private/tmp/cbui/hf-as8breru": [],
+      "/private/tmp/cbui/hf-f8sfceu8": [],
+      "/private/tmp/cbui/hf-irome808": [],
+      "/private/tmp/cbui/hf-tlksm641": []
+    },
+    "elapsedSeconds": 529.896,
+    "log": {
+      "path": "/private/tmp/chainbench-approved-unbonding-retry1-native.jsonl",
+      "sha256": "80cc3241e7e7d63d24a35e2e4983bcb12fc9ac52367787ded2ec02ecaefa7950",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078682601009957
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-approved-unbonding-retry1-start.json",
+      "sha256": "dd5081f2e13fe09845594151c2225e388647528517c34af9bc91a3673a14ebfb",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078149964997520
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-approved-unbonding-retry1-summary.json",
+      "sha256": "99c70cfbfd1e185f13963fafc5dada0e767cfde97e81b5127f7f706bc7e52959",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078683173017930
+    }
+  },
+  "independent": {
+    "path": "/private/tmp/chainbench-approved-unbonding-independent2.json",
+    "sha256": "c16eab57b71a2198f77b4af1a2d044b0f8e66214ffd0b68fa127e4767541c72e",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792078725746860505
+  },
+  "independentDecoder": {
+    "path": "/private/tmp/chainbench-approved-unbonding-independent2.py",
+    "sha256": "9a0b9ce2082e50cc7f1e265f057e02ca705e8959a6c87f456dddbf788d73361b",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792078078781677869
+  },
+  "autoWithdrawal": {
+    "delay": 70,
+    "requested": 1792078227,
+    "early": 1792078229,
+    "mature": 1792078297,
+    "paid": 1792078298,
+    "principal": "20000000000000000000000000",
+    "earlyGasFee": "4290737950597895",
+    "matureGasFee": "7034400006471648"
+  },
+  "delegationWithdrawal": {
+    "delay": 30,
+    "requested": 1792078385,
+    "early": 1792078387,
+    "mature": 1792078415,
+    "paid": 1792078416,
+    "principal": "10000000000000000000000000",
+    "earlyGasFee": "4290701774504799",
+    "matureGasFee": "7034400060777216"
+  },
+  "originalConfiguration": {
+    "delegator": "259200",
+    "literal72hAnd7dWaitPerformed": false,
+    "scope": "Explicit original-number fixture configuration; not a measurement of mainnet deployment parameters.",
+    "staker": "604800",
+    "storage": [
+      "0x000000000000000000000000000000000000000000000000000000000003f480",
+      "0x0000000000000000000000000000000000000000000000000000000000093a80"
+    ]
+  },
+  "originalConfigurationScope": "An explicit fixture configured with original GOV011 numbers was deployed and read through getters plus raw storage. Literal72h/7d waiting and live-mainnet deployment parameters were not measured.",
+  "retention": {
+    "runtimes": 6,
+    "retainedFiles": 1368,
+    "remainingDatabasePaths": 0,
+    "databaseTypes": [
+      "chaindata",
+      "lightchaindata",
+      "etcd"
+    ],
+    "freshProcessAndOpenFileInventory": true,
+    "retainedTrieCacheBytes": 2346804,
+    "trieCacheNote": "Small stopped triecache files remain in the byte/metadata inventory as evidence. They are not claimed removed.",
+    "fields": [
+      "bytes",
+      "mode",
+      "uid",
+      "gid",
+      "mtimeNS"
+    ],
+    "allInventoriedFilesRechecked": true
+  },
+  "preservedFailedAttempt": {
+    "summary": {
+      "path": "/private/tmp/chainbench-approved-unbonding-native-summary.json",
+      "sha256": "1805980553fefd7cc6325aedbb020efbe0104d05589046d3ac15ad29da6889a3",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792077752432105993
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-approved-unbonding-native-native.jsonl",
+      "sha256": "1dee3032cc2e3e2dc6a230603145eee958b4cf0afe80ee267e99d7e300c1818f",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792077751754708807
+    },
+    "finalization": {
+      "path": "/private/tmp/chainbench-approved-unbonding-first-finalization.json",
+      "sha256": "1a8d015b0e0a2d0c995dde9440b2512796da30f8dc46b278790165b3df01e065",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792077895017135352
+    },
+    "sourceDigest": "06f575608360a036c82e20e7df00a74954812eac7d137ae725449bd78007047c",
+    "pass": 5,
+    "fail": 1,
+    "acceptedScope": false,
+    "cause": "New verifier required an unchanged contract post balance that diff-mode tracer intentionally omits. Raw undelegate caller delta equals exact fee; no principal paid. Corrected checker retains strict changed deposit/payer balance requirements.",
+    "traceSource": {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/eth/tracers/native/prestate.go",
+      "sha256": "7397dcb05677bbbd1d67c26d452eec54d13eaed0053176233edd13f942bd9ccb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397447157356
+    },
+    "traceSourceMatchesPinnedGitBlob": true
+  },
+  "tests": {
+    "initialNegativeControls": 15,
+    "sparseDiffPositiveControl": true,
+    "sparseDiffNegativeControls": 4,
+    "nativePassed": [
+      "TestWemixGovernanceAutoWithdrawalE2E",
+      "TestWemixGovernanceOriginalUnbondingConfigurationE2E",
+      "TestWemixGovernanceDelegationWithdrawalE2E",
+      "TestWemixGovernanceDelegateE2E",
+      "TestWemixGovernanceUnstakeE2E",
+      "TestWemixGovernanceCredentialExpiryE2E"
+    ],
+    "compiledTestWemixFunctions": 37,
+    "nativeDenominator": {
+      "path": "/private/tmp/chainbench-approved-unbonding-wemix-denominator.log",
+      "sha256": "f8d5cbc8b933124078a4d4d6fb8031e6086a08a9052d97c12fb8a7b1d54f75fe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078833677922193
+    },
+    "all37Executed": false
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-delegation-withdrawal-red.log",
+      "sha256": "7c561463070590c193f49d7f7a4bc6234ebd71fdf854e6531b17bf83fc1ebd55",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792076539782426298
+    },
+    {
+      "path": "/private/tmp/chainbench-approved-unbonding-final-unit-race.log",
+      "sha256": "3d690636688d7a995693edab29b2ffe95a335a3b5ed28d76c533d8ba55a0c246",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792077014636355968
+    },
+    {
+      "path": "/private/tmp/chainbench-approved-unbonding-sparse-red.log",
+      "sha256": "10105235046f818a6fcb4e608f8f73878520deaba634311b7e10019b9f3df90a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792077932904352683
+    },
+    {
+      "path": "/private/tmp/chainbench-approved-unbonding-sparse-green.log",
+      "sha256": "42b6e009fa3f0fb3e1d6b56bbd77040d9acd6192a95558574da8e3a808d975ae",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792077962512354031
+    },
+    {
+      "path": "/private/tmp/chainbench-approved-unbonding-sparse-check.log",
+      "sha256": "46a273c06e8fe94ebccdcbc2968316fe4eec3ea87a93c0a42467147c6a7a3f6f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078108342136207
+    },
+    {
+      "path": "/private/tmp/chainbench-approved-unbonding-sparse-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078005104449221
+    },
+    {
+      "path": "/private/tmp/chainbench-approved-unbonding-independent2.log",
+      "sha256": "27c886438c12c3894115ff6b20b0a708785493ba1d86a63f7cd6a33c35074986",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792078725784570578
+    }
+  ],
+  "binariesUsed": [
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/gwemix",
+      "sha256": "9999f74e44585ff536aac102d86946cc3ad9e0a8aeb193e39deab6cee7a5075c",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791973660680382414,
+      "sourceCommit": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987"
+    },
+    {
+      "path": "/private/tmp/chainbench-head-native/gwbft",
+      "sha256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791888502020736500,
+      "sourceCommit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505"
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/auto_withdrawal_e2e_test.go",
+      "sha256": "b1e900aeea62711ae36e2392c1d12f94bfb95bd87848505fc6246c3cbc150c07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792077007929620827
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/delegation_withdrawal_e2e_test.go",
+      "sha256": "6ac290cee77e02fb5a80482530292730835b0f7098bb4dbf5337772facc93d76",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792077953770222436
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/delegation_withdrawal_native_e2e_test.go",
+      "sha256": "02336a603f2d4c519058aa226b3e24472ff677666bb75157b94abca96dd3b98d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792076695017794406
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/full_unstake_e2e_test.go",
+      "sha256": "d49669056860e1f471f42a9c1ed1801c6a48f1f763ecc8106ca3f4f5b29af2e8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792029188669893749
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/upgrade_gov_staking_e2e_test.go",
+      "sha256": "2e4491b0b67ba6309261872365aaf4d77d234a9a699aed5bd125abdbce4bad79",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792032936736966455
+    }
+  ]
+}

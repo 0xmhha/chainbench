@@ -93,6 +93,9 @@ type GeneratedKeys struct {
 	// Validators is how many of the generated nodes join the validator set;
 	// <=0 means all of them.
 	Validators int
+	// Derive selects identity material. Nil preserves the historical BLS
+	// default; compositions pass their chain family's explicit choice.
+	Derive *derive.Derivation
 }
 
 // Dir is the directory the set is generated into.
@@ -110,6 +113,10 @@ func (s GeneratedKeys) Ensure(ctx context.Context, n int) (preset.Key, error) {
 	if err := ctx.Err(); err != nil {
 		return preset.Key{}, err
 	}
+	derivation := derive.WithBLS
+	if s.Derive != nil {
+		derivation = *s.Derive
+	}
 	opts := GenerateOpts{
 		Nodes: n,
 		// A zero here has always meant "all of them" on this boundary, so it is
@@ -117,7 +124,7 @@ func (s GeneratedKeys) Ensure(ctx context.Context, n int) (preset.Key, error) {
 		// a ring that declares no validators at all.
 		Validators: validatorCount(s.Validators),
 		Out:        s.Path,
-		Derive:     derive.WithBLS,
+		Derive:     derivation,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}

@@ -1,0 +1,1447 @@
+{
+  "scope": "TX-017 and established RT-A-3-07: real writes before REVERT/OOG, mined status-zero receipts, partial/full gas consumption, state rollback by eth_call and direct storage reads, exact fee balance and continued blocks. Original TX-018 estimateGas-minus-one procedure remains open. Not complete original 87-case sufficiency, mainnet, W3/W4 resolution or final Web acceptance.",
+  "red": "Both original cases passed their DSL checks but completed no SSTORE before failure; the stronger native witness rejected both on WBFT. First diagnostic stopped after the first refusal; second retained both failures.",
+  "green": {
+    "chains": [
+      "wbft",
+      "stablenet",
+      "wemix"
+    ],
+    "cases": 6,
+    "skipped": 0,
+    "frozenSource": "92ccd8b5ad56fcaf7f0d0482daef31006971e3c4a99b49a9f6b2e46aec12d331",
+    "storageInitialAndFinal": 42,
+    "revertGasLimit": 100000,
+    "oogGasLimit": 50000,
+    "runtimeBytes": {
+      "revert": 27,
+      "oog": 26
+    }
+  },
+  "tx018OriginalComplete": false,
+  "estimateMinusOneLimitation": "Infinite execution has no successful finite gas estimate. Additionally WBFT ethapi allows a 0.015 upward approximation ratio, and the estimator may stop before reaching the minimal successful limit. No live estimate-minus-one transaction claimed.",
+  "estimatorSources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/internal/ethapi/api.go",
+      "sha256": "6ac9f7eb826ae61837ef87dcc917da045ce86a7356f1d999542d072701c45b50",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397459598516
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/eth/gasestimator/gasestimator.go",
+      "sha256": "eab4a8ac69b4ecb2c0d4cee55f239f70198b92ccddc3035ce1cc68ed4685cad6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1786265397428564407
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/transaction_failure_native_test.go",
+      "sha256": "ecbad1f08a3aeffb35427c9fd89a7359ac5dbc8f8f15c1e7f9e486f1f0cbe2f9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791986079453419997
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json",
+      "sha256": "cf28d8a295b9ceaf187234c442198621689ce17f51b3c069f14a0db5d4a773fa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791985564424627272
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/contract/CT-CONTRACT-007-out-of-gas-consumes-all.json",
+      "sha256": "04975194e41be8b20ac8209882ea2262c23a92a731208084760d82ab6bc3e6e0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791985564424824063
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/tc/wemix4.0/01-test-scenarios.md",
+      "sha256": "81d8638066f00515b02fb12c6d2c9bb03cb60a721eea1f573080c33f8b84fd4f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791380070025190903
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "1147c32e3a10a254d1bf9883280bd51bc2eafd6ff8f42b6f5fe215f6330ebde8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791986644968765708
+    }
+  ],
+  "runs": [
+    {
+      "exitCode": 1,
+      "sourceBefore": "02aaf77c5fd6f7401da4a4bb86dcd0e8528db81de4ffa256745e74c467966316",
+      "sourceAfter": "02aaf77c5fd6f7401da4a4bb86dcd0e8528db81de4ffa256745e74c467966316",
+      "sourceUnchanged": true,
+      "passed": [],
+      "failed": [
+        "TestNativeTransactionFailureRollback/wbft",
+        "TestNativeTransactionFailureRollback"
+      ],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-454pdfh0"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-454pdfh0/reports/transaction-failure-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-454pdfh0": []
+      },
+      "label": "red",
+      "summary": {
+        "path": "/private/tmp/chainbench-tx-failure-red-summary.json",
+        "sha256": "43d60acd6cc3aea1193f828054f3734e6325d65bf1adba59bb8926ab52089d0a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791985398511803283
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-tx-failure-red-native.jsonl",
+        "sha256": "1e8e437d0f53fcaaf23f7d347c7cb69291fc16fd100462694c9711765a75f0f9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791985398150646237
+      }
+    },
+    {
+      "exitCode": 1,
+      "sourceBefore": "575991c6eca7c53206bf24e7fad01a17f9063516d4e5fab1aa9ebdc0f537ce7b",
+      "sourceAfter": "575991c6eca7c53206bf24e7fad01a17f9063516d4e5fab1aa9ebdc0f537ce7b",
+      "sourceUnchanged": true,
+      "passed": [],
+      "failed": [
+        "TestNativeTransactionFailureRollback/wbft",
+        "TestNativeTransactionFailureRollback"
+      ],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-0jvvg76n"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-0jvvg76n/reports/transaction-failure-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-0jvvg76n": []
+      },
+      "label": "red-both",
+      "summary": {
+        "path": "/private/tmp/chainbench-tx-failure-red-both-summary.json",
+        "sha256": "7d245be2505c87bffeb1a4f79b555255c35877cd4f96d60fafc9b391e67d2123",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791985501572034195
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-tx-failure-red-both-native.jsonl",
+        "sha256": "7b8e0ef49d8e2ecdd299073afb58cd53a9393456b7d19cf98292095575c96867",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791985501215895318
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "e208965b31b56c0498d86df29644ce7549b44bf4060f16249208b8c5e3a83d49",
+      "sourceAfter": "e208965b31b56c0498d86df29644ce7549b44bf4060f16249208b8c5e3a83d49",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestNativeTransactionFailureRollback/stablenet",
+        "TestNativeTransactionFailureRollback/wbft",
+        "TestNativeTransactionFailureRollback/wemix",
+        "TestNativeTransactionFailureRollback"
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-vuvm84o7",
+        "/private/tmp/cbui/txfail-xdnoydym",
+        "/private/tmp/cbui/txfail-xnkv33fz"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-vuvm84o7/reports/transaction-failure-proof.json",
+        "/private/tmp/cbui/txfail-xdnoydym/reports/transaction-failure-proof.json",
+        "/private/tmp/cbui/txfail-xnkv33fz/reports/transaction-failure-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-vuvm84o7": [],
+        "/private/tmp/cbui/txfail-xdnoydym": [],
+        "/private/tmp/cbui/txfail-xnkv33fz": []
+      },
+      "label": "green",
+      "summary": {
+        "path": "/private/tmp/chainbench-tx-failure-green-summary.json",
+        "sha256": "d209a187a43ba2100f2493c89e86b6882bc4f96603bcc0210177292072c4fdfb",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791985789004400493
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-tx-failure-green-native.jsonl",
+        "sha256": "caf397db13ef1c8160d4bb1e33d89b568c3138568a3ea3ce9073828458c08a60",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791985788540069124
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "92ccd8b5ad56fcaf7f0d0482daef31006971e3c4a99b49a9f6b2e46aec12d331",
+      "sourceAfter": "92ccd8b5ad56fcaf7f0d0482daef31006971e3c4a99b49a9f6b2e46aec12d331",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestNativeTransactionFailureRollback/stablenet",
+        "TestNativeTransactionFailureRollback/wbft",
+        "TestNativeTransactionFailureRollback/wemix",
+        "TestNativeTransactionFailureRollback"
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-6klajqi_",
+        "/private/tmp/cbui/txfail-wyubvvju",
+        "/private/tmp/cbui/txfail-yc291n0k"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-6klajqi_/reports/transaction-failure-proof.json",
+        "/private/tmp/cbui/txfail-wyubvvju/reports/transaction-failure-proof.json",
+        "/private/tmp/cbui/txfail-yc291n0k/reports/transaction-failure-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-6klajqi_": [],
+        "/private/tmp/cbui/txfail-wyubvvju": [],
+        "/private/tmp/cbui/txfail-yc291n0k": []
+      },
+      "label": "final-green",
+      "summary": {
+        "path": "/private/tmp/chainbench-tx-failure-final-green-summary.json",
+        "sha256": "82e5f4b798aa1718c73081e3f9c5bfd34ceaeaf6c3ad4f77a7a24cf73d1f687f",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986340681924716
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-tx-failure-final-green-native.jsonl",
+        "sha256": "c86d46b529aae65e51bcdb24461314ddc7c1db9c1a56da3b8c6f543ed3c029b9",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986340169508283
+      }
+    }
+  ],
+  "records": [
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-6klajqi_/reports/transaction-failure-proof.json",
+        "sha256": "0a4ba3d26f1065a54a1547a1c3658a1f6cbaf75d0d430a65ac2c81d72d8f8544",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986234236464305
+      },
+      "session": "/private/tmp/cbui/txfail-6klajqi_/reports/20261014-135525-52493/UTC-20261014-135621",
+      "cases": [
+        {
+          "case": "revert-tx-status-zero",
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-6klajqi_/reports/20261014-135525-52493/UTC-20261014-135621/tests/001_revert-tx-status-zero/assert.json",
+            "sha256": "c40fc2822393f25b568ae76667f3d2ce9587a12db13f05dc4a353393591fd3cf",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986228506203971
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-6klajqi_/reports/20261014-135525-52493/UTC-20261014-135621/tests/001_revert-tx-status-zero/steps.json",
+            "sha256": "1c8206b934671831e769000da63cdf75f90ba167e346f9d43536ecff2900559f",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986227497241027
+          },
+          "minedFailure": {
+            "Index": 6,
+            "Type": "sendTx",
+            "On": "",
+            "Signer": "",
+            "Nonce": 0,
+            "Gas": "",
+            "Hash": "0xf9927d2f794e800db9d3519d07122faa7a27bdb451f19c28412e50afc664e655",
+            "Receipt": {
+              "blockHash": "0x5a734d12c731ef19d77c308adf6585f58540f09dd31c43ae205f095f2decb617",
+              "blockNumber": "0x2d",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0x65be",
+              "effectiveGasPrice": "0x17489c6781",
+              "from": "0xcdcb4a27c895b20bc20da811e35aa4cc23157a8c",
+              "gasUsed": "0x65be",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+              "transactionHash": "0xf9927d2f794e800db9d3519d07122faa7a27bdb451f19c28412e50afc664e655",
+              "transactionIndex": "0x0",
+              "type": "0x2"
+            },
+            "Error": ""
+          },
+          "actualTransaction": {
+            "accessList": [],
+            "blockHash": "0x5a734d12c731ef19d77c308adf6585f58540f09dd31c43ae205f095f2decb617",
+            "blockNumber": "0x2d",
+            "chainId": "0x205c",
+            "from": "0xcdcb4a27c895b20bc20da811e35aa4cc23157a8c",
+            "gas": "0x186a0",
+            "gasPrice": "0x17489c6781",
+            "hash": "0xf9927d2f794e800db9d3519d07122faa7a27bdb451f19c28412e50afc664e655",
+            "input": "0x01",
+            "maxFeePerGas": "0x1748cc9c6a",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0x0",
+            "r": "0xe399adc8ed50fc90574eba79e44572054d9158de59a731a27cb4b7cbbc9967cb",
+            "s": "0x10c39d18f168604353e4f0c9484ba19d5e1e8519e351b0924bc5edceab0edbcd",
+            "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x0",
+            "value": "0x0",
+            "yParity": "0x0"
+          },
+          "storageBeforeAfter": [
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            }
+          ],
+          "balanceEquality": {
+            "ID": "",
+            "Source": "",
+            "On": "",
+            "Assert": "balanceAt",
+            "Expected": "9997395335992658242",
+            "Actual": "9997395335992658242",
+            "Pass": true,
+            "Provenance": {
+              "address": "0xcdcb4a27c895b20bc20da811e35aa4cc23157a8c",
+              "assert": "balanceAt",
+              "compare": "Equal",
+              "expected": "9997395335992658242"
+            }
+          },
+          "traceInstructions": 10,
+          "traceConfirmedWriteBeforeFailure": true
+        },
+        {
+          "case": "out-of-gas-consumes-all",
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-6klajqi_/reports/20261014-135525-52493/UTC-20261014-135621/tests/002_out-of-gas-consumes-all/assert.json",
+            "sha256": "452114bb4bf610c12a37556bd232bda910beddf47c136270dc4ad301fd940f20",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986234097320047
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-6klajqi_/reports/20261014-135525-52493/UTC-20261014-135621/tests/002_out-of-gas-consumes-all/steps.json",
+            "sha256": "19076e6843113d7a236d3cc1636266fa5a799f10bf66fb25b60f2f1a9e061b5b",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986233088611479
+          },
+          "minedFailure": {
+            "Index": 6,
+            "Type": "sendTx",
+            "On": "",
+            "Signer": "",
+            "Nonce": 0,
+            "Gas": "",
+            "Hash": "0x7cbe51a41ca5ae7fc03ce1a55343b6d63aa9d77a3ade4cca2284e6019af5b936",
+            "Receipt": {
+              "blockHash": "0x0fc65f0e009271c0e392c77d1023f6b9884e69821e0730254ae82097ba32cced",
+              "blockNumber": "0x33",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xc350",
+              "effectiveGasPrice": "0x174887bdcb",
+              "from": "0xc444bdc6c2cb8df6b421653c14fcb1606919835e",
+              "gasUsed": "0xc350",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+              "transactionHash": "0x7cbe51a41ca5ae7fc03ce1a55343b6d63aa9d77a3ade4cca2284e6019af5b936",
+              "transactionIndex": "0x0",
+              "type": "0x2"
+            },
+            "Error": ""
+          },
+          "actualTransaction": {
+            "accessList": [],
+            "blockHash": "0x0fc65f0e009271c0e392c77d1023f6b9884e69821e0730254ae82097ba32cced",
+            "blockNumber": "0x33",
+            "chainId": "0x205c",
+            "from": "0xc444bdc6c2cb8df6b421653c14fcb1606919835e",
+            "gas": "0xc350",
+            "gasPrice": "0x174887bdcb",
+            "hash": "0x7cbe51a41ca5ae7fc03ce1a55343b6d63aa9d77a3ade4cca2284e6019af5b936",
+            "input": "0x01",
+            "maxFeePerGas": "0x17489d625c",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0x0",
+            "r": "0x83309d30d490531cc05aef5756cf52b00d68407cfd8ee8672c8296f5f7fb7c64",
+            "s": "0x1c810265236dce8c5ae9701a20fb3dc032ea46a3481e9fe4ed32e997761742e2",
+            "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x0",
+            "yParity": "0x1"
+          },
+          "storageBeforeAfter": [
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            }
+          ],
+          "balanceEquality": {
+            "ID": "",
+            "Source": "",
+            "On": "",
+            "Assert": "balanceAt",
+            "Expected": "9994999944834650000",
+            "Actual": "9994999944834650000",
+            "Pass": true,
+            "Provenance": {
+              "address": "0xc444bdc6c2cb8df6b421653c14fcb1606919835e",
+              "assert": "balanceAt",
+              "compare": "Equal",
+              "expected": "9994999944834650000"
+            }
+          },
+          "traceInstructions": 5998,
+          "traceConfirmedWriteBeforeFailure": true
+        }
+      ]
+    },
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-wyubvvju/reports/transaction-failure-proof.json",
+        "sha256": "1d8ffa207ee45ef04ae1ad906c0d8d371b5565c651a1490e4a7e57c9e12071f5",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986179391586852
+      },
+      "session": "/private/tmp/cbui/txfail-wyubvvju/reports/20261014-135525-52493/UTC-20261014-135525",
+      "cases": [
+        {
+          "case": "revert-tx-status-zero",
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-wyubvvju/reports/20261014-135525-52493/UTC-20261014-135525/tests/001_revert-tx-status-zero/assert.json",
+            "sha256": "2b4da696807bf2981fc96b7f9ed527b91712d4e9a12cf60d5d23b4f94239d9cc",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986173174538298
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-wyubvvju/reports/20261014-135525-52493/UTC-20261014-135525/tests/001_revert-tx-status-zero/steps.json",
+            "sha256": "ff5632acdc315b67b6623292b23c31053837dec2f48e6031aa57616c247e9eaa",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986172166891855
+          },
+          "minedFailure": {
+            "Index": 6,
+            "Type": "sendTx",
+            "On": "",
+            "Signer": "",
+            "Nonce": 0,
+            "Gas": "",
+            "Hash": "0xf75c841e02df161cc9114698bf097edaa3c50502250f14a0e5d6e8fe51ab57cc",
+            "Receipt": {
+              "blockHash": "0x54e07fd0ad7cf6e5bc47964740e7ddb112149feaa66f0a27a7155416035a0e10",
+              "blockNumber": "0x2b",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0x65be",
+              "effectiveGasPrice": "0x2b4abd176000",
+              "from": "0x78199b3730c67014af05a5b14a99b5fb1d47aa36",
+              "gasUsed": "0x65be",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+              "transactionHash": "0xf75c841e02df161cc9114698bf097edaa3c50502250f14a0e5d6e8fe51ab57cc",
+              "transactionIndex": "0x0",
+              "type": "0x2"
+            },
+            "Error": ""
+          },
+          "actualTransaction": {
+            "accessList": [],
+            "blockHash": "0x54e07fd0ad7cf6e5bc47964740e7ddb112149feaa66f0a27a7155416035a0e10",
+            "blockNumber": "0x2b",
+            "chainId": "0x205b",
+            "from": "0x78199b3730c67014af05a5b14a99b5fb1d47aa36",
+            "gas": "0x186a0",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0xf75c841e02df161cc9114698bf097edaa3c50502250f14a0e5d6e8fe51ab57cc",
+            "input": "0x01",
+            "maxFeePerGas": "0x3d7b59fca000",
+            "maxPriorityFeePerGas": "0x191a20322000",
+            "nonce": "0x0",
+            "r": "0x6f40eafd3df60fb16efa0d528137547b047e7e630878e56f4abfe224a64c76be",
+            "s": "0x758b9b6b848633cfd461ef3cf2710e6f227aa3ae9da802ae11200af4cf3ebd7",
+            "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x0",
+            "value": "0x0",
+            "yParity": "0x0"
+          },
+          "storageBeforeAfter": [
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            }
+          ],
+          "balanceEquality": {
+            "ID": "",
+            "Source": "",
+            "On": "",
+            "Assert": "balanceAt",
+            "Expected": "8760210400000000000",
+            "Actual": "8760210400000000000",
+            "Pass": true,
+            "Provenance": {
+              "address": "0x78199b3730c67014af05a5b14a99b5fb1d47aa36",
+              "assert": "balanceAt",
+              "compare": "Equal",
+              "expected": "8760210400000000000"
+            }
+          },
+          "traceInstructions": 10,
+          "traceConfirmedWriteBeforeFailure": true
+        },
+        {
+          "case": "out-of-gas-consumes-all",
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-wyubvvju/reports/20261014-135525-52493/UTC-20261014-135525/tests/002_out-of-gas-consumes-all/assert.json",
+            "sha256": "b30932c546620de475a559de986d73409e4f872b4d933df53ce40ef770723ecd",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986179252380843
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-wyubvvju/reports/20261014-135525-52493/UTC-20261014-135525/tests/002_out-of-gas-consumes-all/steps.json",
+            "sha256": "9255e0a26b62fc0b3ce5c712f55fc89462595a22a9d8a883b5e4036f931c8fe2",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986178245464151
+          },
+          "minedFailure": {
+            "Index": 6,
+            "Type": "sendTx",
+            "On": "",
+            "Signer": "",
+            "Nonce": 0,
+            "Gas": "",
+            "Hash": "0x7fe12c96c2e82476a0b6aececc155a839d160415590b9ae4f8d28bb6e4dc3f76",
+            "Receipt": {
+              "blockHash": "0x08b235abddb598b3936375d82950400ddf7bdd342e6a8704c18f9259acd7ca52",
+              "blockNumber": "0x31",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xc350",
+              "effectiveGasPrice": "0x2b4abd176000",
+              "from": "0x23c95f0065e1c2d2419615e5d563a6f08b709573",
+              "gasUsed": "0xc350",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+              "transactionHash": "0x7fe12c96c2e82476a0b6aececc155a839d160415590b9ae4f8d28bb6e4dc3f76",
+              "transactionIndex": "0x0",
+              "type": "0x2"
+            },
+            "Error": ""
+          },
+          "actualTransaction": {
+            "accessList": [],
+            "blockHash": "0x08b235abddb598b3936375d82950400ddf7bdd342e6a8704c18f9259acd7ca52",
+            "blockNumber": "0x31",
+            "chainId": "0x205b",
+            "from": "0x23c95f0065e1c2d2419615e5d563a6f08b709573",
+            "gas": "0xc350",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0x7fe12c96c2e82476a0b6aececc155a839d160415590b9ae4f8d28bb6e4dc3f76",
+            "input": "0x01",
+            "maxFeePerGas": "0x3d7b59fca000",
+            "maxPriorityFeePerGas": "0x191a20322000",
+            "nonce": "0x0",
+            "r": "0x41ecaf7cf449eea217d057b325a3d25de1612ddd23c87a710d077e7ddb12c95a",
+            "s": "0x7493b486271abf717d749b5f99d4f523f660550f6f368c7fcecebf2a86ef46c1",
+            "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x0",
+            "yParity": "0x1"
+          },
+          "storageBeforeAfter": [
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            }
+          ],
+          "balanceEquality": {
+            "ID": "",
+            "Source": "",
+            "On": "",
+            "Assert": "balanceAt",
+            "Expected": "7620000000000000000",
+            "Actual": "7620000000000000000",
+            "Pass": true,
+            "Provenance": {
+              "address": "0x23c95f0065e1c2d2419615e5d563a6f08b709573",
+              "assert": "balanceAt",
+              "compare": "Equal",
+              "expected": "7620000000000000000"
+            }
+          },
+          "traceInstructions": 5998,
+          "traceConfirmedWriteBeforeFailure": true
+        }
+      ]
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-yc291n0k/reports/transaction-failure-proof.json",
+        "sha256": "1c270f51d5a536521dc56c3952cb0d3c5ff13eea38e2a1e3661691da0132ea34",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986322744569238
+      },
+      "session": "/private/tmp/cbui/txfail-yc291n0k/reports/20261014-135525-52493/UTC-20261014-135716",
+      "cases": [
+        {
+          "case": "revert-tx-status-zero",
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-yc291n0k/reports/20261014-135525-52493/UTC-20261014-135716/tests/001_revert-tx-status-zero/assert.json",
+            "sha256": "1e64004ac727d8afed675ae8a7ffafe6b267d33831ff272484662a71164d083d",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986315529563373
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-yc291n0k/reports/20261014-135525-52493/UTC-20261014-135716/tests/001_revert-tx-status-zero/steps.json",
+            "sha256": "50a10a6b60f8fe736d3e27cacc2673e2c9ccdec6b180a315b8c94f6689536022",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986315018704107
+          },
+          "minedFailure": {
+            "Index": 6,
+            "Type": "sendTx",
+            "On": "",
+            "Signer": "",
+            "Nonce": 0,
+            "Gas": "",
+            "Hash": "0xbbe9e13e1eb93c0972d0a718dddbeb20b681489028f7fa2737699bdea31b40eb",
+            "Receipt": {
+              "blockHash": "0xe8e88dada2c52f9997ebe4ccbfa4fde1232f46967983e6e299df9e9c48aab06a",
+              "blockNumber": "0x29",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0x65be",
+              "effectiveGasPrice": "0x174876e801",
+              "from": "0x1b61434564d2cacc8c54b0704023e767606d4be8",
+              "gasUsed": "0x65be",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+              "transactionHash": "0xbbe9e13e1eb93c0972d0a718dddbeb20b681489028f7fa2737699bdea31b40eb",
+              "transactionIndex": "0x0",
+              "type": "0x2"
+            },
+            "Error": ""
+          },
+          "actualTransaction": {
+            "accessList": [],
+            "blockHash": "0xe8e88dada2c52f9997ebe4ccbfa4fde1232f46967983e6e299df9e9c48aab06a",
+            "blockNumber": "0x29",
+            "chainId": "0x205d",
+            "from": "0x1b61434564d2cacc8c54b0704023e767606d4be8",
+            "gas": "0x186a0",
+            "gasPrice": "0x174876e801",
+            "hash": "0xbbe9e13e1eb93c0972d0a718dddbeb20b681489028f7fa2737699bdea31b40eb",
+            "input": "0x01",
+            "maxFeePerGas": "0x174876e802",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0x0",
+            "r": "0xb54ed42083d9612f543bb9ec99f1724826c6b33dd5fc478a7fcccc8fc1021217",
+            "s": "0x73e4f25d3be323d6283466ca57bbc90634b9032e252bcd3b5be41cf54b3ce58d",
+            "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x0"
+          },
+          "storageBeforeAfter": [
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0xd3c768bd95605d98d8370131e06789c86a3eac06"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            }
+          ],
+          "balanceEquality": {
+            "ID": "",
+            "Source": "",
+            "On": "",
+            "Assert": "balanceAt",
+            "Expected": "9997395399999973954",
+            "Actual": "9997395399999973954",
+            "Pass": true,
+            "Provenance": {
+              "address": "0x1b61434564d2cacc8c54b0704023e767606d4be8",
+              "assert": "balanceAt",
+              "compare": "Equal",
+              "expected": "9997395399999973954"
+            }
+          },
+          "traceInstructions": 10,
+          "traceConfirmedWriteBeforeFailure": true
+        },
+        {
+          "case": "out-of-gas-consumes-all",
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-yc291n0k/reports/20261014-135525-52493/UTC-20261014-135716/tests/002_out-of-gas-consumes-all/assert.json",
+            "sha256": "9587e428d7468018d46632d03ac2dcc5051c71fcfd76bc91283a7e6e4d29ad70",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986322608057522
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-yc291n0k/reports/20261014-135525-52493/UTC-20261014-135716/tests/002_out-of-gas-consumes-all/steps.json",
+            "sha256": "ad400e876087d63834770523041827cc1b36a2c25fbd10d03a4574e6db3e9a18",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1791986321598831204
+          },
+          "minedFailure": {
+            "Index": 6,
+            "Type": "sendTx",
+            "On": "",
+            "Signer": "",
+            "Nonce": 0,
+            "Gas": "",
+            "Hash": "0x5d094736f0e31cdd17425eb4a028bee2ebedd011a3ef92dd95f603e7d3151504",
+            "Receipt": {
+              "blockHash": "0x6dbe239ed2c126a532fa9957f5c6f058d8abf78b893a75ab1aad6b5ef19e4a96",
+              "blockNumber": "0x32",
+              "contractAddress": null,
+              "cumulativeGasUsed": "0xc350",
+              "effectiveGasPrice": "0x174876e801",
+              "from": "0x854c04b879949ab64991c926cd842478eeabeac4",
+              "gasUsed": "0xc350",
+              "logs": [],
+              "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+              "status": "0x0",
+              "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+              "transactionHash": "0x5d094736f0e31cdd17425eb4a028bee2ebedd011a3ef92dd95f603e7d3151504",
+              "transactionIndex": "0x0",
+              "type": "0x2"
+            },
+            "Error": ""
+          },
+          "actualTransaction": {
+            "accessList": [],
+            "blockHash": "0x6dbe239ed2c126a532fa9957f5c6f058d8abf78b893a75ab1aad6b5ef19e4a96",
+            "blockNumber": "0x32",
+            "chainId": "0x205d",
+            "from": "0x854c04b879949ab64991c926cd842478eeabeac4",
+            "gas": "0xc350",
+            "gasPrice": "0x174876e801",
+            "hash": "0x5d094736f0e31cdd17425eb4a028bee2ebedd011a3ef92dd95f603e7d3151504",
+            "input": "0x01",
+            "maxFeePerGas": "0x174876e802",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0x0",
+            "r": "0x52babb746d31466737b36fc8cb5eae672e46c5e1b3cd225a21861dec390b55a0",
+            "s": "0x2b7d9ca2e1345a6b18c0927b2d23ea8226072c58140454a34852942b489f1654",
+            "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x0"
+          },
+          "storageBeforeAfter": [
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "call",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "call",
+                "compare": "Equal",
+                "data": "0x",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "to": "0x9071a0020f7bd719d80944bebd23c1d2bed4527d"
+              }
+            },
+            {
+              "ID": "",
+              "Source": "",
+              "On": "",
+              "Assert": "rpcCall",
+              "Expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Actual": "0x000000000000000000000000000000000000000000000000000000000000002a",
+              "Pass": true,
+              "Provenance": {
+                "assert": "rpcCall",
+                "compare": "Equal",
+                "expected": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                "method": "eth_getStorageAt",
+                "params": [
+                  "0x9071a0020f7bd719d80944bebd23c1d2bed4527d",
+                  "0x0",
+                  "latest"
+                ]
+              }
+            }
+          ],
+          "balanceEquality": {
+            "ID": "",
+            "Source": "",
+            "On": "",
+            "Assert": "balanceAt",
+            "Expected": "9994999999999950000",
+            "Actual": "9994999999999950000",
+            "Pass": true,
+            "Provenance": {
+              "address": "0x854c04b879949ab64991c926cd842478eeabeac4",
+              "assert": "balanceAt",
+              "compare": "Equal",
+              "expected": "9994999999999950000"
+            }
+          },
+          "traceInstructions": 5998,
+          "traceConfirmedWriteBeforeFailure": true
+        }
+      ]
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/txfail-0jvvg76n",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-0jvvg76n/reports/tx-failure-inventory.json",
+        "sha256": "c69d809af9b116d9cc3a14328cb9c40ef73340b9ca6be6a7dee507a97ac5fd03",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366083399231
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-454pdfh0",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-454pdfh0/reports/tx-failure-inventory.json",
+        "sha256": "f1c1c1eca4eef69b7a33c563087f9abdc21bfd9859a0da7c2478a5f3330ebc6b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366121163119
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-6klajqi_",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-6klajqi_/reports/tx-failure-inventory.json",
+        "sha256": "f9d69b2750f8c38e0b8b995111525bc1400d606f4a9ceb045fadd6d7477730f6",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366175531847
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-vuvm84o7",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-vuvm84o7/reports/tx-failure-inventory.json",
+        "sha256": "64b603d0cb4a297d86272822b94baf2cb2ead12533a5430db223e735a25bfe13",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366207718025
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-wyubvvju",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-wyubvvju/reports/tx-failure-inventory.json",
+        "sha256": "5f14a4b4c4dcc02c7e00b75a51f54cf0c041b1e5ceb4d1669d1324c60f33c033",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366253914125
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-xdnoydym",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 118,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-xdnoydym/reports/tx-failure-inventory.json",
+        "sha256": "97be9adcc7450925ea506ae2dbdbe70c2a57abc714aa8d9a8a516144ac19520a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366292585764
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-xnkv33fz",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-xnkv33fz/reports/tx-failure-inventory.json",
+        "sha256": "42c3ed4f55d5fff7370ee8556acaafc7238ce7df29a402b74ac7c9f7ec8fe0e4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366324164900
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-yc291n0k",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 118,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-yc291n0k/reports/tx-failure-inventory.json",
+        "sha256": "7172a55384288a5f78b03da5347316a7eb8cbc87a3e23462a32e3a9a95245b6d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791986366357172120
+      }
+    }
+  ],
+  "binaries": [
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    },
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-tx-failure-unit-race.log",
+      "sha256": "cad81707b27e13d92a41e469e4d5d065266d0dc8595bf8e721a74e725fba07ba",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791985365669292198
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-failure-related-green.log",
+      "sha256": "c5cfaa694bde05f329b99b0c2c37c58de999a4201d1b41d3448ebee345cb9208",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791985573028999715
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-failure-final-unit-green.log",
+      "sha256": "bfb151c533cef904b4eb8bf3bd5df2f81a9762fdc85bf5c2b030ea591ec2cc23",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791986088894192827
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-failure-final-unit-retry.log",
+      "sha256": "4326f0ec3bab8fa68ea9db549d26b865a2b61e0cf1ff5e18ad8bbee401abde00",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791986154413865267
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-failure-final-check.log",
+      "sha256": "e44056059175da0d11def5f910ea1aea241b5e2a142568be38ac701823621275",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791986571838106842
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-failure-corpus-update.log",
+      "sha256": "96143149f3545ace479f3fd39652e236838a6df1c4ca1bd50e4b1a691521758a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791986644970537625
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-failure-final-check-retry.log",
+      "sha256": "410b5333e9412aaffd4e63f84b9cb8a37ba55c30a643b05ea6c6b4a94c371fbc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791986778347178730
+    }
+  ],
+  "validation": {
+    "makeCheck": "passed on final retry",
+    "initialMakeCheck": "failed on intended corpus address drift; retained",
+    "corpusAddressBefore": 854,
+    "corpusAddressAfter": 862,
+    "onlyTwoChangedCasesInGolden": true,
+    "relatedUnitRace": "passed with local-port execution permission",
+    "restrictedUnitAttempt": "port bind denied; retained and not counted as a product RED or GREEN",
+    "nativeFinalRace": "six cases passed, zero skips",
+    "stepGasObservation": "Existing StepResult.Gas was empty; actual transaction gas was independently queried and retained.",
+    "pushOrPR": false,
+    "fullOriginalTX018Awarded": false,
+    "finalWebAcceptanceAwarded": false
+  }
+}

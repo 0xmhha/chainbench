@@ -1,0 +1,3325 @@
+{
+  "scope": "R3 recorded-node RPC reachability, WS acknowledgement, system-contract code or builtin getter complete. Other capability semantics, Linux fleet/L1, task 9 overall, tasks 10-14 and fresh final Web acceptance remain open.",
+  "contract": {
+    "rpc": "Canonical eth_blockNumber quantity on every recorded node.",
+    "ws": "Recorded WSURL only; authenticated eth_subscribe(newHeads) acknowledgement, cancellable acknowledgement and explicit-close lifecycle.",
+    "contracts": "Manifest addresses: nonempty valid eth_getCode with decoded-byte SHA256; accountManager uses the isBlacklisted(address) boolean getter because it is a binary builtin with no deployed code.",
+    "classification": "Typed -32601 or absent code/getter: unsupported, expected SKIP or unexpected FAIL. Unreadable/malformed/unrecorded: unknown/BLOCKED. Unknown outranks unsupported across required runtime probes before hooks/body.",
+    "privacy": "No endpoint URL, credentials or raw error messages in network-capability-probes.json.",
+    "limits": "RPC reachability does not verify all RPC methods. WS acknowledgement does not verify event completeness. Code/getter existence does not verify all ABI/version/permission/fork behavior."
+  },
+  "logs": {
+    "networkRed": {
+      "path": "/private/tmp/chainbench-network-capabilities-red.log",
+      "sha256": "dbc26cf1780d6b4901c9a332104b5a8faf8165c2f7a36c50a1dc7c3aa3773a9e"
+    },
+    "networkGreen": {
+      "path": "/private/tmp/chainbench-network-capabilities-green.log",
+      "sha256": "44b2a7091e76bab6b8905382acb34ec6c37ea87f0a27d7fb29e137356e936548"
+    },
+    "wsRed": {
+      "path": "/private/tmp/chainbench-network-ws-red.log",
+      "sha256": "07b547a43bc5a50e9b36884943d97c5e1b7a81e6af40b5a1f168d861ed5f1a04"
+    },
+    "wsGreen": {
+      "path": "/private/tmp/chainbench-network-ws-green.log",
+      "sha256": "b583441f70ecbf8607d5e8124e749731bdf952f8e3b0c6c5fbe0a77c8aaaefca"
+    },
+    "race": {
+      "path": "/private/tmp/chainbench-network-capabilities-race.log",
+      "sha256": "d5d6bc979e9c45062a38852c11574bbf2508eac9af58da3436c3866418d313b2"
+    },
+    "finalUnit": {
+      "path": "/private/tmp/chainbench-network-capabilities-final-unit.log",
+      "sha256": "8f1ae22d3e023d7edd92d8f6179349235a7505a93935ffd45b6d0dfe2ed053f1"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-network-capabilities-check.log",
+      "sha256": "7e2c343e504346e7c23d265fdfea27a384810ff48306e8d0cd42240fc2d5c6dd"
+    },
+    "initialArchFailure": {
+      "path": "/private/tmp/chainbench-network-capabilities-check-arch-red.log",
+      "sha256": "1e466cea7501fe0dfe5da5456babab163e4f9b99dbd34bb952365385e8635e9e"
+    },
+    "initialRegressionFailure": {
+      "path": "/private/tmp/chainbench-network-capabilities-related.log",
+      "sha256": "2ad956c32fe2e14a8a2205b1f2f477ea6262d2554431e757f3575b02502e40c4"
+    },
+    "native": {
+      "path": "/private/tmp/chainbench-network-capabilities-native.jsonl",
+      "sha256": "665e57ad1a946b3fbd1bc29023f16fb0b0d3f68d68ae94703f8d3feb8559f81b"
+    },
+    "browser": {
+      "path": "/private/tmp/chainbench-network-capabilities-browser.log",
+      "sha256": "b953935d64f620607fba6615b7c4adb8ee9f3f988fd9e1fdc049927ec64f9d76"
+    },
+    "finalArchitecture": {
+      "path": "/private/tmp/chainbench-network-capabilities-final-arch.log",
+      "sha256": "6e9c0cf9a7881128ff9201c1fdfe9f2fa03a18d7132e506532e1bc3c12df4cde"
+    }
+  },
+  "nativeElapsedSeconds": 421.128,
+  "nativeGoFailures": 0,
+  "nativeGoSkips": 0,
+  "networkRuns": 24,
+  "networkRunVerdicts": {
+    "pass": 16,
+    "blocked": 8
+  },
+  "nodeObservations": 320,
+  "nodeObservationStatuses": {
+    "supported": 312,
+    "unknown": 8
+  },
+  "networkTransactionSubmissions": 0,
+  "regressions": {
+    "numericFailures": 192,
+    "unsignedFailures": 144,
+    "durationFailures": 168,
+    "rawSubmissions": 208
+  },
+  "proofs": [
+    {
+      "path": "/private/tmp/cbui/endpoint-native-933049204/proof.json",
+      "sha256": "594c8997c94a31ea50f49cca44ba04ba86a4557d1d2d2399614c8a121273d7ca",
+      "chain": "stablenet",
+      "genesisSet": [
+        "applepieBlock=0"
+      ],
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "sourceHashesVerified": 123,
+      "networkRuns": [
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-933049204/capability-cli/network/20261014-020356-25553/UTC-20261014-020531/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-933049204/capability-cli/network/20261014-020356-25553/UTC-20261014-020531",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-933049204/capability-mcp/network/20261014-020356-25553/UTC-20261014-020531/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-933049204/capability-mcp/network/20261014-020356-25553/UTC-20261014-020531",
+          "status": "pass",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-933049204/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-020531/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-933049204/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-020531",
+          "status": "blocked",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-933049204/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-020531/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-933049204/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-020531",
+          "status": "blocked",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "contract:accountManager",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govCouncil",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMasterMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govValidator",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:nativeCoinAdapter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  }
+                ]
+              },
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-933049204/capability-cli/contracts/20261014-020356-25553/UTC-20261014-020531/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-933049204/capability-cli/contracts/20261014-020356-25553/UTC-20261014-020531",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "contract:accountManager",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govCouncil",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMasterMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19124,
+                    "codeSHA256": "daead67a0262d83f3682d35e2556273841977c2cc250b0164a314c392834f7be"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govValidator",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:nativeCoinAdapter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  }
+                ]
+              },
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "59"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "59"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "59"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "59"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "58"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-933049204/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-020531/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-933049204/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-020531",
+          "status": "pass",
+          "surface": "MCP"
+        }
+      ],
+      "remainingNodeDBMarkers": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-2135019173/proof.json",
+      "sha256": "cd3afb04916a5e25daa3b8cbd5c120959b4c49f162309e8f35fac0668c1488ce",
+      "chain": "wbft",
+      "genesisSet": [
+        "applepieBlock=0"
+      ],
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "sourceHashesVerified": 123,
+      "networkRuns": [
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "66"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2135019173/capability-cli/network/20261014-020356-25553/UTC-20261014-020642/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-2135019173/capability-cli/network/20261014-020356-25553/UTC-20261014-020642",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "66"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2135019173/capability-mcp/network/20261014-020356-25553/UTC-20261014-020642/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-2135019173/capability-mcp/network/20261014-020356-25553/UTC-20261014-020642",
+          "status": "pass",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2135019173/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-020642/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-2135019173/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-020642",
+          "status": "blocked",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2135019173/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-020642/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-2135019173/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-020642",
+          "status": "blocked",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "contract:govConfig",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govNCP",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govRewardeeImp",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govStaking",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  }
+                ]
+              },
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "66"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2135019173/capability-cli/contracts/20261014-020356-25553/UTC-20261014-020642/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-2135019173/capability-cli/contracts/20261014-020356-25553/UTC-20261014-020642",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "contract:govConfig",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 282,
+                    "codeSHA256": "a6d63f04f06cfa59cf0eb14404cdef299673927c4afe99cbdaa151d3440c2155"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govNCP",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 5501,
+                    "codeSHA256": "9559ee715ee33797a626e1ed677234d98e98abbe0f13889156ef5579b0bbc7af"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govRewardeeImp",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 2261,
+                    "codeSHA256": "538832dcc4ed343722bb039b63d10c8d722c6cab4dcd9dba9876fb94d644b4e0"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govStaking",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 20556,
+                    "codeSHA256": "06fcf5cd1a8a68b23b3d009873625302a7abf18558299a2957b336d92172efb8"
+                  }
+                ]
+              },
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "67"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "66"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2135019173/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-020642/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-2135019173/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-020642",
+          "status": "pass",
+          "surface": "MCP"
+        }
+      ],
+      "remainingNodeDBMarkers": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-487909928/proof.json",
+      "sha256": "b0705159c19fdaf79b25489e44dcef8ea01a0f2e20353373397a31579ea5f367",
+      "chain": "wemix",
+      "genesisSet": [
+        "applepieBlock=0"
+      ],
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "sourceHashesVerified": 123,
+      "networkRuns": [
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-487909928/capability-cli/network/20261014-020356-25553/UTC-20261014-020918/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-487909928/capability-cli/network/20261014-020356-25553/UTC-20261014-020918",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-487909928/capability-mcp/network/20261014-020356-25553/UTC-20261014-020918/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-487909928/capability-mcp/network/20261014-020356-25553/UTC-20261014-020918",
+          "status": "pass",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-487909928/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-020918/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-487909928/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-020918",
+          "status": "blocked",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-487909928/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-020918/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-487909928/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-020918",
+          "status": "blocked",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-487909928/capability-cli/contracts/20261014-020356-25553/UTC-20261014-020918/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-487909928/capability-cli/contracts/20261014-020356-25553/UTC-20261014-020918",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "138"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-487909928/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-020918/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-487909928/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-020918",
+          "status": "pass",
+          "surface": "MCP"
+        }
+      ],
+      "remainingNodeDBMarkers": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-2035295246/proof.json",
+      "sha256": "c55a17d67e53a2f2f54bb819382dc22467b0f038fe911c6157af94153273163c",
+      "chain": "stablenet",
+      "genesisSet": [
+        "applepieBlock=0",
+        "bohoBlock=0",
+        "boho={\"systemContracts\":{\"govMinter\":{\"address\":\"0x0000000000000000000000000000000000001003\",\"version\":\"v2\"}}}"
+      ],
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "sourceHashesVerified": 123,
+      "networkRuns": [
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2035295246/capability-cli/network/20261014-020356-25553/UTC-20261014-021054/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-2035295246/capability-cli/network/20261014-020356-25553/UTC-20261014-021054",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  }
+                ]
+              },
+              {
+                "capability": "ws",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_subscribe:newHeads"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2035295246/capability-mcp/network/20261014-020356-25553/UTC-20261014-021054/tests/001_capability-network/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "network",
+          "session": "/private/tmp/cbui/endpoint-native-2035295246/capability-mcp/network/20261014-020356-25553/UTC-20261014-021054",
+          "status": "pass",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2035295246/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-021054/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-2035295246/capability-cli/rpc-unavailable/20261014-020356-25553/UTC-20261014-021054",
+          "status": "blocked",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "rpc",
+                "status": "unknown",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "unknown",
+                    "source": "eth_blockNumber",
+                    "reason": "rpc_probe_unavailable"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2035295246/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-021054/tests/001_capability-rpc-unavailable/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "rpc-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-2035295246/capability-mcp/rpc-unavailable/20261014-020356-25553/UTC-20261014-021054",
+          "status": "blocked",
+          "surface": "MCP"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "contract:accountManager",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govCouncil",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMasterMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govValidator",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:nativeCoinAdapter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  }
+                ]
+              },
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2035295246/capability-cli/contracts/20261014-020356-25553/UTC-20261014-021054/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-2035295246/capability-cli/contracts/20261014-020356-25553/UTC-20261014-021054",
+          "status": "pass",
+          "surface": "CLI"
+        },
+        {
+          "networkProbe": {
+            "probes": [
+              {
+                "capability": "contract:accountManager",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_call:isBlacklisted(address)",
+                    "address": "0x0000000000000000000000000000000000b00003"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govCouncil",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001004",
+                    "codeBytes": 20831,
+                    "codeSHA256": "3fadaa126a9dabd5b19499fb00b08dfc00b86d9ff53085e00585919f82336be7"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMasterMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001002",
+                    "codeBytes": 18401,
+                    "codeSHA256": "ef85ac13c9b6cb895b77aa541289d24b3ffb569ae6949808a59b55cbb22091b9"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govMinter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001003",
+                    "codeBytes": 19810,
+                    "codeSHA256": "19e0b5a8a4e730316a7a645938f2bc50584dbb85dce70aa92a79761f19c51a49"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:govValidator",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001001",
+                    "codeBytes": 17266,
+                    "codeSHA256": "3c934e0b69031225aae80c75a8988949175d6b0be1e1427e5c6adc7b0dff8f0d"
+                  }
+                ]
+              },
+              {
+                "capability": "contract:nativeCoinAdapter",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_getCode",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "codeBytes": 11179,
+                    "codeSHA256": "918782d6bc0bc13bf4a085f7631015ffc56f524f7879b488e5c118202e318863"
+                  }
+                ]
+              },
+              {
+                "capability": "rpc",
+                "status": "supported",
+                "nodes": [
+                  {
+                    "node": 1,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 2,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 3,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 4,
+                    "role": "bp",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  },
+                  {
+                    "node": 5,
+                    "role": "en",
+                    "status": "supported",
+                    "source": "eth_blockNumber",
+                    "height": "75"
+                  }
+                ]
+              }
+            ],
+            "source": "runtime_network_probes"
+          },
+          "networkProbePath": "/private/tmp/cbui/endpoint-native-2035295246/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-021054/tests/001_capability-contracts/observations/network-capability-probes.json",
+          "rawSubmissions": 0,
+          "scenario": "contracts",
+          "session": "/private/tmp/cbui/endpoint-native-2035295246/capability-mcp/contracts/20261014-020356-25553/UTC-20261014-021054",
+          "status": "pass",
+          "surface": "MCP"
+        }
+      ],
+      "remainingNodeDBMarkers": 0
+    }
+  ],
+  "browserReceipt": {
+    "path": "/private/tmp/cbui/1c4de28d-7eca-45fa-81cc-bdd79d621d2e/network-capabilities-browser-proof/receipt.json",
+    "sha256": "6f1acb07dc23bc38828a601ca730be0ee9f668170df14f2dfa6b5a810a4c0adf"
+  },
+  "browserCopiesPreserve": "SHA256, mode, uid, gid, nanosecond mtime; originals retained.",
+  "remainingOwnedProofNodeProcesses": 0,
+  "storage": "Stopped owned node DBs removed; configuration, diagnostics, sessions and referenced evidence retained. Browser reclaim_after_shutdown also verified.",
+  "remainingNodeDataDirectories": 0
+}

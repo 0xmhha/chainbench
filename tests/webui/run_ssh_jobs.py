@@ -1,4 +1,7 @@
 """Real owned loopback SSH deployment proof; does not award a Seed criterion."""
+from runtime_storage import reclaim_after_shutdown
+from runtime_storage import clone_file
+from runtime_storage import create_runtime
 import importlib.util
 import json
 import os
@@ -18,8 +21,7 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
     output = Path("chainbench-out/web-ui-development") / proof_name
     output.mkdir(parents=True, exist_ok=True)
     identity = str(uuid.uuid4())
-    runtime = runtime_root() / identity
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(identity)
     spec = importlib.util.spec_from_file_location('ssh_native_fixture', 'tests/webui/fixtures/prepare_web04.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -53,7 +55,7 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
         known_hosts.chmod(0o600)
         with (output / 'build.log').open('w') as log:
             if dashboard_binary:
-                shutil.copy2(Path(dashboard_binary).resolve(strict=True), runtime / 'dashboard')
+                clone_file(Path(dashboard_binary).resolve(strict=True), runtime / 'dashboard')
             else:
                 subprocess.run(['go', 'build', '-o', str(runtime / 'dashboard'), './cmd/chainbench-dashboard'], stdout=log, stderr=log, check=True)
                 subprocess.run(['go', 'build', '-o', str(runtime / 'chainbench'), './cmd/chainbench'], stdout=log, stderr=log, check=True)
@@ -114,6 +116,9 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
         for record in (runtime / 'store/networks').glob('*/chain-record.json'):
             for node in json.loads(record.read_text()).get('nodes', []):
                 if node.get('pid'):
+                    command_line = subprocess.run(['ps', '-p', str(node['pid']), '-o', 'command='], capture_output=True, text=True)
+                    if str(runtime) not in command_line.stdout:
+                        continue
                     try:
                         os.kill(node['pid'], 15)
                     except ProcessLookupError:
@@ -126,6 +131,7 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait()
+        reclaim_after_shutdown(runtime, output)
 
 
 if __name__ == '__main__':

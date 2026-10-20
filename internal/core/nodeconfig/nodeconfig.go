@@ -131,8 +131,8 @@ type Spec struct {
 	// ignores self).
 	StaticNodes []string
 
-	// HTTPHost binds the HTTP and WS endpoints; empty is 0.0.0.0 in the file
-	// and unset on the command line.
+	// HTTPHost binds both HTTP and WS in the file and on the command line;
+	// empty means 0.0.0.0.
 	HTTPHost string
 	// Genesis is the genesis this node's build reads from its config file,
 	// already rendered as the TOML tables under [Eth.Genesis] (see
@@ -268,6 +268,9 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 	if s.SyncMode == "archive" {
 		storage.SyncMode, storage.GCMode = "full", "archive"
 	}
+	// Enabling an endpoint can restore a binary's loopback default. Carry the
+	// effective configuration explicitly on both transports, also on relaunch.
+	httpHost := orDefault(s.HTTPHost, "0.0.0.0")
 	modules := []Module{
 		id,
 		storage,
@@ -277,8 +280,8 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 		// chain, so every node of one network is told the same number. An
 		// operator's --network-id still wins, arriving on a later layer.
 		P2P{Port: s.Ports.P2P, NetworkID: s.Network.NetworkID},
-		HTTPRPC{Enabled: true, Addr: s.HTTPHost, Port: s.Ports.HTTP},
-		WSRPC{Enabled: true, Port: s.Ports.WS},
+		HTTPRPC{Enabled: true, Addr: httpHost, Port: s.Ports.HTTP},
+		WSRPC{Enabled: true, Addr: httpHost, Port: s.Ports.WS},
 	}
 	if s.ConfigPath == "" && s.Ports.Auth > 0 {
 		modules = append(modules, AuthIPC{AuthPort: s.Ports.Auth})

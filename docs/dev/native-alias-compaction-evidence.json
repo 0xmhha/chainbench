@@ -1,0 +1,185 @@
+{
+  "date": "2026-10-19",
+  "status": "scoped_actual_ast_and_full_check_verified",
+  "scope": "Allow the existing three native binary aliases in recorded d/fork/attach binary directories, retaining content catalog and ownership/closure guards.",
+  "implementationFiles": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/proof_native_cow.py",
+      "sha256": "9ce229b7bff6a629d27b7d75604292205d00dd8279de4f28a78ae3f18d6b9f4e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792398074242819953
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/test_proof_native_cow.py",
+      "sha256": "d243e52b3c85d75b4a4884a5f15e3382f963be684c27c50bb023565bd222cbfc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792398068229088511
+    }
+  ],
+  "redSubcases": 3,
+  "unitContracts": 22,
+  "actualAccepted": true,
+  "fullL1Accepted": false,
+  "all14Accepted": false,
+  "unit": {
+    "redSubcases": 3,
+    "contracts": 22,
+    "red": {
+      "path": "/private/tmp/chainbench-native-alias-red-20261019.log",
+      "sha256": "abf6575f240c3641a289adba6d2a9c12fa3abf6713ada2766cc3ed902853b365",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398068677391472
+    },
+    "green": {
+      "path": "/private/tmp/chainbench-native-alias-green-20261019.log",
+      "sha256": "cb32f720dcbfc34eaffe93e9e32fba0e2df9ebd991e79056c2f846a8d83e6f61",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398074511090667
+    },
+    "runnerContracts": 11,
+    "runnerGreen": {
+      "path": "/private/tmp/chainbench-native-alias-runner-green-20261019.log",
+      "sha256": "d7933ec281df45d434a8fd9de4368f8c512c7b2c6932a622546e8b6655dd3c3e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398097559413199
+    }
+  },
+  "actual": {
+    "sourceDigest": "514c080ace5adafbba998227b8542695539ccac2d2e7a36c41e07f147e04a35f",
+    "summary": {
+      "path": "/private/tmp/chainbench-native-alias-maintenance-1792398221669686000.json",
+      "sha256": "3f910031e7370477728573b295c26ae3b8bcec75dac9869d5378985f81e6ab40",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398232028050508
+    },
+    "before": {
+      "path": "/private/tmp/chainbench-native-alias-maintenance-1792398221669686000-before.json",
+      "sha256": "d9c3ef638490b111e38d1b1d2326b2fe38f1adf3d066bb521a481d03e724f47a",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398221672145646
+    },
+    "independent": {
+      "path": "/private/tmp/chainbench-native-alias-maintenance-1792398221669686000-independent.json",
+      "sha256": "b50f8277cecdfd3ac320902b45325a0c58191ecc013d6d6b6180f773ee8f20a7",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398247659276040
+    },
+    "frozenInputManifest": {
+      "path": "/private/tmp/chainbench-native-alias-20261019-frozen-inputs/manifest.json",
+      "sha256": "47347fce7275f4ce4bff421af09e324c29c88a682a7105cdaebf191ea88a2fd4",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398338189406084
+    },
+    "selectedPairs": 13,
+    "preservedFiles": 14,
+    "privateBytesReleased": 817942528,
+    "observedVolumeFreeChange": 815841280,
+    "independentMetadataTamperControls": 11
+  },
+  "preparationFailure": {
+    "stage": "Before any replacement or pre-state publication",
+    "reason": "Controller used binary parent instead of owned runtime for nested closure; corrected a new controller, original preserved.",
+    "helper": {
+      "path": "/private/tmp/chainbench-native-alias-run-20261019.py",
+      "sha256": "58c15b80731d72672c4369d927f7f5b0725062b81cdefcbe66492e62f50f6369",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398132706298287
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-native-alias-run-20261019.log",
+      "sha256": "adc33c23ca8d8f016e38f3ab56d416707f1568b8555d26a5b25d84439562c892",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398161308554714
+    }
+  },
+  "additionalMaintenance": {
+    "graphSummary": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-native-alias-1792398275532049000.json",
+      "sha256": "1712bf390df00dc078f61f5cc7e3a1db7a5b669f00f0e24ea246f26d72612a83",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398280096534293
+    },
+    "graphIndependent": {
+      "path": "/private/tmp/chainbench-web-acceptance-preserved-1792275678158219000/recorded-artifacts-native-alias-1792398275532049000-independent.json",
+      "sha256": "8816f5eeb456cfb5598f60f1e01b8d0f0f56359536a374ebf0acc728e4cf0711",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398318934386129
+    },
+    "recordedArtifactsPreserved": 92,
+    "recordedGraphsPreserved": 90,
+    "compressedArtifacts": 2,
+    "savedGraphAllocatedBytes": 102572032,
+    "legacyCleanupRefusal": {
+      "path": "/private/tmp/chainbench-l1-space-compat-20261019.log",
+      "sha256": "804a41a1e9f3ec2ec71de25ed793bd4e3b5b87877f4a54650cd4b5eb2de55d4f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398029493918251
+    },
+    "completedGoCache": {
+      "path": "/private/tmp/chainbench-l1-space-go-cache-20261019.json",
+      "sha256": "e294a884791306268e18ed91d709e82f0261965118d7b69f8efefd0e92147415",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398045468385142
+    }
+  },
+  "fullRecurringStorageGrowthSolved": false,
+  "parserRecovery": {
+    "report": "/private/tmp/chainbench-ast-parser-repair-20261019.json",
+    "sha256": "5905599a381754296fcc01aa8eff9f5053942a6260cc930a9f46ccff2a466311",
+    "failedContracts": "/private/tmp/chainbench-ast-native-alias-parser-contracts-20261019.log",
+    "failedGraph": "/private/tmp/chainbench-ast-native-alias-refresh-20261019-capture.json",
+    "missingFilesInFailedGraph": 20,
+    "restoredPythonAndMetadataFiles": 40,
+    "durableToolFiles": 51,
+    "recordedNativeParserHashesPreserved": true
+  },
+  "astEvidence": "all-code-graph-native-alias-evidence.json",
+  "makeCheck": {
+    "outcome": "pass",
+    "log": {
+      "path": "/private/tmp/chainbench-native-alias-make-check-20261019.log",
+      "sha256": "1f521cf0128c00af9e1146ea38e3842aa2c14c39e761dbf23eb96f9591fb1da8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792398893814122723
+    },
+    "scope": "Ordinary full repository checks with native gates unset; no full L1/race/final Web acceptance.",
+    "goResourceLimits": {
+      "GOMAXPROCS": 2,
+      "GOFLAGS": "-p=1",
+      "GOMEMLIMIT": "512MiB",
+      "GOGC": 50
+    }
+  }
+}

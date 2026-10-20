@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -179,11 +180,16 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	// resolving it here is also what rejects a chain the accounts SDK does not
 	// know before a run gets far enough to fail obscurely. It no longer supplies
 	// identity derivation, which keyring does in process.
-	accts, err := accounts.ForChain(cfg.Chain)
+	clients, headers, err := attachAuthClients(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("engine: attach engine: %w", err)
+		return nil, err
 	}
-
+	accts, err := accounts.ForChainWithRPC(cfg.Chain, func(u string) accounts.RPCRequester {
+		return rpc.DialWithClient(u, clients[u])
+	})
+	if err != nil {
+		return nil, fmt.Errorf("engine: attach accounts: %w", err)
+	}
 	keyOutput := cfg.KeysDir
 	if cfg.ReadOnlyKeys {
 		keyOutput = ""
@@ -195,8 +201,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if cfg.Ring != nil {
 		keys = cfg.Ring
 	}
+
 	run := NewRunSpec(interp.Deps{
-		RPC:       func(u string) *rpc.Client { return rpc.Dial(u) },
+		RPC:       func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) },
+		HTTP:      func(u string) *http.Client { return clients[u] },
+		Headers:   func(u string) http.Header { return headers[u].Clone() },
 		Actions:   testhelper.Registry(),
 		Accounts:  accts,
 		Keys:      keys,
@@ -244,14 +253,15 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
-		BuildEnv:   withCollection(build, cfg.Bus, nil, cfg.LogReader),
-		RunSpec:    run,
-		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
-		PreSpec:    cfg.PreSpec,
-		OnFail:     cfg.OnFail,
-		Emit:       busEmit(cfg.Bus),
-		Network:    cfg.Chain,
-		Artifacts:  cfg.Artifacts,
+		BuildEnv:    withCollection(build, cfg.Bus, nil, cfg.LogReader),
+		RunSpec:     run,
+		Applicable:  applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
+		RuntimeGate: identityAndCapabilityGate(cfg.Chain, func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) }, func(u string) http.Header { return headers[u].Clone() }),
+		PreSpec:     cfg.PreSpec,
+		OnFail:      cfg.OnFail,
+		Emit:        busEmit(cfg.Bus),
+		Network:     cfg.Chain,
+		Artifacts:   cfg.Artifacts,
 	}), nil
 }
 

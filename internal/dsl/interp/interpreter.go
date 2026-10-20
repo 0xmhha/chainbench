@@ -2,6 +2,7 @@ package interp
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
@@ -16,9 +17,12 @@ import (
 // Deps are the collaborators an interpreter needs, injected at construction so
 // no package-global state is used and tests stay isolated.
 type Deps struct {
-	Keys      *store.KeySet
-	Accounts  accounts.AccountProvider
-	RPC       func(url string) *rpc.Client
+	Keys     *store.KeySet
+	Accounts accounts.AccountProvider
+	RPC      func(url string) *rpc.Client
+	// HTTP and Headers resolve node-scoped authentication for metrics and WS.
+	HTTP      func(url string) *http.Client
+	Headers   func(url string) http.Header
 	Collector collector.Collector
 	Actions   Registry
 	// Nodes controls node processes for fault-injection steps (stopNode /
@@ -214,6 +218,8 @@ type ActionCtx struct {
 	// record step provenance. They are outputs, set by the action.
 	Hash    string
 	Receipt map[string]any
+	// Deployment is the public provenance emitted by a contract creation action.
+	Deployment *session.ContractDeployment
 	// Value is the action's result for step value binding: when the step declares
 	// "save", the interpreter binds this under that name for later steps and
 	// assertions to reference as "$name". An action that only sets Hash (a tx)

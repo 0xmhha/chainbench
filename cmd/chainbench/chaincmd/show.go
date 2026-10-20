@@ -29,7 +29,7 @@ func queryDeps(cmd *cobra.Command) app.Deps {
 func newNetShowCmd() *cobra.Command {
 	var workspaceDir, label, host, addr string
 	var nodeIdx, port int
-	var asJSON bool
+	var asJSON, dialRPC bool
 	cmd := &cobra.Command{
 		Use:   "show",
 		Short: "Look up where a composed network's nodes are: by node, label, host, or port",
@@ -44,7 +44,7 @@ func newNetShowCmd() *cobra.Command {
 				return fmt.Errorf("--workspace-dir is required")
 			}
 			out, err := app.NetworkMap(cmd.Context(), queryDeps(cmd), app.NetworkMapIn{
-				DataDir: workspaceDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr,
+				DataDir: workspaceDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr, DialRPC: dialRPC,
 			})
 			if err != nil {
 				return err
@@ -63,5 +63,6 @@ func newNetShowCmd() *cobra.Command {
 	cmd.Flags().IntVar(&port, "port", 0, "select whichever node listens on a port (p2p, etcd, http, ws, auth or metrics)")
 	cmd.Flags().StringVar(&addr, "addr", "", "select by an address as a log line prints it (host:port)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the map as JSON")
+	cmd.Flags().BoolVar(&dialRPC, "dial-rpc", false, "include each node's HTTP RPC dial URL using the recorded Docker mapping")
 	return surface.ReadOnly(cmd)
 }

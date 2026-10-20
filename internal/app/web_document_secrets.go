@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"strings"
 )
 
@@ -24,6 +25,23 @@ func PrepareWebTestCase(in TestCaseInput) (TestCasePrepared, error) {
 		if err := validateWebDocumentSecrets("chain-preset", preset); err != nil {
 			return TestCasePrepared{}, err
 		}
+	}
+	resolved, err := dsl.InlineChainPreset(in.Content, func(id string) ([]byte, error) {
+		raw, ok := in.Presets[id]
+		if !ok {
+			return nil, errors.New("missing referenced preset declaration")
+		}
+		return raw, nil
+	})
+	if err != nil {
+		return TestCasePrepared{}, err
+	}
+	var merged map[string]any
+	if err := json.Unmarshal(resolved, &merged); err != nil {
+		return TestCasePrepared{}, err
+	}
+	if err := validateWebDocumentSecrets("case", merged); err != nil {
+		return TestCasePrepared{}, err
 	}
 	return PrepareTestCase(in)
 }
@@ -47,6 +65,31 @@ func webDocumentNodeKeyValues(kind string, content map[string]any) []string {
 	if kind == "case" {
 		if inline, ok := content["chainPreset"].(map[string]any); ok {
 			env = inline
+		}
+	}
+	if kind == "case" {
+		values, _ := env["values"].(map[string]any)
+		lists := []any{content["steps"]}
+		if hooks, ok := content["hooks"].(map[string]any); ok {
+			for _, phase := range []string{"pre", "post", "onFail"} {
+				lists = append(lists, hooks[phase])
+			}
+		}
+		for _, rawList := range lists {
+			list, _ := rawList.([]any)
+			for _, rawStep := range list {
+				step, _ := rawStep.(map[string]any)
+				for _, field := range []string{"key", "feePayerKey", "senderKey", "authorityKey"} {
+					reference, _ := step[field].(string)
+					if !strings.HasPrefix(reference, "$") {
+						continue
+					}
+					material, _ := values[strings.Trim(reference, "${}")].(string)
+					if webNodeKeyMaterial(material) {
+						keys = append(keys, material)
+					}
+				}
+			}
 		}
 	}
 	topology, _ := env["topology"].(map[string]any)

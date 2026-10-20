@@ -48,10 +48,18 @@ func (p Pool) Validate() error {
 	if len(p.Hosts) == 0 {
 		return fmt.Errorf("netmap: pool has no hosts")
 	}
+	names, addresses := map[string]bool{}, map[string]bool{}
 	for i, h := range p.Hosts {
 		if h.Addr == "" {
 			return fmt.Errorf("netmap: pool host %d (%q) has no address", i+1, h.Name)
 		}
+		if names[hostKey(h)] {
+			return fmt.Errorf("netmap: duplicate server identity %q", hostKey(h))
+		}
+		if addresses[h.Addr] {
+			return fmt.Errorf("netmap: duplicate host address %q", h.Addr)
+		}
+		names[hostKey(h)], addresses[h.Addr] = true, true
 	}
 	if p.Slots < 1 {
 		return fmt.Errorf("netmap: pool must allow at least one slot per host, got %d", p.Slots)
@@ -92,6 +100,8 @@ func (p Pool) Validate() error {
 // read by none.
 type Request struct {
 	Role node.Role
+	// Server selects a host by its server-set name (address if unnamed).
+	Server string
 	// Label overrides the conventional identity label for this node. Empty
 	// takes node.LabelFor(position).
 	Label node.Label

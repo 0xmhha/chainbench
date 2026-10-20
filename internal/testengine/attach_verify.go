@@ -3,6 +3,10 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/remote"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -10,37 +14,24 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-// VerifyAttachedChain refuses an attach whose endpoint speaks a different RPC
-// surface than the chain the declaration claims.
+// VerifyAttachedNode checks an operator's chain claim through that profile's
+// authentication transport. Client names match either the logical binary or its
+// native build target: go-wbft builds gwemix, which chainbench calls gwbft.
+// An unavailable client string falls back to comparing probe methods rather
+// than detected chain names, so an operator's custom chain ID remains valid.
 //
-// Nothing composed an attached network, so its chain-preset is an assertion by
-// whoever set it up: "chain": "stablenet" is a claim, not a fact, and nothing
-// compared it with the endpoint. Pointing the endpoint variable at a wemix node
-// and running with stablenet-attached was accepted, and skipsOn and requires
-// then gated on a chain the run was not talking to — a green light for a
-// question nobody asked.
-//
-// It compares PROBE METHODS, not detected chain names, and that is the whole
-// design. The manifests detect stablenet and wbft with the same method
-// (istanbul_getValidators), separated only by a chain-id gate on stablenet's
-// 8283; an endpoint that answers that method with any other id detects as wbft.
-// A network whose operator chose a different chain id is the normal case for
-// anything we did not compose — a testnet, a mock — so refusing on the detected
-// NAME fires on exactly the networks this check exists to let people reach.
-// Refusing on the method instead fires only when the endpoint answers a
-// different RPC surface, which is the confusion worth catching: wemix
-// (wemix_getReward) against a declaration of stablenet or wbft, or the reverse.
-//
-// What it cannot do: wbft and wemix are not told apart by either signal.
-// go-wbft forked from go-wemix and its binary still reports "gwemix", and the
-// manifests give them different probe methods only when those namespaces are
-// open. Within that pair this check is silent, and says so rather than
-// pretending otherwise.
-//
-// A probe that cannot reach the endpoint is not a mismatch. The run will fail
-// on its own with a clearer message, and refusing here would turn "the node is
-// down" into "the chain is wrong".
-func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMismatch bool) error {
+// wbft and wemix share a client name, so this identity signal alone cannot tell
+// them apart. Runtime capability observations check the reached RPC separately.
+// An unreachable endpoint is left to the run to diagnose as a connection failure.
+func VerifyAttachedNode(ctx context.Context, declared string, endpoint node.Node, allowMismatch bool) error {
+	client, err := remote.HTTPClientFromAuth(remote.Auth(endpoint.Auth), os.Getenv)
+	if err != nil {
+		return err
+	}
+	return verifyAttachedChain(ctx, declared, endpoint.RPCURL, allowMismatch, client)
+}
+
+func verifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMismatch bool, client *http.Client) error {
 	if declared == "" || rpcURL == "" || allowMismatch {
 		return nil
 	}
@@ -52,13 +43,15 @@ func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMism
 
 	// First signal: the client string, because it is the one an operator does
 	// not close. A node answers web3_clientVersion with its binary's name —
-	// "Gstable/v...", "Gwemix/v..." — and the manifest already records which
-	// binary a chain runs, so no new declaration is needed. This is what
+	// "Gstable/v...", "Gwemix/v..." — and the manifest records both the
+	// logical binary and its native build target. This is what
 	// catches a stablenet declaration pointed at a wemix endpoint even when
 	// every identifying namespace is shut.
 	if m.Binary != "" {
-		if v, err := clientVersion(ctx, rpcURL); err == nil && v != "" {
-			if !strings.Contains(strings.ToLower(v), strings.ToLower(m.Binary)) {
+		if v, err := clientVersion(ctx, rpcURL, client); err == nil && v != "" {
+			name, _, _ := strings.Cut(v, "/")
+			matches := strings.EqualFold(name, m.Binary) || m.Build.MakeTarget != "" && strings.EqualFold(name, m.Build.MakeTarget)
+			if !matches {
 				return fmt.Errorf(
 					"engine: attach declares chain %q, which runs %s, but %s answers web3_clientVersion %q — "+
 						"point the endpoint at a %s node, name the chain the endpoint really is, or pass --allow-chain-mismatch",
@@ -79,7 +72,7 @@ func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMism
 	if m.Probe.Method == "" {
 		return nil
 	}
-	res, derr := collector.Detect(ctx, collector.Options{RPCURL: rpcURL})
+	res, derr := collector.Detect(ctx, collector.Options{RPCURL: rpcURL, Client: client})
 	if derr != nil || res == nil || res.ChainType == "" || res.ChainType == declared {
 		return nil
 	}
@@ -94,9 +87,9 @@ func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMism
 }
 
 // clientVersion reads web3_clientVersion from one endpoint.
-func clientVersion(ctx context.Context, rpcURL string) (string, error) {
+func clientVersion(ctx context.Context, rpcURL string, client *http.Client) (string, error) {
 	var v string
-	if err := rpc.Dial(rpcURL).Call(ctx, "web3_clientVersion", &v); err != nil {
+	if err := rpc.DialWithClient(rpcURL, client).Call(ctx, "web3_clientVersion", &v); err != nil {
 		return "", err
 	}
 	return v, nil

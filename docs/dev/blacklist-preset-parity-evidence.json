@@ -1,0 +1,241 @@
+{
+  "scope": "R5 real Sender/Recipient/FeePayer blacklist rejection and MCP inline preset resolution; not completion of all R5, R15 or task 9",
+  "logs": {
+    "nativeRed": {
+      "path": "/private/tmp/chainbench-blacklist-sender-native-red-observed.jsonl",
+      "sha256": "7b586929f4d135a4e8eebee76ba1476aaf63749dc4dad9ef9f419d773e780693"
+    },
+    "mcpNativeFailure": {
+      "path": "/private/tmp/chainbench-blacklist-rejections-native-green.jsonl",
+      "sha256": "036c41d304cc1c1b35f0d4f165c9d01ef5fe98f11902848d669f5a0827f6d1bc"
+    },
+    "mcpUnitRed": {
+      "path": "/private/tmp/chainbench-mcp-inline-preset-red.log",
+      "sha256": "2075bfaa65424743c6b35f4fc70e965076d81af93bc04d44d406ec04617a201a"
+    },
+    "relativeContextRed": {
+      "path": "/private/tmp/chainbench-mcp-preset-relative-red.log",
+      "sha256": "7434e650ee1b3d5c80c7e757c027427dd04618d6ef5b2c92c27e40c4cda74b3f"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-blacklist-mcp-preset-check-final.log",
+      "sha256": "eea02ce9a31a90ed0fc04b780c645a8adf8b4a498bc0e0539b1af0355db369d3"
+    },
+    "race": {
+      "path": "/private/tmp/chainbench-blacklist-mcp-preset-race.log",
+      "sha256": "a94307cd23616faad461bbeafd502cdbcf2ebcf8bba9ed7c6f7b6d4f38d1af5b"
+    },
+    "nativeGreen": {
+      "path": "/private/tmp/chainbench-blacklist-rejections-native-final.jsonl",
+      "sha256": "56e3bfe9b16752fdc3027416f5f78b6e4fec0134f4073d4484a52f368c793455"
+    }
+  },
+  "nativeElapsedSeconds": 183.38,
+  "nativeCaseSurfacePasses": 6,
+  "nativeGenuineBlacklistRejections": 6,
+  "proofs": [
+    {
+      "case": "01-sender-blacklisted-rejected.json",
+      "proofPath": "/private/tmp/cbui/blacklist-native-4206264221/proof.json",
+      "proofSHA256": "c76182c281f0638bca4afe8940b5c74c6ef18c05b6f9bb24c8ff8294f6fac445",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "cliSession": "/private/tmp/cbui/blacklist-native-4206264221/cli/20261013-183653-68249/UTC-20261013-183653",
+      "mcpSession": "/private/tmp/cbui/blacklist-native-4206264221/mcp/20261013-183653-68249/UTC-20261013-183705",
+      "submissionRejections": [
+        {
+          "error": {
+            "code": -32000,
+            "message": "blacklisted account: 0x97d0a6AA481674C3aeB5A49b3d1342497036203b"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "blacklisted account: 0xD0eB018a79597303B2a7479DfD16DB40F0dc9Df2"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        }
+      ],
+      "methods": {
+        "eth_blockNumber": 52,
+        "eth_chainId": 28,
+        "eth_getBlockByNumber": 42,
+        "eth_getTransactionCount": 2,
+        "eth_getTransactionReceipt": 26,
+        "eth_maxPriorityFeePerGas": 2,
+        "eth_sendRawTransaction": 2,
+        "eth_sendTransaction": 6,
+        "eth_syncing": 16,
+        "net_peerCount": 40
+      },
+      "sources": {
+        "../../../internal/accounts/wallet.go": "398c87c465b683fbbe829a33ed9f4e2f763e3f79d522d959ea80f728d222e0e3",
+        "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+        "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+        "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/dsl/files.go": "bd06ac189bf077bea29d36e7bb0583f42a98f797109921dd339926108b9010d6",
+        "../../../internal/dsl/parse_v2.go": "a664068a5849241eca4cb24a7ec22f11fd9a271a522eef9939358f1fa3390af5",
+        "../../../internal/mcp/run_tool.go": "f9cd6b3da87c19bb1aae4ac5c92caeee280bb9cac5b0259f9841bce121fe6253",
+        "../../../internal/mcp/spec_presets_test.go": "24d037254a7af120db65dbb112c7c74abeaef48a8f4913096981f11a8b186094",
+        "../../../internal/mcp/validate_tool.go": "cdc05f78aba6771b518683ded2ab77858dfbd7bbfa3d5a043f3b411be0fff136",
+        "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+        "../../../internal/testhelper/outcome.go": "b895f35d7d7d05ed313579c79c0a7fa16f9100b5f2e726c637ea4c09b518dd71",
+        "../../../internal/testhelper/sendtx.go": "44f8a8779b3e0d2c3ab88fe520d053fa5d77a88ced9a3e422442726c593d7597",
+        "../../../tests/tc/go-stablenet/regression/blacklist-authorized/01-sender-blacklisted-rejected.json": "b814dd6f12220df78c06026d546f77c9198170517de5a2fe5c162f74e1ccebc2",
+        "blacklist_native_test.go": "c3f439ef1e8775da52975d1d958ca3f222e5daf2934d41d4aa1ec2abd01a923b",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      },
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "case": "02-recipient-blacklisted-rejected.json",
+      "proofPath": "/private/tmp/cbui/blacklist-native-744740734/proof.json",
+      "proofSHA256": "0e5c186a03608e013ae32043cd4a22278f8a7f621e5270e0052781e6d4a23977",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "cliSession": "/private/tmp/cbui/blacklist-native-744740734/cli/20261013-183653-68249/UTC-20261013-183715",
+      "mcpSession": "/private/tmp/cbui/blacklist-native-744740734/mcp/20261013-183653-68249/UTC-20261013-183805",
+      "submissionRejections": [
+        {
+          "error": {
+            "code": -32000,
+            "message": "blacklisted account: 0x00000000000000000000000000000000C0fFee32"
+          },
+          "method": "eth_sendTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "blacklisted account: 0x00000000000000000000000000000000C0fFee32"
+          },
+          "method": "eth_sendTransaction",
+          "result": null,
+          "statusCode": 200
+        }
+      ],
+      "methods": {
+        "eth_blockNumber": 136,
+        "eth_call": 2,
+        "eth_chainId": 80,
+        "eth_getBlockByNumber": 68,
+        "eth_getTransactionReceipt": 30,
+        "eth_sendTransaction": 10,
+        "eth_syncing": 72,
+        "net_peerCount": 96
+      },
+      "sources": {
+        "../../../internal/accounts/wallet.go": "398c87c465b683fbbe829a33ed9f4e2f763e3f79d522d959ea80f728d222e0e3",
+        "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+        "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+        "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/dsl/files.go": "bd06ac189bf077bea29d36e7bb0583f42a98f797109921dd339926108b9010d6",
+        "../../../internal/dsl/parse_v2.go": "a664068a5849241eca4cb24a7ec22f11fd9a271a522eef9939358f1fa3390af5",
+        "../../../internal/mcp/run_tool.go": "f9cd6b3da87c19bb1aae4ac5c92caeee280bb9cac5b0259f9841bce121fe6253",
+        "../../../internal/mcp/spec_presets_test.go": "24d037254a7af120db65dbb112c7c74abeaef48a8f4913096981f11a8b186094",
+        "../../../internal/mcp/validate_tool.go": "cdc05f78aba6771b518683ded2ab77858dfbd7bbfa3d5a043f3b411be0fff136",
+        "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+        "../../../internal/testhelper/outcome.go": "b895f35d7d7d05ed313579c79c0a7fa16f9100b5f2e726c637ea4c09b518dd71",
+        "../../../internal/testhelper/sendtx.go": "44f8a8779b3e0d2c3ab88fe520d053fa5d77a88ced9a3e422442726c593d7597",
+        "../../../tests/tc/go-stablenet/regression/blacklist-authorized/02-recipient-blacklisted-rejected.json": "fab4bc2627aa4d4c20b6eaf7b65d1fe56336eb9c38510d3183cbe67751f009ff",
+        "blacklist_native_test.go": "c3f439ef1e8775da52975d1d958ca3f222e5daf2934d41d4aa1ec2abd01a923b",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      },
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "case": "03-feepayer-blacklisted-rejected.json",
+      "proofPath": "/private/tmp/cbui/blacklist-native-4053702179/proof.json",
+      "proofSHA256": "aa99574b1e24d130452abd9e9edb5be37561c7d89c258272536886b0510817d5",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "cliSession": "/private/tmp/cbui/blacklist-native-4053702179/cli/20261013-183653-68249/UTC-20261013-183853",
+      "mcpSession": "/private/tmp/cbui/blacklist-native-4053702179/mcp/20261013-183653-68249/UTC-20261013-183908",
+      "submissionRejections": [
+        {
+          "error": {
+            "code": -32000,
+            "message": "blacklisted account: 0xED0D74dC0CB31FcaDD0cE4cc24b081299f1ef821"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "blacklisted account: 0xB89A2AA14Af8Ad4a37Be8B034677927A5232A69E"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        }
+      ],
+      "methods": {
+        "eth_blockNumber": 98,
+        "eth_chainId": 56,
+        "eth_gasPrice": 2,
+        "eth_getBlockByNumber": 72,
+        "eth_getProof": 4,
+        "eth_getTransactionCount": 2,
+        "eth_getTransactionReceipt": 31,
+        "eth_maxPriorityFeePerGas": 2,
+        "eth_sendRawTransaction": 2,
+        "eth_sendTransaction": 8,
+        "eth_syncing": 44,
+        "net_peerCount": 72
+      },
+      "sources": {
+        "../../../internal/accounts/wallet.go": "398c87c465b683fbbe829a33ed9f4e2f763e3f79d522d959ea80f728d222e0e3",
+        "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+        "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+        "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/dsl/files.go": "bd06ac189bf077bea29d36e7bb0583f42a98f797109921dd339926108b9010d6",
+        "../../../internal/dsl/parse_v2.go": "a664068a5849241eca4cb24a7ec22f11fd9a271a522eef9939358f1fa3390af5",
+        "../../../internal/mcp/run_tool.go": "f9cd6b3da87c19bb1aae4ac5c92caeee280bb9cac5b0259f9841bce121fe6253",
+        "../../../internal/mcp/spec_presets_test.go": "24d037254a7af120db65dbb112c7c74abeaef48a8f4913096981f11a8b186094",
+        "../../../internal/mcp/validate_tool.go": "cdc05f78aba6771b518683ded2ab77858dfbd7bbfa3d5a043f3b411be0fff136",
+        "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+        "../../../internal/testhelper/outcome.go": "b895f35d7d7d05ed313579c79c0a7fa16f9100b5f2e726c637ea4c09b518dd71",
+        "../../../internal/testhelper/sendtx.go": "44f8a8779b3e0d2c3ab88fe520d053fa5d77a88ced9a3e422442726c593d7597",
+        "../../../tests/tc/go-stablenet/regression/blacklist-authorized/03-feepayer-blacklisted-rejected.json": "303f338b65350c26cfd0d96af6a21089a8e443503e06d083c96d0837edf2136c",
+        "blacklist_native_test.go": "c3f439ef1e8775da52975d1d958ca3f222e5daf2934d41d4aa1ec2abd01a923b",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      },
+      "endedDatabasesRemaining": 0
+    }
+  ],
+  "baseline": {
+    "runtime": "/private/tmp/cbui/blacklist-native-3301001655",
+    "rawSubmissions": 0,
+    "reason": "Sender blacklist test ended in the SDK local guard; original status failure and observations retained; ended DBs 0"
+  },
+  "mcpInputContract": {
+    "baseDir": "Optional preset reference directory. Omitted uses process cwd; relative paths are normalized before the existing bounded parent search.",
+    "referenceForms": [
+      "named chainPreset string",
+      "inline extends with deep overrides",
+      "fully inline and v1 unchanged"
+    ],
+    "validation": "Per-spec preset errors retain the other validation results; run resolves before composing/attaching.",
+    "architecture": "MCP -> app.ReadSpecContent -> shared DSL search/merge; no import budget or coverage ratchet weakened."
+  },
+  "limitations": [
+    "The three blacklist scenarios are StableNet-specific; this is not a claim about other chains or all R5 cases.",
+    "Preset initial values (P2/P3), affected R5/L1 cases, fee-delegated contract creation, numeric validation and feePayer UI remain pending.",
+    "R3/R4 remainders, R1/R6, Linux L1, tasks 10–14 and frozen Web14 acceptance remain pending."
+  ]
+}
