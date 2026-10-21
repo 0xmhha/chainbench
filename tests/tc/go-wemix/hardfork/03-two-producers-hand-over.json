@@ -21,7 +21,7 @@
     },
     {
       "expect": "rpc",
-      "on": "bp1",
+      "on": "node5",
       "method": "admin_wemixInfo",
       "params": [],
       "select": "etcd.members",
@@ -30,7 +30,7 @@
     },
     {
       "expect": "rpc",
-      "on": "bp1",
+      "on": "node5",
       "method": "admin_wemixInfo",
       "params": [],
       "select": "miners",
@@ -39,7 +39,7 @@
     },
     {
       "expect": "rpc",
-      "on": "bp1",
+      "on": "node5",
       "method": "admin_wemixInfo",
       "params": [],
       "select": "nodes",
@@ -48,7 +48,7 @@
     },
     {
       "expect": "rpc",
-      "on": "bp2",
+      "on": "node6",
       "method": "admin_wemixInfo",
       "params": [],
       "select": "etcd.members",

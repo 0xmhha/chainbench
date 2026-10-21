@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "isolated-en-pending-queued",
-  "description": "RPC-018 — 실제 EN(node5)을 BP4에서 peer 격리하고 정상 합의는 계속 유지한다. 새 sender의 nonce0 pending과 nonce2 queued를 EN에서 제출해 정확한 hash·nonce·from·gas 및 account bucket을 검사한다. peer0·EN block halt·각 receipt null을 확인하므로 재연결되거나 이미 채굴되면 실패한다. 연결을 복구한 뒤 nonce0 성공을 확인하고 nonce1을 채워 nonce2 성공·풀 비움을 검증한다. 격리 전 EN이 제안한 gasPrice·tip을 읽고 cap은 추천 가격의 두 배로 구성한다. 로컬 입장에서만 허용되는 오래된 고정 35조 wei cap으로 원격 재검증·전파가 막히지 않도록 한다.",
+  "description": "RPC-018 — 실제 EN(node5)을 BP4에서 peer 격리하고 정상 합의는 계속 유지한다. 격리 전에 BP 넷이 서로와 EN에 모두 연결될 때까지 기다린다. 기동 직후에는 BP 하나가 EN을 거쳐서만 이어질 수 있어, EN을 끊으면 그 BP도 함께 고립되기 때문이다. 새 sender의 nonce0 pending과 nonce2 queued를 EN에서 제출해 정확한 hash·nonce·from·gas 및 account bucket을 검사한다. peer0·EN block halt·각 receipt null을 확인하므로 재연결되거나 이미 채굴되면 실패한다. 연결을 복구한 뒤 nonce0 성공을 확인하고 nonce1을 채워 nonce2 성공·풀 비움을 검증한다. 격리 전 EN이 제안한 gasPrice·tip을 읽고 cap은 추천 가격의 두 배로 구성한다. 로컬 입장에서만 허용되는 오래된 고정 35조 wei cap으로 원격 재검증·전파가 막히지 않도록 한다.",
   "requires": [
     "rpc"
   ],
@@ -100,6 +100,42 @@
         "$poolGasPrice"
       ],
       "save": "poolFeeCap"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "peerCount",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "120s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "peerCount",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "120s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node3",
+      "source": "peerCount",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "120s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node4",
+      "source": "peerCount",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "120s",
+      "pollInterval": "1s"
     },
     {
       "do": "partition",

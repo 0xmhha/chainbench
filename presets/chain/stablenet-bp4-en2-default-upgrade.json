@@ -2,16 +2,16 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp4-en2-default-upgrade",
-  "description": "StableNet signature compatibility: four original validators and two ENs, both restarted with a distinct upgrade binary while retaining their data. Default and upgrade binary identities must differ.",
+  "description": "StableNet signature compatibility: four original validators and two ENs, both restarted with a distinct upgrade binary while retaining their data. Default and upgrade binary identities must differ. The swap runs old to new, so point GSTABLE_PREUPGRADE_BIN at the older build and GSTABLE_UPGRADE_BIN at the newer one. Keys are generated because the committed preset holds five identities and this wants six.",
   "binaries": {
-    "default": "gstable",
+    "default": "${GSTABLE_PREUPGRADE_BIN:-gstable}",
     "upgrade": "${GSTABLE_UPGRADE_BIN:-gstable-hardfork}"
   },
   "chain": "stablenet",
   "keys": {
     "nodekeys": {
-      "ref": "presets/keys",
-      "source": "keyPreset"
+      "source": "generate",
+      "validators": 4
     }
   },
   "topology": {

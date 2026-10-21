@@ -292,20 +292,20 @@
       },
       "purpose": "web05-unbindable",
       "expectFail": true,
-      "reason": "can't assign requested address"
+      "reason": "assign requested address"
     },
     {
       "do": "startNode",
       "on": "en2",
       "expectFail": true,
-      "reason": "can't assign requested address",
+      "reason": "assign requested address",
       "save": "stillDown"
     },
     {
       "do": "startNode",
       "on": "en2",
       "expect": "fail",
-      "reason": "can't assign requested address"
+      "reason": "assign requested address"
     },
     {
       "do": "swapNode",

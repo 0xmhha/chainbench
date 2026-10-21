@@ -1,0 +1,145 @@
+{
+ "scope": "Full Linux L1 sweep on one fixed source with chain binaries rebuilt from pinned commits. Results and constraints only; not final Web acceptance.",
+ "sourceHead": "42c026098b88e28bd558252a48c7a1eae57c1e27",
+ "sourceDirty": false,
+ "chainbenchSha256": "01ad526439893650ac6fbc07eda8ee4834f6d802d3da3b6e9c538797af177258",
+ "chainBinaries": {
+  "sha256": {
+   "gstable": "2db85521d78b8d3c44c877bca13ffbda5be21dae14be2997a48ab6d44c54a815",
+   "gstable-boho-v101": "ad0b9cc591b90c6327ef27567732cb3eccac07488c25041523e6230a27e6f5cd",
+   "gstable-prefork": "c622439de27699a087d3dff3509d003ccda249b2b4338a37e4fdfde14082d426",
+   "gwbft": "173a55ecebfd683cfccbfdb41093a4ffe8a9658a5cddad2d3d35a66be099fe17",
+   "gwemix": "530f3299681670b9b35dc79ae01b4a8a4554597c29742e548ccb4a9b9e037d35"
+  },
+  "commits": {
+   "gstable": "4d17eea018c8dd579409db30bfd27de79c4f4121",
+   "gwbft": "d535dd3d25110977ce19503d8fcbf7e9a5430562",
+   "gwemix": "4538a9f5f2e4bcd2cb9515f8c466fabc24f73987",
+   "gstable-prefork": "ad0122af042d49022052a9783b3086d40d308db8",
+   "gstable-boho-v101": "bf17c9607a6b893ea85e6301e1cdb02d55b218de"
+  },
+  "builders": {
+   "go1.25.14": "golang@sha256:699337d620559a59b4a2bb298ad59611e535d2ee755a34cf2d2a98f37578dc80",
+   "go1.19.13": "golang@sha256:3025bf670b8363ec9f1b4c4f27348e6d9b7fec607c47e401e40df816853e743a"
+  },
+  "note": "Bytes differ from the earlier pinned hashes; the commits are read from embedded VCS build info and version output."
+ },
+ "environment": {
+  "servers": 15,
+  "target": "local docker server set",
+  "variables": [
+   "GSTABLE_BIN=gstable-prefork",
+   "GSTABLE_POSTFORK_BIN=gstable-boho-v101",
+   "GSTABLE_PREUPGRADE_BIN=gstable-boho-v101",
+   "GSTABLE_UPGRADE_BIN=gstable",
+   "GSTABLE_TESTNET_RPC (public testnet)",
+   "GSTABLE_TESTNET_KEY_FILE (absent)"
+  ]
+ },
+ "plannedRuns": 362,
+ "totals": {
+  "pass": 350,
+  "fail": 2,
+  "blocked": 10,
+  "skip": 0,
+  "notrun": 0
+ },
+ "nonPass": [
+  {
+   "index": 74,
+   "verdict": "BLOCKED",
+   "round": "wemix",
+   "case": "tests/tc/common/node/CT-NODE-011-endpoint-first-layout.json",
+   "reason": "external: go-wemix admin_wemixInfo panics on an EN (handover section 9)"
+  },
+  {
+   "index": 137,
+   "verdict": "BLOCKED",
+   "round": "wemix",
+   "case": "tests/tc/common/node/CT-NODE-009-head-hash-agreement.json",
+   "reason": "external: go-wemix admin_wemixInfo panics on an EN (handover section 9)"
+  },
+  {
+   "index": 143,
+   "verdict": "BLOCKED",
+   "round": "wemix",
+   "case": "tests/tc/common/node/CT-NODE-002-startup-15-nodes.json",
+   "reason": "external: go-wemix W3; node14 stopped at block 4 with 9 unauthorized block errors"
+  },
+  {
+   "index": 217,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/mixed/01-quorum-across-implementations.json",
+   "reason": "out of scope by user decision: no wbft-stablenet source on this machine"
+  },
+  {
+   "index": 218,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/mixed/02-transfer-across-implementations.json",
+   "reason": "out of scope by user decision: no wbft-stablenet source on this machine"
+  },
+  {
+   "index": 219,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/mixed/03-validator-swapped-to-wbft-stablenet.json",
+   "reason": "out of scope by user decision: no wbft-stablenet source on this machine"
+  },
+  {
+   "index": 220,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/mixed/04-rolling-takeover.json",
+   "reason": "out of scope by user decision: no wbft-stablenet source on this machine"
+  },
+  {
+   "index": 221,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/mixed/05-takeover-over-f-halts-and-recovers.json",
+   "reason": "out of scope by user decision: no wbft-stablenet source on this machine"
+  },
+  {
+   "index": 265,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json",
+   "reason": "intermittent: BP peers dropped and consensus stalled about 80s after block 24; passed on two reruns"
+  },
+  {
+   "index": 292,
+   "verdict": "BLOCKED",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json",
+   "reason": "intermittent: body passed, teardown stop of node4 hit its deadline; passed on two reruns"
+  },
+  {
+   "index": 334,
+   "verdict": "FAIL",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/testnet/05-value-transfer.json",
+   "reason": "environment: the funded payer key file is not on this machine"
+  },
+  {
+   "index": 338,
+   "verdict": "FAIL",
+   "round": "stablenet",
+   "case": "tests/tc/go-stablenet/testnet/09-remote-unlocked-transfer.json",
+   "reason": "environment: the funded payer key file is not on this machine"
+  }
+ ],
+ "intermittentReruns": {
+  "anzeon/08-feecap-above-min-accepted": "2 of 2 pass",
+  "ethereum/08-legacy-transfer": "2 of 2 pass"
+ },
+ "fullL1Accepted": false,
+ "finalWebAccepted": false,
+ "limitations": [
+  "Testnet transfers need the funded payer key on this machine.",
+  "Mixed-implementation cases need a wbft-stablenet build.",
+  "Why BP static peers drop in this environment is not known.",
+  "Earlier pinned binary hashes were not reproduced byte for byte."
+ ]
+}

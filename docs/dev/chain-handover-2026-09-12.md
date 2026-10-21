@@ -694,3 +694,43 @@ health의 node4 chainId/blockNumber0은 실패한 조회의 기본값이며 실�
 그 성공은 원문의 extra 상태 명제에 대한 확인이며 패닉 해결 증거가 아니다. 실패 시도와 성공 시도를 합쳐 전부 통과로 세지 않는다.
 Linux·메인넷 영향·장시간 안정성·원인 수정은 이번 범위가 아니다.
 [버전·원본 로그·BLOCKED·새 실행·독립 보존](legacy-extra-state-evidence.json).
+
+## 9. WEMIX EN의 admin_wemixInfo 패닉 (2026-10-21)
+
+**외부 차단으로 기록한다.** go-wemix에서만 고칠 수 있다. 체인팀 메시지나 리뷰 요청은 보내지 않았다.
+
+go-wemix `4538a9f5`를 Linux ARM64로 빌드해 docker 서버 5대에 BP 4대와 EN 1대(`wemix-bp4-en1`)를 띄웠다.
+BP에서 `admin_wemixInfo`는 정상 객체를 돌려준다. EN에서는 `-32000 method handler crashed`를 돌려준다.
+EN 로그에는 `RPC method admin_wemixInfo crashed: runtime error: invalid memory address or nil pointer dereference`가
+남고, 스택은 `wemix/admin.go:1228`을 가리킨다. 그 줄은 `ca := admin.contracts.Address()`다.
+`Info()`는 `admin == nil`만 검사하므로, EN에서 `admin.contracts`가 아직 nil이면 이 줄에서 패닉한다.
+
+2026-10-16에는 같은 케이스가 한 번 통과했고 그때 EN은 `self=null`, `etcd={}`로 정상 응답했다.
+그러니 결과는 조회 시점에 따라 갈린다. `admin.contracts`가 채워지는 시점과 원인은 확인하지 않았다.
+
+chainbench는 poa 검증자를 `admin_wemixInfo`로 거버넌스 주소를 얻은 뒤 `eth_call`로 읽는다
+(`internal/consensus/poa/validators.go`). 그래서 EN이 들어간 WEMIX 망에서 합의 확인이 필요한 케이스는
+`consensus capability unknown: rpc_probe_unavailable`로 BLOCKED가 된다. 2026-10-20 전체 L1에서는
+CT-NODE-011(`wemix-bp3-en1-table`)과 CT-NODE-009(`wemix-bp4-en1`)가 이 이유로 BLOCKED였다.
+chainbench가 BP의 응답으로 우회하지 않는 것은 사용자 결정이다. 우회하면 이 결함이 드러나지 않는다.
+
+## 10. WBFT 계열 BP의 기동 직후 연결 끊김 (2026-10-21)
+
+**외부 동작으로 기록한다.** 고칠 곳은 go-stablenet(그리고 같은 코드를 쓰는 go-wbft)이다. 체인팀에 보내지 않았다.
+
+docker 서버에 StableNet BP 4대와 EN 1대를 띄우면, 기동 직후 약 35초 동안 BP 하나(관찰에서는 node1)가
+EN과만 연결되고 다른 BP와는 연결되지 않는다. 그 뒤 static peer 재연결로 완전 연결이 된다.
+기동 순간에는 node1에 node2~5가 모두 연결됐다가, node2~4와의 연결만 곧 끊긴다. 재연결까지 걸린 35초는
+geth의 static dial 이력 만료 시간과 같다.
+
+`eth/handler_istanbul.go`의 `handleConsensusLoop`는 합의 메시지 처리 오류가 `wbft.ErrStoppedEngine`이고
+`downloader.Synchronising()`이 참일 때만 그 오류를 무시한다. 동기화 중이 아니면 오류를 돌려주고 연결이 끊긴다.
+망을 처음 띄울 때는 노드마다 합의 엔진이 켜지는 시점이 다르다. 그러니 먼저 켜진 BP가 보낸 메시지를 아직 엔진이
+꺼진 BP가 받으면 연결이 끊긴다. EN은 합의 메시지를 보내지 않으므로 EN과의 연결만 남는다는 관찰과도 맞는다.
+떠 있는 망에서 node1만 `--verbosity 4`로 다시 띄웠을 때는 동기화 중이라 같은 오류가 `Ignoring ... due to active sync`로
+무시되고 연결이 유지됐다.
+
+확인하지 못한 것: 기동 순간의 연결 끊김 로그 자체는 잡지 못했다(chainbench에 기동 시 로그 수준 옵션이 없다).
+2026-10-21 최종 L1의 anzeon/08에서 블록 24 뒤 합의가 약 80초 멈춘 것이 같은 원인인지도 확인하지 않았다.
+
+chainbench 쪽 영향: CT-RPC-016은 격리 전에 BP 완전 연결을 기다리도록 고쳤다. 이 동작은 WEMIX에서는 보이지 않았다.
