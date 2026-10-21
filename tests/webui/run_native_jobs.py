@@ -32,7 +32,7 @@ def main():
         listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
     store=runtime/'store'
     log=(output/'server.log').open('w')
-    command=[str(runtime/'dashboard'),'-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json'),'-manifest-keys',str(source_keys)]
+    command=[str(runtime/'dashboard'),'-accounts=true','-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json'),'-manifest-keys',str(source_keys)]
     server=subprocess.Popen(command,stdout=log,stderr=log)
     try:
         url='http://127.0.0.1:'+str(port)

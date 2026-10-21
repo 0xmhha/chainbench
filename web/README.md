@@ -17,13 +17,22 @@ at `/`, with `/chains`, `/tests`, `/monitoring`, `/history` and `/settings` rout
 Rebuild and commit `internal/dashboard/spa/` whenever the source
 changes.
 
-The normal daemon requires an account session in personal and team modes. The
-first administrator uses the private `setup.token` in the Web data directory.
-Personal mode listens only on loopback; team mode on a reachable address needs
+The normal daemon defaults to `-accounts=false`: on loopback, the browser opens
+automatically with a stable local operator, CSRF protection and audit records.
+Use `-accounts=true` to enable registration, login and account roles. The first
+administrator then uses the private `setup.token` in the Web data directory.
+Account-free access is limited to localhost and loopback addresses, refuses to
+start with team mode, `-trusted-proxy` or TLS, and rejects requests that carry
+reverse-proxy forwarding headers. Personal
+mode listens only on loopback; account-enabled team mode on a reachable address needs
 `-tls-cert`/`-tls-key` or `-trusted-proxy`. CLI event producers use
 `CHAINBENCH_PUBLISHER_TOKEN`, which authorizes event ingestion only.
 `-legacy-observation` explicitly selects a loopback observer without control
 APIs for producers without a token. The repository README shows each command.
+
+The local operator retains its credential ownership across restart. Changing
+account modes preserves existing users and artifacts but does not adopt the
+other mode's personal credentials or job identities.
 
 Provision native binaries with `-manifest-assets` to enable local and SSH durable jobs.
 The browser reviews a short-lived plan before submitting it. Jobs survive browser

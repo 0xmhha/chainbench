@@ -22,6 +22,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/webcli"
 )
 
+// accountFreeRemoteRefusal is what an account-free start prints when its flags
+// say remote browsers reach it through this machine.
+const accountFreeRemoteRefusal = "account-free mode serves only a browser on this machine; team mode, -trusted-proxy and TLS need -accounts=true"
+
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8787", "listen address")
 	artifactRoot := flag.String("artifact-root", "", "directory of session artifacts to serve under /api/sessions (optional)")
@@ -31,6 +35,7 @@ func main() {
 	manifestAssets := flag.String("manifest-assets", "", "server-provisioned binary asset JSON enabling manifest management")
 	manifestKeys := flag.String("manifest-keys", "presets/keys", "key preset for isolated manifest setup")
 	webMode := flag.String("web-mode", "personal", "account mode: personal or team")
+	accounts := flag.Bool("accounts", false, "require registered accounts (default: account-free local access)")
 	legacy := flag.Bool("legacy-observation", false, "loopback-only legacy event observer without control APIs")
 	tlsCert := flag.String("tls-cert", "", "TLS certificate for the web service")
 	tlsKey := flag.String("tls-key", "", "TLS private key for the web service")
@@ -62,6 +67,18 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
+		if !*accounts {
+			if err := dashboard.ValidateServiceMode("personal", *addr, *tlsCert != "", proxies); err != nil {
+				fmt.Fprintln(os.Stderr, "account-free mode requires loopback; use -accounts=true for remote access:", err)
+				os.Exit(1)
+			}
+			// A same-host proxy forwards every remote browser from loopback, so
+			// the listener alone cannot tell; these flags say remote use is meant.
+			if *webMode == "team" || len(proxies) > 0 || *tlsCert != "" {
+				fmt.Fprintln(os.Stderr, accountFreeRemoteRefusal)
+				os.Exit(1)
+			}
+		}
 	}
 	if *legacy {
 		host, _, err := net.SplitHostPort(*addr)
@@ -90,9 +107,15 @@ func main() {
 			}
 			opts = append(opts, dashboard.WithPublisherToken(token))
 		}
-		// Every Web control API runs behind the account sessions, CSRF and role
-		// checks of the security layer; there is no other account source.
-		auth, err := app.OpenWebAuth(*deploymentRoot, *webMode)
+		// Both modes share browser protection and execution authorization. Only
+		// account-enabled access requires registration or a password.
+		var auth *app.WebAuth
+		var err error
+		if *accounts {
+			auth, err = app.OpenWebAuth(*deploymentRoot, *webMode)
+		} else {
+			auth, err = app.OpenLocalWebAuth(*deploymentRoot)
+		}
 		var authenticate dashboard.DeploymentAuthenticator
 		if err == nil {
 			authenticate = dashboard.WebAuthenticator(auth)
@@ -110,7 +133,9 @@ func main() {
 		assets := []app.ManifestBinary{}
 		authorize := auth.AuthorizeJobActor
 		opts = append(opts, dashboard.WithWebSecurity(auth, deployments))
-		fmt.Fprintln(os.Stderr, "First administrator setup uses the private setup.token file in the web data directory.")
+		if *accounts {
+			fmt.Fprintln(os.Stderr, "First administrator setup uses the private setup.token file in the web data directory.")
+		}
 		if *manifestAssets != "" {
 			raw, err := os.ReadFile(*manifestAssets)
 			if err != nil {

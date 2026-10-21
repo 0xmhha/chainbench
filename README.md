@@ -287,23 +287,40 @@ catalog. Either way the chain package must be blank-imported from
 ## Dashboard
 
 `chainbench-dashboard` serves the Web UI, a Server-Sent Events stream at
-`/events` and run state at `/api/runs`. Every route needs a signed-in account
-except event ingestion, which takes a publisher token.
+`/events` and run state at `/api/runs`. Registered accounts are optional:
+`-accounts` defaults to `false`, and `-accounts=true` enables the existing
+login, user management and role restrictions. Event ingestion uses a separate
+publisher token.
 
-Personal mode (the default) listens only on loopback. The first administrator
-signs up with the one-time `setup.token` in the data directory
-(`chainbench-out/web-ui` unless `-deployment-root` says otherwise):
+By default, the Web opens on loopback without registration or a password.
+It uses a stable local operator for jobs and credentials, while keeping
+browser CSRF checks, redaction and audit records:
 
 ```bash
 chainbench-dashboard -addr 127.0.0.1:8787
 ```
 
+To require accounts, override the default. The first administrator signs up
+with the one-time `setup.token` in the data directory (`chainbench-out/web-ui`
+unless `-deployment-root` says otherwise):
+
+```bash
+chainbench-dashboard -accounts=true -addr 127.0.0.1:8787
+```
+
+Account-free access accepts `localhost` and loopback addresses only. It refuses
+to start with `-web-mode team`, `-trusted-proxy` or TLS, and it rejects requests
+that carry reverse-proxy forwarding headers: behind a proxy on the same machine
+every remote browser would otherwise look local. Use `-accounts=true` there. Switching
+modes preserves stored accounts and artifacts but does not transfer personal
+credentials or job ownership between a registered user and the local operator.
+
 Team mode on an address other machines reach must terminate TLS itself or name
 the TLS terminator in front of it; the server refuses to start otherwise:
 
 ```bash
-chainbench-dashboard -web-mode team -addr 0.0.0.0:8443 -tls-cert cert.pem -tls-key key.pem
-chainbench-dashboard -web-mode team -addr 10.0.0.2:8787 -trusted-proxy 10.0.0.5
+chainbench-dashboard -accounts=true -web-mode team -addr 0.0.0.0:8443 -tls-cert cert.pem -tls-key key.pem
+chainbench-dashboard -accounts=true -web-mode team -addr 10.0.0.2:8787 -trusted-proxy 10.0.0.5
 ```
 
 CLI runs send their events in one of two ways. With a publisher token, the

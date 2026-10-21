@@ -128,7 +128,7 @@ def main():
         url = 'http://127.0.0.1:' + str(port)
         store = runtime / 'store'
         log = (out / 'server.log').open('w'); handles.append(log)
-        server = subprocess.Popen([str(runtime / 'chainbench-dashboard'), '-addr', '127.0.0.1:' + str(port), '-deployment-root', str(store),
+        server = subprocess.Popen([str(runtime / 'chainbench-dashboard'), '-accounts=true', '-addr', '127.0.0.1:' + str(port), '-deployment-root', str(store),
                                    '-manifest-assets', str(runtime / 'assets.json'), '-manifest-keys', str(keys)], stdout=log, stderr=log)
         for _ in range(200):
             if server.poll() is not None:
