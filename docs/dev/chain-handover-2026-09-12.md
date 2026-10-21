@@ -694,3 +694,22 @@ health의 node4 chainId/blockNumber0은 실패한 조회의 기본값이며 실�
 그 성공은 원문의 extra 상태 명제에 대한 확인이며 패닉 해결 증거가 아니다. 실패 시도와 성공 시도를 합쳐 전부 통과로 세지 않는다.
 Linux·메인넷 영향·장시간 안정성·원인 수정은 이번 범위가 아니다.
 [버전·원본 로그·BLOCKED·새 실행·독립 보존](legacy-extra-state-evidence.json).
+
+## 9. WEMIX EN의 admin_wemixInfo 패닉 (2026-10-21)
+
+**외부 차단으로 기록한다.** go-wemix에서만 고칠 수 있다. 체인팀 메시지나 리뷰 요청은 보내지 않았다.
+
+go-wemix `4538a9f5`를 Linux ARM64로 빌드해 docker 서버 5대에 BP 4대와 EN 1대(`wemix-bp4-en1`)를 띄웠다.
+BP에서 `admin_wemixInfo`는 정상 객체를 돌려준다. EN에서는 `-32000 method handler crashed`를 돌려준다.
+EN 로그에는 `RPC method admin_wemixInfo crashed: runtime error: invalid memory address or nil pointer dereference`가
+남고, 스택은 `wemix/admin.go:1228`을 가리킨다. 그 줄은 `ca := admin.contracts.Address()`다.
+`Info()`는 `admin == nil`만 검사하므로, EN에서 `admin.contracts`가 아직 nil이면 이 줄에서 패닉한다.
+
+2026-10-16에는 같은 케이스가 한 번 통과했고 그때 EN은 `self=null`, `etcd={}`로 정상 응답했다.
+그러니 결과는 조회 시점에 따라 갈린다. `admin.contracts`가 채워지는 시점과 원인은 확인하지 않았다.
+
+chainbench는 poa 검증자를 `admin_wemixInfo`로 거버넌스 주소를 얻은 뒤 `eth_call`로 읽는다
+(`internal/consensus/poa/validators.go`). 그래서 EN이 들어간 WEMIX 망에서 합의 확인이 필요한 케이스는
+`consensus capability unknown: rpc_probe_unavailable`로 BLOCKED가 된다. 2026-10-20 전체 L1에서는
+CT-NODE-011(`wemix-bp3-en1-table`)과 CT-NODE-009(`wemix-bp4-en1`)가 이 이유로 BLOCKED였다.
+chainbench가 BP의 응답으로 우회하지 않는 것은 사용자 결정이다. 우회하면 이 결함이 드러나지 않는다.
