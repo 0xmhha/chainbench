@@ -22,6 +22,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/webcli"
 )
 
+// accountFreeRemoteRefusal is what an account-free start prints when its flags
+// say remote browsers reach it through this machine.
+const accountFreeRemoteRefusal = "account-free mode serves only a browser on this machine; team mode, -trusted-proxy and TLS need -accounts=true"
+
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8787", "listen address")
 	artifactRoot := flag.String("artifact-root", "", "directory of session artifacts to serve under /api/sessions (optional)")
@@ -66,6 +70,12 @@ func main() {
 		if !*accounts {
 			if err := dashboard.ValidateServiceMode("personal", *addr, *tlsCert != "", proxies); err != nil {
 				fmt.Fprintln(os.Stderr, "account-free mode requires loopback; use -accounts=true for remote access:", err)
+				os.Exit(1)
+			}
+			// A same-host proxy forwards every remote browser from loopback, so
+			// the listener alone cannot tell; these flags say remote use is meant.
+			if *webMode == "team" || len(proxies) > 0 || *tlsCert != "" {
+				fmt.Fprintln(os.Stderr, accountFreeRemoteRefusal)
 				os.Exit(1)
 			}
 		}

@@ -21,7 +21,9 @@ The normal daemon defaults to `-accounts=false`: on loopback, the browser opens
 automatically with a stable local operator, CSRF protection and audit records.
 Use `-accounts=true` to enable registration, login and account roles. The first
 administrator then uses the private `setup.token` in the Web data directory.
-Account-free access is limited to localhost and loopback addresses. Personal
+Account-free access is limited to localhost and loopback addresses, refuses to
+start with team mode, `-trusted-proxy` or TLS, and rejects requests that carry
+reverse-proxy forwarding headers. Personal
 mode listens only on loopback; account-enabled team mode on a reachable address needs
 `-tls-cert`/`-tls-key` or `-trusted-proxy`. CLI event producers use
 `CHAINBENCH_PUBLISHER_TOKEN`, which authorizes event ingestion only.

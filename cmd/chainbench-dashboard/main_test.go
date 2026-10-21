@@ -112,6 +112,30 @@ func TestAccountsDefaultAndExplicitOverrides(t *testing.T) {
 	}
 }
 
+// A loopback listener is not enough on its own: team mode, a trusted proxy or
+// TLS each mean remote browsers reach the service through this machine, and a
+// same-host proxy makes every one of them look local.
+func TestAccountFreeModeRefusesProxiedLoopbackListener(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		flags []string
+	}{
+		{"team mode", []string{"-web-mode=team"}},
+		{"trusted proxy", []string{"-trusted-proxy=127.0.0.1"}},
+		{"tls", []string{"-tls-cert=missing.crt", "-tls-key=missing.key"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			args := append([]string{"-addr=127.0.0.1:0", "-deployment-root=" + t.TempDir()}, tc.flags...)
+			output, err := dashboardCommand(t, ctx, args...).CombinedOutput()
+			if err == nil || !strings.Contains(string(output), accountFreeRemoteRefusal) {
+				t.Fatalf("account-free mode started for %s: %s", tc.name, output)
+			}
+		})
+	}
+}
+
 func TestAccountFreeModeRefusesReachableTeamListener(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

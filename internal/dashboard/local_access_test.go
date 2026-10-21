@@ -32,6 +32,20 @@ func TestLocalBrowserRequestsRefuseRemotePeersAndRebinding(t *testing.T) {
 	}
 }
 
+// A same-host reverse proxy turns every remote browser into a loopback peer,
+// and the Host it forwards can be loopback too. Its forwarding headers are the
+// one trace left, so a request carrying any of them is not a local browser.
+func TestLocalBrowserRequestsRefuseProxyForwardedRequests(t *testing.T) {
+	for _, header := range []string{"Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP"} {
+		r := httptest.NewRequest(http.MethodPost, "http://localhost/api/v1/auth/local", nil)
+		r.Host, r.RemoteAddr = "127.0.0.1:8787", "127.0.0.1:4000"
+		r.Header.Set(header, "203.0.113.9")
+		if localBrowserRequest(r) {
+			t.Errorf("%s: a proxied request was treated as a local browser", header)
+		}
+	}
+}
+
 func TestLocalBrowserAccessKeepsControlsCSRFAndAudit(t *testing.T) {
 	root := t.TempDir()
 	auth, err := app.OpenLocalWebAuth(root)

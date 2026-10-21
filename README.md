@@ -308,7 +308,10 @@ unless `-deployment-root` says otherwise):
 chainbench-dashboard -accounts=true -addr 127.0.0.1:8787
 ```
 
-Account-free access accepts `localhost` and loopback addresses only. Switching
+Account-free access accepts `localhost` and loopback addresses only. It refuses
+to start with `-web-mode team`, `-trusted-proxy` or TLS, and it rejects requests
+that carry reverse-proxy forwarding headers: behind a proxy on the same machine
+every remote browser would otherwise look local. Use `-accounts=true` there. Switching
 modes preserves stored accounts and artifacts but does not transfer personal
 credentials or job ownership between a registered user and the local operator.
 
