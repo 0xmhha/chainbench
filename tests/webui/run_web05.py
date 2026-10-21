@@ -32,6 +32,12 @@ FORK_CASE = 'tests/tc/go-wemix/hardfork/02-state-written-before-the-fork-survive
 # an endpoint, so no block reward moves its balance during the transfer.
 ATTACH_CASES = ['tests/tc/basic/08-attached-chain-produces.json', *sorted(glob.glob('tests/tc/go-stablenet/testnet/0*.json'))]
 ATTACH_CREDENTIAL_CASES = ['testnet-value-transfer']
+# The node-signing case ships with empty addresses and fails on purpose until an
+# operator names them. On the owned attach network, node1's account is unlocked
+# by its launch arguments and funded in genesis; node2 only has to receive.
+UNLOCKED_TRANSFER_CASE = 'remote-unlocked-transfer'
+UNLOCKED_SENDER_KEY = 'presets/keys/node1/address'
+UNLOCKED_RECIPIENT_KEY = 'presets/keys/node2/address'
 # Declared accounts on a composed network; this case's network is the attach target.
 DECLARED_ACCOUNTS_CASE = 'tests/tc/go-stablenet/vocabulary/17-declared-accounts.json'
 
@@ -146,6 +152,8 @@ def main():
                    'forkCase': FORK_CASE, 'forkPreset': 'presets/chain/wemix-to-wbft.json',
                    'forkP2PBase': free_band(43000, 3000), 'forkRPCBase': free_band(23000, 3000),
                    'attachFiles': ATTACH_CASES, 'attachCredentialCases': ATTACH_CREDENTIAL_CASES, 'payerKeyFile': str(source / 'presets/keys/node5/private'), 'declaredAccountsCase': DECLARED_ACCOUNTS_CASE,
+                   'unlockedTransfer': {'case': UNLOCKED_TRANSFER_CASE, 'remoteSender': (source / UNLOCKED_SENDER_KEY).read_text().strip(),
+                                        'remoteRecipient': (source / UNLOCKED_RECIPIENT_KEY).read_text().strip()},
                    'attachP2PBase': free_band(46000, 3000), 'attachRPCBase': free_band(26000, 3000)}
         private = runtime / 'browser-fixture.json'; private.write_text(json.dumps(fixture)); private.chmod(0o600)
         browser = run_browser(['node', str(source / 'tests/webui/browser_web05.mjs'), str(private), str(out.resolve())], timeout=3600)

@@ -283,6 +283,10 @@ try {
   const attachIds = []
   for (const file of f.attachFiles) {
     const content = readJSON(file)
+    // The node-signing case has no addresses until an operator names them.
+    if (content.id === f.unlockedTransfer.case) {
+      Object.assign(content.chainPreset.values, {remoteSender: f.unlockedTransfer.remoteSender, remoteRecipient: f.unlockedTransfer.remoteRecipient})
+    }
     assert.equal((await upload(content, path.basename(file))).status(), 200, file)
     await status.filter({hasText: '가져왔습니다. 엔진 검증 통과'}).waitFor()
     await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
