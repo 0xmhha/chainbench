@@ -1135,7 +1135,7 @@ scripts/tcsweep.sh ~/cbw/one.log '07b-extra-state-across-delayed-boho'
 
 **01b-signature-compat-across-swap.json** · `signature-compat-across-swap`
 ```sh
-GSTABLE_UPGRADE_BIN=<값> bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json \
+GSTABLE_PREUPGRADE_BIN=<값> GSTABLE_UPGRADE_BIN=<값> bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json \
   --workspace-dir ~/cbw/one/01b-signature-compat-across-swap --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '01b-signature-compat-across-swap'
