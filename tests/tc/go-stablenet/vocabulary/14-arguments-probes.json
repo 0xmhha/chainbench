@@ -380,7 +380,7 @@
     {
       "do": "deployContract",
       "from": "node1",
-      "bytecode": "0x6005600c60003960056000f360006000fd",
+      "bytecode": "0x600a600c600039600a6000f3602a60005360016000fd",
       "gas": "100000",
       "save": "reverter"
     },
@@ -568,7 +568,7 @@
         "latest"
       ],
       "reason": "execution reverted",
-      "errorData": "0x"
+      "errorData": "0x2a"
     }
   ]
 }
