@@ -713,3 +713,24 @@ chainbench는 poa 검증자를 `admin_wemixInfo`로 거버넌스 주소를 얻�
 `consensus capability unknown: rpc_probe_unavailable`로 BLOCKED가 된다. 2026-10-20 전체 L1에서는
 CT-NODE-011(`wemix-bp3-en1-table`)과 CT-NODE-009(`wemix-bp4-en1`)가 이 이유로 BLOCKED였다.
 chainbench가 BP의 응답으로 우회하지 않는 것은 사용자 결정이다. 우회하면 이 결함이 드러나지 않는다.
+
+## 10. WBFT 계열 BP의 기동 직후 연결 끊김 (2026-10-21)
+
+**외부 동작으로 기록한다.** 고칠 곳은 go-stablenet(그리고 같은 코드를 쓰는 go-wbft)이다. 체인팀에 보내지 않았다.
+
+docker 서버에 StableNet BP 4대와 EN 1대를 띄우면, 기동 직후 약 35초 동안 BP 하나(관찰에서는 node1)가
+EN과만 연결되고 다른 BP와는 연결되지 않는다. 그 뒤 static peer 재연결로 완전 연결이 된다.
+기동 순간에는 node1에 node2~5가 모두 연결됐다가, node2~4와의 연결만 곧 끊긴다. 재연결까지 걸린 35초는
+geth의 static dial 이력 만료 시간과 같다.
+
+`eth/handler_istanbul.go`의 `handleConsensusLoop`는 합의 메시지 처리 오류가 `wbft.ErrStoppedEngine`이고
+`downloader.Synchronising()`이 참일 때만 그 오류를 무시한다. 동기화 중이 아니면 오류를 돌려주고 연결이 끊긴다.
+망을 처음 띄울 때는 노드마다 합의 엔진이 켜지는 시점이 다르다. 그러니 먼저 켜진 BP가 보낸 메시지를 아직 엔진이
+꺼진 BP가 받으면 연결이 끊긴다. EN은 합의 메시지를 보내지 않으므로 EN과의 연결만 남는다는 관찰과도 맞는다.
+떠 있는 망에서 node1만 `--verbosity 4`로 다시 띄웠을 때는 동기화 중이라 같은 오류가 `Ignoring ... due to active sync`로
+무시되고 연결이 유지됐다.
+
+확인하지 못한 것: 기동 순간의 연결 끊김 로그 자체는 잡지 못했다(chainbench에 기동 시 로그 수준 옵션이 없다).
+2026-10-21 최종 L1의 anzeon/08에서 블록 24 뒤 합의가 약 80초 멈춘 것이 같은 원인인지도 확인하지 않았다.
+
+chainbench 쪽 영향: CT-RPC-016은 격리 전에 BP 완전 연결을 기다리도록 고쳤다. 이 동작은 WEMIX에서는 보이지 않았다.
