@@ -98,7 +98,10 @@ func TestChainStepPipeline(t *testing.T) {
 		t.Fatalf("start before init must say so, got %v", err)
 	}
 	// init is reached (its own prerequisite, deploy, has run) and fails on the
-	// binary itself, which is what the operator has to supply.
+	// binary itself, which is what the operator has to supply. PATH is emptied
+	// so the outcome does not depend on whether this machine has a gstable;
+	// the Web acceptance run puts native chain binaries on PATH on purpose.
+	t.Setenv("PATH", t.TempDir())
 	if _, err := verb.ChainInit(ctx, d, verb.ChainInitIn{DataDir: dir}); err == nil ||
 		!strings.Contains(err.Error(), "gstable") {
 		t.Fatalf("init must fail naming the binary it could not run, got %v", err)
