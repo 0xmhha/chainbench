@@ -127,7 +127,7 @@
    "verdict": "FAIL",
    "round": "stablenet",
    "case": "tests/tc/go-stablenet/testnet/09-remote-unlocked-transfer.json",
-   "reason": "environment: the funded payer key file is not on this machine"
+   "reason": "by design: values.remoteSender and remoteRecipient are empty until an operator names an unlocked, funded account on that endpoint (corrected 2026-10-21; first recorded as a missing key file)"
   }
  ],
  "intermittentReruns": {
@@ -137,7 +137,7 @@
  "fullL1Accepted": false,
  "finalWebAccepted": false,
  "limitations": [
-  "Testnet transfers need the funded payer key on this machine.",
+  "Testnet 05 needs the funded payer key on this machine; testnet 09 needs an unlocked sender and a recipient named in its values.",
   "Mixed-implementation cases need a wbft-stablenet build.",
   "Why BP static peers drop in this environment is not known.",
   "Earlier pinned binary hashes were not reproduced byte for byte."
