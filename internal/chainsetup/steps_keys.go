@@ -469,7 +469,10 @@ func KeysFailure(err error) lifecycle.Status {
 	return lifecycle.FailStageUnclassified
 }
 
-// keyDerivation asks the registered family which validator identity it needs.
+// keyDerivation asks the registered families which validator identity they
+// need: the network's own chain and every chain a binary hands it over to.
+// The ring is made once, before genesis, and the genesis after a fork is built
+// from that same ring, so a family met only after the fork still decides it.
 func (w *Workspace) keyDerivation() (derive.Derivation, error) {
 	plugin, err := w.plugin()
 	if err != nil {
@@ -477,6 +480,24 @@ func (w *Workspace) keyDerivation() (derive.Derivation, error) {
 	}
 	if plugin.Family().ValidatorsCarryBLS() {
 		return derive.WithBLS, nil
+	}
+	binaries := make([]string, 0, len(w.state.BinaryChains))
+	for binary := range w.state.BinaryChains {
+		binaries = append(binaries, binary)
+	}
+	sort.Strings(binaries)
+	for _, binary := range binaries {
+		id := w.state.BinaryChains[binary]
+		if id == "" || id == w.state.Chain {
+			continue
+		}
+		next, err := external.ResolveChain(id, "", "")
+		if err != nil {
+			return derive.AccountOnly, fmt.Errorf("chainsetup: keys: binary %q runs chain %q: %w", binary, id, err)
+		}
+		if next.Family().ValidatorsCarryBLS() {
+			return derive.WithBLS, nil
+		}
 	}
 	return derive.AccountOnly, nil
 }

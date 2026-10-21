@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 87,521 |
+| `internal/` | 54 | 87,542 |
 | `cmd/` | 19 | 5,699 |
 | `scripts/inventory/` | 4 | 1,104 |
 | `tests/` | 2 | 353 |
-| **합계** | **79** | **94,677** |
+| **합계** | **79** | **94,698** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 62,708줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 62,729줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -153,7 +153,7 @@ internal/testengine 6,748 [L4] 테스트 엔진 — RunSuite 가 4단계를 소�
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 12,327 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 12,348 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
                           ChainProvision·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·ChainHealth·
                           ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·ChainBaseline{Check,Approve}·
