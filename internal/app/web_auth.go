@@ -28,10 +28,11 @@ type webAccount struct {
 	Hash string `json:"passwordHash"`
 }
 type WebSession struct {
-	User      WebUser   `json:"user"`
-	CSRFToken string    `json:"csrfToken"`
-	ExpiresAt time.Time `json:"expiresAt"`
-	Mode      string    `json:"mode"`
+	User            WebUser   `json:"user"`
+	CSRFToken       string    `json:"csrfToken"`
+	ExpiresAt       time.Time `json:"expiresAt"`
+	Mode            string    `json:"mode"`
+	AccountsEnabled bool      `json:"accountsEnabled"`
 }
 type webLogin struct {
 	UserID  string
@@ -39,13 +40,25 @@ type webLogin struct {
 	Expires time.Time
 }
 
-// WebAuth owns accounts and server-side sessions. Sessions intentionally expire on restart.
+type webIdentityMode uint8
+
+const (
+	webAccountIdentity webIdentityMode = iota
+	webLocalIdentity   webIdentityMode = iota
+	localWebActorID                    = "local-web-operator"
+	webSessionLifetime                 = 12 * time.Hour
+)
+
+// WebAuth owns account or local browser identities and server-side sessions.
+// Sessions intentionally expire on restart; the local actor's ownership does not.
 type WebAuth struct {
 	mu          sync.Mutex
 	mode, setup string
 	storage     *session.AccountStore
 	users       map[string]webAccount
 	sessions    map[string]webLogin
+	identity    webIdentityMode
+	clock       func() time.Time
 }
 
 var webUsername = regexp.MustCompile(`^[A-Za-z0-9_.-]{1,64}$`)
@@ -69,7 +82,7 @@ func OpenWebAuth(root, mode string) (*WebAuth, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &WebAuth{storage: storage, mode: mode, users: map[string]webAccount{}, sessions: map[string]webLogin{}}
+	a := &WebAuth{storage: storage, mode: mode, users: map[string]webAccount{}, sessions: map[string]webLogin{}, clock: time.Now}
 	b, err := storage.ReadUsers()
 	if err == nil {
 		if err = json.Unmarshal(b, &a.users); err != nil {
@@ -98,6 +111,43 @@ func OpenWebAuth(root, mode string) (*WebAuth, error) {
 	}
 
 	return a, nil
+}
+
+// OpenLocalWebAuth opens account-free browser access without reading or creating
+// registered users or a setup token. Existing accounts remain untouched.
+func OpenLocalWebAuth(root string) (*WebAuth, error) {
+	storage, err := session.OpenAccountStore(root)
+	if err != nil {
+		return nil, err
+	}
+	return &WebAuth{storage: storage, mode: "personal", identity: webLocalIdentity, clock: time.Now,
+		users: map[string]webAccount{}, sessions: map[string]webLogin{}}, nil
+}
+
+// AccountsEnabled reports whether browser access uses registered accounts.
+func (a *WebAuth) AccountsEnabled() bool { return a.identity == webAccountIdentity }
+
+func localWebUser() WebUser {
+	return WebUser{ID: localWebActorID, Username: "local", Role: "administrator", Active: true}
+}
+
+// LocalSession issues a browser session for the stable local operator. It never
+// creates a registered user and is forbidden on account-enabled services.
+func (a *WebAuth) LocalSession() (WebSession, string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.AccountsEnabled() {
+		return WebSession{}, "", ErrDeploymentForbidden
+	}
+	// Automatic reconnects must not retain sessions that have already expired.
+	now := a.clock()
+	for token, login := range a.sessions {
+		if !now.Before(login.Expires) {
+			delete(a.sessions, token)
+		}
+	}
+	s, token := a.session(localWebUser())
+	return s, token, nil
 }
 func (a *WebAuth) save(next map[string]webAccount) error {
 	b, err := json.Marshal(next)
@@ -134,13 +184,16 @@ func (a *WebAuth) create(username, password, role string) (webAccount, error) {
 }
 func (a *WebAuth) session(u WebUser) (WebSession, string) {
 	token := webToken()
-	s := WebSession{u, webToken(), time.Now().UTC().Add(12 * time.Hour), a.mode}
+	s := WebSession{User: u, CSRFToken: webToken(), ExpiresAt: a.clock().UTC().Add(webSessionLifetime), Mode: a.mode, AccountsEnabled: a.AccountsEnabled()}
 	a.sessions[tokenDigest(token)] = webLogin{u.ID, s.CSRFToken, s.ExpiresAt}
 	return s, token
 }
 func (a *WebAuth) Bootstrap(username, password, token string) (WebSession, string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if !a.AccountsEnabled() {
+		return WebSession{}, "", ErrDeploymentForbidden
+	}
 	if len(a.users) != 0 {
 		return WebSession{}, "", ErrDeploymentConflict
 	}
@@ -162,6 +215,9 @@ func (a *WebAuth) Bootstrap(username, password, token string) (WebSession, strin
 func (a *WebAuth) Login(username, password string) (WebSession, string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if !a.AccountsEnabled() {
+		return WebSession{}, "", ErrDeploymentForbidden
+	}
 	for _, u := range a.users {
 		if u.Username == username && u.Active && bcrypt.CompareHashAndPassword([]byte(u.Hash), []byte(password)) == nil {
 			s, t := a.session(u.WebUser)
@@ -175,11 +231,14 @@ func (a *WebAuth) Session(token string) (WebSession, error) {
 	defer a.mu.Unlock()
 	s, ok := a.sessions[tokenDigest(token)]
 	u := a.users[s.UserID]
-	if !ok || !u.Active || !time.Now().Before(s.Expires) {
+	if !a.AccountsEnabled() && s.UserID == localWebActorID {
+		u.WebUser = localWebUser()
+	}
+	if !ok || !u.Active || !a.clock().Before(s.Expires) {
 		delete(a.sessions, tokenDigest(token))
 		return WebSession{}, ErrDeploymentForbidden
 	}
-	return WebSession{u.WebUser, s.CSRF, s.Expires, a.mode}, nil
+	return WebSession{User: u.WebUser, CSRFToken: s.CSRF, ExpiresAt: s.Expires, Mode: a.mode, AccountsEnabled: a.AccountsEnabled()}, nil
 }
 func (a *WebAuth) Logout(token string) {
 	a.mu.Lock()
@@ -201,6 +260,12 @@ func (a *WebAuth) Users() []WebUser {
 func (a *WebAuth) AuthorizeJobActor(actor DeploymentActor) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if !a.AccountsEnabled() {
+		if actor.ID == localWebActorID && actor.canEdit() {
+			return nil
+		}
+		return ErrDeploymentForbidden
+	}
 	u, ok := a.users[actor.ID]
 	if !ok || !u.Active || u.Role == "viewer" {
 		return ErrDeploymentForbidden
@@ -210,7 +275,7 @@ func (a *WebAuth) AuthorizeJobActor(actor DeploymentActor) error {
 func (a *WebAuth) CreateUser(actor DeploymentActor, username, password, role string) (WebUser, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if actor.Role != "admin" {
+	if !a.AccountsEnabled() || actor.Role != "admin" {
 		return WebUser{}, ErrDeploymentForbidden
 	}
 	u, err := a.create(username, password, role)
@@ -251,7 +316,7 @@ func (a *WebAuth) UpdateUser(actor DeploymentActor, id, role, password string, a
 
 // updatedUser applies a change to a copy of the accounts; the caller holds a.mu.
 func (a *WebAuth) updatedUser(actor DeploymentActor, id, role, password string, active *bool) (webAccount, map[string]webAccount, error) {
-	if actor.Role != "admin" {
+	if !a.AccountsEnabled() || actor.Role != "admin" {
 		return webAccount{}, nil, ErrDeploymentForbidden
 	}
 	u, ok := a.users[id]
@@ -301,7 +366,7 @@ func (a *WebAuth) AuditWeb(actor, operation string, status int) error {
 func (a *WebAuth) AuditWebRequest(actor, operation, target, requestID string, status int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	b, err := json.Marshal(map[string]any{"actorId": actor, "operation": operation, "target": target, "requestId": requestID, "status": status, "time": time.Now().UTC()})
+	b, err := json.Marshal(map[string]any{"actorId": actor, "operation": operation, "target": target, "requestId": requestID, "status": status, "time": a.clock().UTC()})
 	if err != nil {
 		return err
 	}
@@ -312,5 +377,5 @@ func (a *WebAuth) AuditWebRequest(actor, operation, target, requestID string, st
 func (a *WebAuth) BootstrapRequired() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return len(a.users) == 0
+	return a.AccountsEnabled() && len(a.users) == 0
 }

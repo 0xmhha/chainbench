@@ -2121,16 +2121,24 @@ paths:
   /api/v1/auth/config:
     get:
       operationId: authConfig
-      summary: Report whether the first administrator still has to be created
-      description: Readable without a session so the login screen can offer first-administrator setup; it carries bootstrapRequired only.
+      summary: Report account requirements and administrator setup state
+      description: Readable without a session. accountsEnabled defaults to false at service startup; bootstrapRequired applies only when accounts are enabled.
       x-minimum-role: public
       responses:
         '200':
-          description: Report whether the first administrator still has to be created
+          description: Report account requirements and administrator setup state
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  accountsEnabled:
+                    type: boolean
+                  bootstrapRequired:
+                    type: boolean
+                required:
+                - accountsEnabled
+                - bootstrapRequired
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2141,6 +2149,28 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/auth/local:
+    post:
+      operationId: localBrowserAccess
+      summary: Automatically open an account-free local browser context
+      description: Available only with accounts disabled, from a loopback peer and a localhost or loopback Host. Reuses a valid browser session or sets an HttpOnly SameSite=Strict cookie. Origin checks apply; subsequent writes require the returned CSRF token. No registered user or password is created.
+      x-minimum-role: public
+      security: []
+      responses:
+        '200':
+          description: Local administrator execution context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
   /api/v1/chain-presets:
@@ -2609,12 +2639,15 @@ components:
           enum:
           - personal
           - team
+        accountsEnabled:
+          type: boolean
       additionalProperties: false
       required:
       - user
       - csrfToken
       - expiresAt
       - mode
+      - accountsEnabled
     UserCreate:
       type: object
       properties:

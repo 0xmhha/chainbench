@@ -64,7 +64,7 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
             port = listener.getsockname()[1]
         store = runtime / 'store'
         with (output / 'server.log').open('w') as log:
-            server = subprocess.Popen([str(runtime / 'dashboard'), '-addr', f'127.0.0.1:{port}', '-deployment-root', str(store), '-manifest-assets', str(runtime / 'assets.json'), '-manifest-keys', str(Path('presets/keys').resolve())], stdout=log, stderr=log)
+            server = subprocess.Popen([str(runtime / 'dashboard'), '-accounts=true', '-addr', f'127.0.0.1:{port}', '-deployment-root', str(store), '-manifest-assets', str(runtime / 'assets.json'), '-manifest-keys', str(Path('presets/keys').resolve())], stdout=log, stderr=log)
             url = f'http://127.0.0.1:{port}'
             for _ in range(200):
                 if server.poll() is not None:

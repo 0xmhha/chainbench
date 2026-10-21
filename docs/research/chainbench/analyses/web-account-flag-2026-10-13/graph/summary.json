@@ -1,0 +1,209 @@
+{
+  "commit": "662fff77382eb031df687d371a8bc8f63cad581f",
+  "coverage": {
+    ".css": 1,
+    ".go": 1141,
+    ".html": 3,
+    ".js": 8,
+    ".mjs": 79,
+    ".py": 100,
+    ".sh": 62,
+    ".svelte": 25
+  },
+  "files": 1419,
+  "parseErrorFiles": [
+    "env/docker/gen-env.sh"
+  ],
+  "astNodes": 2292588,
+  "syntacticCalls": 75404,
+  "fileImportEdges": 372,
+  "goPackageImportOccurrences": 1759,
+  "goPackages": 78,
+  "goPackageEdges": 263,
+  "goSymbols": 5054,
+  "layerViolationsReportedByInventoryTool": [
+    "internal/core/blueprint -> internal/preset (other)",
+    "internal/core/genesis -> internal/preset (other)",
+    "internal/core/keyring/operation -> internal/preset (other)",
+    "internal/core/keyring/store -> internal/preset (other)",
+    "internal/core/nodeconfig -> internal/preset (other)",
+    "internal/core/process -> internal/preset (other)"
+  ],
+  "goProductionFiles": 563,
+  "goTestFiles": 577,
+  "topGoFanIn": [
+    {
+      "path": "internal/app",
+      "layer": "usecase",
+      "files": 98,
+      "testFiles": 84,
+      "lines": 17002,
+      "exportedFuncs": 148,
+      "exportedTypes": 219,
+      "fanIn": 19,
+      "fanOut": 28
+    },
+    {
+      "path": "internal/core/node",
+      "layer": "core",
+      "files": 13,
+      "testFiles": 8,
+      "lines": 1381,
+      "exportedFuncs": 18,
+      "exportedTypes": 17,
+      "fanIn": 19,
+      "fanOut": 0
+    },
+    {
+      "path": "internal/core/registry",
+      "layer": "core",
+      "files": 8,
+      "testFiles": 6,
+      "lines": 1127,
+      "exportedFuncs": 24,
+      "exportedTypes": 23,
+      "fanIn": 18,
+      "fanOut": 1
+    },
+    {
+      "path": "internal/preset",
+      "layer": "other",
+      "files": 3,
+      "testFiles": 0,
+      "lines": 553,
+      "exportedFuncs": 6,
+      "exportedTypes": 3,
+      "fanIn": 15,
+      "fanOut": 3
+    },
+    {
+      "path": "cmd/chainbench/surface",
+      "layer": "entry",
+      "files": 2,
+      "testFiles": 0,
+      "lines": 96,
+      "exportedFuncs": 4,
+      "exportedTypes": 0,
+      "fanIn": 13,
+      "fanOut": 1
+    },
+    {
+      "path": "internal/core/filestore",
+      "layer": "core",
+      "files": 3,
+      "testFiles": 2,
+      "lines": 297,
+      "exportedFuncs": 4,
+      "exportedTypes": 6,
+      "fanIn": 13,
+      "fanOut": 0
+    },
+    {
+      "path": "internal/core/keyring",
+      "layer": "core",
+      "files": 5,
+      "testFiles": 3,
+      "lines": 391,
+      "exportedFuncs": 1,
+      "exportedTypes": 13,
+      "fanIn": 9,
+      "fanOut": 2
+    },
+    {
+      "path": "internal/core/process",
+      "layer": "core",
+      "files": 18,
+      "testFiles": 22,
+      "lines": 1781,
+      "exportedFuncs": 21,
+      "exportedTypes": 24,
+      "fanIn": 9,
+      "fanOut": 6
+    },
+    {
+      "path": "internal/core/session",
+      "layer": "core",
+      "files": 22,
+      "testFiles": 13,
+      "lines": 2782,
+      "exportedFuncs": 35,
+      "exportedTypes": 29,
+      "fanIn": 9,
+      "fanOut": 2
+    },
+    {
+      "path": "internal/core/collector",
+      "layer": "core",
+      "files": 16,
+      "testFiles": 13,
+      "lines": 1460,
+      "exportedFuncs": 15,
+      "exportedTypes": 21,
+      "fanIn": 8,
+      "fanOut": 3
+    }
+  ],
+  "goEntrypoint": [
+    {
+      "from": "cmd/chainbench-dashboard",
+      "to": "internal/app",
+      "refs": {
+        "CheckChainSurfaces": 1,
+        "ManifestBinary": 1,
+        "NewWebChainEngine": 1,
+        "OpenDeploymentStore": 1,
+        "OpenManifestStore": 1,
+        "OpenWebAuth": 1,
+        "OpenWebHistory": 1,
+        "OpenWebJobs": 1,
+        "OpenWebMonitor": 1
+      }
+    },
+    {
+      "from": "cmd/chainbench-dashboard",
+      "to": "internal/chains/all",
+      "refs": {}
+    },
+    {
+      "from": "cmd/chainbench-dashboard",
+      "to": "internal/core/collector",
+      "refs": {
+        "NewBus": 1,
+        "NewMemStore": 1
+      }
+    },
+    {
+      "from": "cmd/chainbench-dashboard",
+      "to": "internal/dashboard",
+      "refs": {
+        "DeploymentAuthenticator": 1,
+        "NewServer": 1,
+        "Option": 1,
+        "ValidateServiceMode": 1,
+        "WebAuthenticator": 1,
+        "WithArtifactRoot": 1,
+        "WithChainPresets": 1,
+        "WithChainSurfaces": 1,
+        "WithDeployments": 1,
+        "WithManifests": 1,
+        "WithPublisherToken": 1,
+        "WithTestCases": 1,
+        "WithTrustedProxies": 1,
+        "WithWebAudit": 1,
+        "WithWebHistory": 1,
+        "WithWebJobs": 1,
+        "WithWebMonitor": 1,
+        "WithWebSecurity": 1
+      }
+    },
+    {
+      "from": "cmd/chainbench-dashboard",
+      "to": "internal/webcli",
+      "refs": {
+        "FindBinary": 1,
+        "Runner": 4
+      }
+    }
+  ],
+  "webFiles": 47
+}

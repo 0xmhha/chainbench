@@ -120,7 +120,7 @@ def main():
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
         url = f'http://127.0.0.1:{port}'
-        command = [str(runtime / 'chainbench-dashboard'), '-addr', f'127.0.0.1:{port}', '-deployment-root', str(runtime / 'store')]
+        command = [str(runtime / 'chainbench-dashboard'), '-accounts=true', '-addr', f'127.0.0.1:{port}', '-deployment-root', str(runtime / 'store')]
         def launch(logname):
             logfile = (output / logname).open('w')
             handles.append(logfile)

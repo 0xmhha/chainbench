@@ -111,7 +111,7 @@ def main():
         state.mkdir()
         docker('run', '-d', '--name', CONTROL, '--hostname', 'control', '--network', NETWORK, '--ip', '172.30.0.5', '-p', f'127.0.0.1:{port}:8080',
                '-v', f'{work}:/work:ro', '-v', f'{state}:/state', '--entrypoint', '/work/chainbench-dashboard', IMAGE,
-               '-addr', '0.0.0.0:8080', '-web-mode', 'team', '-deployment-root', '/state', '-manifest-assets', '/work/assets.json',
+               '-accounts=true','-addr', '0.0.0.0:8080', '-web-mode', 'team', '-deployment-root', '/state', '-manifest-assets', '/work/assets.json',
                '-manifest-keys', '/work/keys', '-chain-presets', '/work/presets', '-chain-analysis', '/work/chain-analysis',
                '-tls-cert', '/work/tls.crt', '-tls-key', '/work/tls.key')
         # The control plane inspects its own machine as well; same empty id.

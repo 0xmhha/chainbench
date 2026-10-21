@@ -13,7 +13,10 @@
 
 {#if status}<p class="error" role="alert">{status}</p>{/if}
 {#if access && role !== 'viewer'}<CredentialManager {webSession} kinds={access.credentialKinds} />{/if}
-{#if access && role === 'administrator'}<UserManager {webSession} roles={access.roles} /><AuditPanel {webSession} />{/if}
+{#if access && role === 'administrator'}
+  {#if webSession.accountsEnabled !== false}<UserManager {webSession} roles={access.roles} />{/if}
+  <AuditPanel {webSession} />
+{/if}
 <AssetManager {webSession} {onuploaded} />
 <ManifestManager {webSession} {assetRevision} />
 

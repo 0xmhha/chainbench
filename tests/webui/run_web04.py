@@ -66,7 +66,7 @@ def main():
             sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
         url='http://127.0.0.1:'+str(port)
         logfile=(out/'server.log').open('w');handles.append(logfile)
-        command=[str(runtime/'chainbench-dashboard'),'-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json')]
+        command=[str(runtime/'chainbench-dashboard'),'-accounts=true','-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json')]
         def launch():
             process=subprocess.Popen(command,stdout=logfile,stderr=logfile)
             for attempt in range(100):

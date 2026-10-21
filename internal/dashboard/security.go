@@ -69,7 +69,16 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 					_ = auth.AuditWebRequest(actor, operation, auditTarget(r, operation, deployments.RedactWeb), requestID, response.status)
 				}
 			}()
-			public := path == "/api/v1/bootstrap" || path == "/api/v1/auth/login" || path == "/api/v1/auth/config"
+			localAccess := !auth.AccountsEnabled()
+			if localAccess && !localBrowserRequest(r) {
+				http.Error(response, "account-free access requires a local address", http.StatusForbidden)
+				return
+			}
+			if localAccess && (path == "/api/v1/bootstrap" || path == "/api/v1/auth/login" || path == "/api/v1/auth/logout" || path == "/api/v1/users" || strings.HasPrefix(path, "/api/v1/users/")) {
+				http.Error(response, "accounts are disabled", http.StatusNotFound)
+				return
+			}
+			public := path == "/api/v1/bootstrap" || path == "/api/v1/auth/login" || path == "/api/v1/auth/config" || (localAccess && path == "/api/v1/auth/local")
 			scheme := s.requestScheme(r)
 			if r.Method != "GET" && r.Method != "HEAD" {
 				origin := r.Header.Get("Origin")
@@ -135,6 +144,24 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 			http.SetCookie(w, &http.Cookie{Name: webCookie, Value: token, Path: "/", HttpOnly: true, Secure: s.requestScheme(r) == "https", SameSite: http.SameSiteStrictMode, Expires: session.ExpiresAt})
 			deploymentJSON(w, status, session)
 		}
+		if !auth.AccountsEnabled() {
+			s.mux.HandleFunc("POST /api/v1/auth/local", func(w http.ResponseWriter, r *http.Request) {
+				// Reuse this browser's valid session on refresh; cookies from
+				// another service mode or a previous restart cannot be reused.
+				if cookie, err := r.Cookie(webCookie); err == nil {
+					if session, err := auth.Session(cookie.Value); err == nil {
+						deploymentJSON(w, http.StatusOK, session)
+						return
+					}
+				}
+				session, token, err := auth.LocalSession()
+				if err != nil {
+					deploymentError(w, err)
+					return
+				}
+				setSession(w, r, session, token, http.StatusOK)
+			})
+		}
 		s.mux.HandleFunc("POST /api/v1/bootstrap", func(w http.ResponseWriter, r *http.Request) {
 			var in struct {
 				Username   string `json:"username"`
@@ -182,7 +209,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 			w.WriteHeader(204)
 		})
 		s.mux.HandleFunc("GET /api/v1/auth/config", func(w http.ResponseWriter, r *http.Request) {
-			deploymentJSON(w, http.StatusOK, map[string]any{"bootstrapRequired": auth.BootstrapRequired()})
+			deploymentJSON(w, http.StatusOK, map[string]any{"bootstrapRequired": auth.BootstrapRequired(), "accountsEnabled": auth.AccountsEnabled()})
 		})
 		authenticate := WebAuthenticator(auth)
 		s.contracts = append(s.contracts, "access")

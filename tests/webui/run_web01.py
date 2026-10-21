@@ -51,7 +51,7 @@ def main():
         url = f'http://127.0.0.1:{port}'
         serverlog = output / 'server.log'
         with serverlog.open('w') as logfile:
-            process = subprocess.Popen([str(runtime / 'chainbench-dashboard'), '-addr', f'127.0.0.1:{port}', '-chain-presets', 'presets/chain', '-deployment-root', str(runtime / 'store')], stdout=logfile, stderr=logfile)
+            process = subprocess.Popen([str(runtime / 'chainbench-dashboard'), '-accounts=true', '-addr', f'127.0.0.1:{port}', '-chain-presets', 'presets/chain', '-deployment-root', str(runtime / 'store')], stdout=logfile, stderr=logfile)
             for attempt in range(100):
                 if process.poll() is not None:
                     raise RuntimeError('server exited before health check')

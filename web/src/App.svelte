@@ -99,7 +99,7 @@
         {#if selection.chain}<span>체인 {selection.chain}</span>{:else}<a href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{/if}
         <span class="signal-label"><span class="signal" class:on={connected} aria-hidden="true"></span>{connected ? '서버 연결됨' : '서버 미연결'}</span>
       </span>
-      <span class="account">{webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span></header>
+      <span class="account">{webSession?.accountsEnabled === false ? '로컬 사용' : webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span></header>
     <main id="content">
       <div class="page-heading"><div><p class="eyebrow">운영 콘솔</p><h1>{current[1]}</h1><p>{current[2]}</p></div><span class="connection" class:on={connected}>{connected ? '연결됨' : '미연결'}</span></div>
       <LoginPanel bind:session={webSession} bind:ready />
