@@ -88,6 +88,10 @@ const (
 	KeyMetricsAddr OptionKey = "metrics.addr" // --metrics.addr <ip>
 	KeyMetricsPort OptionKey = "metrics.port" // --metrics.port <n>
 
+	// Logging — the level a node starts with. Raising it later over RPC
+	// misses what the first seconds of a network do.
+	KeyVerbosity OptionKey = "verbosity" // --verbosity <0-5>
+
 	// Txpool — mempool admission and retention. These decide whether a
 	// transaction a test submits is kept, replaced or dropped, so a test that
 	// exercises nonce gaps or replacement needs to say what the pool does
@@ -282,6 +286,9 @@ func geth114Common() map[OptionKey]flagSpec {
 		KeyMetrics:     {"--metrics", true},
 		KeyMetricsAddr: {"--metrics.addr", false},
 		KeyMetricsPort: {"--metrics.port", false},
+
+		// All three binaries spell it the same and take 0-5 (default 3).
+		KeyVerbosity: {"--verbosity", false},
 
 		// Spellings and value/boolean kinds below are read from the captured
 		// binary surfaces, not from memory — docs/chain-analysis/*/cli-surface.txt.

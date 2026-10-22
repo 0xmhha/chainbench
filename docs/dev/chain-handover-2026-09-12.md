@@ -730,7 +730,13 @@ geth의 static dial 이력 만료 시간과 같다.
 떠 있는 망에서 node1만 `--verbosity 4`로 다시 띄웠을 때는 동기화 중이라 같은 오류가 `Ignoring ... due to active sync`로
 무시되고 연결이 유지됐다.
 
-확인하지 못한 것: 기동 순간의 연결 끊김 로그 자체는 잡지 못했다(chainbench에 기동 시 로그 수준 옵션이 없다).
-2026-10-21 최종 L1의 anzeon/08에서 블록 24 뒤 합의가 약 80초 멈춘 것이 같은 원인인지도 확인하지 않았다.
+2026-10-22 직접 확인: 기동 옵션 `"launch": {"all": {"verbosity": 4}}`로 BP 4대 + EN 1대를 띄워 기동 순간의 로그를 잡았다.
+node1(첫 제안자)의 엔진이 27.442에 시작해 합의 메시지를 보냈고, 27.443에 node2~4가 각각
+`Ethereum quorum message handling failed ... err="stopped engine"`과 `Removing p2p peer ... req=false err="stopped engine"`으로
+node1을 끊었다. node2~4의 엔진은 그 뒤 27.479~27.487에 시작했다. 엔진이 약 40ms 늦게 켜진 BP가 먼저 켜진 BP의
+메시지를 받고 연결을 끊은 것이며, 위 코드로 세운 설명과 같다.
+
+확인하지 못한 것:
+2026-10-21 최종 L1의 anzeon/08에서 블록 24 뒤 합의가 약 80초 멈춘 것이 같은 원인인지는 확인하지 않았다.
 
 chainbench 쪽 영향: CT-RPC-016은 격리 전에 BP 완전 연결을 기다리도록 고쳤다. 이 동작은 WEMIX에서는 보이지 않았다.
