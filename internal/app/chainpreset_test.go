@@ -42,8 +42,11 @@ func TestChainPresetContractVocabulary(t *testing.T) {
 		launch := props["launch"].(map[string]any)
 		all := launch["properties"].(map[string]any)["all"].(map[string]any)["properties"].(map[string]any)
 		single := launch["additionalProperties"].(map[string]any)["properties"].(map[string]any)
-		if len(single) != map[string]int{"stablenet": 78, "wbft": 78, "wemix": 87}[chain] {
+		if len(single) != map[string]int{"stablenet": 79, "wbft": 79, "wemix": 88}[chain] {
 			t.Fatalf("incomplete vocabulary for %s: %d", chain, len(single))
+		}
+		if _, ok := all["verbosity"]; !ok {
+			t.Fatalf("%s: verbosity is not offered to all nodes", chain)
 		}
 		if _, ok := all["http.port"]; ok {
 			t.Fatal("per-node port offered to all nodes")

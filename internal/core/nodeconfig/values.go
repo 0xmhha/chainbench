@@ -36,6 +36,8 @@ var valueRules = map[OptionKey]valueRule{
 	KeyAuthPort:      portRule,
 	KeyMetricsPort:   portRule,
 	KeyDiscoveryPort: portRule,
+	// All three binaries' help: "0=silent, 1=error, 2=warn, 3=info, 4=debug, 5=detail".
+	KeyVerbosity: {kind: "integer", min: 0, max: 5},
 	// geth114 help: "snap" or "full"; go-wemix adds "light".
 	KeySyncMode: {kind: "enum", enum: []string{"full", "snap"}, byDialect: map[string][]string{"geth110-wemix": {"full", "snap", "light"}}},
 	KeyGCMode:   {kind: "enum", enum: []string{"full", "archive"}},
