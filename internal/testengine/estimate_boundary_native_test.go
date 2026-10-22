@@ -136,6 +136,37 @@ func finiteWriteCode() (initCode, runtime string) {
 	return fmt.Sprintf("0x602a60005561%04x806100126000396000f3%s", len(runtime)/2, runtime), "0x" + runtime
 }
 
+// waitHeadAt waits until the node's head is at least the receipt's block, so
+// reads of "latest" state include that block's effects.
+func waitHeadAt(ctx context.Context, t *testing.T, c *rpc.Client, blockNumber any, deadline time.Time) {
+	t.Helper()
+	raw, ok := blockNumber.(string)
+	if !ok {
+		t.Fatalf("receipt has no block number: %v", blockNumber)
+	}
+	want, err := strconv.ParseUint(strings.TrimPrefix(raw, "0x"), 16, 64)
+	if err != nil {
+		t.Fatalf("receipt block number %q: %v", raw, err)
+	}
+	for {
+		head, err := c.BlockNumber(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if head >= want {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("head %d did not reach receipt block %d", head, want)
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+}
+
 // This diagnostic records TX-018's original input without assuming that an
 // estimate is exact. A success counterexample is not original acceptance.
 func TestNativeEstimateMinusOneBoundary(t *testing.T) {
@@ -284,6 +315,10 @@ func TestNativeEstimateMinusOneBoundary(t *testing.T) {
 					case <-time.After(200 * time.Millisecond):
 					}
 				}
+				// A node can serve the receipt a moment before its head moves to
+				// that block, and the balance and storage below read "latest".
+				// Read them only once the head has reached the receipt's block.
+				waitHeadAt(ctx, t, c, p.Receipt["blockNumber"], deadline)
 				if err := c.Call(ctx, "eth_getTransactionByHash", &p.Transaction, hash); err != nil {
 					t.Fatal(err)
 				}
