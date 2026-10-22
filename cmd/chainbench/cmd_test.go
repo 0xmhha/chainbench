@@ -219,7 +219,10 @@ func TestHardforkCmd_DryRunPlan(t *testing.T) {
 func TestHardforkCmd_ExecuteNeedsBinary(t *testing.T) {
 	dir := t.TempDir()
 	writeWorkspace(t, dir, "wemix", wsNode(dir, 1, "validator", 8501, 0))
-	// gwbft is not on PATH → resolveBinary fails.
+	// gwbft is not on PATH → resolveBinary fails. PATH is emptied so the
+	// outcome does not depend on this machine: the Web acceptance run puts
+	// native chain binaries on PATH on purpose.
+	t.Setenv("PATH", t.TempDir())
 	_, err := run(t, "hardfork", "--workspace-dir", dir, "--to-chain", "wbft", "--block", "100", "--dry-run=false")
 	if err == nil || !strings.Contains(err.Error(), "cannot find node binary") {
 		t.Errorf("expected binary-not-found error, got %v", err)
