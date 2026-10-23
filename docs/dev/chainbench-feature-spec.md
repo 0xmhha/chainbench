@@ -21,16 +21,16 @@
   4. 임의 노드 로그·키·테스트 결과가 session 하위 **결정적 경로**에 존재(경로 규칙 위반 0건).
 
 ## F2. 키 레지스트리  (요구 17,30 · design §3.5)
-- **입력**: 키 이름(op1/bp1/acctA), 소스(Random | LocalFile<path> | RemoteDownload<server,path>), **`EnsureOpts{NeedBLS, BLS BLSDeriver}`**(validator 키면 BLS/PoP 필요), (remote 실행 시) 업로드 대상 경로. (design §3.5)
-- **동작**: 이름→키를 `keys/<name>/`에 일원화 저장. Random=생성, LocalFile=복사, RemoteDownload=ssh 다운로드. **`NeedBLS`면 주입된 `BLSDeriver`(외부 `bootnode` 위임)로 BLS/PoP 생성 — Deriver 없으면 오류**(누출 방지). Random 키를 remote에서 쓰면 약속 경로로 **업로드**(driver.FileProvisioner). 노드키(신원)와 서명키(계정)를 같은 레지스트리에서 이름으로 참조.
-- **출력**: `keys/<name>/{private,address,bls?,pop?}`(bls/pop은 NeedBLS일 때); 신규 생성 키는 genesis 등록에 사용(요구 17).
-- **에러·엣지**: 이름 충돌 → 오류(덮어쓰기 금지). remote 다운로드 실패 → 명확한 오류(부분 상태 금지). **NeedBLS인데 BLSDeriver/`bootnode` 부재 → 명확 오류**(BLS 없이 진행 금지). private 키는 로그·아티팩트 본문에 노출 금지(경로/주소만).
+- **입력**: 키 이름(op1/bp1/acctA), 소스(Random | LocalFile<path> | RemoteDownload<server,path>), **`derive.Derivation`(`AccountOnly` | `WithBLS`)**(wbft validator 키면 BLS/PoP 필요), (remote 실행 시) 업로드 대상 경로. (design §3.5)
+- **동작**: 이름→키를 `keys/<name>/`에 일원화 저장. Random=생성, LocalFile=복사, RemoteDownload=ssh 다운로드. **`WithBLS`면 `keyring/derive`가 프로세스 안에서 BLS/PoP를 직접 계산한다**(go-wbft `bootnode` 출력과 바이트 단위로 같다, 외부 바이너리 불필요). Random 키를 remote에서 쓰면 약속 경로로 **업로드**(driver.FileProvisioner). 노드키(신원)와 서명키(계정)를 같은 레지스트리에서 이름으로 참조.
+- **출력**: `keys/<name>/{private,address,bls?,pop?}`(bls/pop은 WithBLS일 때); 신규 생성 키는 genesis 등록에 사용(요구 17).
+- **에러·엣지**: 이름 충돌 → 오류(덮어쓰기 금지). remote 다운로드 실패 → 명확한 오류(부분 상태 금지). **BLS를 쓰는 키 세트에 키를 추가하면 자동으로 `WithBLS`로 파생**(BLS 없는 validator 금지). private 키는 로그·아티팩트 본문에 노출 금지(경로/주소만).
 - **AC**
   1. `Ensure(ctx, "op1", Random, "", {})` 두 번 호출 시 동일 키 반환(멱등), `keys/op1/` 1개.
   2. RemoteDownload한 키의 주소가 remote 원본과 일치.
   3. Random 키로 remote 실행 시 remote 약속 경로에 해당 키 존재.
   4. 서명 시 `keys/`의 이름으로 signer 지정 → 해당 주소로 서명됨.
-  5. `Ensure(ctx, validator키, Random, "", {NeedBLS:true, BLS:deriver})` → BLS/PoP 채워짐; deriver 없으면 오류.
+  5. validator 키를 `WithBLS`로 파생 → BLS/PoP 채워짐; BLS를 쓰는 키 세트에 추가한 키도 BLS/PoP를 가짐.
 
 ## F3. TestSpec DSL 스키마  (요구 3,29,30,32 · design §3.2,§4.3)
 - **입력**: JSON 정의서(파일 또는 인라인).
@@ -156,13 +156,13 @@
 - **입력**: plan, Options{LeaderGate, AlignJoinGap, MaxAttempts, Backoff, ForkSwaps}. remote 시 SSH 접속정보는 **`server-set.yaml`(gitignore)** 에서 로드(L6b).
 - **기동 소유(L6)**: **supervisor.BringUp이 노드 기동을 소유**(setup은 Plan+동시 provision/launch 프리미티브만 제공). 기동 후 **헬스 게이트**로 상태 확인·분류.
 - **동작**: etcd: `etcdInit` 후 **리더 준비(`etcdIsReady`/`"*"`) 폴링 확인**, 조인 슬롯에 **시작 정렬**(gap은 supervisor가 **클러스터 크기 N에서 파생** — sz≤11→7s·≤23→11s·≤41→17s·else 23s; 호출자가 고정값 안 넘김, L7). 실패는 분류(`EtcdJoinFailed/EtcdStale/ForkNotCrossed/QuorumLost/RPCUnready`)하고 사유·producer 로그를 세션 보존. 백오프 재기동 또는 명확한 실패.
-- **teardown·datadir(S2)**: 내장 etcd는 **프로세스 종료로 함께 종료**("살아있는 etcd 정리" 불필요). `Teardown{RemoveDataDir}`은 **종료와 별개 기능** — 재-셋업/디스크관리 시 datadir 삭제. procman이 노드별 `{PID, datadir}`를 추적해야 정확한 삭제 가능.
+- **teardown·datadir(S2)**: 내장 etcd는 **프로세스 종료로 함께 종료**("살아있는 etcd 정리" 불필요). datadir 삭제는 **종료와 별개 기능**이다. 종료는 `chainbench chain stop`, 재-셋업/디스크관리 시 datadir 삭제는 `chainbench chain rm`(정지된 노드만)이 맡는다.
 - **출력**: NodeSet + Diagnosis(OK/Mode/Detail/ProducerLog).
 - **에러·엣지**: 원인 은닉 금지("flaky" 라벨 금지) — 항상 분류된 Mode+Detail. hang 없음(모든 대기 timeout). 실패 시 procman.StopAll로 고아 노드 0.
 - **AC**
   1. producer etcd 리더 준비 전 조인시도 없음(게이트 통과 후 진행).
   2. 실패 시 Diagnosis.Mode가 실제 사유와 일치(예: 로그가 join 실패면 EtcdJoinFailed).
-  3. 재기동(같은 datadir) 시 stale etcd로 인한 `cannot fetch cluster info` 재현 0 — **재-셋업 전 `RemoveDataDir`로 datadir 정리**.
+  3. 재기동(같은 datadir) 시 stale etcd로 인한 `cannot fetch cluster info` 재현 0 — **재-셋업 전 `chain rm`으로 datadir 정리**.
   4. 어떤 실패에도 잔존 노드 프로세스 0(고아 없음). 종료 시 내장 etcd도 함께 종료.
   5. 노드 종료와 datadir 삭제가 **독립 호출**로 동작(종료만·삭제만 각각 가능).
 

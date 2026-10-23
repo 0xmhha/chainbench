@@ -14,7 +14,7 @@
 >
 > | 본문의 경로 | 지금 |
 > |---|---|
-> | `internal/testspec/spec.go` | `internal/dsl/spec.go` (`type Spec struct` at :29) |
+> | `internal/testspec/spec.go` | `internal/dsl/spec.go` (`type Spec struct` at :51) |
 > | `internal/testspec/schema/v2.schema.json` | `internal/dsl/schema/v2.schema.json` |
 > | `tests/specs/` (이관 ledger) | `tests/tc/` — [`../../tests/tc/SPECS.md`](../../tests/tc/SPECS.md) 가 그 기록이다 |
 >
@@ -38,7 +38,7 @@ v2 는 문법을 넓히는 것이 아니라 **선언부(environment)와 시나�
 
 ## 1. 현행 문법 실측 (v1)
 
-`internal/testspec/spec.go:26-41` 이 정본이다. (지금은 `internal/dsl/spec.go:29` `type Spec struct`.)
+`internal/testspec/spec.go:26-41` 이 정본이다. (지금은 `internal/dsl/spec.go:51` `type Spec struct`.)
 
 ```
 Spec := schemaVersion id [applicableChains] [requires] chain [topology] [hardforks]

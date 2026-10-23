@@ -86,8 +86,8 @@ genesis   extraData                       파생. 저장하지 않고 매번 계
 
 `extraData` 를 저장하지 않는 것이 중요하다 — 저장하면 검증자 집합과 어긋날 수 있고,
 그 불일치는 genesis 를 통과한 뒤 합의에서 터진다(BLS 를 선언 필드로 두면 안 되는 것과 같은 이유).
-계산 함수는 이미 있다(`keygen.WBFTExtraData`, 배포 preset 재현 골든 테스트 통과) —
-**`consensus/wbft` 로 옮긴다.** genesis 자료이지 키 자료가 아니다.
+계산 함수는 `keygen.WBFTExtraData` 였고(배포 preset 재현 골든 테스트 통과)
+**`consensus/wbft.ExtraData` 로 옮겼다.** genesis 자료이지 키 자료가 아니다.
 
 > **하위호환**: 기존 `presets/keys/metadata.json` 은 그대로 읽는다. keyring 은 `nodes[]` 만 취하고,
 > 나머지는 `net blueprint --from-keyring` 이 청사진 초안으로 옮긴다. 파일을 깨지 않는다.
@@ -125,8 +125,8 @@ core/keyring (L1)
 `Ensure(name, …)` · `Get(name)` · `UploadTo(…)` 는 이름 붙은 키 집합의 조회·영속·전달이다.
 이름을 둘로 두면 이 프로젝트가 반복해 온 "유사하면서 다른 것"이 하나 더 는다.
 
-**백엔드가 이미 여럿이라는 것도 근거다** — `RawFileStore`(raw hex) / `KeystoreStore`(암호화 v3) +
-`PasswordSource`. cosmos-sdk 의 `--keyring-backend` 와 같은 모양이 이미 구현돼 있다.
+**백엔드가 이미 여럿이라는 것도 근거다** — `store.RawFileBackend`(raw hex) / `store.KeystoreBackend`(암호화 v3) +
+`PasswordSource`(당시 이름은 `RawFileStore`·`KeystoreStore`). cosmos-sdk 의 `--keyring-backend` 와 같은 모양이 이미 구현돼 있다.
 
 ---
 

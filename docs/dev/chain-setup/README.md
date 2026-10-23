@@ -203,7 +203,7 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 
 | 변곡점 | 설정 위치 | 상태 |
 |---|---|---|
-| 블록 전진 | `health.NewBlockAdvanceGate` | ✅ 배선됨 |
+| 블록 전진 | `health.Run` 의 `Report.Producing` (주 노드의 블록 높이가 오르는지) | ✅ 배선됨. 옛 `NewBlockAdvanceGate` 는 코드에 없음 |
 | etcd 클러스터 | poa 부트스트랩 phase 의 `poa.VerifyEtcd` / `poa.WaitEtcdCluster` | ✅ `admin.wemixInfo.etcd.cluster` 폴링 |
 | 조인 슬롯 정렬 | — | 옛 `AlignJoinGap`·`JoinWindow` 는 코드에 없음 |
 | 재시도 | — | 옛 `MaxAttempts`·`Backoff` 는 코드에 없음 |

@@ -24,9 +24,9 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 87,684 |
+| `internal/` | 54 | 87,683 |
 | `cmd/` | 19 | 5,724 |
-| `scripts/inventory/` | 4 | 1,104 |
+| `scripts/inventory/` | 4 | 1,105 |
 | `tests/` | 2 | 353 |
 | **합계** | **79** | **94,865** |
 
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,266줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,265줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -57,7 +57,7 @@ internal/core/
 │                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
 ├── rpc            600  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
 ├── remote         651  [L1] 원격 접근 — API key/JWT 전송, SSH 터널, host-key 정책. rpc.DialWithClient 용 *http.Client
-├── process      1,781  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
+├── process      1,780  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
 │                            + 기동 정책(Direct: arm·materialize·init·launch / Launcher: 헬스 게이트·진단·재시도·teardown)
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
@@ -227,14 +227,14 @@ cmd/chainbench-dashboard 220  main. 대시보드 데몬(요구 19) — obs 이�
 
 ---
 
-## 5. `scripts/inventory/` — 4패키지 1,104줄
+## 5. `scripts/inventory/` — 4패키지 1,105줄
 
 측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` (2026-09-24 삭제) 의 숫자가
 여기서 나온다. (`consolidation-plan.md` (2026-09-24 삭제) 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
 
 ```
 scripts/inventory/
-├── code-graph        449  chainbench 모듈의 AST 그래프 — 패키지=노드, import=엣지, 그 엣지가 실제로
+├── code-graph        450  chainbench 모듈의 AST 그래프 — 패키지=노드, import=엣지, 그 엣지가 실제로
 │                          참조하는 exported 심볼. 빌드 불필요
 ├── source-ast        314  Go 표준 파서로 모든 Go 파일·테스트·빌드 태그를 파싱하고 선언·호출·import를 JSON으로 내보낸다
 ├── chain-flag-graph  282  go-ethereum 파생 체인 저장소의 명령/플래그 그래프를 cmd/ 트리 파싱으로 추출

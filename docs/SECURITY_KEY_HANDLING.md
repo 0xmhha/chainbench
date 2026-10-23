@@ -15,7 +15,18 @@ operator's deployment environment. The threat model assumes:
 - Any code path inside chainbench-net that could serialize a signer to
   stdout / stderr / log / disk is a contract violation.
 
-## Key Injection (current — env-key OR keystore)
+## Key Injection (2026-04 기록 — env-key OR keystore)
+
+> **경로 정정 (2026-10-22).** 이 절과 아래 Developer Contract 는
+> `network/internal/signer` 시절의 기록이다. 그 패키지와
+> `CHAINBENCH_SIGNER_<ALIAS>_*` 환경변수는 `#41` 에서 network 모듈과 함께
+> 없어졌고, `signer.Load`·`signer.Signer`·`ErrUnknownAlias`·`SignHash` 도 지금
+> 코드에 없다. 지금 키는 `internal/core/keyring` 의 `Source`
+> (`PrivateKeySource`·`FileSource`·`MnemonicSource`·`RandomSource`)로 들어오고,
+> 키스토어 암호는 `PasswordSource`(인라인, 파일, 한 번 묻고 0600 파일로 저장)가
+> 준다. DSL 스펙의 계정은 `keyFile` 로 hex 키 파일을 가리키며 키스토어 JSON 은
+> 받지 않는다. 비밀 자체는 `derive.PrivateKey` 가 갖고 `String`·`GoString` 이
+> 가린다.
 
 Private keys enter via env vars at chainbench-net spawn time. Two
 provider paths are supported; both share the same alias model and the
@@ -79,12 +90,12 @@ memory.
       screenshots.
 - [ ] Prefer short-lived test keys over long-lived production keys.
 - [ ] Scrub `.env` files from CI artifact uploads and dev-machine backups.
-- [ ] Verify on every release that the two boundary tests above stay in the
+- [ ] Verify on every release that the two boundary tests below stay in the
       required-green CI suite (`go test ./internal/core/keyring/...
       ./internal/core/session/...`). The end-to-end shell check they replaced
       went away with the legacy bash suite in `#43`.
 
-## Developer Contract
+## Developer Contract (2026-04 기록 — 위 경로 정정을 따른다)
 
 - Key material lives ONLY in the `network/internal/signer` package's sealed
   struct. No method exposes the key bytes.

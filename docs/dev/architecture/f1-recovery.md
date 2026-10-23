@@ -3,6 +3,12 @@
 > 실행 순서표의 마지막 항목이다. "chainbench 프로세스가 중간에 죽었을 때, 다시 실행하면
 > 이전 진행을 이어받고 서버 상태를 다시 확인한다." §4 의 네 가지는 제안대로 결정됐고
 > (2026-08-28), §6 이 구현 결과다.
+>
+> **경로 정정 (2026-10-22).** 명령 묶음 `net` 은 `chain` 이 됐다(`chain up`·`chain resume`,
+> MCP `chainbench_chain_resume`). 되짚기 구현은 `internal/chainsetup/verb/verbs_resume.go` 의
+> `ChainResume` 이고, 같은 패키지 `verbs_up.go` 의 `composeFrom` 이 첫 미완 단계부터 잇는다.
+> §6 표의 `upStepNames`·`netUpFrom`·`firstUndone`·`withWorkspace` 는 그때의 이름이다
+> (잠금 인수는 지금 `holdWorkspace`).
 > 상위 계획: `module-plan` (2026-09-24 삭제) §2a(Inventory), §4 P4.x(preflight), §7-6(워크스페이스 정의).
 
 ## 0. 원칙 — 사본을 만들지 않는다
@@ -52,7 +58,7 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 
 ### 3.1 요청을 기록한다 (구멍 1)
 
-`chain-record.json` 에 `request` 를 더한다. `net up` 이 받은 `ChainUpIn` 에서 **비밀이 아닌
+`chain-record.json` 에 `request` 를 더한다. `chain up` 이 받은 `ChainUpIn` 에서 **비밀이 아닌
 것**(체인·바이너리·키셋 경로·노드 수·동기화 모드·피어링·서버 참조·genesis set/overlay
 경로·launch set)을 `new` 단계에서 적는다. 이것은 사본이 아니다 — 요청은 지금 어디에도
 남지 않는 새 사실이다. `run --workspace-dir` 가 선언(env)에서 만든 요청도 같은 자리에
@@ -61,9 +67,9 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 `preflight.WantOf` 가 이미 `ChainUpIn` 을 목표로 바꾸므로, 기록된 요청은 곧 "이 워크스
 페이스가 되려던 것" 이다. 이어받기와 preflight 가 같은 값을 본다.
 
-### 3.2 되짚기 — `net resume` (구멍 2)
+### 3.2 되짚기 — `chain resume` (구멍 2)
 
-새 verb 하나: `chainbench net resume --workspace-dir DIR`. 하는 일은 순서대로 넷이다.
+새 verb 하나: `chainbench chain resume --workspace-dir DIR`. 하는 일은 순서대로 넷이다.
 
 1. **잠금 인수.** 지금처럼 `LockStale` 이면 넘겨받고, `LockLive` 면 거부한다(살아 있는
    실행을 되짚지 않는다).
@@ -80,9 +86,9 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 4. **서버를 다시 확인한다.** 끝나면 `preflight.Check` 로 전 노드 생사를 한 번 더 보고,
    `net status` 와 같은 표를 찍는다.
 
-`run --workspace-dir` 는 `net resume` 을 부르지 않는다. 이미 preflight 로 reuse /
+`run --workspace-dir` 는 `chain resume` 을 부르지 않는다. 이미 preflight 로 reuse /
 rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 넣는다. 복구가 필요한
-쪽은 "조립 도중 죽음" 이고 그것이 `net resume` 의 일이다. 테스트 도중 죽었으면 세션은
+쪽은 "조립 도중 죽음" 이고 그것이 `chain resume` 의 일이다. 테스트 도중 죽었으면 세션은
 케이스 단위로 기록돼 있으므로, 다시 `run` 하면 preflight 가 네트워크를 재사용하고 케이스는
 처음부터 돈다. **테스트 단위 이어받기는 하지 않는다**(케이스는 짧고, 반쯤 돈 케이스의
 상태를 믿을 수 없다).
@@ -101,7 +107,7 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 
 ### 3.4 게이트
 
-- 조립 도중(`genesis` 뒤, `start` 도중 노드 2/4 기동 뒤) 프로세스를 죽이고 `net resume`
+- 조립 도중(`genesis` 뒤, `start` 도중 노드 2/4 기동 뒤) 프로세스를 죽이고 `chain resume`
   하면 **남은 단계만** 돌고 노드 4개가 모두 뜬다. 단위 테스트는 stub 드라이버로
   `steps` 와 pid 판정을 검사하고, 라이브(gstable)로 실제 kill → resume 을 한 번 증명한다.
 - `chain-record.json` 의 `request` 만으로 같은 네트워크를 다시 조립할 수 있다(플래그 없이).
@@ -114,7 +120,7 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 | # | 질문 | 제안 | 대안 |
 |---|---|---|---|
 | 1 | 요청을 `chain-record.json` 에 기록하나 | **기록한다**(3.1). genesis 전 실패를 이어받는 유일한 길 | 기록하지 않고 재실행 시 플래그를 다시 받는다 — "다시 시작" 이지 복구가 아니다 |
-| 2 | 복구 진입점 | **`net resume` 한 verb**(3.2). 되짚기는 명시적으로 | 모든 `net <step>` 이 stale lock 을 보면 자동으로 되짚는다 — 사용자가 모르는 새 pid 를 지우거나 입양하게 되어 놀랄 수 있다 |
+| 2 | 복구 진입점 | **`chain resume` 한 verb**(3.2). 되짚기는 명시적으로 | 모든 `chain <step>` 이 stale lock 을 보면 자동으로 되짚는다 — 사용자가 모르는 새 pid 를 지우거나 입양하게 되어 놀랄 수 있다 |
 | 3 | 인벤토리 동시성 | **세트 잠금**(3.3). 파일 정본을 만들지 않는다 | `inventory.json` 정본 — 사본 금지 원칙과 충돌 |
 | 4 | 주인 없는 프로세스 | 명령줄이 ledger 의 것과 같으면 **입양**, 아니면 지금처럼 거부 | 항상 거부(안전하지만, 죽기 직전 띄운 우리 노드를 손으로 죽여야 한다) |
 
@@ -128,17 +134,17 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 
 | 조각 | 어디에 | 무엇 |
 |---|---|---|
-| 요청 기록 | `chainsetup.State.Request` (`chain-record.json` 의 `request`) | `net up` 의 `new` 단계 직후 `ChainUpIn` 을 적는다(`DataDir` 은 비움). `ChainUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
-| 되짚기 | `chainsetup.ChainResume` (`verbs_resume.go`), CLI `net resume --workspace-dir [--binary]`, MCP `chainbench_net_resume`, `app.ChainResume` | ① `withWorkspace` 가 stale 잠금을 인수하고 live 는 거부 ② `Workspace.Reconcile`: 기록된 pid 는 그 노드 머신에서 `PIDAlive`, 죽었으면 ledger·record 둘 다 지움; pid 없는 노드는 `FindBinary` + `ps -o command=` 로 우리 argv 와 같은 프로세스를 찾아 입양 ③ `firstUndone` 부터 `netUpFrom` 으로 잇기(요청의 stage 가 provision 이면 init·start 는 미완이 아니다) ④ stage 가 start 면 pid 없는 노드를 `StartNode` 로 되살림 ⑤ `NetworkStatus` 로 읽어 보고 |
-| 단계 목록 | `upStepNames` (`verbs_up.go`) | `net up` 과 `resume` 이 같은 순서 하나를 쓴다 |
+| 요청 기록 | `chainsetup.State.Request` (`chain-record.json` 의 `request`) | `chain up` 의 `new` 단계 직후 `ChainUpIn` 을 적는다(`DataDir` 은 비움). `ChainUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
+| 되짚기 | `verb.ChainResume` (`chainsetup/verb/verbs_resume.go`), CLI `chain resume --workspace-dir [--binary]`, MCP `chainbench_chain_resume`, `app.ChainResume` | ① `withWorkspace` 가 stale 잠금을 인수하고 live 는 거부 ② `Workspace.Reconcile`: 기록된 pid 는 그 노드 머신에서 `PIDAlive`, 죽었으면 ledger·record 둘 다 지움; pid 없는 노드는 `FindBinary` + `ps -o command=` 로 우리 argv 와 같은 프로세스를 찾아 입양 ③ `firstUndone` 부터 `netUpFrom` 으로 잇기(요청의 stage 가 provision 이면 init·start 는 미완이 아니다) ④ stage 가 start 면 pid 없는 노드를 `StartNode` 로 되살림 ⑤ `NetworkStatus` 로 읽어 보고 |
+| 단계 목록 | `upStepNames` (`verbs_up.go`) | `chain up` 과 `resume` 이 같은 순서 하나를 쓴다 |
 | 세트 잠금 | `chainsetup/setlock.go` + `session.AcquireLock` | `ChainAllocate` 가 `~/.chainbench/<set>.lock`(내장 풀은 `local.lock`)을 잡고 워크스페이스를 저장한 뒤 놓는다. live 홀더는 10초까지 기다린다. `session.AcquireLock` 은 워크스페이스 잠금과 같은 코드다(stale 인수·같은 프로세스 중첩) |
 
 게이트(§3.4) 실측:
 - 단위: 죽은 pid 정리 후 재기동 · 주인 없는 프로세스 입양(같은 바이너리 다른 argv 는 무시) ·
   요청 없는 워크스페이스 거부 · provision 에서 죽은 start 요청을 `init` 부터 잇기(가짜 바이너리) ·
   잠금 중첩/해제 — `internal/chainsetup/resume_test.go`.
-- 라이브(gstable): `net up --stage provision` → 요청을 start 로 바꿔 "start 도중 죽음" 을 재현 →
-  `net resume` 이 `init`·`start` 만 돌려 4노드 기동 → node3 을 `kill -9` → `net resume` 이
+- 라이브(gstable): `chain up --stage provision` → 요청을 start 로 바꿔 "start 도중 죽음" 을 재현 →
+  `chain resume` 이 `init`·`start` 만 돌려 4노드 기동 → node3 을 `kill -9` → `chain resume` 이
   `pid 33693 dead, cleared` 후 `node3 started (pid 33719)` → `net health` 전 노드 블록 7 →
   `net stop` 4노드. 스텝 목록·요청·pid 외에 새 파일은 세트 잠금 하나뿐이고, 그것은 사실이
   아니라 신호다.

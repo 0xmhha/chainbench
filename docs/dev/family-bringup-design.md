@@ -31,7 +31,7 @@
 | `poa.GenerateGenesis` / `DeployGovernance` / `EtcdInit` | `consensus/poa/bootstrap_exec.go` | ✅ 커맨드 정확, `Runner` boundary 있음 |
 | `poa.BootstrapPlan()` — 5단계 순서 데이터 | `consensus/poa/bootstrap.go` | ✅ 순서 정확 |
 | `supervisor.Deps.LeaderGate` — "미배선이면 오류" 계약 | `core/supervisor` | ✅ 자리만 비어 있음 |
-| `engine.GenesisSource` / `KeySource` boundary | `internal/engine`(지금 `internal/chainsetup`) | ✅ |
+| `engine.GenesisSource` / `KeySource` boundary | `internal/engine`(지금 `internal/core/genesis` 의 `Source` · `internal/core/keyring` 의 `Source`) | ✅ |
 
 **작성 당시에는 이 프리미티브를 부르는 곳이 3군데로 흩어져 있었다** — 업그레이드 CLI,
 핸드오프 드라이버, 원격 서버셋 부트스트랩. 그리고 정작 평범한 기동 경로에는 없었다.
@@ -131,8 +131,9 @@ type GenesisArtifacts struct {
 }
 ```
 `GenesisSource.Build` 의 반환을 `[]byte` → `GenesisArtifacts` 로 넓힌다. wbft 는 `Extra` 가 nil.
+(지금은 `genesis.Source.Genesis` 가 `genesis.Artifacts` 를 돌려준다.)
 
-### 4.4 `PortRule` — 패밀리가 대역 요구량을 말한다
+### 4.4 `PortReservation` — 패밀리가 대역 요구량을 말한다
 
 현재 `portplan` 은 `etcd = p2p+1` 하나만 예약한다. wemix 는 **p2p+1(peer)·p2p+2(client)** 둘을 쓴다
 (라이브 확인: `peerUrls https://127.0.0.1:8590`, `clientUrls http://localhost:8591`, p2p=8589).
@@ -212,7 +213,8 @@ internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
   `wemix genesis`·`deploy-governance`·`admin.etcdInit()` 는 바이너리의 기능이고, 계속 바이너리를 호출한다
   (`keygen` 이 `bootnode` 를 호출하는 것과 같다). `Runner` boundary 이 이미 그 경계다.
 - **wemix 전용 신원 생성기를 만들지 않는다.** §2 마지막 줄 — preset 이 이미 idv5 를 담고 있다.
-- **로컬/원격을 분기하지 않는다.** `Runner` 는 이미 로컬(`execRunner`)·SSH(`SSHPoaRunner`) 두 구현이 있다.
+- **로컬/원격을 분기하지 않는다.** `Runner` 는 로컬이면 `poa.ExecRunner` 이고, 원격이면 `chainsetup` 이
+  노드별 `Bootstrap.Access` 로 그 머신의 `process.Commander` 를 감싼 `Runner` 를 넘긴다.
 
 ---
 
@@ -221,8 +223,9 @@ internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
 1. **`Phase.Actions` 를 문자열로 둘 것인가, 타입 상수로 둘 것인가.**
    문자열이면 core 가 체인 어휘를 모르지만 오타가 런타임까지 간다. `testspec` 은 문자열 + `Unresolved`
    오프라인 검증으로 풀었다(`chainbench validate`). 같은 방식을 쓸 수 있다.
-2. **부트노드 선정.** 현재 `poa.BootRole` 은 `RoleBoot || RoleValidator` 를 참으로 본다 —
-   4검증자면 전부 참이라 선정 기준이 되지 못한다. 토폴로지의 `bootnode: true`(이미 `State.Bootnode` 로
-   기록 중)를 정본으로 삼는 편이 맞다.
+2. **부트노드 선정.** 옛 `poa.BootRole` 은 `RoleBoot || RoleValidator` 를 참으로 봐서
+   4검증자면 전부 참이라 선정 기준이 되지 못했다. 지금은 `BringUpPhases` 와 `bootPlacement` 가
+   index 가 가장 큰 bp 를 고른다. 토폴로지의 `bootnode: true`(이미 `State.Bootnode` 로
+   기록 중)를 정본으로 삼을지는 아직 열려 있다.
 3. **`config.json` 의 `env` 정책값**(blockCreationTime·stakingMin 등)을 어디서 받을 것인가.
    DSL `env` 선언 / 서버 세트 / 패밀리 기본값 중 어디에 두느냐는 사용자 결정 사항.

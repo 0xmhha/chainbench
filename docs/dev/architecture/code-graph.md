@@ -1,6 +1,6 @@
 # Code graph — AST-measured package structure
 
-> **측정 문서.** §2~§3 은 **2026-09-29 (`127be5a4`)** 재측정이다. §4 는 완료된
+> **측정 문서.** §2~§3 은 **2026-10-22 (`f9e46b2d`)** 재측정이다. §4 는 완료된
 > launchopt 리팩토링의 **[이력]** 이다. 측정은 다시 뽑으면 갱신되지만, 뽑지 않은
 > 사이의 코드 변경은 반영되지 않는다 — 어긋나면 코드가 이긴다.
 >
@@ -13,7 +13,7 @@
 > 호출(선택자) 그래프는 별도 도구다 — [`../codegraph/`](../codegraph/README.md).
 >
 > 측정 이력: 08-27 = 75/268 · 09-07 = 65/209 · 09-10 = 70/225 · 09-11 = 70/225 ·
-> 09-29 = 75/251.
+> 09-29 = 75/251 · 10-22 = 80/266.
 
 ## 1. Method
 
@@ -29,73 +29,77 @@ and `tests/` and emits:
   `layerOf` (the per-package placement is `layers.md` §3, which `internal/arch`
   enforces).
 
-## 2. Measured shape — 2026-09-29 (75 packages, 251 edges, 66,936 lines)
+## 2. Measured shape — 2026-10-22 (80 packages, 266 edges, 94,866 lines)
 
-`violations: 6` — 전부 같은 모양이다: `internal/core/*` 여섯이 `internal/preset` 을
-부른다. **층이 깨진 것이 아니라 이 도구가 `preset` 을 못 보는 것이다** — `layerOf` 의
-분기에 `internal/preset` 이 없어 `default` 인 `other` 로 떨어지고, core → other 가
-역방향으로 보인다. 배치의 정본은 `layers.md` §3 이고 그것을 기계로 강제하는
-`internal/arch` 는 위반 0 으로 통과한다. 도구의 버킷을 고치면 사라진다.
+`violations: 0`. 09-29 측정의 6건은 층이 깨진 것이 아니라 도구가 `internal/preset` 을
+못 본 것이었다 — `layerOf` 에 분기가 없어 `other` 로 떨어지고, core → other 가
+역방향으로 보였다. `preset` 을 L1(core) 버킷에 넣고, 이미 없는 `testspec`·`testkit`
+분기를 지금 있는 `testsupport` 로 바꾸자 사라졌다. 배치의 정본은 `layers.md` §3 이고
+그것을 기계로 강제하는 `internal/arch` 도 위반 0 으로 통과한다.
 
 | Layer | Packages | Lines | Outbound edges land in |
 |---|---|---|---|
-| core (`internal/core/*`, `resource`) | 26 | 20,965 | core 46 · other 6 · domain 1 |
-| orchestration (`chainsetup`, `chainsetup/verb`, `testengine`, `testhelper`, `mcp`, `dashboard`) | 6 | 27,085 | core 52 · other 9 · domain 4 · orchestration 4 · usecase 1 |
-| domain (`chains/*`, `consensus/*`, `accounts`, `validatorset`) | 11 | 3,810 | core 15 · domain 11 · other 2 |
-| entry (`cmd/*`, incl. the per-group `*cmd` packages) | 19 | 5,094 | entry 32 · usecase 15 · orchestration 4 · core 3 · other 3 · domain 2 |
-| other (`dsl/*`, `feature`, `preset`, `nodemonitor`, `testsupport`) | 7 | 4,993 | core 11 · domain 1 · other 1 · usecase 1 |
-| usecase (`app`) | 1 | 2,794 | core 17 · domain 3 · orchestration 3 · other 2 |
-| tests (`arch`, `tests/e2e`) | 2 | 1,405 | — |
-| scripts (`scripts/inventory/*`) | 3 | 790 | tests 2 |
+| core (`internal/core/*`, `resource`, `preset`) | 28 | 24,625 | core 55 · domain 1 |
+| orchestration (`chainsetup`, `chainsetup/verb`, `testengine`, `testhelper`, `mcp`, `dashboard`) | 6 | 34,055 | core 58 · other 8 · domain 4 · orchestration 4 · usecase 2 |
+| usecase (`app`) | 1 | 17,504 | core 20 · orchestration 4 · domain 3 · other 1 |
+| entry (`cmd/*`, incl. the per-group `*cmd` packages) | 19 | 5,724 | entry 32 · usecase 16 · core 6 · orchestration 4 · domain 3 · other 1 |
+| other (`dsl/*`, `feature`, `nodemonitor`, `webcli`) | 6 | 5,511 | core 8 · domain 1 · other 1 · usecase 1 · orchestration 1 |
+| domain (`chains/*`, `consensus/*`, `accounts`, `validatorset`) | 11 | 4,556 | core 18 · domain 11 |
+| tests (`arch`, `tests/e2e`, `tests/webui/fixtures/*`) | 4 | 1,760 | core 1 |
+| scripts (`scripts/inventory/*`) | 4 | 1,105 | tests 2 |
+| support (`testsupport`) | 1 | 26 | — |
+
+09-29 와 비교해 가장 크게 바뀐 것은 `app` 이다. 2,794줄에서 17,504줄로 늘었고,
+늘어난 몫의 대부분이 Web UI 의 유스케이스다. 층의 모양은 그대로다 — 표면은 여전히
+app 을 지나고, core 는 아래로만 향한다.
 
 ```mermaid
 flowchart TD
     entry[entry: cmd/chainbench + per-group *cmd · -mcp · -dashboard]
     usecase[usecase: app]
     orch[orchestration: chainsetup · chainsetup/verb · testengine · testhelper · mcp · dashboard]
-    other[other: dsl · dsl/interp · dsl/assert · feature · preset · nodemonitor · testsupport]
+    other[other: dsl · dsl/interp · dsl/assert · feature · nodemonitor · webcli]
     domain[domain: chains · consensus · accounts · validatorset]
-    core[core: 26 packages incl. resource]
+    core[core: 28 packages incl. resource · preset]
     entry -->|32| entry
-    entry -->|15| usecase
+    entry -->|16| usecase
     entry -->|4| orch
-    entry -->|3| core
-    usecase -->|17| core
+    entry -->|6| core
+    usecase -->|20| core
     usecase -->|3| domain
-    usecase -->|3| orch
-    orch -->|52| core
-    orch -->|9| other
+    usecase -->|4| orch
+    orch -->|58| core
+    orch -->|8| other
     orch -->|4| domain
-    other -->|11| core
-    domain -->|15| core
+    orch -->|2| usecase
+    other -->|8| core
+    domain -->|18| core
     domain -->|11| domain
-    core -->|46| core
-    core -->|6| other
+    core -->|55| core
 ```
 
-**표면은 app 을 지난다.** `cmd/chainbench/*` 의 최대 목적지는 `usecase`(14 엣지)이고,
-`mcp -> app` 은 229 refs — MCP 가 app 을 우회하지 않는다는 규칙(architecture-v2 §2)이
-그래프에 그대로 보인다. `internal/arch` 의 래칫 9개가 이것을 기계로 강제한다.
+**표면은 app 을 지난다.** `cmd/*` 에서 `app` 으로 가는 엣지가 16개, 274 refs 이고,
+`mcp -> app` 은 317 refs 다. MCP 가 app 을 우회하지 않는다는 규칙(architecture-v2 §2)이
+그래프에 그대로 보이며, `internal/arch` 가 이것을 기계로 강제한다.
 
 **Highest fan-in (the load-bearing contracts)**
 
 | Package | in | out | lines |
 |---|---:|---:|---:|
-| `internal/core/node` | 18 | **0** | 1,102 |
-| `internal/core/registry` | 17 | 1 | 650 |
-| `internal/app` | 16 | 23 | 2,505 |
-| `internal/core/filestore` | 12 | **0** | 196 |
-| `internal/core/keyring` | 11 | 2 | 502 |
-| `internal/core/keyring/store` | 10 | 4 | 1,294 |
-| `cmd/chainbench/surface` | 9 | **0** | 36 |
-| `internal/core/process` · `core/rpc` · `core/session` | 8 | 5 / **0** / 2 | 1,349 / 495 / 1,298 |
+| `internal/app` | 19 | 28 | 17,504 |
+| `internal/core/node` | 19 | **0** | 1,474 |
+| `internal/core/registry` | 18 | 1 | 1,135 |
+| `internal/preset` | 15 | 3 | 553 |
+| `cmd/chainbench/surface` | 13 | 1 | 96 |
+| `internal/core/filestore` | 13 | **0** | 297 |
+| `internal/core/keyring` · `core/process` · `core/session` | 9 | 2 / 6 / 2 | 391 / 1,781 / 2,835 |
 
-많이 의존되면서 아무것도 의존하지 않는 넷(`core/node`·`core/filestore`·`core/rpc`·
-`cmd/chainbench/surface`)이 프리미티브 층이다.
+많이 의존되면서 아무것도 의존하지 않는 둘(`core/node`·`core/filestore`)이 프리미티브
+층이다. `cmd/chainbench/surface` 는 이번 측정에서 out 1 이 생겼다.
 
-**Highest fan-out (the assemblers):** `app` (23), `testengine` (23),
-`chainsetup` (19), `cmd/chainbench` (17), `consensus/upgrade` (12).
-`app` 은 in 16 / out 23 인 허브인데, 유스케이스 층이라 의도한 모양이다.
+**Highest fan-out (the assemblers):** `app` (28), `testengine` (26),
+`chainsetup` (24), `cmd/chainbench` (17), `testhelper` (10).
+`app` 은 in 19 / out 28 인 허브인데, 유스케이스 층이라 의도한 모양이다.
 
 ## 3. "노드가 어디서 도는가" — 한 소유자로 수렴했다
 
@@ -106,18 +110,17 @@ attached-network 레지스트리는 `core/session` 으로 흡수됐다.
 
 | Package | Layer | Lines | Exported | in / out | What it answers |
 |---|---|---:|---|---|---|
-| `internal/resource` | core | 3,016 | 24f / 41t | 6 / 4 | 서버 세트·인벤토리·포트 슬롯·배치·풀·opener·localmap·workspace-config·baseline |
-| `internal/core/node` | core | 1,102 | 12f / 17t | 18 / **0** | 노드 어휘: label · role · Map · placement · peering · enode · reservation |
-| `internal/core/session` | core | 1,298 | 20f / 18t | 8 / 2 | 세션·아티팩트, 그리고 attached-network 레지스트리(옛 `core/netreg`) |
-| `internal/core/blueprint` | core | 1,248 | 6f / 19t | 2 / 3 | 네트워크 선언 문서(N1) — 배치와 키를 한 장에 |
+| `internal/resource` | core | 3,806 | 26f / 49t | 7 / 4 | 서버 세트·인벤토리·포트 슬롯·배치·풀·opener·localmap·workspace-config·baseline |
+| `internal/core/node` | core | 1,474 | 18f / 18t | 19 / **0** | 노드 어휘: label · role · Map · placement · peering · enode · reservation |
+| `internal/core/session` | core | 2,835 | 35f / 30t | 9 / 2 | 세션·아티팩트, 그리고 attached-network 레지스트리(옛 `core/netreg`) |
+| `internal/core/blueprint` | core | 1,228 | 6f / 18t | 2 / 5 | 네트워크 선언 문서(N1) — 배치와 키를 한 장에 |
 
 ```mermaid
 flowchart TD
     cmd[cmd: resourcecmd · chaincmd · suitecmd]
     app[app]
-    setup[chainsetup]
+    setup[chainsetup · chainsetup/verb]
     engine[testengine]
-    upg[consensus/upgrade]
     res[internal/resource<br/>LoadSet · Access · Opener · Allocation · Baseline]
     nd[core/node<br/>Label · Map · Endpoints · peering · enode]
     proc[core/process]
@@ -125,26 +128,28 @@ flowchart TD
     fs[core/filestore]
 
     cmd -->|3| res
-    cmd -->|7| app
-    app -->|34| res
-    setup -->|67| res
-    engine -->|6| res
-    upg -->|3| res
-    res -->|26| nd
-    res -->|36| rem
-    res -->|10| proc
+    cmd -->|110| app
+    app -->|162| res
+    setup -->|106| res
+    engine -->|12| res
+    res -->|29| nd
+    res -->|51| rem
+    res -->|17| proc
     res -->|5| fs
 ```
 
-엣지가 이름보다 많이 말하는 것:
+엣지 라벨은 참조한 공개 심볼의 수(refs)다. 엣지가 이름보다 많이 말하는 것:
 
-- **`resource` 는 `core/node` 의 어휘를 쓴다**(`Map`·`Label`·`Endpoints`, 26 refs).
+- **`resource` 는 `core/node` 의 어휘를 쓴다**(`Map`·`Label`·`Endpoints`, 29 refs).
   인벤토리가 배치 어휘에 의존하는 방향은 08-27 과 같고, architecture-v2 V2.4 가
   인벤토리를 그 모듈 *안에* 둔 결정이 지금 컴파일된 모양이다.
-- **`chainsetup -> resource` 가 67 refs 로 가장 굵다.** 구성 단계가 자원 소유자를
-  통해서만 서버·포트를 만진다는 뜻이고, 그것이 이 통폐합의 목적이었다.
-- `resource` 는 3,016줄로 core 에서 가장 크다. 다음 통폐합 검토 대상이라면 여기다 —
-  `code-health-review-2026-09-10.md` (2026-09-24 삭제) §패키지 문서 참조.
+- **`app -> resource` 가 162 refs 로 가장 굵다.** 09-29 에는 `chainsetup` 쪽(67)이
+  가장 굵었다. Web UI 가 서버 세트와 포트를 app 을 거쳐 다루면서 순서가 바뀌었다.
+  구성 단계(`chainsetup`·`chainsetup/verb`, 106)도 여전히 자원 소유자를 통해서만
+  서버·포트를 만진다. 그것이 이 통폐합의 목적이었다.
+- `consensus/upgrade` 는 이제 없다. 09-29 그림의 `upg -> res` 엣지도 함께 사라졌다.
+- `resource` 는 3,806줄로 core 에서 `core/session`(2,835) 보다 크다. 다음 통폐합
+  검토 대상이라면 여기다.
 
 ## 4. Launch-argument assembly — 완료된 리팩토링 *(2026-08 이력)*
 

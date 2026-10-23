@@ -241,7 +241,7 @@ const ( EtcdJoinFailed FailureMode = iota; EtcdStale; ForkNotCrossed; QuorumLost
 ```
 > etcd: `etcdInit` 후 **리더 준비 확인 게이트** + **재기동 시 datadir 정리** + **gap 정렬**로 "바로 연결"(C-etcd §요약). 실패는 분류·기록.
 > **stale etcd의 실체(S2):** etcd는 노드 내장이므로 프로세스 종료 시 함께 종료된다 — "살아있는 etcd 정리"는 불필요. 문제는 **같은 datadir로 재기동** 시 남은 클러스터 상태(`cannot fetch cluster info`)이며, 해법은 **재-셋업 전 datadir 삭제**(`Teardown{RemoveDataDir:true}`, 종료와 별개 기능).
-> 하드포크는 2종(§D-2.8): **type-1 체인 업그레이드**는 노드별 바이너리 집합(plan.Nodes[].Binary)으로, **type-2 동일체인**은 `ForkSwaps`로 fork 블록 전 바이너리 교체를 supervisor가 오케스트레이션.
+> 하드포크는 2종(§D-2.8): **type-1 체인 업그레이드**는 노드별 바이너리 집합(plan.Nodes[].Binary)으로, **type-2 동일체인**은 `hardfork.SwapPlan`으로 fork 블록 전 바이너리 교체를 `chainsetup`(`Workspace.Hardfork`)이 오케스트레이션.
 
 ### 3.4 `core/place` — 통합 배치·포트 [NEW · portplan+topology CONSOLIDATE]
 ```go
@@ -266,7 +266,7 @@ type Capacity struct { MinValidators int; Hosts int; SlotsPerHost int; PortBandS
 ```
 - **용량 검증(C·요구 5)**: 노드 수가 **min(≥4 BFT)·max(서버×슬롯 or 포트대역)** 를 벗어나면 배치 이전에 실패. 원격 자원 낭비 방지(§0-2-3). `topology`가 개수, `place`가 물리 용량 담당.
 - **포트 타입(L1):** etcd는 wemix **바이너리 내장**이고 그 포트는 바이너리가 `P2P+1`로 파생하므로, launch flag가 아니라 **예약 대상**이다. 이 예약은 기존 `portplan.Ports`(P2P·Etcd·HTTP·WS·Auth, p2pStep≥2·rpcStep≥3로 **P2P 밴드와 RPC 밴드 분리** → 충돌 없음)에 이미 존재하므로 place는 이를 재사용(consolidate)한다. `node.Endpoints`(P2P/HTTP/WS/Auth/**Metrics**, etcd 필드 없음)는 별개 타입 — node table 직렬화용이며 etcd 예약은 `portplan.Ports`가 소유. (place가 두 타입의 필드차이(Metrics↔Etcd)를 흡수.)
-- `LocalStepped`: index 기반 결정적 스텝. `LocalOSAssigned`: `:0` 바인드 후 회수(고정포트 이중바인드 근절, E-3-1). `RemotePerHost`: 동일 포트 + 서버별 IP(요구 16).
+- 현행 코드에는 `core/place`와 위 `Mode` 3종이 없다. 배치는 `internal/resource`의 `Pool`(호스트 × 슬롯 격자)이 맡는다. 서버 세트가 없으면 이 머신에서 index 기반 결정적 스텝 포트(`resource.Builtin`)를 쓰고, 서버당 슬롯이 1이면 동일 포트 + 서버별 IP가 된다(요구 16). `:0` 바인드 후 회수(OS 할당) 모드는 구현되지 않았다.
 
 ### 3.5 `core/keyreg` — 키 레지스트리 [NEW · keys+deploy/keys CONSOLIDATE]
 ```go
@@ -330,15 +330,15 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
 > 주의: `BuildGenesis`는 **`ConsensusFamily`의 메서드**(`registry.go:46`)이고, genesis 패키지의 진입점은 **`genesis.Build`**(`genesis.go:38`)다 — 이름 혼동 금지. 오버레이는 항상 새 바이트 반환(원본 불변, E-3-3).
 
 ### 3.9 역할 용어집 (요구 4 · L2)
-**단일 도메인 어휘 `bp`/`en`/`boot`를 정의서와 아티팩트(env.json) 전반에서 일관 사용**한다. 코드 `node.Role` enum("validator"/"endpoint"/"boot")은 **내부 식별자**이며, session이 env.json 기록 시 도메인 용어로 직렬화한다(단일 소유자에서 1회 변환).
-| 도메인 용어 (정의서·env.json) | 코드 enum (node.Role, 내부) | 의미 |
+**단일 도메인 어휘 `bp`/`en`/`pn`을 정의서와 아티팩트(env.json) 전반에서 일관 사용**한다. 코드 `node.Role` enum도 같은 어휘(`RoleBP`="bp"/`RoleEN`="en"/`RolePN`="pn")를 쓰므로 별도 변환이 없다. `boot` 역할은 없고, 노드 연결은 `pn`(proxy node)이 맡는다.
+| 도메인 용어 (정의서·env.json) | 코드 enum (node.Role) | 의미 |
 |-------------------------------|-----------------------------|------|
-| **`bp`** | `RoleValidator`("validator") | **block producer** — 블록 생성·검증(staking 선정). BFT 코드가 "validator"라 부를 뿐 동일 역할 |
-| **`en`** | `RoleEndpoint`("endpoint") | **endpoint** — 비생성 RPC/싱크 노드 |
-| **`boot`** | `RoleBoot`("boot") | bootnode — 부트스트랩(wemix governance 배포) |
-> **왜 `bp`/`en` 단축어로 통일하는가:** wemix4 도메인의 표준 명칭이고 대칭적(2글자)이라 정의서 가독성이 높다. `bp`↔`validator`는 약어↔확장이 **아니라** 도메인 어휘와 BFT-코드 어휘의 **동의어**다 — 코드값 "validator"에 맞추면 `en`↔`endpoint`(약어↔확장)와 짝이 안 맞아 비대칭으로 보였다. 해결: **표층(정의서·아티팩트)은 `bp`/`en`으로 통일, enum은 내부에만.**
-> 입력 관용: topology 파서는 `"en"`·`"endpoint"` 둘 다 받아 `RoleEndpoint`로 정규화(topology.go:60-61). `node.RoleEN`("en")은 **dead code** → 제거(refactoring §2).
-> **구현 주의:** `node.Node.Role`의 json 태그는 enum값("validator"/"endpoint")을 낸다. 따라서 env.json은 `node.Node`를 **그대로 marshal하지 않고**, session이 `RoleValidator→"bp"`·`RoleEndpoint→"en"`·`RoleBoot→"boot"`로 매핑한 **전용 레코드**로 기록한다(위 "1회 변환"의 실체).
+| **`bp`** | `RoleBP`("bp") | **block producer** — 블록 생성·검증(staking 선정). BFT 코드가 "validator"라 부를 뿐 동일 역할 |
+| **`en`** | `RoleEN`("en") | **endpoint** — 비생성 RPC/싱크 노드 |
+| **`pn`** | `RolePN`("pn") | proxy node — producer와 endpoint 사이 트래픽을 잇는 계층(static-nodes 그래프로 표현) |
+> **왜 `bp`/`en` 단축어로 통일하는가:** wemix4 도메인의 표준 명칭이고 대칭적(2글자)이라 정의서 가독성이 높다. `bp`↔`validator`는 약어↔확장이 **아니라** 도메인 어휘와 BFT-코드 어휘의 **동의어**다 — 코드값 "validator"에 맞추면 `en`↔`endpoint`(약어↔확장)와 짝이 안 맞아 비대칭으로 보였다. 해결: **표층(정의서·아티팩트)과 코드 enum 모두 `bp`/`en`으로 통일.**
+> 입력 관용 없음: `node.NormalizeRole`은 `bp`/`en`/`pn`만 받고, 예전 철자(`validator`/`endpoint`/`boot`)를 포함한 그 밖의 값은 오류로 거부한다(`internal/core/node/role.go`).
+> **구현 주의:** `node.Node.Role`의 json 값이 곧 도메인 어휘("bp"/"en"/"pn")이므로 env.json 기록에 역할 매핑 단계가 따로 없다.
 
 ---
 
@@ -437,7 +437,7 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
 
 ## 7. remote 전략 (요구 9·10·11·16)
 
-- 공통 절차(접근·upload·download·동일포트)를 **core로 승격**: `driver.RemoteDriver`(+`FileProvisioner`, 기존) + `core/remote`(ssh/auth, 기존) + `place.RemotePerHost` + `keyreg.UploadTo/RemoteDownload`.
+- 공통 절차(접근·upload·download·동일포트)를 **core로 승격**: `process.RemoteDriver`(+`FileProvisioner`) + `core/remote`(ssh/auth) + `resource.Pool`(서버당 1슬롯 = 동일 포트·서버별 IP) + `core/keyring`.
 - 체인 특화(wemix etcd/gov)는 `chains/wemix/deploy`에 잔류. 테스트 정의서는 **placement-무관**(local/remote 동일 spec, `placement` 필드만 상이).
 - **SSH 접속 자격증명(L6b · 보안):** remote 접속에 필요한 **ssh 포트·서버 IP 목록·user·password(또는 keyPath)** 는 **정의서에 넣지 않고**, git에 **절대 커밋하지 않는** 별도 파일 `server-set.yaml`을 런타임에 읽어 사용한다. 정의서는 `remote.cluster`로 이 파일을 **참조만** 한다. 파일은 `.gitignore` 처리하고 `server-set.sample.yaml`(더미값)만 추적.
 ```yaml
