@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {chartModel, logWindow, gapSummary} from '../../web/src/metric-chart.mjs'
+import {formatTime} from '../../web/src/labels.mjs'
 
 const metrics = {
  networkId: 'n',
@@ -40,7 +41,8 @@ test('a selected chart time links logs from 30 seconds before to 30 seconds afte
 })
 
 test('coverage gaps are listed with their reasons rather than hidden', () => {
- assert.deepEqual(gapSummary(metrics.coverage), ['node2 rpc rpc_unavailable (2026-10-09T00:00:10Z – 2026-10-09T00:00:15Z)'])
+ // Korean first, the engine code kept (tests and searches still find it), local times.
+ assert.deepEqual(gapSummary(metrics.coverage), [`node2 · RPC 응답 없음 · rpc_unavailable (${formatTime('2026-10-09T00:00:10Z')} – ${formatTime('2026-10-09T00:00:15Z')})`])
  assert.deepEqual(gapSummary({complete: true, gaps: []}), [])
 })
 

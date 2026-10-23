@@ -88,11 +88,19 @@ func TestMonitorRoutesServeViewersAndRejectBadQueries(t *testing.T) {
 	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &logs) != nil || len(logs.Entries) != 1 || len(logs.Entries[0]) != 2 {
 		t.Fatalf("viewer logs = %d %s", w.Code, w.Body.String())
 	}
+	for query, total := range map[string]float64{"q=IMPORTED": 1, "q=absent": 0, "level=info": 0} {
+		w = call("viewer", "/api/v1/nodes/monitored.node1/logs?"+query)
+		var filtered map[string]any
+		if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &filtered) != nil || filtered["total"] != total {
+			t.Errorf("logs?%s = %d %s, want total %v", query, w.Code, w.Body.String(), total)
+		}
+	}
 	for path, want := range map[string]int{
 		"/api/v1/networks/monitored/metrics?from=yesterday":                                    400,
 		"/api/v1/networks/monitored/metrics?from=2026-10-09T00:00:00Z&to=2026-10-08T00:00:00Z": 400,
 		"/api/v1/nodes/monitored.node1/logs?limit=101":                                         400,
 		"/api/v1/nodes/monitored.node1/logs?cursor=-1":                                         400,
+		"/api/v1/nodes/monitored.node1/logs?level=fatal":                                       400,
 		"/api/v1/networks/monitored/metrics?from=2026-01-01T00:00:00Z&to=2026-03-01T00:00:00Z": 400,
 		"/api/v1/networks/absent/metrics":                                                      404,
 		"/api/v1/nodes/monitored.node9/logs":                                                   404,

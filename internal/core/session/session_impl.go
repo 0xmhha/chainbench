@@ -102,6 +102,9 @@ type sess struct {
 	mu    sync.Mutex
 	envs  map[Fingerprint]*env
 	tests []*record
+
+	// now stamps when each test starts and gets its verdict.
+	now func() time.Time
 }
 
 // New creates the .chainbench/<session>/ tree under baseDir and returns the
@@ -146,6 +149,7 @@ func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysD
 		startedAt: startedAt,
 		keys:      newKeys(filepath.Join(root, dirKeys)),
 		envs:      make(map[Fingerprint]*env),
+		now:       time.Now,
 	}, nil
 }
 
@@ -210,7 +214,7 @@ func (s *sess) NewEnvironment(fp Fingerprint) (Environment, error) {
 func (s *sess) Test(seq int, id string) TestRecord {
 	dir := filepath.Join(s.root, dirTests, fmt.Sprintf("%03d_%s", seq, id))
 	_ = os.MkdirAll(dir, dirPerm)
-	r := &record{dir: dir, seq: seq, id: id}
+	r := &record{dir: dir, seq: seq, id: id, now: s.now, startedAt: s.now().UTC()}
 	s.mu.Lock()
 	s.tests = append(s.tests, r)
 	s.mu.Unlock()
@@ -235,7 +239,7 @@ func (s *sess) Save() error {
 	}
 	var writeErrs []error
 	for _, r := range s.tests {
-		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.presetRef, Status: string(r.status), PresetID: r.presetID})
+		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.presetRef, Status: string(r.status), PresetID: r.presetID, StartedAt: stamp(r.startedAt), FinishedAt: stamp(r.finishedAt)})
 		switch r.status {
 		case StatusPass:
 			doc.Summary.Pass++

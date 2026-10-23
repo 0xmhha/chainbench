@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import { webApi } from './web-api.mjs'
   let { webSession } = $props()
   const api = $derived(webApi(webSession))
@@ -12,15 +13,15 @@
   $effect(() => { if (webSession) load(false) })
   // A result is an HTTP status or the outcome a store recorded.
   const refused = result => /^[45]\d\d$/.test(result) || result === 'failed'
-  const fmt = t => new Date(t).toLocaleString()
+  const fmt = formatTime
 </script>
 
 <section class="panel" aria-label="감사 기록">
   <h2>감사 기록</h2>
   <p class="muted">관리자만 봅니다. 요청마다 누가, 무엇을, 어떤 결과로 했는지 남으며 비밀 값은 기록하지 않습니다.</p>
   <form class="filters" onsubmit={e => { e.preventDefault(); load(false) }}>
-    <label>시작 <input aria-label="감사 기록 시작 시각" type="datetime-local" bind:value={from} /></label>
-    <label>끝 <input aria-label="감사 기록 끝 시각" type="datetime-local" bind:value={to} /></label>
+    <label>시작 <input name="from" aria-label="감사 기록 시작 시각" type="datetime-local" bind:value={from} /></label>
+    <label>끝 <input name="to" aria-label="감사 기록 끝 시각" type="datetime-local" bind:value={to} /></label>
     <button disabled={busy}>기간 조회</button>
   </form>
   {#if items.length}
@@ -33,13 +34,6 @@
 </section>
 
 <style>
-  .panel { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .muted { color: var(--text-muted); }
-  .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-  label { display: grid; gap: 4px; }
-  input, button { font: inherit; color: inherit; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); padding: 8px; }
-  button { cursor: pointer; margin-top: 12px; } button:disabled { opacity: .45; cursor: default; }
-  .table-wrap { overflow: auto; margin-top: 16px; } table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-subtle); } th { color: var(--text-muted); font-weight: 500; font-size: 12px; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; } .refused { color: var(--danger); }
+  .filters { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
+  .mono { overflow-wrap: anywhere; } .refused { color: var(--danger); }
 </style>

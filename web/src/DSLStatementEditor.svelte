@@ -90,14 +90,13 @@
 </div>
 
 <style>
-  .summary { padding: 12px 16px; border: 1px solid var(--danger); border-radius: 8px; background: var(--danger-bg); color: var(--danger); }
-  .summary h3 { margin: 0 0 8px; font-size: 15px; } .summary button { color: var(--danger); background: none; border: 0; text-decoration: underline; cursor: pointer; font: inherit; padding: 0; min-height: 0; font-family: ui-monospace, monospace; }
-  .columns { display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
-  nav { border-right: 1px solid var(--border-subtle); padding-right: 12px; } nav ul { list-style: none; padding: 0; margin: 0; } h4 { margin: 12px 0 4px; color: var(--text-muted); font-size: 13px; }
-  .item { display: block; width: 100%; text-align: left; font: inherit; color: var(--text); background: none; border: 1px solid transparent; border-radius: 6px; padding: 6px 8px; cursor: pointer; overflow-wrap: anywhere; }
+  .summary { padding: var(--space-3) var(--space-4); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-bg); color: var(--danger); }
+  .summary h3 { margin: 0 0 var(--space-2); color: var(--danger); } .summary button { min-height: 0; padding: 0; border: 0; background: none; color: var(--danger); text-decoration: underline; font-family: var(--font-mono); }
+  .columns { display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: var(--space-4); margin-top: var(--space-4); }
+  nav { border-right: 1px solid var(--border-subtle); padding-right: var(--space-3); } nav ul { list-style: none; padding: 0; margin: 0; } h4 { margin: var(--space-3) 0 var(--space-1); }
+  .item { display: block; width: 100%; text-align: left; white-space: normal; background: none; border-color: transparent; overflow-wrap: anywhere; }
   .item.selected { background: var(--surface-raised); border-color: var(--accent); } .item.invalid { color: var(--danger); }
-  .add, .toolbar button { font: inherit; color: var(--text); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 6px 10px; cursor: pointer; margin: 4px 4px 0 0; }
-  .toolbar button:disabled { opacity: .4; cursor: default; }
-  .hint { color: var(--text-muted); font-size: 12px; }
+  .add, .toolbar button { margin: var(--space-1) var(--space-1) 0 0; }
+  .hint { color: var(--text-muted); font-size: var(--text-xs); }
   @media (max-width: 800px) { .columns { grid-template-columns: 1fr; } nav { border-right: 0; } }
 </style>

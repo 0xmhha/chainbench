@@ -1623,7 +1623,7 @@ paths:
       operationId: logs
       summary: Read redacted time-linked captured node logs
       x-minimum-role: viewer
-      description: nodeId is "<networkId>.<node label>". Entries are archived complete lines of a local node log, redacted before storage. A geth-family timestamp is used as the entry time (local zone, collection year); otherwise the collection time is used, and coverage.timestampSource reports source, collection or mixed. The default window is the last two hours (at most 31 days), in node log order, paged by limit (at most 100); nextCursor keeps its window. Lines are cut at 64 KiB, a line longer than 1 MiB is skipped as a log_line_oversized gap, a replaced or shrunk file is read from its start with a log_rotated or log_truncated gap, and every line of a PEM block is redacted. Remote SSH node logs are archived only while an operator's network.monitor job runs with that operator's own binding; other intervals are remote_log_collection_unavailable gaps.
+      description: nodeId is "<networkId>.<node label>". Entries are archived complete lines of a local node log, redacted before storage. A geth-family timestamp is used as the entry time (local zone, collection year); otherwise the collection time is used, and coverage.timestampSource reports source, collection or mixed. The default window is the last two hours (at most 31 days), in node log order, paged by limit (at most 100); nextCursor keeps its window. q (case-insensitive substring of the redacted text, at most 200 characters) and level (comma-separated CRIT, ERROR, WARN, INFO, DEBUG, TRACE; go-wemix's EROR, DBUG and TRCE read as ERROR, DEBUG and TRACE) narrow the read to matching lines over the whole window; total counts them, each entry carries the level its line starts with, and a cursor is accepted only with the q and level it was issued for. Lines are cut at 64 KiB, a line longer than 1 MiB is skipped as a log_line_oversized gap, a replaced or shrunk file is read from its start with a log_rotated or log_truncated gap, and every line of a PEM block is redacted. Remote SSH node logs are archived only while an operator's network.monitor job runs with that operator's own binding; other intervals are remote_log_collection_unavailable gaps.
       responses:
         '200':
           description: Read redacted time-linked captured node logs
@@ -1655,6 +1655,18 @@ paths:
       - *id007
       - *id008
       - *id009
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 200
+      - name: level
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z]+(, ?[A-Za-z]+)*$
   /api/v1/history:
     get:
       operationId: listHistory
@@ -3499,10 +3511,22 @@ components:
             properties:
               time: *id006
               text: *id001
+              level:
+                type: string
+                enum:
+                - CRIT
+                - ERROR
+                - WARN
+                - INFO
+                - DEBUG
+                - TRACE
             additionalProperties: false
             required:
             - time
             - text
+        total:
+          type: integer
+          minimum: 0
         coverage:
           $ref: '#/components/schemas/Coverage'
         nextCursor:
@@ -3513,6 +3537,7 @@ components:
       required:
       - nodeId
       - entries
+      - total
       - coverage
       - nextCursor
     Run:

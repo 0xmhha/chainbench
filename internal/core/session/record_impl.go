@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 // Artifact file names within a test record folder.
@@ -35,6 +36,9 @@ type record struct {
 	posts     []PostResult
 	artifacts TestArtifacts
 	errs      []error
+
+	now                   func() time.Time
+	startedAt, finishedAt time.Time
 }
 
 func (r *record) Dir() string { return r.dir }
@@ -98,6 +102,17 @@ type statusDoc struct {
 	Env      string `json:"env,omitempty"`
 	Reason   string `json:"reason,omitempty"`
 	PresetID string `json:"presetId,omitempty"`
+	// StartedAt and FinishedAt are RFC 3339 UTC; see TestResult.
+	StartedAt  string `json:"startedAt,omitempty"`
+	FinishedAt string `json:"finishedAt,omitempty"`
+}
+
+// stamp formats a test time, leaving an unset one empty.
+func stamp(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.UTC().Format(time.RFC3339Nano)
 }
 
 // Status records the terminal verdict as status.json.
@@ -105,6 +120,7 @@ func (r *record) Status(s TestStatus) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.status = s
+	r.finishedAt = r.now().UTC()
 	r.writeStatus()
 }
 
@@ -119,12 +135,14 @@ func (r *record) Reason(why string) {
 // writeStatus persists the verdict and its reason. The caller holds the lock.
 func (r *record) writeStatus() {
 	r.capture(writeJSON(filepath.Join(r.dir, fileStatus), statusDoc{
-		ID:       r.id,
-		Seq:      r.seq,
-		Result:   string(r.status),
-		Env:      r.presetRef,
-		Reason:   r.reason,
-		PresetID: r.presetID,
+		ID:         r.id,
+		Seq:        r.seq,
+		Result:     string(r.status),
+		Env:        r.presetRef,
+		Reason:     r.reason,
+		PresetID:   r.presetID,
+		StartedAt:  stamp(r.startedAt),
+		FinishedAt: stamp(r.finishedAt),
 	}))
 }
 

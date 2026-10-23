@@ -18,15 +18,15 @@
   <ul class="users">{#each users as user (user.id)}
     <li data-testid="user-row"><strong>{user.username}</strong>
       <span class="state" class:off={!user.active}><span aria-hidden="true">{user.active ? '●' : '⊘'}</span> {user.active ? '사용 중' : '꺼짐'}</span>
-      <label>역할 <select aria-label={`${user.username} 역할`} value={user.role} disabled={busy || user.id === webSession.user.id} onchange={e => work(() => change(user, { role: e.target.value }, `${user.username} 역할을 ${roleName(e.target.value)}(으)로 바꿨습니다`))}>{#each roles as r}<option value={r.id}>{r.label}</option>{/each}</select></label>
+      <label>역할 <select name={`role-${user.username}`} aria-label={`${user.username} 역할`} value={user.role} disabled={busy || user.id === webSession.user.id} onchange={e => work(() => change(user, { role: e.target.value }, `${user.username} 역할을 ${roleName(e.target.value)}(으)로 바꿨습니다`))}>{#each roles as r}<option value={r.id}>{r.label}</option>{/each}</select></label>
       <button disabled={busy || user.id === webSession.user.id} onclick={() => work(() => change(user, { active: !user.active }, `${user.username} 계정을 ${user.active ? '껐습니다' : '켰습니다'}`))}>{user.username} {user.active ? '끄기' : '켜기'}</button>
     </li>
   {/each}</ul>
   <form onsubmit={e => { e.preventDefault(); work(create) }}>
     <fieldset disabled={busy}><legend>새 사용자</legend>
-      <label>사용자 이름 <input aria-label="새 사용자 이름" bind:value={newName} autocomplete="off" required /></label>
-      <label>비밀번호 <input aria-label="새 사용자 비밀번호" type="password" bind:value={newPassword} minlength="12" autocomplete="new-password" required /></label>
-      <label>역할 <select aria-label="새 사용자 역할" bind:value={newRole}>{#each roles as r}<option value={r.id}>{r.label}</option>{/each}</select></label>
+      <label>사용자 이름 <input name="new-name" aria-label="새 사용자 이름" bind:value={newName} autocomplete="off" required /></label>
+      <label>비밀번호 <input name="new-password" aria-label="새 사용자 비밀번호" type="password" bind:value={newPassword} minlength="12" autocomplete="new-password" required /></label>
+      <label>역할 <select name="new-role" aria-label="새 사용자 역할" bind:value={newRole}>{#each roles as r}<option value={r.id}>{r.label}</option>{/each}</select></label>
       <button>사용자 만들기</button>
     </fieldset>
   </form>
@@ -34,13 +34,8 @@
 </section>
 
 <style>
-  .panel { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .muted { color: var(--text-muted); }
-  .users { list-style: none; padding: 0; } .users li { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-top: 1px solid var(--border-subtle); padding: 8px 0; }
+  .users { list-style: none; padding: 0; } .users li { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; border-top: 1px solid var(--border-subtle); padding: var(--space-2) 0; }
   .state { color: var(--ok); } .state.off { color: var(--danger); }
-  fieldset { border: 1px solid var(--border); border-radius: 8px; margin-top: 16px; }
-  label { display: grid; gap: 4px; margin: 8px 0; }
-  .users label { display: flex; align-items: center; gap: 8px; margin: 0; }
-  input, select, button { font: inherit; color: inherit; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); padding: 8px; min-width: 0; }
-  button { cursor: pointer; } button:disabled { opacity: .45; cursor: default; }
+  label { margin: var(--space-2) 0; }
+  .users label { display: flex; align-items: center; gap: var(--space-2); margin: 0; }
 </style>

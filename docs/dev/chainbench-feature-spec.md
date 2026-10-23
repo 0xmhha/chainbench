@@ -128,7 +128,7 @@
 - **동작**: 순서 `pre → steps → assert → post`.
   - **스텝 결과 시맨틱(중요)**: tx 스텝은 **선언한 기대 결과가 충족되면 성공**이다. 기본 = 채굴+`status 0x1`. **negative 테스트**(예: 최소미달 언스테이킹 revert)는 `expectRevert:true`(또는 `expectStatus:"0x0"`)를 선언하며, 이때 **revert가 곧 성공**이다. 따라서 **tx revert가 스텝 실패인지 여부는 기대치가 결정**한다(기대와 다를 때만 스텝 실패). **인프라 실패**(전송 불가/영수증 timeout)는 기대치와 무관하게 항상 실패. 이로써 design의 "atomic step(부분성공 없음)"은 "선언된 기대 충족 = 원자적 성공"으로 성립.
   - **preAction 실패 → 테스트 미수행(BLOCKED)**. 스텝 기대 불충족 또는 assertion 실패 → 테스트 **FAIL**. **postAction 실패 → 어떤 테스트인지 기록**하되 **판정 집계는 스텝기대+assertion 기준 독립**. 미설정 액션은 skip.
-- **출력**: status.json(pass/fail/blocked), steps.json(각 스텝 기대·실측·충족여부), postaction.json(성공여부·사유).
+- **출력**: status.json(pass/fail/blocked, 테스트 시작·판정 시각 `startedAt`·`finishedAt`), steps.json(각 스텝 기대·실측·충족여부), postaction.json(성공여부·사유).
   - **노드 생명주기·fault 액션**(요구 12): `stopNode`/`startNode`/`restartNode`/`partition`/`healPartition`(+`chainMigrate`)는 스텝/액션으로 노드를 제어(procman·driver 경유). **destructive/fault 테스트**(WBFT-007/008 노드 중단→쿼럼, NODE-005 재기동→싱크복구, NODE-002 데이터 마이그레이션, **F8 분기=partition 유발**)에 필수.
   - **자산·컨트랙트 액션**: `faucet`(K) = keyreg 서명키에 gas 자금 공급(genesis alloc 미충전 신규키는 faucet 후 tx 가능). `deployContract`/`registerContract`(F) = 바이트코드 배포→주소 캡처→(bp 등록 필요 시) 컨트랙트에 노드정보 등록(배포 컨트랙트 vs 시스템 컨트랙트 구분, 요구 참조). 모두 design §3.2 액션 레지스트리 소속.
 - **에러·엣지**: pre가 부분 성공 후 실패 → BLOCKED + 상태 기록(복구는 F13). post 실패가 판정을 바꾸지 않음. `expectRevert` 스텝이 오히려 성공(0x1) → 스텝 실패(기대 위반). 노드 중단 후 procman이 프로세스 종료를 검증(고아 0).

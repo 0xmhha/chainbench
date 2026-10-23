@@ -1,5 +1,8 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
+  import LogViewer from './LogViewer.svelte'
+  import RunTimeline from './RunTimeline.svelte'
   import { responseError } from './api-error.mjs'
   import { allItems } from './pages.mjs'
   import { untrack } from 'svelte'
@@ -7,12 +10,12 @@
   let { webSession } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
   let selected = $state([]), pendingDelete = $state(null), busy = $state(false), error = $state('')
-  let observed = $state(null), runLogs = $state(null)
+  let observed = $state(null), runNodeIds = $state([]), detailBox = $state()
   let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
   const terminal = run => ['succeeded', 'failed', 'cancelled', 'interrupted'].includes(run.state)
-  const format = time => time ? new Date(time).toLocaleString() : '자료 없음'
+  const format = time => time ? formatTime(time) : '자료 없음'
   async function api(path, method = 'GET', body) {
     const response = await fetch('/api/v1/' + path, { method, headers: { 'Content-Type': 'application/json', ...(method !== 'GET' ? { 'X-CSRF-Token': webSession?.csrfToken ?? '' } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) })
     if (!response.ok) throw await responseError(response)
@@ -49,15 +52,24 @@
   async function open(id) {
     busy = true; error = ''; pendingDelete = null; observed = null
     try { detail = parseHistoryJSON(await (await api('history/' + encodeURIComponent(id))).text()) } catch (e) { error = e.message } finally { busy = false }
+    loadRunNodes(detail)
+    // The detail opens below the list; bring it into view so the failure is what the reader sees.
+    requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+  // The timeline needs the run's node names for its logs; the metric series of
+  // the run's own window name them. A failure here only leaves the list empty.
+  async function loadRunNodes(run) {
+    runNodeIds = []
+    const network = run?.summary?.observations?.networkId
+    if (!network) return
+    try {
+      const metrics = await (await api(`networks/${encodeURIComponent(network)}/metrics?runId=${encodeURIComponent(run.id)}`)).json()
+      if (detail?.id === run.id) runNodeIds = [...new Set(metrics.series.map(s => s.nodeId))].sort()
+    } catch { runNodeIds = [] }
   }
   async function loadObserved(run) {
     busy = true; error = ''
     try { observed = { id: run.id, metrics: await (await api(`networks/${encodeURIComponent(run.summary.observations.networkId)}/metrics?runId=${encodeURIComponent(run.id)}`)).json() } } catch (e) { error = e.message } finally { busy = false }
-  }
-  // loadRunLogs reads one node's archived log lines for the run's own window.
-  async function loadRunLogs(run, node) {
-    busy = true; error = ''
-    try { runLogs = { id: run.id, node, logs: await (await api(`nodes/${encodeURIComponent(run.summary.observations.networkId + '.' + node)}/logs?runId=${encodeURIComponent(run.id)}&limit=100`)).json() } } catch (e) { error = e.message } finally { busy = false }
   }
   const seconds = value => value == null ? '자료 없음' : `${Math.round(value * 10) / 10}초`
   const metricValue = value => value ? `${value.samples}개 · 최소 ${value.min ?? '—'} · 최대 ${value.max ?? '—'} · 마지막 ${value.last ?? '—'}` : '표본 없음'
@@ -85,16 +97,16 @@
   }
 </script>
 
-<section class="history-panel" aria-label="실행 히스토리">
+<section class="panel history-panel" aria-label="실행 히스토리">
   <header><div><h2>실행 기록</h2><p>서버에 보관된 결과 사본입니다. 과거 기록에서 확인할 수 없는 값은 자료 없음으로 표시합니다.</p></div><button disabled={busy} onclick={() => load()}>히스토리 새로고침</button></header>
   <form onsubmit={e => { e.preventDefault(); selected = []; comparison = null; load() }}>
-    <label class="search">기록 검색<input aria-label="히스토리 검색" bind:value={search} placeholder="실행 ID, 명령, 테스트 이름" /></label>
-    <label>체인<select aria-label="히스토리 체인" bind:value={chain}><option value="">모든 체인</option>{#each knownChains as value}<option>{value}</option>{/each}</select></label>
-    <label>Workspace<select aria-label="히스토리 Workspace" bind:value={workspaceId}><option value="">모든 Workspace</option>{#each workspaces as w}<option value={w.id}>{w.name}</option>{/each}</select></label>
-    <label>실행자<select aria-label="히스토리 실행자" bind:value={actorId}><option value="">모든 실행자</option>{#each knownActors as value}<option>{value}</option>{/each}</select></label>
-    <label>상태<select aria-label="히스토리 상태" bind:value={state}><option value="">모든 상태</option>{#each ['accepted', 'running', 'cancelling', 'succeeded', 'failed', 'cancelled', 'interrupted', 'unknown'] as value}<option>{value}</option>{/each}</select></label>
-    <label>테스트 케이스<select aria-label="히스토리 케이스" bind:value={caseId}><option value="">모든 케이스</option>{#each knownCases as value}<option>{value}</option>{/each}</select></label>
-    <label>시작 이후<input aria-label="히스토리 시작 시각" type="datetime-local" bind:value={from} /></label><label>시작 이전<input aria-label="히스토리 종료 시각" type="datetime-local" bind:value={to} /></label>
+    <label class="search">기록 검색<input name="search" aria-label="히스토리 검색" bind:value={search} placeholder="실행 ID, 명령, 테스트 이름" /></label>
+    <label>체인<select name="chain" aria-label="히스토리 체인" bind:value={chain}><option value="">모든 체인</option>{#each knownChains as value}<option>{value}</option>{/each}</select></label>
+    <label>Workspace<select name="workspace-id" aria-label="히스토리 Workspace" bind:value={workspaceId}><option value="">모든 Workspace</option>{#each workspaces as w}<option value={w.id}>{w.name}</option>{/each}</select></label>
+    <label>실행자<select name="actor-id" aria-label="히스토리 실행자" bind:value={actorId}><option value="">모든 실행자</option>{#each knownActors as value}<option>{value}</option>{/each}</select></label>
+    <label>상태<select name="state" aria-label="히스토리 상태" bind:value={state}><option value="">모든 상태</option>{#each ['accepted', 'running', 'cancelling', 'succeeded', 'failed', 'cancelled', 'interrupted', 'unknown'] as value}<option>{value}</option>{/each}</select></label>
+    <label>테스트 케이스<select name="case-id" aria-label="히스토리 케이스" bind:value={caseId}><option value="">모든 케이스</option>{#each knownCases as value}<option>{value}</option>{/each}</select></label>
+    <label>시작 이후<input name="from" aria-label="히스토리 시작 시각" type="datetime-local" bind:value={from} /></label><label>시작 이전<input name="to" aria-label="히스토리 종료 시각" type="datetime-local" bind:value={to} /></label>
     <button type="submit" disabled={busy}>필터 적용</button>
   </form>
   {#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -102,10 +114,10 @@
   <div class="toolbar"><span>{items.length}개 표시 · 비교는 2–4개 선택</span><button disabled={busy || selected.length < 2} onclick={compare}>선택한 실행 비교</button></div>
   {#if items.length === 0}<p class="empty">조건에 맞는 실행 기록이 없습니다.</p>{:else}
     <div class="table-wrap"><table><thead><tr><th>비교</th><th>실행</th><th>체인 / Workspace</th><th>시작 시각</th><th>상태</th><th>결과</th></tr></thead><tbody>{#each items as run (run.id)}<tr>
-      <td><input type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></td>
+      <td><input name="compare" value={run.id} type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></td>
       <td><button class="record" onclick={() => open(run.id)}>{run.summary.operation ?? run.summary.command ?? run.id}<small>{run.id}</small></button></td>
       <td>{run.chain || '자료 없음'}<small>{run.workspaceId || '자료 없음'}</small></td><td>{format(run.startedAt)}</td><td><StatusBadge state={run.state} /></td>
-      <td>{#if run.summary.counts}<span>통과 {run.summary.counts.pass} · 실패 {run.summary.counts.fail} · 차단 {run.summary.counts.blocked} · 제외 {run.summary.counts.skip}</span>{:else}<span>작업 단계 기록</span>{/if}</td>
+      <td>{#if run.summary.counts}<span>통과 {run.summary.counts.pass} · 실패 {run.summary.counts.fail} · 막힘 {run.summary.counts.blocked} · 건너뜀 {run.summary.counts.skip}</span>{:else}<span>작업 단계 기록</span>{/if}</td>
     </tr>{/each}</tbody></table></div>
   {/if}
   {#if next}<button disabled={busy} onclick={() => load(next)}>다음 기록 더 보기</button>{/if}
@@ -118,27 +130,27 @@
       {/each}</tbody></table></div>
     {#if comparison.metrics?.length}<div class="table-wrap"><table data-testid="comparison-metrics"><thead><tr><th>노드 지표 (출처 · 단위)</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>{#each comparison.metrics as metric}<tr><td>{metric.name}<small>{metric.source}{metric.unit ? ' · ' + metric.unit : ''}</small></td>{#each comparison.runIds as id}<td>{metricValue(metric.values[id])}</td>{/each}</tr>{/each}</tbody></table></div>{/if}
   </section>{/if}
-  {#if detail}<section class="detail" aria-label="실행 상세 결과"><header><h3>상세 결과</h3><div class="actions"><button disabled={busy} onclick={() => download(detail.id)}>결과 내보내기</button>{#if administrator}<button class="danger" disabled={busy || !terminal(detail)} onclick={() => { pendingDelete = detail }}>보관 결과 삭제</button>{/if}</div></header>
+  {#if detail}<section class="detail" aria-label="실행 상세 결과" bind:this={detailBox}><header><h3>상세 결과</h3><div class="actions"><button disabled={busy} onclick={() => download(detail.id)}>결과 내보내기</button>{#if administrator}<button class="danger" disabled={busy || !terminal(detail)} onclick={() => { pendingDelete = detail }}>보관 결과 삭제</button>{/if}</div></header>
+    <RunTimeline run={detail} nodes={runNodeIds} />
     <p class="mono">{detail.id}</p><p>원본 세션: {detail.sessionRefs.join(', ') || '연결된 엔진 세션 없음'}</p>
     <p>큰 정수는 정확한 숫자 문자열로 표시합니다. 다운로드 파일은 원래 JSON 수치 형식을 유지합니다.</p>
     <p>종료 시각: {detail.finishedAt ? format(detail.finishedAt) : '기록 없음'}{#if detail.coverage} · 수집 주기 {detail.coverage.sampleIntervalSeconds}초 · {detail.coverage.complete ? '누락 없음' : `누락 구간 ${detail.coverage.gaps.length}개`}{detail.coverage.downsampled ? ' · 다운샘플됨' : ''}{/if}</p>
     {#if detail.summary.missingDimensions?.length}<p class="notice">자료 없음: {detail.summary.missingDimensions.join(', ')}</p>{/if}
     {#if detail.summary.observations}<div class="observed" data-testid="run-observations"><p>보관된 노드 지표·로그 구간: {format(detail.summary.observations.from)} – {detail.summary.observations.to ? format(detail.summary.observations.to) : '진행 중'} · 네트워크 {detail.summary.observations.networkId}</p><button disabled={busy} onclick={() => loadObserved(detail)}>이 실행의 지표 확인</button>{#if observed?.id === detail.id}<p data-testid="run-observation-series" data-series={observed.metrics.series.length}>지표 {observed.metrics.series.length}개 · 표본 {observed.metrics.series.reduce((n, s) => n + s.samples.length, 0)}개 · {observed.metrics.coverage.complete ? '누락 없음' : '누락 구간 있음'}</p>{#if observed.metrics.coverage.gaps.length}<ul>{#each observed.metrics.coverage.gaps as gap}<li>{gap.reason} ({format(gap.from)} – {format(gap.to)})</li>{/each}</ul>{/if}
-      <div class="actions">{#each [...new Set(observed.metrics.series.map(s => s.nodeId))] as node}<button disabled={busy} onclick={() => loadRunLogs(detail, node)}>{node} 로그 보기</button>{/each}</div>
-      {#if runLogs?.id === detail.id}<section data-testid="run-logs" data-node={runLogs.node}><p>{runLogs.node} · 이 실행 구간의 보관 로그 {runLogs.logs.entries.length}줄{runLogs.logs.coverage?.timestampSource ? ` · 시각 출처 ${runLogs.logs.coverage.timestampSource}` : ''}</p><pre>{runLogs.logs.entries.map(e => `${e.time} ${e.text}`).join('\n') || '이 구간에 보관된 로그가 없습니다.'}</pre></section>{/if}{/if}</div>{/if}
+      {@const runNodes = [...new Set(observed.metrics.series.map(s => s.nodeId))].sort()}
+      {#if runNodes.length && !detail.summary.tests?.length}<LogViewer networkId={detail.summary.observations.networkId} nodes={runNodes} node={runNodes[0]} runId={detail.id} title="이 실행 구간의 보관 로그" testid="run-logs" />{/if}{/if}</div>{/if}
     {#if detail.summary.captureGaps?.length}<ul>{#each detail.summary.captureGaps as gap}<li>{gap}</li>{/each}</ul>{/if}
     {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={() => { pendingDelete = null }}>돌아가기</button></div>{/if}
-    <details open><summary>테스트 판정 · 어세션 · 단계 · 사용 자료</summary><pre>{JSON.stringify(detail.summary, null, 2)}</pre></details>
+    <details><summary>원본 JSON (테스트 판정 · 어세션 · 단계 · 사용 자료)</summary><pre>{JSON.stringify(detail.summary, null, 2)}</pre></details>
     <details><summary>환경 fingerprint</summary><pre>{JSON.stringify(detail.fingerprints, null, 2)}</pre></details>
   </section>{/if}
 </section>
 
 <style>
-  .history-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-top: 24px; min-width: 0; }
-  header, .toolbar, .actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; } h2, h3 { margin: 0 0 8px; } p, li, .toolbar { color: var(--text-muted); } header p { margin: 0; max-width: 700px; }
-  form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 24px 0; align-items: end; } label { display: grid; gap: 6px; color: var(--text-muted); } .search { grid-column: span 2; } input, select { width: 100%; min-width: 0; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px; }
-  button { color: var(--accent-strong); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px 12px; } button:disabled { opacity: .55; } .danger { color: var(--danger); border-color: var(--danger-border); } .error, .notice { color: var(--danger); } .confirm { padding: 16px; border: 1px solid var(--danger-border); border-radius: 8px; } .confirm button { margin-right: 8px; }
-  .table-wrap { overflow: auto; margin: 16px 0; } table { border-collapse: collapse; width: 100%; font-size: 12px; } th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-subtle); } th { color: var(--text-muted); font-weight: 500; } small { display: block; color: var(--text-muted); margin-top: 4px; } td input { width: 20px; min-height: 24px; } .record { text-align: left; max-width: 320px; overflow-wrap: anywhere; } .record small { font-family: ui-monospace, monospace; font-size: 10px; }
-  .detail { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px; min-width: 0; } .mono, pre { font-family: ui-monospace, monospace; } pre { font-size: 12px; overflow: auto; padding: 16px; background: var(--bg); border-radius: 8px; max-height: 560px; } summary { cursor: pointer; padding: 12px 0; color: var(--accent-strong); } .empty { padding: 32px; text-align: center; } .assertion td { color: var(--text-muted); }
-  @media (max-width: 760px) { .history-panel { padding: 16px; } form { grid-template-columns: minmax(0, 1fr); } .search { grid-column: auto; } }
+  header, .toolbar { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap; } h3 { margin: 0 0 var(--space-2); } p, li, .toolbar { color: var(--text-muted); } header p { margin: 0; max-width: 700px; }
+  form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin: var(--space-4) 0; align-items: end; } .search { grid-column: span 2; } input, select { width: 100%; }
+  .confirm { padding: var(--space-4); border: 1px solid var(--danger-border); border-radius: var(--radius); } .confirm button { margin-right: var(--space-2); }
+  table { font-size: var(--text-sm); } small { display: block; margin-top: var(--space-1); } td input { width: 16px; } .record { text-align: left; max-width: 320px; white-space: normal; overflow-wrap: anywhere; } .record small { font-family: var(--font-mono); }
+  .detail { margin-top: var(--space-5); border-top: 1px solid var(--border-subtle); padding-top: var(--space-4); min-width: 0; } pre { font-size: var(--text-xs); overflow: auto; padding: var(--space-4); background: var(--bg); border-radius: var(--radius); max-height: 560px; } summary { cursor: pointer; padding: var(--space-3) 0; color: var(--accent-strong); } .assertion td { color: var(--text-muted); }
+  @media (max-width: 760px) { form { grid-template-columns: minmax(0, 1fr); } .search { grid-column: auto; } }
 </style>

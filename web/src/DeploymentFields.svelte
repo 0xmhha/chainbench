@@ -37,7 +37,7 @@
         <DeploymentFields schema={schema.additionalProperties} value={entry} path={`${path}.${key}`} {problems} change={v => field(key, v)} />
         <button type="button" onclick={() => omit(key)}>{key} 삭제</button>
       {/each}
-      <label>항목 이름 <input aria-label={`${path}.entry-name`} bind:value={propertyName} /></label>
+      <label>항목 이름 <input name="property-name" aria-label={`${path}.entry-name`} bind:value={propertyName} /></label>
       <button type="button" disabled={!propertyName || Object.hasOwn(value ?? {}, propertyName)} onclick={() => { field(propertyName, defaultValue(schema.additionalProperties)); propertyName = '' }}>항목 추가</button>
     {/if}
   </fieldset>
@@ -51,24 +51,23 @@
     <button type="button" onclick={() => change([...(value ?? []), defaultValue(schema.items)])}>항목 추가</button>
   </fieldset>
 {:else if schema.enum}
-  <label data-field-path={path}>{path}<select aria-label={path} {...invalid} value={value} onchange={e => change(schema.type === 'integer' ? Number(e.target.value) : e.target.value)}>
+  <label data-field-path={path}>{path}<select name={path} aria-label={path} {...invalid} value={value} onchange={e => change(schema.type === 'integer' ? Number(e.target.value) : e.target.value)}>
     {#each schema.enum as option}<option value={option}>{option}</option>{/each}
   </select></label>
 {:else if schema.type === 'boolean'}
-  <label data-field-path={path}><input type="checkbox" aria-label={path} {...invalid} checked={value ?? false} onchange={e => change(e.target.checked)} /> {path}</label>
+  <label data-field-path={path}><input name={path} type="checkbox" aria-label={path} {...invalid} checked={value ?? false} onchange={e => change(e.target.checked)} /> {path}</label>
 {:else if schema.type === 'integer'}
-  <label data-field-path={path}>{path}<input aria-label={path} {...invalid} type="number" step="1" min={schema.minimum} max={schema.maximum} value={value ?? 0} oninput={e => change(e.target.valueAsNumber)} /></label>
+  <label data-field-path={path}>{path}<input name={path} aria-label={path} {...invalid} type="number" step="1" min={schema.minimum} max={schema.maximum} value={value ?? 0} oninput={e => change(e.target.valueAsNumber)} /></label>
 {:else}
-  <label data-field-path={path}>{path}<input aria-label={path} {...invalid} value={value ?? ''} oninput={e => change(e.target.value)} /></label>
+  <label data-field-path={path}>{path}<input name={path} aria-label={path} {...invalid} value={value ?? ''} oninput={e => change(e.target.value)} /></label>
 {/if}
 {#if problem}<p id={`${path}-problem`} class="problem">{problem}</p>{/if}
 
 <style>
-  fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 10px 0; min-width: 0; }
-  legend { color: var(--text-muted); font-size: 12px; }
-  label { display: grid; gap: 5px; margin: 8px 0; overflow-wrap: anywhere; }
-  input, select, button { font: inherit; color: inherit; background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 5px; padding: 7px; }
-  [aria-invalid=true] { border-color: var(--danger); outline: 1px solid var(--danger); } .problem { color: var(--danger); margin: 0 0 8px; }
-  button { margin: 4px; cursor: pointer; }
-  .field { margin: 5px 0; }
+  fieldset { padding: var(--space-2) 0 var(--space-2) var(--space-3); margin: var(--space-2) 0; border-top: 0; border-left: 1px solid var(--border-subtle); }
+  legend { font-size: var(--text-xs); }
+  label { margin: var(--space-2) 0; overflow-wrap: anywhere; }
+  .problem { color: var(--danger); margin: 0 0 var(--space-2); }
+  button { margin: var(--space-1); }
+  .field { margin: var(--space-1) 0; }
 </style>

@@ -19,7 +19,3 @@
 {/if}
 <AssetManager {webSession} {onuploaded} />
 <ManifestManager {webSession} {assetRevision} />
-
-<style>
-  .error { padding: 12px 16px; border-left: 3px solid var(--danger); color: var(--danger); background: var(--danger-bg); }
-</style>

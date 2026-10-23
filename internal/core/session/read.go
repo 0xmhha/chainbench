@@ -26,6 +26,12 @@ type TestResult struct {
 	ID       string `json:"id"`
 	Env      string `json:"env,omitempty"`
 	Status   string `json:"status"`
+	// StartedAt and FinishedAt (RFC 3339, UTC) bound the moments the test ran,
+	// so its node logs and metrics can be read for exactly that span. A
+	// record written before they existed, or a test without a verdict, leaves
+	// them empty.
+	StartedAt  string `json:"startedAt,omitempty"`
+	FinishedAt string `json:"finishedAt,omitempty"`
 }
 
 // Counts is the verdict tally over a session's tests.

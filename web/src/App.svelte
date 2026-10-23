@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import { responseError } from './api-error.mjs'
   import { onMount } from 'svelte'
   import DSLEditor from './DSLEditor.svelte'
@@ -80,28 +81,30 @@
   // The monitoring range also narrows the event timeline.
   const range = $derived(timeRange(monitorRange, now))
   const rangedEvents = $derived(range ? events.filter(e => { const t = Date.parse(e.time); return !Number.isFinite(t) || (t >= Date.parse(range.from) && t <= Date.parse(range.to)) }) : events)
-  const fmtTime = t => t ? new Date(t).toLocaleString() : '—'
+  const fmtTime = formatTime
   const runOk = s => s === 'success' || s === 'pass'
 </script>
 
 <svelte:head><title>{current[1]} · chainbench</title><meta name="theme-color" content="#0b1018" /></svelte:head>
-<a class="skip" href="#content">본문으로 이동</a>
+<a class="skip-link" href="#content">본문으로 이동</a>
 <div class="shell">
   <aside aria-label="주 메뉴">
-    <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol">cb</span><span>chainbench<small>체인 운영</small></span></a>
-    <nav>{#each pages as [path, label], i}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => follow(e, path)}><span class="nav-number" aria-hidden="true">0{i + 1}</span>{label}</a>{/each}</nav>
-    <div class="nav-footer"><span class="signal" class:on={connected}></span>{connected ? '이벤트 서버 연결됨' : '이벤트 서버 미연결'}<small>연결 표시는 노드 상태와 별개입니다.</small></div>
+    <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol" aria-hidden="true">cb</span>chainbench</a>
+    <nav>{#each pages as [path, label]}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => follow(e, path)}>{label}</a>{/each}</nav>
   </aside>
   <div class="workspace">
-    <header class="topbar"><span class="breadcrumb">운영 콘솔 <span>/</span> {current[1]}</span>
+    <header class="topbar">
       <span class="context" data-testid="topbar-context">
-        <span>Workspace {workspaceName || '선택 안 함'}</span>
-        {#if selection.chain}<span>체인 {selection.chain}</span>{:else}<a href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{/if}
-        <span class="signal-label"><span class="signal" class:on={connected} aria-hidden="true"></span>{connected ? '서버 연결됨' : '서버 미연결'}</span>
+        <span><span class="label">Workspace</span> {workspaceName || '선택 안 함'}</span>
+        {#if selection.chain}<span><span class="label">체인</span> {selection.chain}</span>{:else if route === '/chains' || route === '/tests'}<a href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{:else}<a class="quiet" href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{/if}
       </span>
-      <span class="account">{webSession?.accountsEnabled === false ? '로컬 사용' : webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span></header>
+      <span class="status">
+        <span class="signal-label" title="이벤트 서버 연결 상태입니다. 노드 상태와는 별개입니다."><span class="signal" class:on={connected} aria-hidden="true"></span>{connected ? '서버 연결됨' : '서버 미연결'}</span>
+        <span class="account">{webSession?.accountsEnabled === false ? '로컬 사용' : webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span>
+      </span>
+    </header>
     <main id="content">
-      <div class="page-heading"><div><p class="eyebrow">운영 콘솔</p><h1>{current[1]}</h1><p>{current[2]}</p></div><span class="connection" class:on={connected}>{connected ? '연결됨' : '미연결'}</span></div>
+      <header class="page-heading"><h1>{current[1]}</h1><p>{current[2]}</p></header>
       <LoginPanel bind:session={webSession} bind:ready />
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       {#if ready && webSession !== null}
@@ -134,35 +137,36 @@
 </div>
 
 <style>
-  :global(:root) { --bg: #0b1018; --sidebar: #0e1520; --surface: #121b28; --surface-raised: #192536; --border: #334155; --border-subtle: #253247; --border-strong: #475569; --text: #f1f5f9; --text-muted: #a8b5c8; --text-faint: #475569; --accent: #93c5fd; --accent-strong: #dbeafe; --ok: #6ee7b7; --ok-border: #295344; --warn: #fcd34d; --warn-bg: #30251a; --danger: #fca5a5; --danger-bg: #301d25; --danger-border: #5a343a; --accent-border: #47668b; --series-1: #60a5fa; --series-2: #f472b6; --series-3: #34d399; --series-4: #fbbf24; --series-5: #a78bfa; --series-6: #f87171; --series-7: #22d3ee; --series-8: #a3e635; }
-  :global(*) { box-sizing: border-box; }
-  :global(body) { margin: 0; font: 14px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
-  :global(button), :global(input), :global(select), :global(textarea) { min-height: 40px; font: inherit; }
-  :global(button) { cursor: pointer; } :global(button:disabled) { cursor: default; }
-  :global(:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
-  :global([hidden]) { display: none !important; }
-  :global(fieldset), :global(section) { min-width: 0; }
-  :global(p), :global(code) { overflow-wrap: anywhere; }
+  .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 100vh; }
+  aside { min-width: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4) var(--space-3); background: var(--sidebar); border-right: 1px solid var(--border-subtle); }
+  .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); color: var(--text); font-size: var(--text-lg); font-weight: 650; }
+  .brand:hover { text-decoration: none; }
+  .brand-symbol { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--accent-border); border-radius: var(--radius-sm); color: var(--accent); font: 600 var(--text-sm) var(--font-mono); }
+  nav { display: grid; gap: 2px; margin-top: var(--space-5); }
+  nav a { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); color: var(--text-muted); }
+  nav a:hover { color: var(--text); background: var(--surface); text-decoration: none; }
+  nav a[aria-current] { color: var(--accent-strong); background: var(--surface-raised); }
   .workspace { min-width: 0; }
-  aside { min-width: 0; }
-  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
-  .shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: 100vh; }
-  aside { background: var(--sidebar); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; padding: 24px 16px; position: sticky; top: 0; height: 100vh; }
-  .brand { display: flex; gap: 10px; align-items: center; color: var(--text); font-size: 19px; font-weight: 650; padding: 0 8px; }
-  .brand-symbol { display: grid; place-items: center; border: 1px solid var(--accent-border); border-radius: 10px; width: 36px; height: 36px; color: var(--accent); font-size: 16px; }
-  .brand small { display: block; color: var(--text-muted); font-size: 9px; font-weight: 400; letter-spacing: .13em; }
-  nav { display: grid; gap: 6px; margin-top: 40px; } nav a { padding: 12px; color: var(--text-muted); border-radius: 8px; } nav a[aria-current] { background: var(--surface-raised); color: var(--accent-strong); } .nav-number { margin-right: 12px; font-size: 11px; opacity: .65; }
-  .nav-footer { margin-top: auto; padding: 16px 8px; color: var(--text-muted); font-size: 12px; } .nav-footer small { display: block; margin-top: 8px; }
-  .signal { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); margin-right: 8px; } .signal.on { background: var(--ok); }
-  .topbar { height: 64px; border-bottom: 1px solid var(--border-subtle); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--text-muted); } .breadcrumb span { padding: 0 12px; color: var(--border-strong); }
-  .context { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 12px; } .context a { color: var(--warn); } .account { font-size: 12px; }
-  main { max-width: 1440px; margin: auto; padding: 32px 24px; }
-  .page-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-  .page-heading { margin-bottom: 24px; } .page-heading p { margin: 8px 0 0; color: var(--text-muted); } .page-heading .eyebrow { color: var(--accent); font-size: 10px; letter-spacing: .14em; } h1 { margin: 8px 0 0; font-size: 26px; letter-spacing: -.03em; } h2 { font-size: 18px; margin: 0 0 12px; }
-  .connection { border: 1px solid var(--danger-border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--danger); } .connection.on { color: var(--ok); border-color: var(--ok-border); }
-  .panel { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 24px; margin-top: 24px; }
-  .empty { padding: 32px 8px; color: var(--text-muted); text-align: center; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  .events { list-style: none; padding: 0; margin: 0; } .events li { display: grid; grid-template-columns: 160px 100px 100px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-subtle); align-items: start; } time, .kind { color: var(--text-muted); font-size: 12px; } .msg { overflow-wrap: anywhere; } .muted { color: var(--text-muted); } .notice, .error { padding: 12px 16px; background: var(--warn-bg); border-left: 3px solid var(--warn); color: var(--warn); } .error { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
-  .skip { position: absolute; left: 12px; top: -80px; z-index: 10; padding: 12px; background: var(--surface-raised); } .skip:focus { top: 12px; }
-  @media(max-width: 800px) { .shell { grid-template-columns: minmax(0, 1fr); } aside { height: auto; position: static; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--border-subtle); } nav { margin-top: 16px; display: flex; overflow-x: auto; } nav a { white-space: nowrap; padding: 8px 12px; } .nav-number, .nav-footer { display: none; } .topbar { padding: 0 16px; } main { padding: 24px 16px; } .events li { grid-template-columns: 1fr; gap: 4px; } .account { max-width: 50%; overflow-wrap: anywhere; } }
+  .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 44px; padding: var(--space-2) var(--space-5); background: color-mix(in srgb, var(--bg) 92%, transparent); border-bottom: 1px solid var(--border-subtle); font-size: var(--text-sm); color: var(--text-muted); }
+  .context, .status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-width: 0; }
+  .context .label { color: var(--text-faint); }
+  .context a { color: var(--warn); } .context a.quiet { color: var(--text-muted); }
+  .signal { display: inline-block; width: 7px; height: 7px; margin-right: var(--space-2); border-radius: 50%; background: var(--danger); }
+  .signal.on { background: var(--ok); }
+  main { max-width: 1440px; margin: 0 auto; padding: var(--space-4) var(--space-5) var(--space-5); }
+  .page-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
+  .page-heading h1 { font-size: var(--text-xl); letter-spacing: -.01em; }
+  .page-heading p { margin: 0; color: var(--text-muted); font-size: var(--text-sm); }
+  .events { list-style: none; padding: 0; margin: 0; }
+  .events li { display: grid; grid-template-columns: 170px 110px 110px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); align-items: start; }
+  time, .kind { color: var(--text-muted); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+  @media (max-width: 800px) {
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    aside { position: static; height: auto; padding: var(--space-2) var(--space-4); border-right: 0; border-bottom: 1px solid var(--border-subtle); }
+    nav { display: flex; margin-top: var(--space-2); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; mask-image: linear-gradient(to right, black 85%, transparent); }
+    nav a { white-space: nowrap; scroll-snap-align: start; }
+    .topbar { position: static; padding: var(--space-2) var(--space-4); flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+    main { padding: var(--space-3) var(--space-4); }
+    .events li { grid-template-columns: 1fr; gap: 2px; }
+  }
 </style>

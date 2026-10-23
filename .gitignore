@@ -134,3 +134,6 @@ graphify-out/
 
 # ouroboros local session artifacts
 .ouroboros
+
+# impeccable critique snapshots are local run archives
+.impeccable/critique/
