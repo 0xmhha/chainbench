@@ -2,16 +2,16 @@
  import {onMount} from 'svelte'
  import {chartModel,logWindow,gapSummary,metricNames,timeRange} from './metric-chart.mjs'
  import {monitorRange} from './selection.svelte.js'
+ import LogViewer from './LogViewer.svelte'
  let {networkId}=$props()
  // Every metric the server collected in the range is charted unless one is chosen.
  const charts=$derived(metricNames(metrics).filter(m=>!monitorRange.metric||m.name===monitorRange.metric))
  const shownNodes=$derived(allNodes.filter(n=>!monitorRange.node||n===monitorRange.node))
- let rangeLogs=$state(null),rangeLogError=$state('')
  // Series colors are design tokens (--series-1 … --series-8 in App).
  const colors=[1,2,3,4,5,6,7,8].map(i=>`var(--series-${i})`)
  const W=640,H=160
  let selection=0,polls=0,applied=0
- let metrics=$state(null),error=$state(''),selected=$state(null),logs=$state(null),logError=$state('')
+ let metrics=$state(null),error=$state(''),selected=$state(null)
  const gaps=$derived(gapSummary(metrics?.coverage))
  const nodeColor=(node,all)=>colors[all.indexOf(node)%colors.length]
  const allNodes=$derived([...new Set((metrics?.series??[]).map(s=>s.nodeId))].sort())
@@ -27,28 +27,15 @@
    if(order>applied){applied=order;metrics=value;error=''}
   }catch(failure){if(order>applied)error=failure.message}
  }
- async function select(node,point,model){
-  const choice=++selection // Plain counter: $state wraps objects in proxies.
-  selected={node,time:point.time,value:point.value,unit:model?.unit??selected?.unit??'',source:model?.source??selected?.source??'',name:model?.name??selected?.name??''};logs=null;logError=''
-  const {from,to}=logWindow(point.time,30)
-  try{
-   const response=await fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+node)}/logs?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=100`,{cache:'no-store'})
-   if(!response.ok)throw new Error(`로그 조회 실패 (${response.status})`)
-   const value=await response.json()
-   if(selection===choice)logs=value // A later selection supersedes this reply.
-  }catch(failure){if(selection===choice)logError=failure.message}
+ // Choosing a point opens that node's logs around the point's time.
+ function select(node,point,model){
+  selected={node,time:point.time,value:point.value,unit:model?.unit??selected?.unit??'',source:model?.source??selected?.source??'',name:model?.name??selected?.name??''}
  }
  onMount(()=>{const timer=setInterval(()=>{if(monitorRange.preset>0)load()},5000);return()=>clearInterval(timer)})
  // A changed range reloads the charts and the range logs of the chosen node.
- $effect(()=>{void monitorRange.preset;void monitorRange.from;void monitorRange.to;load();selected=null;logs=null})
- $effect(()=>{
-  const node=monitorRange.node,range=timeRange({preset:monitorRange.preset,from:monitorRange.from,to:monitorRange.to})
-  rangeLogs=null;rangeLogError=''
-  if(!node||!range||!allNodes.includes(node))return
-  fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+node)}/logs?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}&limit=100`,{cache:'no-store'})
-   .then(async r=>{if(!r.ok)throw new Error(`로그 조회 실패 (${r.status})`);const v=await r.json();if(monitorRange.node===node)rangeLogs=v})
-   .catch(e=>{rangeLogError=e.message})
- })
+ $effect(()=>{void monitorRange.preset;void monitorRange.from;void monitorRange.to;load();selected=null})
+ // The range logs follow the chosen node and the monitoring range.
+ const rangeWindow=$derived(allNodes.includes(monitorRange.node)?timeRange({preset:monitorRange.preset,from:monitorRange.from,to:monitorRange.to}):null)
 </script>
 <div class="metrics">
  {#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -81,29 +68,13 @@
    {/each}
   </div>
   {#if selected}
-   <section class="logs" data-testid="time-linked-logs" data-selected-time={selected.time} data-log-node={logs?selected.node:undefined}>
+   <div class="linked">
     <p data-testid="selected-point">{selected.name} · {selected.node} · {time(selected.time)}{selected.value!==null?` · ${selected.value} ${selected.unit}`:''} · 출처 {selected.source}</p>
-    <h4>{time(selected.time)} 전후 30초 로그</h4>
-    <label>로그 노드 <select name="node-metrics-select-1" aria-label="로그 노드" value={selected.node} onchange={event=>select(event.currentTarget.value,{time:selected.time,value:null})}>{#each allNodes as node}<option value={node}>{node}</option>{/each}</select></label>
-    {#if logError}<p class="error" role="alert">{logError}</p>{:else if !logs}<p class="muted">보관된 로그를 확인하는 중입니다.</p>{:else}
-     <p class="muted">로그 시각 출처: {logs.coverage.timestampSource==='source'?'노드 로그 기록 시각':logs.coverage.timestampSource==='mixed'?'노드 기록 시각과 수집 시각 혼합':'서버 수집 시각'} · {logs.coverage.complete?'누락 없음':'누락 구간 있음'}</p>
-     {#each gapSummary(logs.coverage) as gap}<p class="notice">{gap}</p>{/each}
-     {#if gapSummary(logs.coverage).some(g=>g.includes('remote_log_collection_unavailable'))}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
-     {#if logs.entries.length===0}<p class="empty">이 시점 전후로 보관된 로그가 없습니다.</p>{:else}
-      <ol>{#each logs.entries as entry, index (index)}<li data-log-time={entry.time}><time>{time(entry.time)}</time><code class="log-text">{entry.text}</code></li>{/each}</ol>
-      {#if logs.nextCursor}<p class="muted">이 구간에 로그가 더 있습니다. 더 좁은 시점을 선택하세요.</p>{/if}
-     {/if}
-    {/if}
-   </section>
+    {#key selected.time}<LogViewer {networkId} nodes={allNodes} node={selected.node} {...logWindow(selected.time,30)} focus={selected.time} title="{time(selected.time)} 전후 30초 로그" testid="time-linked-logs" data-selected-time={selected.time} />{/key}
+   </div>
   {/if}
-  {#if monitorRange.node}
-   <section class="logs" data-testid="range-logs" data-log-node={monitorRange.node}>
-    <h4>{monitorRange.node} 범위 로그</h4>
-    {#if rangeLogError}<p class="error" role="alert">{rangeLogError}</p>{:else if !rangeLogs}<p class="muted">보관된 로그를 확인하는 중입니다.</p>{:else if rangeLogs.entries.length===0}<p class="empty">이 범위에 보관된 로그가 없습니다.</p>{:else}
-     <ol>{#each rangeLogs.entries as entry, index (index)}<li data-log-time={entry.time}><time>{time(entry.time)}</time><code class="log-text">{entry.text}</code></li>{/each}</ol>
-     {#if rangeLogs.nextCursor}<p class="muted">이 범위에 로그가 더 있습니다. 범위를 좁히세요.</p>{/if}
-    {/if}
-   </section>
+  {#if monitorRange.node&&rangeWindow}
+   {#key monitorRange.node}<LogViewer {networkId} nodes={[monitorRange.node]} node={monitorRange.node} from={rangeWindow.from} to={rangeWindow.to} title="{monitorRange.node} 범위 로그" testid="range-logs" />{/key}
   {/if}
  {:else if !error}<p class="muted">지표를 불러오는 중입니다.</p>{/if}
 </div>
@@ -112,8 +83,6 @@
  figure{margin:0;padding:var(--space-3);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);min-width:0}figcaption{color:var(--accent-strong);font-size:var(--text-sm);margin-bottom:var(--space-2)}svg{width:100%;height:auto;display:block}circle{cursor:pointer}circle:focus{outline:2px solid var(--warn)}
  .legend{display:flex;flex-wrap:wrap;gap:var(--space-3);margin:var(--space-2) 0}.legend span{display:flex;align-items:center;gap:6px;color:var(--text-muted);font-size:var(--text-sm)}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
  [data-testid="metric-coverage"] p,ul{color:var(--text-muted);font-size:var(--text-sm);margin:var(--space-1) 0}.incomplete ul{color:var(--warn)}li{overflow-wrap:anywhere}
- .logs{margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border-subtle)}h4{margin:0 0 var(--space-2)}label{display:block;margin-bottom:var(--space-2)}select{margin-left:var(--space-2)}
- ol{list-style:none;padding:0;margin:0;max-height:320px;overflow:auto}ol li{display:grid;grid-template-columns:auto 1fr;gap:var(--space-3);padding:var(--space-1) 0;border-bottom:1px solid var(--border-subtle)}time{color:var(--text-muted);font-size:var(--text-xs);white-space:nowrap;font-variant-numeric:tabular-nums}code{font-size:var(--text-xs);white-space:pre-wrap}
- .muted,.empty{font-size:var(--text-sm)}
- @media(max-width:800px){ol li{grid-template-columns:1fr;gap:2px}}
+ .linked{margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border-subtle)}.linked>p{margin:0;color:var(--text-muted);font-size:var(--text-sm)}
+ .muted{font-size:var(--text-sm)}
 </style>

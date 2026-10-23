@@ -1,5 +1,6 @@
 <script>
   import StatusBadge from './StatusBadge.svelte'
+  import LogViewer from './LogViewer.svelte'
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
   import { latestSamples, nodeControls } from './node-view.mjs'
@@ -7,8 +8,9 @@
   import { follow, go } from './nav.mjs'
   let { networkId, nodeId, webSession } = $props()
   const api = $derived(webApi(webSession))
+  let logSpan = $state(null)
   let network = $state(null), observed = $state(null), workspace = $state(null), documents = $state([]), operations = $state([])
-  let metrics = $state(null), logs = $state(null), activeJobs = $state([]), error = $state(''), busy = $state(false)
+  let metrics = $state(null), activeJobs = $state([]), error = $state(''), busy = $state(false)
   const recorded = $derived(network?.nodes.find(n => n.id === nodeId) ?? null)
   const node = $derived(observed?.nodes.find(n => n.id === nodeId) ?? recorded)
   const busyReason = $derived(activeJobs.length ? `이 네트워크에서 작업 ${activeJobs.map(j => j.operation).join(', ')}이(가) 실행 중입니다. 끝난 뒤 제어하세요.` : '')
@@ -27,9 +29,8 @@
     operations = (await api('contracts/jobs')).operations
     activeJobs = (await allItems(api, 'jobs?workspaceId=' + encodeURIComponent(network.workspaceId))).filter(j => ['accepted', 'running', 'cancelling'].includes(j.state))
     const to = new Date(), from = new Date(to.getTime() - 10 * 60 * 1000)
-    const window = `from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`
-    metrics = await api(`networks/${networkId}/metrics?${window}`).catch(() => null)
-    logs = await api(`nodes/${encodeURIComponent(networkId + '.' + nodeId)}/logs?${window}&limit=50`).catch(e => ({ error: e.message }))
+    logSpan = { from: from.toISOString(), to: to.toISOString() }
+    metrics = await api(`networks/${networkId}/metrics?from=${encodeURIComponent(logSpan.from)}&to=${encodeURIComponent(logSpan.to)}`).catch(() => null)
   }
   async function observe() { observed = await api(`networks/${networkId}/observations`) }
   $effect(() => { void networkId; void nodeId; if (webSession) work(load) })
@@ -61,8 +62,8 @@
         {#if c.reason}<span id={'limit-' + c.id} class="reason" data-testid={'control-limit-' + c.id}>{c.reason}</span>{/if}
       </li>{/each}</ul>
     {/if}
-    <h3>최근 로그</h3>
-    {#if logs?.error}<p class="error">{logs.error}</p>{:else if logs?.entries?.length}<pre data-testid="node-logs">{logs.entries.map(e => `${time(e.time)} ${e.text}`).join('\n')}</pre>{:else}<p class="muted">최근 10분 동안 수집된 로그가 없습니다.</p>{/if}
+    <h3>최근 10분 로그</h3>
+    {#if logSpan}<LogViewer {networkId} nodes={[nodeId]} node={nodeId} from={logSpan.from} to={logSpan.to} testid="node-logs" />{/if}
   {:else if !error}<p class="muted">노드를 불러오는 중…</p>{/if}
 </section>
 
@@ -70,7 +71,6 @@
   .reason { color: var(--danger); }
   .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); } dt { color: var(--text-muted); } dd { margin: 0; }
   .metric { display: block; }
-  pre { max-height: 24rem; overflow: auto; background: var(--bg); padding: var(--space-3); border-radius: var(--radius-sm); }
   .controls { list-style: none; padding: 0; } .controls li { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin: var(--space-2) 0; }
   @media (max-width: 700px) { .summary { grid-template-columns: 1fr; } }
 </style>
