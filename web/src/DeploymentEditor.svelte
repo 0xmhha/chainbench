@@ -78,7 +78,7 @@
       <label>저장된 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision}</option>{/each}</select></label>
       {#if canEdit}
         <button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>
-        <label>이름 <input name="name" aria-label="배포 문서 이름" bind:value={name} /></label>
+        <label>이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>
         {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button onclick={() => focusProblem(p.path)}>{p.path}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
         {#if contract}<DeploymentFields schema={contract[kind]} value={content} problems={problemMap} change={v => { content = v; problems = [] }} />{/if}
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>

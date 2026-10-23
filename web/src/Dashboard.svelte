@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
   import { onMount } from 'svelte'
   import { jobStream } from './job-stream.svelte.js'
@@ -17,7 +18,7 @@
   const attention = $derived(attentionJobs(jobs, ATTENTION_LIMIT))
   const tally = $derived(nodeTally(networks.flatMap(n => n.nodes)))
   const drops = $derived((live.drops ?? 0) + (busDrops ?? 0))
-  const fmt = t => t ? new Date(t).toLocaleString() : '—'
+  const fmt = formatTime
   const runOk = s => s === 'success' || s === 'pass'
   onMount(() => feed.start())
 </script>

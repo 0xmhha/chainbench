@@ -5,6 +5,7 @@
  import StatusBadge from './StatusBadge.svelte'
  import LogViewer from './LogViewer.svelte'
  import {testRows,verdictSegments,placeOnAxis,testLogSpan} from './run-timeline.mjs'
+ import {stateLabel,formatTime} from './labels.mjs'
 
  let {run,nodes=[]}=$props()
 
@@ -21,14 +22,21 @@
  const failures=$derived(rows.filter(r=>FAILED.includes(r.status)))
 
  let chosen=$state(null)
+ // A node picked from an assertion or step row overrides the default log node.
+ let pickedNode=$state(null)
  const selected=$derived(rows.find(r=>r.seq===chosen)??failures[0]??null)
  const span=$derived(selected?testLogSpan(selected,PAD_SECONDS):null)
  const logNodes=$derived(nodes.length?nodes:selected?.nodes??[])
- const firstNode=$derived(selected?.nodes.find(n=>logNodes.includes(n))??logNodes[0]??'')
+ // The node an assertion failed on is the likeliest cause, then a step error's node.
+ const evidenceNodes=$derived([...(selected?.failedAsserts??[]).map(a=>a.on),...(selected?.stepErrors??[]).map(s=>s.on)].filter(Boolean))
+ const firstNode=$derived(pickedNode&&logNodes.includes(pickedNode)?pickedNode:evidenceNodes.find(n=>logNodes.includes(n))??logNodes[0]??'')
+ const failedTest=$derived(FAILED.includes(selected?.status))
+ function choose(seq){chosen=seq;pickedNode=null}
+ function showNode(node){pickedNode=node}
 
- const time=value=>value?new Date(value).toLocaleString():'—'
+ const time=formatTime
  const duration=ms=>ms===null?'시각 없음':ms<1000?`${ms}ms`:ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
- const verdictName={fail:'실패',blocked:'막힘',pass:'통과',skip:'건너뜀'}
+ const verdictName=Object.fromEntries(['fail','blocked','pass','skip'].map(s=>[s,stateLabel(s)]))
  const shown=value=>typeof value==='string'?value:JSON.stringify(value)
 </script>
 
@@ -45,7 +53,7 @@
  {#if timed.length}
   <div class="axis" aria-label="테스트 시간축">
    {#each timed as row (row.seq)}
-    <button type="button" class="bar {row.status}" class:chosen={selected?.seq===row.seq} style:left="{row.left}%" style:width="{row.width}%" title="{row.id} · {verdictName[row.status]??row.status} · {duration(row.durationMs)}" aria-label="{row.id} {verdictName[row.status]??row.status}" onclick={()=>{chosen=row.seq}}></button>
+    <button type="button" class="bar {row.status}" class:chosen={selected?.seq===row.seq} style:left="{row.left}%" style:width="{row.width}%" title="{row.id} · {verdictName[row.status]??row.status} · {duration(row.durationMs)}" aria-label="{row.id} {verdictName[row.status]??row.status}" onclick={()=>choose(row.seq)}></button>
    {/each}
   </div>
  {/if}
@@ -54,7 +62,7 @@
   <div class="split">
    <ol class="tests" aria-label="테스트">
     {#each rows as row (row.seq)}
-     <li><button type="button" class="test" class:chosen={selected?.seq===row.seq} aria-pressed={selected?.seq===row.seq} onclick={()=>{chosen=row.seq}}>
+     <li><button type="button" class="test" class:chosen={selected?.seq===row.seq} aria-pressed={selected?.seq===row.seq} onclick={()=>choose(row.seq)}>
       <StatusBadge state={row.status} />
       <span class="name">{row.id}</span>
       <span class="meta">{[duration(row.durationMs),row.failedAsserts.length?`단언 ${row.failedAsserts.length}건 실패`:'',row.stepErrors.length?`스텝 오류 ${row.stepErrors.length}건`:''].filter(Boolean).join(' · ')}</span>
@@ -69,17 +77,17 @@
      {#if selected.reason}<p class={FAILED.includes(selected.status)?'error':'muted'}>{selected.reason}</p>{/if}
      {#if selected.failedAsserts.length}
       <div class="table-wrap"><table>
-       <thead><tr><th>실패한 단언</th><th>노드</th><th>기대</th><th>실제</th></tr></thead>
-       <tbody>{#each selected.failedAsserts as a}<tr><td><code>{a.assert ?? a.id}</code></td><td>{a.on||'—'}</td><td><code>{shown(a.expected)}</code></td><td><code class="actual">{shown(a.actual)}</code></td></tr>{/each}</tbody>
+       <thead><tr><th>실패한 단언</th><th>노드</th><th>기대</th><th>실제</th><th><span class="sr">로그</span></th></tr></thead>
+       <tbody>{#each selected.failedAsserts as a}<tr><td><code>{a.assert ?? a.id}</code></td><td>{a.on||'—'}</td><td><code>{shown(a.expected)}</code></td><td><code class="actual">{shown(a.actual)}</code></td><td>{#if a.on&&logNodes.includes(a.on)}<button type="button" class="link" onclick={()=>showNode(a.on)}>{a.on} 로그</button>{/if}</td></tr>{/each}</tbody>
       </table></div>
      {/if}
      {#if selected.stepErrors.length}
-      <ul class="steps">{#each selected.stepErrors as s}<li><code>#{s.index} {s.type}</code>{s.on?` · ${s.on}`:''}{' · '}<span class="error-text">{s.error}</span></li>{/each}</ul>
+      <ul class="steps">{#each selected.stepErrors as s}<li><code>#{s.index} {s.type}</code>{s.on?` · ${s.on}`:''}{' · '}<span class="error-text">{s.error}</span>{#if s.on&&logNodes.includes(s.on)}{' '}<button type="button" class="link" onclick={()=>showNode(s.on)}>{s.on} 로그</button>{/if}</li>{/each}</ul>
      {/if}
      {#if observations&&logNodes.length}
-      {#if !span.exact}<p class="notice">이 기록에는 테스트별 시각이 없어 실행 전체 범위의 로그를 엽니다. ERROR·WARN 줄을 먼저 보여 줍니다.</p>{/if}
-      {#key `${selected.seq}`}
-       <LogViewer networkId={observations.networkId} nodes={logNodes} node={firstNode} from={span.exact?span.from:null} to={span.exact?span.to:null} runId={span.exact?null:run.id} initialLevels={span.exact?[]:['ERROR','WARN']} title={span.exact?`이 테스트 구간(앞뒤 ${PAD_SECONDS}초) 로그`:'실행 전체 범위 로그'} testid="cause-logs" />
+      {#if !span.exact}<p class="notice">이 기록에는 테스트별 시각이 없어 실행 전체 범위의 로그를 엽니다.</p>{/if}
+      {#key `${selected.seq}-${firstNode}`}
+       <LogViewer networkId={observations.networkId} nodes={logNodes} node={firstNode} from={span.exact?span.from:null} to={span.exact?span.to:null} runId={span.exact?null:run.id} initialLevels={failedTest||!span.exact?['ERROR','WARN']:[]} focus={selected.finishedAt} title={span.exact?`${firstNode} · 이 테스트 구간(앞뒤 ${PAD_SECONDS}초)${failedTest?' · ERROR·WARN 먼저':''}`:`${firstNode} · 실행 전체 범위 · ERROR·WARN 먼저`} testid="cause-logs" />
       {/key}
      {:else if !observations}
       <p class="muted">이 실행에는 보관된 노드 로그·지표 구간이 없습니다.</p>
@@ -115,5 +123,6 @@
  .actual { color: var(--danger); }
  .steps { margin: var(--space-2) 0; padding-left: var(--space-4); }
  .error-text { color: var(--danger); }
+ .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
  @media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } .tests { max-height: 280px; } }
 </style>

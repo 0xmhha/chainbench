@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import { webApi } from './web-api.mjs'
   let { webSession } = $props()
   const api = $derived(webApi(webSession))
@@ -12,7 +13,7 @@
   $effect(() => { if (webSession) load(false) })
   // A result is an HTTP status or the outcome a store recorded.
   const refused = result => /^[45]\d\d$/.test(result) || result === 'failed'
-  const fmt = t => new Date(t).toLocaleString()
+  const fmt = formatTime
 </script>
 
 <section class="panel" aria-label="감사 기록">

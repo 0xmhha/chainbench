@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
   import { webApi } from './web-api.mjs'
   // chain is the chain being configured; the panel judges its documentation
@@ -12,7 +13,7 @@
   const counts = $derived(Object.fromEntries(statuses.map(s => [s, surface.options.filter(o => o.support.status === s).length])))
   const shown = $derived((surface?.options ?? []).filter(o => (!status || o.support.status === status) && (!search || o.spelling.includes(search))))
   const icon = v => v === 'verified' ? '✓' : v === 'incompatible' ? '✕' : v === 'stale' ? '!' : '○'
-  const time = t => t ? new Date(t).toLocaleString() : '—'
+  const time = formatTime
   async function load() {
     busy = true; error = ''
     try { surface = await api(`chains/${encodeURIComponent(chain)}/surface${assetId ? '?assetId=' + encodeURIComponent(assetId) : ''}`) } catch (e) { surface = null; error = e.message } finally { busy = false }

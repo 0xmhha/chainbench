@@ -1,4 +1,5 @@
 <script>
+ import { formatTime } from './labels.mjs'
  import StatusBadge from './StatusBadge.svelte'
  import {onMount} from 'svelte'
  import {jobStream} from './job-stream.svelte.js'
@@ -15,7 +16,7 @@
  $effect(()=>{if(webSession)allItems(api,'workspaces').then(items=>{names=Object.fromEntries(items.map(w=>[w.id,w.name]))}).catch(e=>{cancelError=e.message})})
  const snapshot=$derived(live.snapshot)
  const stale=$derived(live.lastObserved!==null&&now-Date.parse(live.lastObserved)>5000)
- const time=value=>value?new Date(value).toLocaleString():'—'
+ const time=formatTime
  // Every workspace the user can read, plus any a job or network still names.
  const workspaceIds=$derived([...new Set([...Object.keys(names),...(snapshot?.networks??[]).map(n=>n.workspaceId),...(snapshot?.jobs??[]).map(j=>j.workspaceId)].filter(Boolean))].sort())
  const networks=$derived((snapshot?.networks??[]).filter(n=>!selection.workspaceId||n.workspaceId===selection.workspaceId))

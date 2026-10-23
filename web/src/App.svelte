@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import { responseError } from './api-error.mjs'
   import { onMount } from 'svelte'
   import DSLEditor from './DSLEditor.svelte'
@@ -80,7 +81,7 @@
   // The monitoring range also narrows the event timeline.
   const range = $derived(timeRange(monitorRange, now))
   const rangedEvents = $derived(range ? events.filter(e => { const t = Date.parse(e.time); return !Number.isFinite(t) || (t >= Date.parse(range.from) && t <= Date.parse(range.to)) }) : events)
-  const fmtTime = t => t ? new Date(t).toLocaleString() : '—'
+  const fmtTime = formatTime
   const runOk = s => s === 'success' || s === 'pass'
 </script>
 

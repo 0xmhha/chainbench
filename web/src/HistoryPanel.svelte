@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
   import LogViewer from './LogViewer.svelte'
   import RunTimeline from './RunTimeline.svelte'
@@ -9,12 +10,12 @@
   let { webSession } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
   let selected = $state([]), pendingDelete = $state(null), busy = $state(false), error = $state('')
-  let observed = $state(null), runNodeIds = $state([])
+  let observed = $state(null), runNodeIds = $state([]), detailBox = $state()
   let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
   const terminal = run => ['succeeded', 'failed', 'cancelled', 'interrupted'].includes(run.state)
-  const format = time => time ? new Date(time).toLocaleString() : '자료 없음'
+  const format = time => time ? formatTime(time) : '자료 없음'
   async function api(path, method = 'GET', body) {
     const response = await fetch('/api/v1/' + path, { method, headers: { 'Content-Type': 'application/json', ...(method !== 'GET' ? { 'X-CSRF-Token': webSession?.csrfToken ?? '' } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) })
     if (!response.ok) throw await responseError(response)
@@ -52,6 +53,8 @@
     busy = true; error = ''; pendingDelete = null; observed = null
     try { detail = parseHistoryJSON(await (await api('history/' + encodeURIComponent(id))).text()) } catch (e) { error = e.message } finally { busy = false }
     loadRunNodes(detail)
+    // The detail opens below the list; bring it into view so the failure is what the reader sees.
+    requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
   // The timeline needs the run's node names for its logs; the metric series of
   // the run's own window name them. A failure here only leaves the list empty.
@@ -114,7 +117,7 @@
       <td><input name="compare" value={run.id} type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></td>
       <td><button class="record" onclick={() => open(run.id)}>{run.summary.operation ?? run.summary.command ?? run.id}<small>{run.id}</small></button></td>
       <td>{run.chain || '자료 없음'}<small>{run.workspaceId || '자료 없음'}</small></td><td>{format(run.startedAt)}</td><td><StatusBadge state={run.state} /></td>
-      <td>{#if run.summary.counts}<span>통과 {run.summary.counts.pass} · 실패 {run.summary.counts.fail} · 차단 {run.summary.counts.blocked} · 제외 {run.summary.counts.skip}</span>{:else}<span>작업 단계 기록</span>{/if}</td>
+      <td>{#if run.summary.counts}<span>통과 {run.summary.counts.pass} · 실패 {run.summary.counts.fail} · 막힘 {run.summary.counts.blocked} · 건너뜀 {run.summary.counts.skip}</span>{:else}<span>작업 단계 기록</span>{/if}</td>
     </tr>{/each}</tbody></table></div>
   {/if}
   {#if next}<button disabled={busy} onclick={() => load(next)}>다음 기록 더 보기</button>{/if}
@@ -127,7 +130,8 @@
       {/each}</tbody></table></div>
     {#if comparison.metrics?.length}<div class="table-wrap"><table data-testid="comparison-metrics"><thead><tr><th>노드 지표 (출처 · 단위)</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>{#each comparison.metrics as metric}<tr><td>{metric.name}<small>{metric.source}{metric.unit ? ' · ' + metric.unit : ''}</small></td>{#each comparison.runIds as id}<td>{metricValue(metric.values[id])}</td>{/each}</tr>{/each}</tbody></table></div>{/if}
   </section>{/if}
-  {#if detail}<section class="detail" aria-label="실행 상세 결과"><header><h3>상세 결과</h3><div class="actions"><button disabled={busy} onclick={() => download(detail.id)}>결과 내보내기</button>{#if administrator}<button class="danger" disabled={busy || !terminal(detail)} onclick={() => { pendingDelete = detail }}>보관 결과 삭제</button>{/if}</div></header>
+  {#if detail}<section class="detail" aria-label="실행 상세 결과" bind:this={detailBox}><header><h3>상세 결과</h3><div class="actions"><button disabled={busy} onclick={() => download(detail.id)}>결과 내보내기</button>{#if administrator}<button class="danger" disabled={busy || !terminal(detail)} onclick={() => { pendingDelete = detail }}>보관 결과 삭제</button>{/if}</div></header>
+    <RunTimeline run={detail} nodes={runNodeIds} />
     <p class="mono">{detail.id}</p><p>원본 세션: {detail.sessionRefs.join(', ') || '연결된 엔진 세션 없음'}</p>
     <p>큰 정수는 정확한 숫자 문자열로 표시합니다. 다운로드 파일은 원래 JSON 수치 형식을 유지합니다.</p>
     <p>종료 시각: {detail.finishedAt ? format(detail.finishedAt) : '기록 없음'}{#if detail.coverage} · 수집 주기 {detail.coverage.sampleIntervalSeconds}초 · {detail.coverage.complete ? '누락 없음' : `누락 구간 ${detail.coverage.gaps.length}개`}{detail.coverage.downsampled ? ' · 다운샘플됨' : ''}{/if}</p>
@@ -137,7 +141,6 @@
       {#if runNodes.length && !detail.summary.tests?.length}<LogViewer networkId={detail.summary.observations.networkId} nodes={runNodes} node={runNodes[0]} runId={detail.id} title="이 실행 구간의 보관 로그" testid="run-logs" />{/if}{/if}</div>{/if}
     {#if detail.summary.captureGaps?.length}<ul>{#each detail.summary.captureGaps as gap}<li>{gap}</li>{/each}</ul>{/if}
     {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={() => { pendingDelete = null }}>돌아가기</button></div>{/if}
-    <RunTimeline run={detail} nodes={runNodeIds} />
     <details><summary>원본 JSON (테스트 판정 · 어세션 · 단계 · 사용 자료)</summary><pre>{JSON.stringify(detail.summary, null, 2)}</pre></details>
     <details><summary>환경 fingerprint</summary><pre>{JSON.stringify(detail.fingerprints, null, 2)}</pre></details>
   </section>{/if}

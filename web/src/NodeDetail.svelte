@@ -1,4 +1,5 @@
 <script>
+  import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
   import LogViewer from './LogViewer.svelte'
   import { webApi } from './web-api.mjs'
@@ -17,7 +18,7 @@
   const controls = $derived(node ? nodeControls(node, operations, busyReason) : [])
   const latest = $derived(latestSamples(metrics, nodeId))
   const canControl = $derived(webSession?.user.role !== 'viewer')
-  const time = t => t ? new Date(t).toLocaleString() : '—'
+  const time = formatTime
   async function work(fn) { busy = true; error = ''; try { await fn() } catch (e) { error = e.message } finally { busy = false } }
   async function load() {
     const networks = (await api('networks')).items

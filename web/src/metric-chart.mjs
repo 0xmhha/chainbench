@@ -1,3 +1,5 @@
+import {gapText, formatTime} from './labels.mjs'
+
 // Chart geometry for archived node metrics. Missing values stay missing: a
 // sample with a null value widens the time axis but is never drawn as zero,
 // and the line stops there. It also stops where two samples are further apart
@@ -85,7 +87,10 @@ export function logWindow(time, seconds) {
 }
 
 export function gapSummary(coverage) {
- return (coverage?.gaps ?? []).map(g => `${g.reason} (${g.from} – ${g.to})`)
+ return (coverage?.gaps ?? []).map(g => {
+  const {text, code} = gapText(g.reason)
+  return `${text}${text.endsWith(code) ? '' : ` · ${code}`} (${formatTime(g.from)} – ${formatTime(g.to)})`
+ })
 }
 
 // metricNames lists every metric the server collected for the range, with the

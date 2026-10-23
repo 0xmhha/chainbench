@@ -1,4 +1,5 @@
 <script>
+ import { formatTime, gapText } from './labels.mjs'
  // One log reader for every screen: search over the whole window on the
  // server, highlight the hits here, filter by level, read one node or all of
  // them interleaved by time, and jump to the lines around a moment.
@@ -31,10 +32,11 @@
  // Gaps are listed per node; the same outage on several nodes is one line.
  const gaps=$derived(Object.entries(coverage).flatMap(([label,c])=>(c?.gaps??[]).map(g=>({label,...g}))))
  const gapReasons=$derived([...new Set(gaps.map(g=>g.reason))])
+ const gapWords=$derived([...new Set(gaps.map(g=>gapText(g.reason).text.replace(/^\S+ · /,'')))])
  const stamp=$derived(stampText(Object.values(coverage).map(c=>c?.timestampSource)))
  const filtered=$derived(applied.trim()!==''||levels.length>0)
  const statusTail=$derived([entries.length<total?`${entries.length.toLocaleString()}줄 불러옴`:'',selected>=0?`${selected+1}번째 선택`:'',stamp?`시각 출처 ${stamp}`:''].filter(Boolean).map(part=>` · ${part}`).join(''))
- const time=value=>value?new Date(value).toLocaleString():'—'
+ const time=formatTime
  // Rows show the clock only; the window and the selected line carry the date.
  const clock=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'—':`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${String(d.getMilliseconds()).padStart(3,'0')}`}
 
@@ -158,14 +160,15 @@
  {#if context}<p class="context">{time(context.time)} 전후 {CONTEXT_SECONDS}초를 보고 있습니다. <button type="button" class="link" onclick={()=>{context=null}}>원래 범위로</button></p>{/if}
  {#if error}<p class="error" role="alert">{error}</p>{/if}
  {#if gaps.length}
-  <details class="notice gaps"><summary>누락 구간 {gaps.length}개 · {gapReasons.join(', ')} · 이 구간의 로그는 보관되지 않았을 수 있습니다</summary>
-   <ul>{#each gaps as gap}<li>{shownNodes.length>1?`${gap.label} · `:''}{time(gap.from)} – {time(gap.to)} · {gap.reason}</li>{/each}</ul>
+  <details class="notice gaps"><summary>누락 구간 {gaps.length}개 · {gapWords.join(', ')} · 이 구간의 로그는 보관되지 않았을 수 있습니다</summary>
+   <ul>{#each gaps as gap}<li>{shownNodes.length>1?`${gap.label} · `:''}{time(gap.from)} – {time(gap.to)} · {gapText(gap.reason).text} <code>{gapText(gap.reason).code}</code></li>{/each}</ul>
   </details>
  {/if}
- {#if gapReasons.includes('remote_log_collection_unavailable')}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
+ {#if gapReasons.some(r=>r.endsWith('remote_log_collection_unavailable'))}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
 
  {#if !error&&!loading&&entries.length===0}
   <p class="empty">{filtered?`이 범위(${time(span.from??coverage[shownNodes[0]]?.from)} – ${time(span.to??coverage[shownNodes[0]]?.to)})에 조건과 일치하는 줄이 없습니다.`:'이 범위에 보관된 로그가 없습니다.'}{gaps.length?' 누락 구간에는 로그가 없을 수 있습니다.':''}</p>
+  {#if filtered}<p class="empty-actions"><button type="button" onclick={()=>{clearSearch();levels=[]}}>필터 해제하고 모든 줄 보기</button></p>{/if}
  {:else if entries.length}
   <div class="viewport" bind:this={viewport} style:height="{height}px" onscroll={scrolled} tabindex="0" role="listbox" aria-label="로그 줄" aria-activedescendant={selected>=0?`${testid}-row-${selected}`:undefined}>
    <ol style:height="{entries.length*ROW}px">
@@ -226,6 +229,7 @@
  .detail .meta { margin: 0 0 var(--space-2); color: var(--text-muted); font-size: var(--text-sm); }
  .detail .level { border-left: 0; padding: 0; }
  .detail pre { max-height: 10rem; overflow: auto; margin-bottom: var(--space-2); font-size: var(--text-xs); }
+ .empty-actions { margin: 0; text-align: center; }
  .keys { margin: var(--space-2) 0 0; color: var(--text-faint); font-size: var(--text-xs); }
  /* On a narrow screen the message gets the width: the level stays as its
     colored edge and the time moves to the selected line's detail. */

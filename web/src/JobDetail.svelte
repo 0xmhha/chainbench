@@ -36,6 +36,9 @@
     return Number.isFinite(s) && Number.isFinite(e) ? { from: new Date(s - PAD_MS).toISOString(), to: new Date(e + PAD_MS).toISOString() } : null
   })
   const networkNodes = $derived((network?.nodes ?? []).map(n => n.id))
+  const failed = run => (run?.summary?.counts?.fail ?? 0) + (run?.summary?.counts?.blocked ?? 0) > 0
+  const failingRuns = $derived(runs.filter(failed))
+  const passingRuns = $derived(runs.filter(r => !failed(r)))
   $effect(() => {
     const workspace = job?.workspaceId
     if (!workspace || !webSession) return
@@ -55,21 +58,20 @@
 
 <section class="panel" aria-label="작업 상세">
   <p><a href="/chains" onclick={e => follow(e, '/chains')}>← 체인 화면의 작업 목록</a></p>
-  <h2>작업 상세</h2>
-  <p class="notice" data-testid="job-continues">이 작업은 서버에서 실행됩니다. 브라우저를 닫거나 다른 화면으로 가도 계속되며, 다시 열면 기록된 상태를 보여 줍니다.</p>
-  <p class="muted" data-testid="job-stream">실시간 연결: {live.connection}{live.gap ? ' · ' + live.gap : ''}</p>
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   {#if job}
-    <dl class="summary">
-      <dt>작업</dt><dd>{job.operation} · <code>{job.id}</code></dd>
-      <dt>상태</dt><dd data-testid="job-state"><StatusBadge state={job.state} /></dd>
-      <dt>실패한 단계</dt><dd data-testid="job-failed-phase">{summary.failedPhase ? `${summary.failedPhase.name}${summary.failedPhase.message ? ' · ' + summary.failedPhase.message : ''}` : '없음'}</dd>
-      {#if summary.failure}<dt>{job.state === 'cancelled' ? '중단 메시지' : '실패 이유'}</dt><dd class:error={job.state !== 'cancelled'}>{summary.failure}</dd>{/if}
-      <dt>이미 반영된 변경</dt><dd data-testid="job-effects">{summary.effects.length ? `${summary.effects.length}건 기록됨 · 아래 '수행된 변경'에서 봅니다` : '기록 없음'}</dd>
-      <dt>확인할 자원</dt><dd data-testid="job-unresolved">{summary.unresolved.length ? `${summary.unresolved.length}개` : '없음'}</dd>
-      <dt>노드 처리</dt><dd data-testid="job-disposition">{job.nodeDisposition}{summary.needsCheck ? ' · 실제 상태 확인이 필요합니다' : ''}</dd>
-      {#if job.cancelReason}<dt>취소</dt><dd>{job.cancelReason}{job.cancelMessage ? ' · ' + job.cancelMessage : ''}</dd>{/if}
-    </dl>
+    <header class="verdict">
+      <h2>{job.operation}</h2>
+      <span data-testid="job-state"><StatusBadge state={job.state} /></span>
+      {#if summary.failedPhase}<span class="failed-at">{summary.failedPhase.name} 단계에서 실패{summary.failedPhase.message ? ' · ' + summary.failedPhase.message : ''}</span>{:else if summary.failure}<span class="failed-at">{summary.failure}</span>{/if}
+    </header>
+    <!-- A failing test run is the cause a reader came for, so it comes first. -->
+    {#each failingRuns as run (run.id)}
+      <section class="run" aria-label="실패한 테스트 실행">
+        <h3>테스트 실행 <code>{run.id}</code></h3>
+        <RunTimeline {run} nodes={networkNodes} />
+      </section>
+    {/each}
     {#if phases.length}
       <div class="phases" role="img" aria-label={phases.map(p => `${p.name} ${p.state}`).join(', ')}>
         {#each phases as p}<span class="phase {p.state}" style:width="{phaseWidth(p)}%" title="{p.name} · {p.state}{p.durationMs !== null ? ` · ${(p.durationMs / 1000).toFixed(1)}초` : ''}"></span>{/each}
@@ -82,14 +84,28 @@
         <LogViewer networkId={network.id} nodes={networkNodes} node={networkNodes.length > 1 ? '*' : networkNodes[0]} from={phaseSpan?.from ?? null} to={phaseSpan?.to ?? null} title={phaseSpan ? `실패한 단계 ${summary.failedPhase.name} 구간(앞뒤 5초) · 모든 노드` : '최근 로그'} testid="phase-logs" />
       </section>
     {/if}
-    {#each runs as run (run.id)}
+    {#each passingRuns as run (run.id)}
       <section class="run" aria-label="테스트 실행 결과">
         <h3>테스트 실행 <code>{run.id}</code></h3>
         <RunTimeline {run} nodes={networkNodes} />
       </section>
     {/each}
+    <details class="meta" open={!summary.failedPhase && !summary.failure && !failingRuns.length}>
+      <summary>작업 정보</summary>
+      <dl class="summary">
+        <dt>작업</dt><dd>{job.operation} · <code>{job.id}</code></dd>
+        <dt>실패한 단계</dt><dd data-testid="job-failed-phase">{summary.failedPhase ? `${summary.failedPhase.name}${summary.failedPhase.message ? ' · ' + summary.failedPhase.message : ''}` : '없음'}</dd>
+        {#if summary.failure}<dt>{job.state === 'cancelled' ? '중단 메시지' : '실패 이유'}</dt><dd class:error={job.state !== 'cancelled'}>{summary.failure}</dd>{/if}
+        <dt>이미 반영된 변경</dt><dd data-testid="job-effects">{summary.effects.length ? `${summary.effects.length}건 기록됨 · 아래 '수행된 변경'에서 봅니다` : '기록 없음'}</dd>
+        <dt>확인할 자원</dt><dd data-testid="job-unresolved">{summary.unresolved.length ? `${summary.unresolved.length}개` : '없음'}</dd>
+        <dt>노드 처리</dt><dd data-testid="job-disposition">{job.nodeDisposition}{summary.needsCheck ? ' · 실제 상태 확인이 필요합니다' : ''}</dd>
+        {#if job.cancelReason}<dt>취소</dt><dd>{job.cancelReason}{job.cancelMessage ? ' · ' + job.cancelMessage : ''}</dd>{/if}
+      </dl>
+    </details>
     <JobCard {job} {webSession} onchanged={load} />
   {:else if !error}<p class="muted">작업을 불러오는 중…</p>{/if}
+  <p class="muted note" data-testid="job-continues">이 작업은 서버에서 실행됩니다. 브라우저를 닫거나 다른 화면으로 가도 계속되며, 다시 열면 기록된 상태를 보여 줍니다.</p>
+  <p class="muted note" data-testid="job-stream">실시간 연결: {live.connection}{live.gap ? ' · ' + live.gap : ''}</p>
 </section>
 
 <style>
@@ -100,4 +116,8 @@
   .phase-names { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) 0 0; padding: 0; list-style: none; color: var(--text-muted); font-size: var(--text-sm); }
   .phase-names li.failed { color: var(--danger); font-weight: 600; } .phase-names li.running { color: var(--accent); }
   .cause, .run { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-subtle); }
+  .verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); margin: var(--space-2) 0 var(--space-3); }
+  .failed-at { color: var(--danger); }
+  .meta { margin-top: var(--space-4); } .meta summary { cursor: pointer; color: var(--text-muted); }
+  .note { margin: var(--space-3) 0 0; font-size: var(--text-xs); }
 </style>
