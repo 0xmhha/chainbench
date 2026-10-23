@@ -45,7 +45,7 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 
 > **Scenario 2 (wemix→wbft handoff)** lives in the DSL: `tests/tc/go-wemix/hardfork/`
 > asserts the croissant handoff and that state written before the fork survives it,
-> composed from `tests/tc/env/wemix-to-wbft.env.json`. The Go e2e that used to hold
+> composed from the chain preset `presets/chain/wemix-to-wbft.json`. The Go e2e that used to hold
 > it drove `chainbench upgrade run`, a command the CLI no longer has, and was removed.
 >
 > Migration in progress: the remaining scenarios (1 wemix pure, basefee, and the

@@ -104,7 +104,7 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 		return nil, err
 	}
 	in := e.webSuiteInput(*p)
-	// PlanSuite may materialize content-addressed overlays. Keep preparation
+	// Planning the suite may materialize content-addressed overlays. Keep preparation
 	// inside an owned input directory, away from the network or target servers.
 	in.DataDir = filepath.Join(run.InputDir, "planning")
 	layout, plan, err := planSuiteThroughCLI(ctx, e.cli, in, run.InputDir)

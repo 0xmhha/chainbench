@@ -26,8 +26,8 @@
 | ~~`keys.NodeKey`~~ | `core/keys` | **K3 에서 제거** |
 | ~~`keygen.Node`~~ | `keygen` | **K3 에서 제거** |
 | ~~`keyreg.Key`~~ | `core/keyreg` | **K3 에서 제거** — `keyring.Entry` 가 대신한다 |
-| ~~`deploy.NodeKeyInfo`~~ | `chains/wemix/deploy` | **K7b 에서 제거** — `ServerIdentity` 가 `keyring.Identity` 를 임베드한다 |
-| `keyring.Identity` | `core/keyring` | pubkey · address · BLS *(신규)* |
+| ~~`deploy.NodeKeyInfo`~~ | `chains/wemix/deploy` | **K7b 에서 제거** — 그 자리를 받은 `ServerIdentity` 도 `#346` 에서 원격 명령군과 함께 없어졌다 |
+| `derive.Identity` | `core/keyring/derive` | pubkey · address · BLS *(신규)* |
 
 다섯 개가 **같은 것의 부분집합**이다. 어느 것도 전체가 아니고, 어느 것도 다른 것으로 변환되지
 않는다. 호출자는 매번 필드를 손으로 옮겨 담는다.
@@ -182,8 +182,9 @@ func (r *Ring) Save(e Entry) error
 type Label string
 ```
 
-`place.NodePlacement.Name` · `keyreg.Key.Name` · 계정 라벨이 전부 이 타입으로 모인다
-([[network-blueprint-design]] N7 `netmap`).
+링 항목 이름과 계정 라벨이 이 타입을 쓴다. 노드 이름은 따로 `core/node.Label` 을 쓴다 —
+노드와 링 항목은 철자가 같을 때가 있어도 다른 개념이기 때문이다 (`internal/core/node/label.go`).
+`place.NodePlacement` 와 `keyreg.Key` 는 코드에 없다.
 
 ### 3.3 `FileStore` — 읽기를 더한다 (K6)
 

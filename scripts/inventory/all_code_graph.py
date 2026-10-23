@@ -20,10 +20,10 @@ from inline_python import extract as python_programs, inline_program, stdin_prog
 
 REPO = Path(__file__).resolve().parents[2]
 LANGUAGES = {'.go': 'go', '.py': 'python', '.sh': 'bash', '.js': 'javascript',
-             '.mjs': 'javascript', '.svelte': 'svelte', '.html': 'html', '.css': 'css',
+             '.mjs': 'javascript', '.cjs': 'javascript', '.svelte': 'svelte', '.html': 'html', '.css': 'css',
              '.json': 'json', '.yaml': 'yaml', '.yml': 'yaml', '.toml': 'toml',
              '.mod': 'gomod', '.sum': 'gosum'}
-DATA = {'.md', '.txt', '.mmd', '.tsv', '.jsonl', '.sample', '.golden'}
+DATA = {'.md', '.txt', '.mmd', '.tsv', '.jsonl', '.sample', '.golden', '.dot', '.svg'}
 DECLARATIONS = {'function_definition': 'function', 'function_declaration': 'function',
                 'class_definition': 'type', 'target': 'target', 'rule': 'target'}
 CALLS = {'command', 'call_expression'}

@@ -405,7 +405,6 @@ func layerOf(path string) string {
 		return "usecase"
 	case strings.HasPrefix(path, "internal/mcp"),
 		strings.HasPrefix(path, "internal/dashboard"),
-		strings.HasPrefix(path, "internal/testspec"),
 		strings.HasPrefix(path, "internal/testhelper"),
 		strings.HasPrefix(path, "internal/testengine"),
 		strings.HasPrefix(path, "internal/chainsetup"):
@@ -415,12 +414,14 @@ func layerOf(path string) string {
 		strings.HasPrefix(path, "internal/validatorset"),
 		strings.HasPrefix(path, "internal/accounts"):
 		return "domain"
-	// resource is the L1 module that owns the server set and the dial wiring
-	// (layers.md §3): a primitive, not an orchestrator.
+	// resource owns the server set and the dial wiring, and preset defines and
+	// loads the preset documents; both are L1 primitives (layers.md §3), not
+	// orchestrators.
 	case strings.HasPrefix(path, "internal/core"),
-		strings.HasPrefix(path, "internal/resource"):
+		strings.HasPrefix(path, "internal/resource"),
+		strings.HasPrefix(path, "internal/preset"):
 		return "core"
-	case strings.HasPrefix(path, "internal/testkit"):
+	case strings.HasPrefix(path, "internal/testsupport"):
 		return "support"
 	// arch holds no production code and imports nothing; it has no layer.
 	case strings.HasPrefix(path, "internal/arch"),

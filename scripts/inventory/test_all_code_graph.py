@@ -93,6 +93,22 @@ class AllCodeGraphTest(unittest.TestCase):
             self.assertTrue(any(f['path'] == 'node_modules/vendor.bin' and f['reason'] == 'external dependency' for f in graph['excluded']))
             self.assertTrue(any(f['path'] == 'linked.py' and f['reason'] == 'symlink' for f in graph['missing']))
 
+    def test_commonjs_is_source_and_diagrams_are_documentation(self):
+        # An analysis bundle ships CommonJS tools next to rendered diagrams.
+        # The tools are code to parse; the diagrams are data, not unknown files.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root, 'tools/render.cjs', "const fs = require('fs')\nfunction render() { return fs }\nmodule.exports = render\n")
+            self.fixture(root, 'graph/packages.dot', 'digraph g { a -> b }\n')
+            self.fixture(root, 'graph/packages.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>\n')
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertEqual(graph['missing'], [])
+            self.assertTrue(any(f['path'] == 'tools/render.cjs' and f['language'] == 'javascript' for f in graph['files']))
+            excluded = {f['path'] for f in graph['excluded']}
+            self.assertLessEqual({'graph/packages.dot', 'graph/packages.svg'}, excluded)
+
     def test_executed_inline_programs_are_parsed_in_their_own_language(self):
         cases = [
             ('inline.go', 'package main\nimport "os/exec"\nfunc f() { exec.Command("python3", "-B", "-c", `def broken(:`) }\n'),

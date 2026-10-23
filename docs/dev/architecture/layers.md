@@ -110,9 +110,9 @@ flowchart TD
 |---|---|
 | `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
 | `core/rpc` | JSON-RPC 클라이언트 |
-| `core/process` | **실행** — 프로세스 기동/정지/provision(`Initializer`·`LogReader`, 옛 `core/driver`)·PID 추적·검증된 종료(run ledger)와 **기동 정책**(`Direct`: arm·materialize·init·launch / `Launcher`: 헬스 게이트·진단·재시도·teardown, 옛 `core/launcher` L3). 실행 메커니즘과 정책이 한 모듈 — 층 경계는 파일 경계로 내려간다(R3, 2026-09-01) |
+| `core/process` | **실행** — 프로세스 기동/정지/provision(`Initializer`·`LogReader`, 옛 `core/driver`)·PID 추적·검증된 종료(run ledger)와 기동에 쓰는 원시 함수(`NodeConfig`: 노드 spec 조립 / `LaunchAndRecord`: 기동과 대장 기록 / `StopNodeSet` / `FailureMode`). 옛 `Direct`·`Launcher` 기동 정책은 호출자가 없어 제거됐고, 기동 순서는 chainsetup 의 start 단계가 갖는다(ee9f082f) |
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
-| `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
+| `core/filestore` | `Store` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/chainsurface` | **체인 바이너리의 캡처된 표면** — `docs/chain-analysis` 의 네 산출물에서 명령 경로·위치 인자·전역/명령 플래그·숨김·거절 플래그와 캡처 커밋·시각·digest 를 읽는다. 엔진 매핑과의 결합과 실제 바이너리 판정은 `app` 이 한다(Web UI G-A01, 2026-10-11). 내부 import 0 |
 | `core/nodeconfig` | 노드 하나의 설정을 한곳에서 — config.toml 렌더 · launch argv 조립(`Argv`, 옛 `core/launchopt`) · 평면 dot-path 설정값(`Values`·`Merge`·`Resolve`·`Flatten`·`Defaults`, 옛 `core/config`). 파일·argv·해석이 한 지붕(R1, 2026-08-31) |
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
@@ -122,10 +122,10 @@ flowchart TD
 | `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run` 이 같은 경계를 쓴다, P6.1·R4) |
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
-| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) (`module-plan` (2026-09-24 삭제)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1). 그리고 머신 지정(`Spec`·`Access`·ip+경로 한 규칙, 로컬/원격 한 표기, 옛 `core/machine`) — 타깃을 여는 것이 자원 접근이라 여기 합류(R3, 2026-09-01) |
+| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) (`module-plan` (2026-09-24 삭제)). devp2p 네트워크 id 해석·검증(`NetworkOf`·`ValidateUniformNetworkID`)은 argv 조립과 함께 `core/nodeconfig` 로 옮겨갔다(a5386b0e). 그리고 머신 지정(`Spec`·`Access`·ip+경로 한 규칙, 로컬/원격 한 표기, 옛 `core/machine`) — 타깃을 여는 것이 자원 접근이라 여기 합류(R3, 2026-09-01) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리, 그리고 그 플러그인이 선언하는 것들: capability 카탈로그·핸들러(`Capability`·`LoadCatalog`·`RegisterHandler`·`GetByAddress`, 옛 `core/capability`)와 검증자 조회(`Validators`, 옛 `core/consensus`). 무엇이 등록되는가와 그 등록물의 능력이 한 곳(R1, 2026-08-31) |
 | `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
-| `preset` | preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과 키(`Key`). 갈래마다 문서가 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈(`keyring`·`poa`·`chainsetup`)은 정의하지 않고 쓰기만 한다 — 어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지, 거버넌스 정책(`GovernanceEnv`). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
+| `preset` | key preset 문서(`presets/keys/`)의 정의와 로더 — `Key`·`LoadKeyPreset`. 쓰는 모듈(`keyring`·`poa`·`chainsetup`)은 정의하지 않고 읽기만 한다. 체인 갈래(`Chain`·`LoadChainPreset`·`GovernanceEnv`)는 제거됐고, 그 선언은 DSL 의 `dsl.ChainPresetV2`(`presets/chain/*.json`)가 맡는다(7cd42aac). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
 
 > `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
 > 그래서 L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
@@ -227,10 +227,10 @@ flowchart TD
 |---|---|---|
 | 무엇 | 실행 기록 · 판정 · 컴포지션 상태 | genesis · config.toml · datadir · 로그 |
 | 어디 | **항상 조작자의 로컬 머신** | 타깃(이 머신 또는 원격 SSH 호스트) |
-| 소유 | `core/session` | `core/filestore.FileSink` |
+| 소유 | `core/session` | `core/filestore.Store` |
 | 예 | `session.json` · `env.json` · `chain-record.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
 
-이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `Sink` 에 쓰고, 어느 머신인지는 `Target` 이 안다.
+이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `filestore.Store` 에 쓰고, 어느 머신인지는 주입된 구현(`filestore.Local` 또는 `process.RemoteFileStore`)이 안다.
 
 ### 파일을 쓰는 패키지 (A2 가 이 표를 강제한다)
 
@@ -450,13 +450,13 @@ A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
 |---|---|---|
 | `Phase` · `ConsensusFamily.BringUpPhases` | **L1** (`core/registry`) | 인터페이스는 아래. 구현은 L2a |
 | `PortReservation` | **L1** (`core/registry` 선언 / `core/node` 소유 · `resource` 사용) | 순수 계산 |
-| `launcher.Deps.Action` | **L1** (`core/process`) | 실행 시점·타임아웃·진단은 정책 |
+| 액션 실행(`registry.Phase.Actions`) | **L4** (`chainsetup` start 단계) | 실행 시점·순서는 기동 정책 |
 | 액션 구현(거버넌스·etcd) | **L2a** (`consensus/poa`) | 이미 존재 |
-| `GenesisArtifacts` | **L4** (`engine`) | 조립 산출물 |
+| `genesis.Artifacts` | **L1** (`core/genesis`) | genesis 빌더의 산출물 |
 | 유스케이스 수렴(3곳→1곳) | **L5** (`app`) | 유스케이스 1개 = 함수 1개 |
 
-**층이 정해지면 배선이 정해진다.** L3 launcher 는 `Action` 을 이름으로만 알고,
-L5 app 이 L2a 구현을 주입한다 — L3 는 여전히 wemix 를 모른다.
+**층이 정해지면 배선이 정해진다.** chainsetup 의 start 단계는 phase 가 이름으로 선언한
+`Actions` 를 `poa.Bootstrap.Action` 에 넘긴다 — 액션이 무엇을 하는지는 L2a 가 안다.
 
 ---
 

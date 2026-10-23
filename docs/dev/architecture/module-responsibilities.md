@@ -165,12 +165,12 @@ engine(L4) ──주도──▶ dsl/interp(L3) ──사용──▶ dsl(L1) ·
 
 ## 4. 3체인 실행 시뮬레이션
 
-`chainbench net up --chain <X> --binary <B> --server local` 한 줄이 모듈을 어떻게 타는지.
+`chainbench chain up --chain <X> --binary <B> --server local` 한 줄이 모듈을 어떻게 타는지.
 
 ### 4.1 공통 골격 (세 체인 동일)
 
 ```
-L6  cmd/chainbench net up                       플래그 바인딩만
+L6  cmd/chainbench chain up                     플래그 바인딩만
 L5  app.ChainUp                                   9개 스텝을 순서대로
      │
      ├─ ChainNew        → netcompose.New          → external.ResolveChain ─→ registry.ChainPlugin
@@ -256,8 +256,8 @@ L3  core/session 이 전 과정의 스텝 스탬프를 기록                   
 | p2p 대역 2칸 vs 3칸(etcd peer+client) | `Family.PortReservation()` | 숫자만 안다 |
 | `--networkid` 방출 | `launchopt` 다이얼렉트 | ❌ |
 
-**L3 supervisor 는 끝까지 wemix 를 모른다.** `Action("deploy-governance")` 를 언제 부르고,
-얼마나 기다리고, 실패를 어떻게 분류할지만 안다. 이것이 `LeaderGate` 가 이미 쓰는 계약과 같다.
+**기동 순서를 맡는 쪽(지금은 chainsetup 의 start 단계)은 액션의 내용을 모른다.** `Action("deploy-governance")` 를
+언제 부르고, 실패를 어떻게 보고할지만 안다. 옛 `LeaderGate`(L3 supervisor)는 호출자가 없어 제거됐다(ee9f082f).
 
 ---
 

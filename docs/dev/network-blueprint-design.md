@@ -202,23 +202,23 @@ peering: mesh        # 기본. pn 이 하나라도 있으면 proxied 가 기본�
 # peering: {custom: {bp1: [pn1, pn2], en1: [pn1]}}   # 최후 수단
 ```
 
-#### wemix(poa)는 pn 을 쓰지 않는다 — etcd 가 그 자리다
+#### wemix(poa)도 pn 을 받는다 — etcd 는 별도 계층이다
 
-wemix 는 static-nodes 대신 **거버넌스 member 목록 + etcd 클러스터**로 연결되고,
-프록시 계층의 역할을 **etcd 가 대신한다.** 따라서:
+> **정정.** 처음 설계는 "poa 는 pn 을 쓰지 않고 etcd 가 그 자리다, 선언하면 오류"였다.
+> 지금은 그렇지 않다. poa 도 프록시 계층(pn)을 받고, wemix bp/pn/en 네트워크가 실제로 기동해
+> 블록을 만든다.
 
-- **poa 패밀리에서 `pn` 은 적용 대상이 아니다.**
-- 청사진이 poa 체인에 `pn` 을 선언하면 **오류**다. 조용히 무시하면 사용자는 프록시 계층이
-  선 줄 알지만 실제로는 없는 네트워크를 얻는다 — 이 프로젝트가 `LeaderGate`·`Action` 에
-  이미 쓰는 계약("선언했는데 미배선이면 오류")과 같은 이유다.
-- `peering` 은 poa 에서 **선언 자체가 무의미**하므로 마찬가지로 거부한다.
+pn 은 블록을 만들지 않는 탐색 허브이고, etcd 클러스터는 프로듀서끼리 만든다. 두 계층은
+따로 움직인다(p2p 탐색은 pn, 합의·etcd 는 프로듀서). 따라서:
 
-이것을 `Family` 가 말한다:
+- 패밀리가 실행하지 못하는 역할을 선언하면 **오류**다. 조용히 mesh 로 강등하지 않는다.
+  사용자는 프록시 계층이 선 줄 알지만 실제로는 없는 네트워크를 얻게 되기 때문이다.
+- 이 판단은 `Family.SupportsRole` 이 한다. 지금은 두 패밀리 모두 bp·en·pn 세 역할을 받는다.
+  다음 패밀리는 다르게 답할 수 있으므로 질문은 패밀리에 남긴다.
 
 ```go
-// ConsensusFamily gains:
-//   SupportsRole(node.Role) bool     // poa: pn -> false
-//   SupportsPeeringGraph() bool      // poa: false (etcd 가 연결을 소유)
+// ConsensusFamily (internal/core/registry):
+//   SupportsRole(node.Role) bool     // poa·wbft: bp, en, pn -> true
 ```
 
 ---
@@ -304,17 +304,18 @@ governance:                         # N12·N13 — poa 패밀리만. 다른 체�
 2단계  preset 이 그 청사진을 생성            ← 이것이 순수한 시간 단축이 된다
 ```
 
-`net up --blueprint network.yaml` 이 **preset 디렉토리 없이** 동작하는 것이 1단계의 게이트다.
-지금은 `keys.LoadPreset` 이 필수라 이것이 불가능하다.
+`chain up --blueprint network.yaml` 이 **preset 디렉토리 없이** 동작하는 것이 1단계의 게이트다.
+지금은 청사진이 노드 키를 직접 담고, `--blueprint` 를 주면 `--keys-source` 가 `declared` 로
+정해져 키 세트 없이 구성된다.
 
 ### 3.3 preset 은 Blueprint 의 **생성기**다
 
 ```sh
 # preset 에서 청사진을 만든다 — 이후 손으로 고칠 수 있다
-chainbench net blueprint --from-preset presets/keys --chain wemix --bp 4 --en 1 > network.yaml
+chainbench chain blueprint --from-preset presets/keys --chain wemix --bp 4 --en 1 > network.yaml
 
 # 청사진으로 구성한다
-chainbench net up --blueprint network.yaml
+chainbench chain up --blueprint network.yaml
 ```
 
 이 뒤집기가 핵심이다. 지금은 `preset → (내부 조립) → 네트워크` 라서 중간을 볼 수도 고칠 수도 없다.
@@ -397,7 +398,7 @@ ResolvedNetwork
 | 노드별 nodekey·계정·포트·서버 지정 불가 | 노드마다 명시 가능 |
 | 바이너리 경로 20곳 | `binaries:` 한 곳 + 노드별 오버라이드 |
 | alloc·검증자 집합 수정 불가 | 선언 |
-| 값의 출처를 알 수 없음 | `Sources` 에 기록 |
+| 값의 출처를 알 수 없음 | `Origins` 에 기록 |
 | genesis/config 조립이 스텝마다 조금씩 다름 | 전부 `ResolvedNetwork` 하나만 읽음 |
 
 ---
@@ -634,6 +635,7 @@ S 계열(표면 통일)에서 뒤의 것이 `feature` 레지스트리와 겹치�
    `pn`=proxy, `en`=endpoint. **실행 옵션 차이는 없다** — 세 체인에 proxy 모드 플래그가 없다(실측).
    ~~proxied 그래프 규칙~~ → **확정: `bp ↔ pn ↔ en`, en 은 bp 를 직접 알지 못한다.**
    ~~wemix 의 pn~~ → **확정: poa 는 pn 을 쓰지 않는다(etcd 가 그 자리). 선언하면 오류.**
+   (이후 번복: poa 도 pn 을 받는다. §2.3 의 wemix 항목을 본다.)
 2. **Blueprint 를 어디에 둘 것인가.** 노드 IP·포트를 담으므로 [[server-set]] 와 같은 민감도다.
    서버 세트를 참조만 하고(`server: local`) 자신은 IP 를 담지 않게 하면 커밋 가능해진다 —
    **그 편이 낫다고 본다.**

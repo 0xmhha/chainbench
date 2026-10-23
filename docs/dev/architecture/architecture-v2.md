@@ -128,15 +128,15 @@ loopback 주소의 머신일 뿐이고, 구현 차이는 machine 내부의 관�
 2. **소유하는 명사로 짓는다** — 동작이 역할이면 "대상+동작명사" 합성, 최대 2단어
    (`chainsetup`, `testengine`).
 3. **덤핑 단어 금지** — util·common·helpers·shared·misc·base·manager. 관리자는
-   패키지가 아니라 타입이다 (`process.Manager`).
+   패키지가 아니라 타입이다 (`chainsetup.Manager`).
 4. **stutter 금지** — 패키지명이 타입명에 반복되지 않게 (`machine.Spec` ○ /
-   `machine.Machine` ✗. 현 `target.Target` 이 위반 사례).
+   `machine.Machine` ✗. 옛 `target.Target` 이 위반 사례였고 `machine.Spec` 으로 고쳤다).
 5. **단수형** — 집합 자체가 주제일 때만 집합 명사 (`serverset` ○, 현 `accounts` 위반).
 6. **계층은 경로가 말한다** — 이름에 core·app 같은 계층 접두어 금지.
 7. **약어는 업계 표준만** — rpc·ssh·mcp·dsl ○ / `netreg` ✗ (registry 인지 register 인지
    읽히지 않음).
 
-접미사 관례: CLI 표면 패키지는 `<그룹명>cmd` (keyringcmd·netmapcmd·netcmd),
+접미사 관례: CLI 표면 패키지는 `<그룹명>cmd` (keyringcmd·chaincmd·nodecmd),
 저장 하위 패키지는 `<도메인>/store` (keyring/store).
 
 ## 8. 이동 계획
