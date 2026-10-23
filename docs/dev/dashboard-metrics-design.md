@@ -101,7 +101,7 @@ Netdata(UI 가 비공개 사유 라이선스).
 
 | # | 질문 | 기울기 |
 |---|---|---|
-| DM-a | 차트 라이브러리 — uPlot(MIT, 초경량) vs ECharts(Apache) vs 직접 SVG | 시계열 다중 비교라면 uPlot 기울기. statsviz 도 uPlot 사용 |
+| DM-a | 차트 라이브러리 — uPlot(MIT, 초경량) vs ECharts(Apache) vs 직접 SVG | **결정(2026-10-23): uPlot.** 시간 축·커서·확대처럼 직접 만들면 버그가 많은 부분만 맡긴다. 로그 뷰어와 가상 스크롤은 직접 만든다(고정 높이 줄이라 위험이 작다) |
 | DM-b | collector 간이 파서를 언제 `expfmt` 로 바꾸나 | 라벨 있는 지표(예: `rpc/duration` 계열)를 그리는 시점. 그 전까지는 간이판으로 충분 |
 | DM-c | 링버퍼 보관량 | 해상도 5s × 2h ≈ 노드당 지표당 1,440샘플 기울기. 실행이 그보다 길면 다운샘플 |
 | DM-d | 스크레이프 주기와 노드 부하 | `--metrics.expensive` 는 켜지 않는 기본. 5s 기울기 |
