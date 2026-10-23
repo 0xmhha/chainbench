@@ -6,6 +6,10 @@
   import { jobSummary } from './job-view.mjs'
   import { follow } from './nav.mjs'
   import JobCard from './JobCard.svelte'
+  import LogViewer from './LogViewer.svelte'
+  import RunTimeline from './RunTimeline.svelte'
+  import { phaseSegments } from './run-timeline.mjs'
+  import { parseHistoryJSON } from './history-json.js'
   let { jobId, webSession } = $props()
   const api = $derived(webApi(webSession))
   const feed = jobStream(), live = feed.state
@@ -15,6 +19,36 @@
   const job = $derived(live.snapshot?.jobs.find(j => j.id === jobId) ?? fetched)
   const summary = $derived(job ? jobSummary(job) : null)
   async function load() { error = ''; try { fetched = await api('jobs/' + jobId) } catch (e) { error = e.message } }
+  // The failed phase is read against the logs of the network the job worked
+  // on, and every test run the job produced is shown as its own timeline.
+  const PAD_MS = 5000
+  let network = $state(null), runs = $state([])
+  const phases = $derived(phaseSegments(job?.phases))
+  // Untimed phases keep a small fixed slot; timed ones share the rest.
+  const UNTIMED_SLOT = 4
+  const phaseWidth = p => {
+    const untimed = phases.filter(x => !x.timed).length
+    return p.timed ? (p.share * (100 - untimed * UNTIMED_SLOT)) / 100 : UNTIMED_SLOT
+  }
+  const phaseSpan = $derived.by(() => {
+    const p = summary?.failedPhase
+    const s = Date.parse(p?.startedAt ?? ''), e = Date.parse(p?.finishedAt ?? '')
+    return Number.isFinite(s) && Number.isFinite(e) ? { from: new Date(s - PAD_MS).toISOString(), to: new Date(e + PAD_MS).toISOString() } : null
+  })
+  const networkNodes = $derived((network?.nodes ?? []).map(n => n.id))
+  $effect(() => {
+    const workspace = job?.workspaceId
+    if (!workspace || !webSession) return
+    api('networks').then(page => { network = page.items.find(n => n.workspaceId === workspace) ?? null }).catch(() => { network = null })
+  })
+  $effect(() => {
+    const ids = job?.runIds ?? []
+    if (!ids.length || !webSession) { runs = []; return }
+    // Raw text keeps large integers exact (parseHistoryJSON), as History does.
+    const read = id => fetch('/api/v1/history/' + encodeURIComponent(id), { cache: 'no-store' }).then(r => r.ok ? r.text() : Promise.reject(new Error(String(r.status)))).then(parseHistoryJSON)
+    Promise.all(ids.map(id => read(id).catch(() => null)))
+      .then(found => { runs = found.filter(Boolean) })
+  })
   $effect(() => { void jobId; if (webSession) load() })
   onMount(() => feed.start())
 </script>
@@ -36,6 +70,24 @@
       <dt>노드 처리</dt><dd data-testid="job-disposition">{job.nodeDisposition}{summary.needsCheck ? ' · 실제 상태 확인이 필요합니다' : ''}</dd>
       {#if job.cancelReason}<dt>취소</dt><dd>{job.cancelReason}{job.cancelMessage ? ' · ' + job.cancelMessage : ''}</dd>{/if}
     </dl>
+    {#if phases.length}
+      <div class="phases" role="img" aria-label={phases.map(p => `${p.name} ${p.state}`).join(', ')}>
+        {#each phases as p}<span class="phase {p.state}" style:width="{phaseWidth(p)}%" title="{p.name} · {p.state}{p.durationMs !== null ? ` · ${(p.durationMs / 1000).toFixed(1)}초` : ''}"></span>{/each}
+      </div>
+      <ol class="phase-names">{#each phases as p}<li class={p.state}>{p.name}{#if p.durationMs !== null} <small>{(p.durationMs / 1000).toFixed(1)}초</small>{/if}</li>{/each}</ol>
+    {/if}
+    {#if summary.failedPhase && network && networkNodes.length}
+      <section class="cause" aria-label="실패한 단계 시점 로그">
+        {#if !phaseSpan}<p class="notice">실패한 단계에 시각이 없어 최근 2시간의 로그를 엽니다.</p>{/if}
+        <LogViewer networkId={network.id} nodes={networkNodes} node={networkNodes.length > 1 ? '*' : networkNodes[0]} from={phaseSpan?.from ?? null} to={phaseSpan?.to ?? null} title={phaseSpan ? `실패한 단계 ${summary.failedPhase.name} 구간(앞뒤 5초) · 모든 노드` : '최근 로그'} testid="phase-logs" />
+      </section>
+    {/if}
+    {#each runs as run (run.id)}
+      <section class="run" aria-label="테스트 실행 결과">
+        <h3>테스트 실행 <code>{run.id}</code></h3>
+        <RunTimeline {run} nodes={networkNodes} />
+      </section>
+    {/each}
     <JobCard {job} {webSession} onchanged={load} />
   {:else if !error}<p class="muted">작업을 불러오는 중…</p>{/if}
 </section>
@@ -43,4 +95,9 @@
 <style>
   .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); } dt { color: var(--text-muted); } dd { margin: 0; }
   @media (max-width: 700px) { .summary { grid-template-columns: 1fr; } }
+  .phases { display: flex; gap: 2px; height: 10px; margin-top: var(--space-4); border-radius: 999px; overflow: hidden; background: var(--border-subtle); }
+  .phase { flex: none; min-width: 4px; background: var(--border-strong); } .phase.succeeded { background: var(--ok); } .phase.failed { background: var(--danger); } .phase.running { background: var(--accent); }
+  .phase-names { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) 0 0; padding: 0; list-style: none; color: var(--text-muted); font-size: var(--text-sm); }
+  .phase-names li.failed { color: var(--danger); font-weight: 600; } .phase-names li.running { color: var(--accent); }
+  .cause, .run { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-subtle); }
 </style>

@@ -6,7 +6,7 @@
  import {responseError} from './api-error.mjs'
  import {LOG_LEVELS,levelTone,highlightSegments,mergeByTime,logQuery,visibleRange,nearestIndex} from './log-view.mjs'
 
- let {networkId,nodes=[],node=$bindable(nodes[0]??''),from=null,to=null,runId=null,focus=null,title='',height=420,testid='log-viewer',...attributes}=$props()
+ let {networkId,nodes=[],node=$bindable(nodes[0]??''),from=null,to=null,runId=null,initialLevels=[],focus=null,title='',height=420,testid='log-viewer',...attributes}=$props()
 
  const ALL='*'
  const PAGE=100
@@ -14,7 +14,7 @@
  const SEARCH_DELAY=300
  const CONTEXT_SECONDS=30
 
- let search=$state(''),applied=$state(''),levels=$state([])
+ let search=$state(''),applied=$state(''),levels=$state(untrack(()=>[...initialLevels]))
  let context=$state(null) // {from,to,time}: a narrowed window around one line
  let byNode=$state({}),cursors=$state({}),totals=$state({}),coverage=$state({})
  let loading=$state(false),error=$state(''),loadedFor=$state('')
@@ -33,6 +33,7 @@
  const gapReasons=$derived([...new Set(gaps.map(g=>g.reason))])
  const stamp=$derived(stampText(Object.values(coverage).map(c=>c?.timestampSource)))
  const filtered=$derived(applied.trim()!==''||levels.length>0)
+ const statusTail=$derived([entries.length<total?`${entries.length.toLocaleString()}줄 불러옴`:'',selected>=0?`${selected+1}번째 선택`:'',stamp?`시각 출처 ${stamp}`:''].filter(Boolean).map(part=>` · ${part}`).join(''))
  const time=value=>value?new Date(value).toLocaleString():'—'
  // Rows show the clock only; the window and the selected line carry the date.
  const clock=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'—':`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${String(d.getMilliseconds()).padStart(3,'0')}`}
@@ -151,9 +152,7 @@
  <p class="status" aria-live="polite">
   {#if loading&&!entries.length}불러오는 중…
   {:else if !error}
-   <span class="count">{filtered?`일치 ${total.toLocaleString()}줄`:`${total.toLocaleString()}줄`}</span>{#if entries.length<total}{' · '}{entries.length.toLocaleString()}줄 불러옴{/if}
-   {#if selected>=0}{' · '}{selected+1}번째 선택{/if}
-   {#if stamp}{' · '}시각 출처 {stamp}{/if}
+   <span class="count">{filtered?`일치 ${total.toLocaleString()}줄`:`${total.toLocaleString()}줄`}</span>{statusTail}
   {/if}
  </p>
  {#if context}<p class="context">{time(context.time)} 전후 {CONTEXT_SECONDS}초를 보고 있습니다. <button type="button" class="link" onclick={()=>{context=null}}>원래 범위로</button></p>{/if}

@@ -85,7 +85,7 @@
 </script>
 
 <svelte:head><title>{current[1]} · chainbench</title><meta name="theme-color" content="#0b1018" /></svelte:head>
-<a class="skip" href="#content">본문으로 이동</a>
+<a class="skip-link" href="#content">본문으로 이동</a>
 <div class="shell">
   <aside aria-label="주 메뉴">
     <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol" aria-hidden="true">cb</span>chainbench</a>

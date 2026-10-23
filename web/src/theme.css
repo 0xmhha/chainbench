@@ -209,8 +209,8 @@ kbd {
   color: var(--text-muted);
 }
 
-.skip { position: absolute; left: var(--space-3); top: -80px; z-index: 10; padding: var(--space-3); background: var(--surface-raised); }
-.skip:focus { top: var(--space-3); }
+.skip-link { position: absolute; left: var(--space-3); top: -80px; z-index: 10; padding: var(--space-3); background: var(--surface-raised); }
+.skip-link:focus { top: var(--space-3); }
 
 @media (max-width: 800px) {
   .panel { padding: var(--space-3) var(--space-4) var(--space-4); }
