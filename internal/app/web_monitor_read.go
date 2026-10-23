@@ -33,6 +33,10 @@ type WebMonitorQuery struct {
 	RunID    string
 	Cursor   string
 	Limit    int
+	// Search and Levels narrow a log read to matching lines; both apply to
+	// the whole window, and a cursor is valid only under the same pair.
+	Search string
+	Levels []LogLevel
 }
 
 type WebCoverageGap struct {
@@ -77,15 +81,18 @@ type WebMetrics struct {
 type WebLogEntry struct {
 	Time            time.Time `json:"time"`
 	Text            string    `json:"text"`
+	Level           LogLevel  `json:"level,omitempty"`
 	TimestampSource string    `json:"-"`
 }
 
 type WebLogs struct {
-	NodeID     string        `json:"nodeId"`
-	RunID      string        `json:"runId,omitempty"`
-	Entries    []WebLogEntry `json:"entries"`
-	Coverage   WebCoverage   `json:"coverage"`
-	NextCursor *string       `json:"nextCursor"`
+	NodeID  string        `json:"nodeId"`
+	RunID   string        `json:"runId,omitempty"`
+	Entries []WebLogEntry `json:"entries"`
+	// Total counts the lines in the window that match the filter.
+	Total      int         `json:"total"`
+	Coverage   WebCoverage `json:"coverage"`
+	NextCursor *string     `json:"nextCursor"`
 }
 
 // ErrWebMonitorQuery reports an unusable time window, cursor or limit.
@@ -205,13 +212,18 @@ func (m *WebMonitor) Logs(ctx context.Context, a DeploymentActor, nodeID string,
 	if !known {
 		return WebLogs{}, ErrDeploymentNotFound
 	}
+	filter, err := newWebLogFilter(q)
+	if err != nil {
+		return WebLogs{}, err
+	}
 	start := 0
 	var from, to time.Time
 	if q.Cursor != "" {
-		if start, from, to, err = parseWebLogCursor(q.Cursor); err != nil {
+		var issuedFor string
+		if start, from, to, issuedFor, err = parseWebLogCursor(q.Cursor); err != nil {
 			return WebLogs{}, err
 		}
-		if (!q.From.IsZero() && !q.From.Equal(from)) || (!q.To.IsZero() && !q.To.Equal(to)) {
+		if issuedFor != filter.fingerprint() || (!q.From.IsZero() && !q.From.Equal(from)) || (!q.To.IsZero() && !q.To.Equal(to)) {
 			return WebLogs{}, ErrWebMonitorQuery
 		}
 	} else if from, to, err = m.queryWindow(network, q); err != nil {
@@ -229,16 +241,20 @@ func (m *WebMonitor) Logs(ctx context.Context, a DeploymentActor, nodeID string,
 			if line.Time.Before(from) || line.Time.After(to) {
 				return
 			}
+			level := parseLogLevel(line.Text)
+			if !filter.match(line.Text, level) {
+				return
+			}
 			matched++
 			if matched <= start || out.NextCursor != nil {
 				return
 			}
 			if len(out.Entries) == limit {
-				next := formatWebLogCursor(start+limit, from, to)
+				next := formatWebLogCursor(start+limit, from, to, filter.fingerprint())
 				out.NextCursor = &next
 				return
 			}
-			out.Entries = append(out.Entries, WebLogEntry{Time: line.Time, Text: line.Text, TimestampSource: line.TimestampSource})
+			out.Entries = append(out.Entries, WebLogEntry{Time: line.Time, Text: line.Text, Level: level, TimestampSource: line.TimestampSource})
 			sources[line.TimestampSource] = true
 		})
 		if err != nil {
@@ -259,26 +275,39 @@ func (m *WebMonitor) Logs(ctx context.Context, a DeploymentActor, nodeID string,
 	case sources["source"]:
 		stamp = "source"
 	}
+	out.Total = matched
 	out.Coverage = WebCoverage{From: from, To: to, Complete: len(gaps) == 0, Gaps: gaps, TimestampSource: stamp}
 	return out, nil
 }
 
-func formatWebLogCursor(index int, from, to time.Time) string {
-	return strconv.Itoa(index) + "-" + strconv.FormatInt(from.UnixNano(), 10) + "-" + strconv.FormatInt(to.UnixNano(), 10)
+// A cursor is "<index>-<from>-<to>" and, for a filtered read, "-<filter
+// fingerprint>"; an unfiltered cursor keeps the three-part form.
+func formatWebLogCursor(index int, from, to time.Time, filter string) string {
+	cursor := strconv.Itoa(index) + "-" + strconv.FormatInt(from.UnixNano(), 10) + "-" + strconv.FormatInt(to.UnixNano(), 10)
+	if filter != "" {
+		cursor += "-" + filter
+	}
+	return cursor
 }
 
-func parseWebLogCursor(raw string) (int, time.Time, time.Time, error) {
+func parseWebLogCursor(raw string) (int, time.Time, time.Time, string, error) {
 	parts := strings.Split(raw, "-")
-	if len(parts) != 3 {
-		return 0, time.Time{}, time.Time{}, ErrWebMonitorQuery
+	if len(parts) != 3 && len(parts) != 4 {
+		return 0, time.Time{}, time.Time{}, "", ErrWebMonitorQuery
+	}
+	filter := ""
+	if len(parts) == 4 {
+		if filter = parts[3]; filter == "" {
+			return 0, time.Time{}, time.Time{}, "", ErrWebMonitorQuery
+		}
 	}
 	index, err1 := strconv.Atoi(parts[0])
 	from, err2 := strconv.ParseInt(parts[1], 10, 64)
 	to, err3 := strconv.ParseInt(parts[2], 10, 64)
 	if err1 != nil || err2 != nil || err3 != nil || index < 0 || to < from || time.Duration(to-from) > webMonitorMaxWindow {
-		return 0, time.Time{}, time.Time{}, ErrWebMonitorQuery
+		return 0, time.Time{}, time.Time{}, "", ErrWebMonitorQuery
 	}
-	return index, time.Unix(0, from).UTC(), time.Unix(0, to).UTC(), nil
+	return index, time.Unix(0, from).UTC(), time.Unix(0, to).UTC(), filter, nil
 }
 
 // coverageGaps lists archived and still-open gaps in the window, merging
