@@ -26,7 +26,56 @@ export function chartModel(metrics, name, {width, height}) {
   const points = segments.flat()
   return {node: s.nodeId, points, segments, path: segments.map(seg => seg.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')).join(' ')}
  }).filter(n => n.points.length > 0)
- return {name, unit: series[0]?.unit ?? '', source: series[0]?.source ?? '', nodes, yMin, yMax, tMin, tMax}
+ return {name, unit: series[0]?.unit ?? '', source: series[0]?.source ?? '', nodes, yMin, yMax, tMin, tMax, width, height}
+}
+
+const toX = (model, t) => (model.tMax === model.tMin ? model.width / 2 : ((t - model.tMin) / (model.tMax - model.tMin)) * model.width)
+
+// timeTicks spaces count labels evenly over the chart's time span, both ends
+// included; a single instant gets one tick.
+export function timeTicks(model, count) {
+ if (!(model.tMax > model.tMin)) return [{x: model.width / 2, time: new Date(model.tMin).toISOString()}]
+ return Array.from({length: count}, (_, i) => {
+  const t = model.tMin + ((model.tMax - model.tMin) * i) / (count - 1)
+  return {x: toX(model, t), time: new Date(t).toISOString()}
+ })
+}
+
+// gapBands shades each collection gap that overlaps the chart, clipped to it.
+export function gapBands(model, coverage) {
+ return (coverage?.gaps ?? []).flatMap(g => {
+  const from = Math.max(Date.parse(g.from), model.tMin), to = Math.min(Date.parse(g.to), model.tMax)
+  if (!(to > from)) return []
+  const x = toX(model, from)
+  return [{x, width: toX(model, to) - x, reason: g.reason}]
+ })
+}
+
+// latestValues is each node's last drawn value and the spread between the
+// highest and lowest of them, which is how far the slowest node lags.
+export function latestValues(model) {
+ const values = model.nodes.map(n => ({node: n.node, value: n.points[n.points.length - 1].value}))
+ const numbers = values.map(v => v.value).filter(v => typeof v === 'number')
+ return {values, spread: numbers.length > 1 ? Math.max(...numbers) - Math.min(...numbers) : null}
+}
+
+// nearestPoints is each node's drawn point closest to time. Beyond maxMs (when
+// given) the node had no sample near that moment and its value is null, so a
+// gap is never read as the last value before it.
+export function nearestPoints(model, time, maxMs = Infinity) {
+ const at = Date.parse(time)
+ return model.nodes.flatMap(n => {
+  let best = null
+  for (const p of n.points) if (!best || Math.abs(Date.parse(p.time) - at) < Math.abs(Date.parse(best.time) - at)) best = p
+  if (!best) return []
+  return Math.abs(Date.parse(best.time) - at) > maxMs ? [{node: n.node, time: best.time, value: null, x: null, y: null}] : [{node: n.node, ...best}]
+ })
+}
+
+// pointerTime maps an x position in chart coordinates to a time on the axis.
+export function pointerTime(model, x) {
+ const share = Math.max(0, Math.min(1, x / model.width))
+ return new Date(model.tMin + (model.tMax - model.tMin) * share).toISOString()
 }
 
 // logWindow is the archived log range linked to a selected chart time.

@@ -165,7 +165,7 @@
  {#if gapReasons.includes('remote_log_collection_unavailable')}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
 
  {#if !error&&!loading&&entries.length===0}
-  <p class="empty">{filtered?`이 범위(${time(span.from??coverage[shownNodes[0]]?.from)} – ${time(span.to??coverage[shownNodes[0]]?.to)})에 조건과 일치하는 줄이 없습니다.`:'이 범위에 보관된 로그가 없습니다.'}{#if gaps.length} 누락 구간에는 로그가 없을 수 있습니다.{/if}</p>
+  <p class="empty">{filtered?`이 범위(${time(span.from??coverage[shownNodes[0]]?.from)} – ${time(span.to??coverage[shownNodes[0]]?.to)})에 조건과 일치하는 줄이 없습니다.`:'이 범위에 보관된 로그가 없습니다.'}{gaps.length?' 누락 구간에는 로그가 없을 수 있습니다.':''}</p>
  {:else if entries.length}
   <div class="viewport" bind:this={viewport} style:height="{height}px" onscroll={scrolled} tabindex="0" role="listbox" aria-label="로그 줄" aria-activedescendant={selected>=0?`${testid}-row-${selected}`:undefined}>
    <ol style:height="{entries.length*ROW}px">
