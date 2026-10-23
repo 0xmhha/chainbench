@@ -58,7 +58,7 @@
    {#if gaps.length}<ul>{#each gaps as gap}<li>{gap}</li>{/each}</ul>{/if}
    <p class="muted">수집하지 못했거나 노드가 노출하지 않는 지표는 0으로 그리지 않고 누락으로 표시합니다.</p>
   </div>
-  <label>지표 <select aria-label={'지표 선택 '+networkId} bind:value={monitorRange.metric}><option value="">수집된 모든 지표</option>{#each metricNames(metrics) as m}<option value={m.name}>{m.name} · {m.source}{m.unit?' · '+m.unit:''}</option>{/each}</select></label>
+  <label>지표 <select name="metric" aria-label={'지표 선택 '+networkId} bind:value={monitorRange.metric}><option value="">수집된 모든 지표</option>{#each metricNames(metrics) as m}<option value={m.name}>{m.name} · {m.source}{m.unit?' · '+m.unit:''}</option>{/each}</select></label>
   <div class="legend">{#each shownNodes as node}<span><i style:background={nodeColor(node,allNodes)}></i>{node}</span>{/each}</div>
   <div class="grid">
    {#each charts as m (m.name)}
@@ -84,7 +84,7 @@
    <section class="logs" data-testid="time-linked-logs" data-selected-time={selected.time} data-log-node={logs?selected.node:undefined}>
     <p data-testid="selected-point">{selected.name} · {selected.node} · {time(selected.time)}{selected.value!==null?` · ${selected.value} ${selected.unit}`:''} · 출처 {selected.source}</p>
     <h4>{time(selected.time)} 전후 30초 로그</h4>
-    <label>로그 노드 <select aria-label="로그 노드" value={selected.node} onchange={event=>select(event.currentTarget.value,{time:selected.time,value:null})}>{#each allNodes as node}<option value={node}>{node}</option>{/each}</select></label>
+    <label>로그 노드 <select name="node-metrics-select-1" aria-label="로그 노드" value={selected.node} onchange={event=>select(event.currentTarget.value,{time:selected.time,value:null})}>{#each allNodes as node}<option value={node}>{node}</option>{/each}</select></label>
     {#if logError}<p class="error" role="alert">{logError}</p>{:else if !logs}<p class="muted">보관된 로그를 확인하는 중입니다.</p>{:else}
      <p class="muted">로그 시각 출처: {logs.coverage.timestampSource==='source'?'노드 로그 기록 시각':logs.coverage.timestampSource==='mixed'?'노드 기록 시각과 수집 시각 혼합':'서버 수집 시각'} · {logs.coverage.complete?'누락 없음':'누락 구간 있음'}</p>
      {#each gapSummary(logs.coverage) as gap}<p class="notice">{gap}</p>{/each}
@@ -108,12 +108,12 @@
  {:else if !error}<p class="muted">지표를 불러오는 중입니다.</p>{/if}
 </div>
 <style>
- .metrics{margin-top:12px;min-width:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
- figure{margin:0;padding:12px;border:1px solid var(--border-subtle);border-radius:6px;min-width:0}figcaption{color:var(--accent-strong);font-size:13px;margin-bottom:8px}svg{width:100%;height:auto;display:block}circle{cursor:pointer}circle:focus{outline:2px solid var(--warn)}
- .legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}.legend span{display:flex;align-items:center;gap:6px;color:var(--text-muted);font-size:13px}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
- [data-testid="metric-coverage"] p,ul{color:var(--text-muted);font-size:13px;margin:4px 0}.incomplete ul{color:var(--warn)}li{overflow-wrap:anywhere}
- .logs{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:6px}h4{margin:0 0 8px;font-size:14px}label{display:block;color:var(--text-muted);font-size:13px;margin-bottom:8px}select{margin-left:8px;color:var(--accent-strong);background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:4px 8px}
- ol{list-style:none;padding:0;margin:0;max-height:320px;overflow:auto}ol li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:4px 0;border-bottom:1px solid var(--border-subtle)}time{color:var(--text-muted);font-size:12px;white-space:nowrap}code{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
- .muted,.empty{color:var(--text-muted);font-size:13px}.notice,.error{padding:8px;border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn)}.error{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
+ .metrics{margin-top:var(--space-3);min-width:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:var(--space-3)}
+ figure{margin:0;padding:var(--space-3);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);min-width:0}figcaption{color:var(--accent-strong);font-size:var(--text-sm);margin-bottom:var(--space-2)}svg{width:100%;height:auto;display:block}circle{cursor:pointer}circle:focus{outline:2px solid var(--warn)}
+ .legend{display:flex;flex-wrap:wrap;gap:var(--space-3);margin:var(--space-2) 0}.legend span{display:flex;align-items:center;gap:6px;color:var(--text-muted);font-size:var(--text-sm)}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
+ [data-testid="metric-coverage"] p,ul{color:var(--text-muted);font-size:var(--text-sm);margin:var(--space-1) 0}.incomplete ul{color:var(--warn)}li{overflow-wrap:anywhere}
+ .logs{margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border-subtle)}h4{margin:0 0 var(--space-2)}label{display:block;margin-bottom:var(--space-2)}select{margin-left:var(--space-2)}
+ ol{list-style:none;padding:0;margin:0;max-height:320px;overflow:auto}ol li{display:grid;grid-template-columns:auto 1fr;gap:var(--space-3);padding:var(--space-1) 0;border-bottom:1px solid var(--border-subtle)}time{color:var(--text-muted);font-size:var(--text-xs);white-space:nowrap;font-variant-numeric:tabular-nums}code{font-size:var(--text-xs);white-space:pre-wrap}
+ .muted,.empty{font-size:var(--text-sm)}
  @media(max-width:800px){ol li{grid-template-columns:1fr;gap:2px}}
 </style>

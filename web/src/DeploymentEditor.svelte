@@ -68,17 +68,17 @@
   const hostName = h => typeof h === 'string' ? h : h.name || h.addr
 </script>
 
-<section class="deployment" aria-label="배포 구성">
+<section class="panel deployment" aria-label="배포 구성">
   <h2>공유 배포 구성</h2>
   <p>팀이 함께 쓰는 서버 풀과 대상 경로, workspace를 만들고 내 SSH 자격증명을 서버에 연결합니다.</p>
   <p data-testid="deployment-actor">{webSession?.user.username} · {role}</p>
   <fieldset class="editor-controls" disabled={busy}><div class="columns">
     <div>
       <h3>공유 문서</h3>
-      <label>저장된 문서 <select aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision}</option>{/each}</select></label>
+      <label>저장된 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision}</option>{/each}</select></label>
       {#if canEdit}
         <button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>
-        <label>이름 <input aria-label="배포 문서 이름" bind:value={name} /></label>
+        <label>이름 <input name="name" aria-label="배포 문서 이름" bind:value={name} /></label>
         {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button onclick={() => focusProblem(p.path)}>{p.path}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
         {#if contract}<DeploymentFields schema={contract[kind]} value={content} problems={problemMap} change={v => { content = v; problems = [] }} />{/if}
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>
@@ -90,18 +90,18 @@
       {#if canEdit}<BundleImport {webSession} onsaved={() => action(async () => { onsaved(); await refresh() })} />{/if}
       <h3>공유 workspace</h3>
       {#if workspaceId}<button disabled={busy} onclick={() => action(exportWorkspace)}>workspace 묶음 내보내기</button>{/if}
-      <label>저장된 workspace <select aria-label="저장된 배포 workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">새 workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
+      <label>저장된 workspace <select name="deployment-editor-select-2" aria-label="저장된 배포 workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">새 workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
       {#if canEdit}
         <button onclick={() => { workspaceId = ''; workspaceRevision = 0; bindings = {} }}>새 공유 workspace</button>
-        <label>이름 <input aria-label="배포 workspace 이름" bind:value={workspaceName} /></label>
-        <label>서버 풀 revision <select aria-label="workspace 서버 풀 revision" bind:value={setRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'server-set') as d}<option value={`${d.id}:${d.revision}`}>{d.name} · {d.revision}</option>{/each}</select></label>
-        <label>대상 경로 revision <select aria-label="workspace 대상 경로 revision" bind:value={configRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'workspace-config') as d}<option value={`${d.id}:${d.revision}`}>{d.name} · {d.revision}</option>{/each}</select></label>
+        <label>이름 <input name="workspace-name" aria-label="배포 workspace 이름" bind:value={workspaceName} /></label>
+        <label>서버 풀 revision <select name="set-ref" aria-label="workspace 서버 풀 revision" bind:value={setRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'server-set') as d}<option value={`${d.id}:${d.revision}`}>{d.name} · {d.revision}</option>{/each}</select></label>
+        <label>대상 경로 revision <select name="config-ref" aria-label="workspace 대상 경로 revision" bind:value={configRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'workspace-config') as d}<option value={`${d.id}:${d.revision}`}>{d.name} · {d.revision}</option>{/each}</select></label>
         <button disabled={busy || !setRef || !configRef} onclick={() => action(saveWorkspace)}>공유 workspace 저장</button>
         {#if workspaceId}
           <h3>내 SSH 자격증명 연결</h3>
           <p>자격증명 등록과 폐기는 <a href="/settings">설정</a>에서 합니다. 여기서는 이 workspace의 서버에 내 자격증명을 연결합니다. 연결은 나에게만 보입니다.</p>
-          <label>대상 서버 <select aria-label="연결 서버" bind:value={serverRef}><option value="">서버 선택</option>{#each hosts as h}<option value={hostName(h)}>{hostName(h)}</option>{/each}</select></label>
-          <label>내 자격증명 <select aria-label="연결 자격증명" bind:value={selectedCredential}><option value="">내 자격증명 선택</option>{#each credentials.filter(c => c.kind !== 'account-key' && !c.revoked) as c}<option value={c.id}>{c.label}</option>{/each}</select></label>
+          <label>대상 서버 <select name="server-ref" aria-label="연결 서버" bind:value={serverRef}><option value="">서버 선택</option>{#each hosts as h}<option value={hostName(h)}>{hostName(h)}</option>{/each}</select></label>
+          <label>내 자격증명 <select name="selected-credential" aria-label="연결 자격증명" bind:value={selectedCredential}><option value="">내 자격증명 선택</option>{#each credentials.filter(c => c.kind !== 'account-key' && !c.revoked) as c}<option value={c.id}>{c.label}</option>{/each}</select></label>
           <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { bindings = await api(`workspaces/${workspaceId}/credential-bindings`, 'PUT', { serverRef, credentialId: selectedCredential }); status = '내 SSH 연결 저장됨' })}>내 자격증명 연결</button>
           <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { access = await api(`credentials/${selectedCredential}/check`, 'POST', { workspaceId, serverRef }); status = access.allowedOperations.includes('deploy') ? 'SSH 배포 접근 확인됨' : access.reason ?? '접근 거절' })}>SSH 접근 확인</button>
           <p data-testid="personal-bindings">내 연결: {Object.keys(bindings).join(', ') || '없음'}</p>
@@ -114,16 +114,12 @@
 </section>
 
 <style>
-  .deployment { margin-top: 24px; padding: 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  h3 { color: var(--text-muted); margin-top: 24px; }
+  h3 { color: var(--text-muted); margin-top: var(--space-5); }
   .editor-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
-  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  label { display: grid; gap: 4px; margin: 12px 0; }
-  input, select, button { font: inherit; color: inherit; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); padding: 8px; min-width: 0; min-height: 40px; }
-  button { cursor: pointer; margin: 4px; }
-  button:disabled { opacity: .45; cursor: default; }
-  a { color: var(--accent); }
-  .problems { padding: 12px; border: 1px solid var(--danger); border-radius: 8px; background: var(--danger-bg); color: var(--danger); } .problems button { color: var(--danger); background: none; border: 0; text-decoration: underline; min-height: 0; padding: 0; margin: 0; font-family: ui-monospace, monospace; } h4 { margin: 0 0 8px; }
+  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+  label { margin: var(--space-3) 0; }
+  button { margin: var(--space-1); }
+  .problems { padding: var(--space-3); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-bg); color: var(--danger); } .problems button { min-height: 0; padding: 0; margin: 0; border: 0; background: none; color: var(--danger); text-decoration: underline; font-family: var(--font-mono); } h4 { margin: 0 0 var(--space-2); }
   [role=status] { color: var(--text-muted); overflow-wrap: anywhere; }
   @media (max-width: 700px) { .columns { grid-template-columns: 1fr; } }
 </style>

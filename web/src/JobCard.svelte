@@ -28,12 +28,8 @@
 </article>
 
 <style>
-  article { margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; }
-  .heading { display: flex; justify-content: space-between; gap: 16px; }
-  .error { color: var(--danger); }
-  a { color: var(--accent); }
-  button { font: inherit; color: var(--text); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; min-height: 40px; padding: 8px 12px; cursor: pointer; margin-top: 16px; }
-  button:disabled { opacity: .45; cursor: default; }
-  code, pre { font-family: ui-monospace, monospace; overflow-wrap: anywhere; white-space: pre-wrap; }
-  li { margin-top: 8px; } summary { cursor: pointer; }
+  article { margin-top: var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); }
+  .heading { display: flex; justify-content: space-between; gap: var(--space-4); }
+  button { margin-top: var(--space-3); }
+  li { margin-top: var(--space-2); } summary { cursor: pointer; }
 </style>

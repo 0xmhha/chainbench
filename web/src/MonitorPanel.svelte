@@ -37,11 +37,11 @@
 <section class="panel" aria-label="실행 상태 모니터링">
  <div class="heading"><div><h2>실행 상태</h2><p>브라우저 연결과 독립적으로 수행되는 서버 작업의 마지막 확정 상태입니다.</p></div><button onclick={()=>feed.refresh()}>실행 상태 새로고침</button></div>
  <div class="filters">
-  <label>Workspace<select aria-label="모니터링 Workspace" value={selection.workspaceId} onchange={e=>{selectWorkspace(e.target.value);selectNetwork('')}}><option value="">전체 Workspace</option>{#each workspaceIds as id}<option value={id}>{names[id]??id}</option>{/each}</select></label>
-  <label>네트워크<select aria-label="모니터링 네트워크" value={selection.networkId} onchange={e=>{selectNetwork(e.target.value);monitorRange.node=''}}><option value="">전체 네트워크</option>{#each networks as n}<option value={n.id}>{n.id} · 노드 {n.nodes.length}개</option>{/each}</select></label>
-  <label>시간 범위<select aria-label="모니터링 시간 범위" bind:value={monitorRange.preset}><option value={15}>최근 15분</option><option value={60}>최근 1시간</option><option value={360}>최근 6시간</option><option value={1440}>최근 24시간</option><option value={0}>직접 지정</option></select></label>
-  {#if monitorRange.preset===0}<label>시작<input aria-label="모니터링 시작 시각" type="datetime-local" bind:value={monitorRange.from} /></label><label>끝<input aria-label="모니터링 끝 시각" type="datetime-local" bind:value={monitorRange.to} /></label>{/if}
-  <label>노드<select aria-label="모니터링 노드" bind:value={monitorRange.node}><option value="">모든 노드</option>{#each [...new Set(shown.flatMap(n=>n.nodes.map(x=>x.id)))].sort() as id}<option value={id}>{id}</option>{/each}</select></label>
+  <label>Workspace<select name="monitor-panel-select-1" aria-label="모니터링 Workspace" value={selection.workspaceId} onchange={e=>{selectWorkspace(e.target.value);selectNetwork('')}}><option value="">전체 Workspace</option>{#each workspaceIds as id}<option value={id}>{names[id]??id}</option>{/each}</select></label>
+  <label>네트워크<select name="monitor-panel-select-2" aria-label="모니터링 네트워크" value={selection.networkId} onchange={e=>{selectNetwork(e.target.value);monitorRange.node=''}}><option value="">전체 네트워크</option>{#each networks as n}<option value={n.id}>{n.id} · 노드 {n.nodes.length}개</option>{/each}</select></label>
+  <label>시간 범위<select name="preset" aria-label="모니터링 시간 범위" bind:value={monitorRange.preset}><option value={15}>최근 15분</option><option value={60}>최근 1시간</option><option value={360}>최근 6시간</option><option value={1440}>최근 24시간</option><option value={0}>직접 지정</option></select></label>
+  {#if monitorRange.preset===0}<label>시작<input name="from" aria-label="모니터링 시작 시각" type="datetime-local" bind:value={monitorRange.from} /></label><label>끝<input name="to" aria-label="모니터링 끝 시각" type="datetime-local" bind:value={monitorRange.to} /></label>{/if}
+  <label>노드<select name="node" aria-label="모니터링 노드" bind:value={monitorRange.node}><option value="">모든 노드</option>{#each [...new Set(shown.flatMap(n=>n.nodes.map(x=>x.id)))].sort() as id}<option value={id}>{id}</option>{/each}</select></label>
  </div>
  {#if monitorRange.preset===0&&!timeRange(monitorRange)}<p class="error" role="alert">시작 시각이 끝 시각보다 앞서야 합니다.</p>{/if}
  <p data-testid="job-observation-health" data-cursor={snapshot?.cursor}>작업 스트림: {live.connection} · 확정 버전: {snapshot?.version??'확인 중'} · 마지막 관측: {time(live.lastObserved)}{stale?' · stale':''}</p>
@@ -63,11 +63,8 @@
  {/if}
 </section>
 <style>
- .panel{margin-top:24px;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:24px;min-width:0}
- .heading{display:flex;justify-content:space-between;align-items:center;gap:16px}h2{margin:0;font-size:18px}h3{font-size:16px;margin-top:24px}p,.network span{color:var(--text-muted)}
- button{color:var(--accent-strong);background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:8px 12px}
- .filters{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}label{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0;max-width:100%}input{font:inherit;color:inherit;background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:8px;min-height:40px}select{font:inherit;color:inherit;background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:8px;min-height:40px;max-width:100%}a{color:var(--accent)}
- .notice,.error{padding:12px;border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn)}.error{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
- .table{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border-subtle);vertical-align:top}th{color:var(--text-muted);font-size:12px}td{overflow-wrap:anywhere}small,strong{display:block}small{color:var(--text-muted)}code{font-size:11px}.network{padding:12px;border:1px solid var(--border);border-radius:6px;margin-top:8px;overflow-wrap:anywhere}
- @media(max-width:800px){.panel{padding:16px}.heading{align-items:start;flex-direction:column}table,tbody,tr,td{display:block}thead{display:none}td{padding:8px 0;border:0}tr{padding:12px 0;border-bottom:1px solid var(--border)}}
+ .heading{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4)}h3{margin-top:var(--space-5)}p,.network span{color:var(--text-muted)}
+ .filters{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-4)}
+ td{overflow-wrap:anywhere}small,strong{display:block}.network{padding:var(--space-3) 0;border-top:1px solid var(--border-subtle);margin-top:var(--space-2);overflow-wrap:anywhere}
+ @media(max-width:800px){.heading{align-items:start;flex-direction:column}table,tbody,tr,td{display:block}thead{display:none}td{padding:var(--space-2) 0;border:0}tr{padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle)}}
 </style>

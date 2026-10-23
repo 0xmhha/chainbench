@@ -26,9 +26,9 @@
     <h2>{bootstrap ? '첫 관리자 만들기' : '로그인'}</h2>
     {#if bootstrap}<p>비공개 Web 데이터 디렉터리의 설정 토큰을 입력하세요.</p>{/if}
     <form onsubmit={e => { e.preventDefault(); login() }}>
-      <label>사용자 이름 <input aria-label="계정 사용자 이름" bind:value={username} autocomplete="username" required /></label>
-      <label>비밀번호 <input aria-label="계정 비밀번호" type="password" bind:value={password} autocomplete={bootstrap ? 'new-password' : 'current-password'} required /></label>
-      {#if bootstrap}<label>설정 토큰 <input aria-label="설정 토큰" type="password" bind:value={setupToken} required /></label>{/if}
+      <label>사용자 이름 <input name="username" aria-label="계정 사용자 이름" bind:value={username} autocomplete="username" required /></label>
+      <label>비밀번호 <input name="password" aria-label="계정 비밀번호" type="password" bind:value={password} autocomplete={bootstrap ? 'new-password' : 'current-password'} required /></label>
+      {#if bootstrap}<label>설정 토큰 <input name="setup-token" aria-label="설정 토큰" type="password" bind:value={setupToken} required /></label>{/if}
       <button disabled={busy}>{bootstrap ? '관리자 만들기' : '로그인'}</button>
     </form>
   {:else if session && accountsEnabled}
@@ -39,8 +39,8 @@
   <p role="status" aria-label="계정 상태">{status}</p>
 </section>
 <style>
-  section { border-bottom: 1px solid var(--border); padding: 16px 0; }
-  label { display: grid; gap: 4px; margin: 12px 0; max-width: 360px; }
-  input, button { font: inherit; padding: 8px; background: var(--surface-raised); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
-  button { cursor: pointer; margin: 4px; }
+  section:has(form, [data-testid=account-session]) { border-bottom: 1px solid var(--border-subtle); padding: var(--space-4) 0; }
+  p[role=status]:empty { display: none; }
+  label { margin: var(--space-3) 0; max-width: 360px; }
+  button { margin: var(--space-1); }
 </style>

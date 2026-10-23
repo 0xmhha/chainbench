@@ -168,14 +168,13 @@
 </script>
 
 {#if presets.length || webSession}
-  <section class="editor" aria-labelledby="chain-heading">
-    <p class="eyebrow">네트워크 구성</p>
+  <section class="panel editor" aria-labelledby="chain-heading">
     <h2 id="chain-heading">체인 프리셋에서 시작</h2>
     <p class="intro">엔진이 지원하는 선언을 고른 뒤 네트워크 배치를 조정합니다.</p>
     {#if webSession}
       <label for="saved-chain-document">공유 체인 구성</label>
       <select id="saved-chain-document" value={savedId} onchange={e => { if(e.target.value) loadSaved(e.target.value) }}><option value="">새 구성</option>{#each saved as entry}<option value={entry.id}>{entry.name} · revision {entry.revision}</option>{/each}</select>
-      {#if writable}<label>구성 import <input aria-label="체인 구성 import" type="file" accept=".json,.yaml,.yml" onchange={importFile} /></label>{/if}
+      {#if writable}<label>구성 import <input name="chain-preset-editor-input-1" aria-label="체인 구성 import" type="file" accept=".json,.yaml,.yml" onchange={importFile} /></label>{/if}
       {#if preview}<p>Import 원문은 서버에 암호화되어 보존됩니다. {preview.changes.join('; ')}</p>{/if}
     {/if}
     <label for="chain-preset">체인 프리셋</label>
@@ -188,7 +187,7 @@
     {#if document}
       <p class="description">{presets.find(p => p.id === selected)?.description}</p>
       {#if webSession}
-        <label>완성된 genesis 자료<select aria-label="완성된 genesis 자료" disabled={!writable} value={genesisAsset} onchange={e=>chooseGenesis(e.currentTarget.value)}><option value="">프리셋에서 생성</option>{#if genesisAsset&&!genesisChoices.some(a=>a.id===genesisAsset)}<option value={genesisAsset}>사용할 수 없는 자료 · {genesisAsset}</option>{/if}{#each genesisChoices as a}<option value={a.id}>{a.name} · {a.checksum.slice(0,12)}</option>{/each}</select></label>
+        <label>완성된 genesis 자료<select name="chain-preset-editor-select-2" aria-label="완성된 genesis 자료" disabled={!writable} value={genesisAsset} onchange={e=>chooseGenesis(e.currentTarget.value)}><option value="">프리셋에서 생성</option>{#if genesisAsset&&!genesisChoices.some(a=>a.id===genesisAsset)}<option value={genesisAsset}>사용할 수 없는 자료 · {genesisAsset}</option>{/if}{#each genesisChoices as a}<option value={a.id}>{a.name} · {a.checksum.slice(0,12)}</option>{/each}</select></label>
         <small>완성 파일을 그대로 사용하며 기존 genesis set/overlay를 대체합니다. 이번 편집에서 선택한 파일을 해제하면 이전 생성 설정으로 돌아갑니다. 저장된 파일 구성에는 기본 생성 설정이 적용됩니다.</small>
       {/if}
       {#if !document.topology?.nodes}
@@ -240,20 +239,14 @@
 {/if}
 
 <style>
-  .editor { padding: 24px; margin-top: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .12em; margin: 0; }
-  h2 { font-size: 22px; margin: 8px 0; color: var(--text); }
   .intro, .description { color: var(--text-muted); }
-  label { display: block; margin: .8rem 0 .3rem; }
-  input, select { box-sizing: border-box; width: 100%; padding: 10px; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; font: inherit; }
-  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-  small { display: block; color: var(--text-muted); padding-top: 6px; }
-  details { margin: 16px 0; } summary { cursor: pointer; color: var(--accent-strong); }
-  button { padding: 10px 16px; border: 0; border-radius: 6px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
-  button.link { background: none; color: var(--danger); padding: 0; text-decoration: underline; font-weight: 400; font-family: ui-monospace, monospace; }
-  button:disabled { opacity: .5; }
-  [role=status] { border-left: 3px solid var(--warn); padding: 12px 16px; margin-top: 16px; }
-  [role=status].valid { border-color: var(--ok); } [role=alert] { color: var(--danger); }
+  label { margin: var(--space-3) 0 0; }
+  input, select { width: 100%; }
+  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+  small { display: block; padding-top: var(--space-1); }
+  details { margin: var(--space-4) 0; } summary { cursor: pointer; color: var(--accent-strong); }
+  [role=status] { margin-top: var(--space-4); padding: var(--space-2) var(--space-3); border: 1px solid var(--warn-border); border-radius: var(--radius-sm); background: var(--warn-bg); color: var(--warn); }
+  [role=status].valid { border-color: var(--ok-border); background: none; color: var(--ok); } [role=alert] { color: var(--danger); }
   pre { overflow: auto; max-height: 360px; }
   @media(max-width: 600px) { .fields { grid-template-columns: 1fr; } }
 </style>

@@ -16,24 +16,24 @@
   async function setup(){await work(async()=>{result=await api(`manifests/${selected}/setup`,'POST',{assetId});status='엔진 설정을 초기화했습니다. 노드는 멈춘 상태로 남습니다'})}
 </script>
 
-<section class="manifests" aria-label="체인 매니페스트 관리">
+<section class="panel manifests" aria-label="체인 매니페스트 관리">
   <h2>체인 플러그인과 매니페스트</h2>
   <p>내장 플러그인을 쓰거나 기존 엔진 계열의 선언을 가져옵니다. 설정은 격리된 로컬 노드 네 개를 준비하고 데이터베이스를 초기화합니다.</p>
   {#if webSession}
-    <label>저장된 체인 매니페스트 <select aria-label="저장된 체인 매니페스트" bind:value={selected} onchange={()=>result=null}>
+    <label>저장된 체인 매니페스트 <select name="selected" aria-label="저장된 체인 매니페스트" bind:value={selected} onchange={()=>result=null}>
       <option value="">플러그인이나 가져온 매니페스트 선택</option>
       {#each items as item}<option value={item.id}>{item.manifest.id} · {item.source}</option>{/each}
     </select></label>
     {#if current}
       <dl><dt>체인</dt><dd>{current.manifest.id}</dd><dt>합의 계열</dt><dd>{current.manifest.consensus_family}</dd><dt>방언</dt><dd>{current.manifest.dialect}</dd><dt>Chain ID</dt><dd>{current.manifest.chain_id}</dd><dt>프로토콜</dt><dd>{current.manifest.protocol||current.manifest.id}</dd></dl>
       <button onclick={download}>매니페스트 묶음 내보내기</button>
-      <label>검증된 바이너리 자료 <select aria-label="검증된 바이너리 자료" bind:value={assetId}><option value="">호환 바이너리 선택</option>{#each assets.filter(a=>a.chain===(current.manifest.protocol||current.manifest.id)) as asset}<option value={asset.id}>{asset.id} · {asset.sha256.slice(0,12)}</option>{/each}</select></label>
+      <label>검증된 바이너리 자료 <select name="asset-id" aria-label="검증된 바이너리 자료" bind:value={assetId}><option value="">호환 바이너리 선택</option>{#each assets.filter(a=>a.chain===(current.manifest.protocol||current.manifest.id)) as asset}<option value={asset.id}>{asset.id} · {asset.sha256.slice(0,12)}</option>{/each}</select></label>
       {#if writable}<button disabled={busy||!assetId} onclick={setup}>매니페스트 설정 초기화</button>{/if}
     {/if}
     {#if writable}
       <fieldset><legend>외부 매니페스트 가져오기</legend>
-        <label>매니페스트 JSON 파일 <input aria-label="매니페스트 JSON 파일" type="file" accept=".json,application/json" onchange={e=>upload(e,false)} /></label>
-        <label>genesis 템플릿 JSON 파일 <input aria-label="genesis 템플릿 JSON 파일" type="file" accept=".json,application/json" onchange={e=>upload(e,true)} /></label>
+        <label>매니페스트 JSON 파일 <input name="manifest-manager-input-1" aria-label="매니페스트 JSON 파일" type="file" accept=".json,application/json" onchange={e=>upload(e,false)} /></label>
+        <label>genesis 템플릿 JSON 파일 <input name="manifest-manager-input-2" aria-label="genesis 템플릿 JSON 파일" type="file" accept=".json,application/json" onchange={e=>upload(e,true)} /></label>
         {#if imported}<p>{imported.id} · {imported.consensus_family} · {imported.dialect}</p>{/if}
         <button disabled={busy||!imported} onclick={validate}>매니페스트 검증</button>
         <button disabled={busy||!imported} onclick={save}>외부 매니페스트 저장</button>
@@ -44,7 +44,4 @@
   <p role="status" aria-label="매니페스트 상태">{busy?'처리 중…':status}</p>
 </section>
 
-<style>
-.manifests{margin-top:24px;padding:24px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
-p{color:var(--text-muted)}label{display:grid;gap:4px;margin:12px 0}input,select,button{font:inherit;padding:8px;background:var(--surface-raised);color:var(--text);border:1px solid var(--border);border-radius:6px;max-width:100%}button{cursor:pointer;margin:4px 4px 4px 0}button:disabled{opacity:.5;cursor:default}fieldset{border:1px solid var(--border);border-radius:8px;margin-top:16px}dl{display:grid;grid-template-columns:7rem 1fr;gap:4px}dt{color:var(--text-muted)}dd{margin:0}
-</style>
+<style>p{color:var(--text-muted)}label{margin:var(--space-3) 0}button{margin:var(--space-1) var(--space-1) var(--space-1) 0}dl{display:grid;grid-template-columns:7rem 1fr;gap:var(--space-1)}dt{color:var(--text-muted)}dd{margin:0}</style>

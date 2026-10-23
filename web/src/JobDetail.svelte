@@ -41,11 +41,6 @@
 </section>
 
 <style>
-  .panel { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .muted { color: var(--text-muted); } a { color: var(--accent); }
-  .notice { padding: 12px 16px; border-left: 3px solid var(--warn); background: var(--warn-bg); color: var(--warn); }
-  .error { color: var(--danger); }
-  .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 8px 16px; } dt { color: var(--text-muted); } dd { margin: 0; overflow-wrap: anywhere; }
-  code { font-family: ui-monospace, monospace; }
+  .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); } dt { color: var(--text-muted); } dd { margin: 0; }
   @media (max-width: 700px) { .summary { grid-template-columns: 1fr; } }
 </style>

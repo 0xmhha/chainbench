@@ -67,13 +67,10 @@
 </section>
 
 <style>
-  .panel { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .muted { color: var(--text-muted); } a { color: var(--accent); } .error, .reason { color: var(--danger); }
-  .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 8px 16px; } dt { color: var(--text-muted); } dd { margin: 0; overflow-wrap: anywhere; }
-  .metric { display: block; } .mono, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  pre { max-height: 24rem; overflow: auto; background: var(--bg); padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .controls { list-style: none; padding: 0; } .controls li { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 8px 0; }
-  button { font: inherit; color: var(--text); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; min-height: 40px; padding: 8px 12px; cursor: pointer; }
-  button:disabled { opacity: .45; cursor: default; }
+  .reason { color: var(--danger); }
+  .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); } dt { color: var(--text-muted); } dd { margin: 0; }
+  .metric { display: block; }
+  pre { max-height: 24rem; overflow: auto; background: var(--bg); padding: var(--space-3); border-radius: var(--radius-sm); }
+  .controls { list-style: none; padding: 0; } .controls li { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin: var(--space-2) 0; }
   @media (max-width: 700px) { .summary { grid-template-columns: 1fr; } }
 </style>

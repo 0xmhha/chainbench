@@ -47,14 +47,10 @@
 </section>
 
 <style>
-  .overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
-  .overview article, .panel { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 24px; }
-  .overview article { display: grid; gap: 8px; color: var(--text-muted); } .overview strong { color: var(--text); font-size: 32px; font-weight: 550; } .overview small { font-size: 12px; }
-  .panel { margin-top: 24px; } .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; } h2 { font-size: 18px; margin: 0 0 12px; }
-  .muted, .empty { color: var(--text-muted); } .empty { padding: 32px 8px; text-align: center; }
-  a { color: var(--accent); } button { color: var(--accent-strong); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px 12px; min-height: 40px; cursor: pointer; }
-  .table-wrap { overflow: auto; margin-top: 16px; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-subtle); } th { color: var(--text-muted); font-weight: 500; font-size: 12px; }
-  .row { cursor: pointer; } .row:hover { background: var(--surface-raised); } small { display: block; color: var(--text-muted); }
-  .nodes { display: flex; flex-wrap: wrap; gap: 12px; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  @media (max-width: 800px) { .overview { grid-template-columns: 1fr; gap: 8px; } }
+  .overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin: var(--space-4) 0 0; }
+  .overview article { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius); background: var(--surface); color: var(--text-muted); }
+  .overview strong { color: var(--text); font-size: var(--text-xl); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row { cursor: pointer; } small { display: block; }
+  .nodes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  @media (max-width: 800px) { .overview { grid-template-columns: 1fr; gap: var(--space-2); } }
 </style>

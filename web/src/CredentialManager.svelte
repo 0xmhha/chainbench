@@ -52,16 +52,16 @@
   {/if}
   <form onsubmit={e => { e.preventDefault(); work(create) }}>
     <fieldset disabled={busy}><legend>새 자격증명</legend>
-      <label>이름 <input aria-label="자격증명 이름" bind:value={label} required /></label>
-      <label>종류 <select aria-label="자격증명 종류" bind:value={kind}>{#each kinds as k}<option value={k.id}>{k.label}</option>{/each}</select></label>
-      {#if kind !== 'account-key'}<label>SSH 사용자 <input aria-label="SSH 사용자" bind:value={sshUser} autocomplete="off" required /></label>{/if}
+      <label>이름 <input name="label" aria-label="자격증명 이름" bind:value={label} required /></label>
+      <label>종류 <select name="kind" aria-label="자격증명 종류" bind:value={kind}>{#each kinds as k}<option value={k.id}>{k.label}</option>{/each}</select></label>
+      {#if kind !== 'account-key'}<label>SSH 사용자 <input name="ssh-user" aria-label="SSH 사용자" bind:value={sshUser} autocomplete="off" required /></label>{/if}
       {#if kind === 'account-key'}
-        <label>테스트 계정 개인키 <input aria-label="테스트 계정 개인키" type="password" bind:value={accountKey} autocomplete="off" required /></label>
+        <label>테스트 계정 개인키 <input name="account-key" aria-label="테스트 계정 개인키" type="password" bind:value={accountKey} autocomplete="off" required /></label>
       {:else if kind === 'private-key'}
-        <label>SSH 개인키 <textarea aria-label="SSH 개인키" bind:value={privateKey} autocomplete="off" required></textarea></label>
-        <label>개인키 암호 <input aria-label="개인키 암호" type="password" bind:value={passphrase} autocomplete="off" /></label>
+        <label>SSH 개인키 <textarea name="private-key" aria-label="SSH 개인키" bind:value={privateKey} autocomplete="off" required></textarea></label>
+        <label>개인키 암호 <input name="passphrase" aria-label="개인키 암호" type="password" bind:value={passphrase} autocomplete="off" /></label>
       {:else}
-        <label>SSH 비밀번호 <input aria-label="SSH 비밀번호" type="password" bind:value={sshPassword} autocomplete="off" required /></label>
+        <label>SSH 비밀번호 <input name="ssh-password" aria-label="SSH 비밀번호" type="password" bind:value={sshPassword} autocomplete="off" required /></label>
       {/if}
       <button>개인 자격증명 저장</button>
     </fieldset>
@@ -70,14 +70,8 @@
 </section>
 
 <style>
-  .panel { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .muted { color: var(--text-muted); }
-  .credentials { list-style: none; padding: 0; } .credentials > li { border-top: 1px solid var(--border-subtle); padding: 12px 0; }
-  .row-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .credentials { list-style: none; padding: 0; } .credentials > li { border-top: 1px solid var(--border-subtle); padding: var(--space-3) 0; }
+  .row-head { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
   .state { color: var(--ok); } .state.revoked { color: var(--danger); }
-  fieldset { border: 1px solid var(--border); border-radius: 8px; margin-top: 16px; }
-  label { display: grid; gap: 4px; margin: 12px 0; }
-  input, select, textarea, button { font: inherit; color: inherit; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); padding: 8px; min-width: 0; }
-  textarea { min-height: 96px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  button { cursor: pointer; } button:disabled { opacity: .45; cursor: default; }
+  label { margin: var(--space-3) 0; }
 </style>

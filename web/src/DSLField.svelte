@@ -25,7 +25,7 @@
 </script>
 <div class="field" data-field-path={path}>
  {#if choices.length>1}
-  <label>{label} 형식 <select aria-label={`${path} 형식`} {...invalid} value={index} onchange={e=>onchange(initial(choices[Number(e.target.value)],root))}>
+  <label>{label} 형식 <select name={`${path}.type`} aria-label={`${path} 형식`} {...invalid} value={index} onchange={e=>onchange(initial(choices[Number(e.target.value)],root))}>
    {#each choices as choice,i}<option value={i}>{variantLabel(choice,i)}</option>{/each}
   </select></label>
  {/if}
@@ -33,16 +33,16 @@
   <span>{label}: <strong>{String(value??current.const)}</strong></span>
   {#if value!==current.const}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}. 지원하는 형식을 고르세요.</p>{/if}
  {:else if current.enum}
-  <label>{label} <select aria-label={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
+  <label>{label} <select name={path} aria-label={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
   {#if !current.enum.includes(value)}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}</p>{/if}
  {:else if type==='string'&&path.startsWith('/content/prepared/imports/')&&(label==='case'||label==='name')}
   {@const options=label==='case'?(suggestions.preparedCases??[]):(suggestions.preparedNames?.[path.split('/')[4]]??[])}
-  <label>{label==='case'?'준비 케이스':'공개된 준비물'} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+  <label>{label==='case'?'준비 케이스':'공개된 준비물'} <select name={path} aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
    {#if !value}<option value="">선택</option>{:else if !options.includes(value)}<option value={value}>가져온 참조 · {value}</option>{/if}
    {#each options as option}<option value={option}>{option}</option>{/each}
   </select></label>
  {:else if label==='feePayer' && type==='string'}
-  <label>{label} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+  <label>{label} <select name={path} aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
    {#if !value}<option value="">대납 계정 선택</option>{:else if !(suggestions.accounts??[]).includes(value)}<option value={value}>가져온 계정 · {value}</option>{/if}
    {#each suggestions.accounts??[] as account}<option value={account}>{account}</option>{/each}
   </select></label>
@@ -58,10 +58,10 @@
     </div>
    {/each}
    {#if optional.length}
-    <label>{label} 필드 추가 <select aria-label={`${path} 필드 추가`} value="" onchange={e=>{if(e.target.value)update(e.target.value,initial(properties[e.target.value],root))}}><option value="">필드 선택</option>{#each optional as name}<option value={name}>{name}{current.required?.includes(name)?' (필수)':''}</option>{/each}</select></label>
+    <label>{label} 필드 추가 <select name={`${path}.add`} aria-label={`${path} 필드 추가`} value="" onchange={e=>{if(e.target.value)update(e.target.value,initial(properties[e.target.value],root))}}><option value="">필드 선택</option>{#each optional as name}<option value={name}>{name}{current.required?.includes(name)?' (필수)':''}</option>{/each}</select></label>
    {/if}
    {#if current.additionalProperties!==false}
-    <label>항목 이름 <input aria-label={`${path} 항목 이름`} bind:value={key} /></label>
+    <label>항목 이름 <input name="key" aria-label={`${path} 항목 이름`} bind:value={key} /></label>
     <button disabled={!key||Object.hasOwn(value??{},key)} onclick={()=>{update(key,initial(propertySchema(current,key),root));key=''}}>항목 추가</button>
    {/if}
   </fieldset>
@@ -78,23 +78,21 @@
    <button aria-label={`${path} 항목 추가`} onclick={()=>onchange([...(value??[]),initial(current.items??{},root)])}>{label} 항목 추가</button>
   </fieldset>
  {:else if type==='boolean'}
-  <label><input aria-label={path} {...invalid} type="checkbox" checked={value} onchange={e=>onchange(e.target.checked)} /> {label}</label>
+  <label><input name={path} aria-label={path} {...invalid} type="checkbox" checked={value} onchange={e=>onchange(e.target.checked)} /> {label}</label>
  {:else if type==='number'||type==='integer'}
-  <label>{label} <input aria-label={path} {...invalid} type="number" value={value} min={current.minimum} max={current.maximum} step={type==='integer'?1:'any'} oninput={e=>{if(e.target.value!=='')onchange(Number(e.target.value))}} /></label>
+  <label>{label} <input name={path} aria-label={path} {...invalid} type="number" value={value} min={current.minimum} max={current.maximum} step={type==='integer'?1:'any'} oninput={e=>{if(e.target.value!=='')onchange(Number(e.target.value))}} /></label>
  {:else if type==='null'}
   <span>{label}: null</span>
  {:else}
   {@const problem=valueProblem(current,value)}
-  <label>{label} <input aria-label={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)} /></label>
+  <label>{label} <input name={path} aria-label={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)} /></label>
   {#if problem}<p id={`${path}-problem`} role="alert">{problem}</p>{/if}
   <datalist id={`${path}-suggestions`}>{#each fieldSuggestions(current,label,path,suggestions.nodes,refs) as option}<option value={option}></option>{/each}</datalist>
  {/if}
  {#if !current.type&&!current.properties&&!current.enum&&current.const===undefined&&choices.length===1}
-  <label>{label} 값 종류 <select aria-label={`${path} 값 종류`} value={type} onchange={e=>onchange(({string:'',number:0,boolean:false,object:{},array:[],null:null})[e.target.value])}>{#each ['string','number','boolean','object','array','null'] as kind}<option value={kind}>{kind}</option>{/each}</select></label>
+  <label>{label} 값 종류 <select name={`${path}.kind`} aria-label={`${path} 값 종류`} value={type} onchange={e=>onchange(({string:'',number:0,boolean:false,object:{},array:[],null:null})[e.target.value])}>{#each ['string','number','boolean','object','array','null'] as kind}<option value={kind}>{kind}</option>{/each}</select></label>
  {/if}
  {#if fieldError}<p id={errorId} class="field-error" data-error-path={path}>{fieldError}</p>{/if}
  {#if current.description}<small>{current.description}</small>{/if}
 </div>
-<style>
-.field{min-width:0;flex:1}fieldset{border:1px solid var(--border);margin:8px 0;padding:12px;border-radius:6px}legend{color:var(--text-muted)}.row{display:flex;align-items:start;gap:8px;padding:4px 0;flex-wrap:wrap}label{display:block;margin:4px 0}input,select,button{font:inherit;padding:6px;background:var(--surface-raised);color:var(--text);border:1px solid var(--border-strong);border-radius:4px;min-height:36px}select,input{max-width:100%}button{cursor:pointer}button:disabled{opacity:.4}small{display:block;color:var(--text-muted)}p{color:var(--danger)}[aria-invalid=true]{border-color:var(--danger);outline:1px solid var(--danger)}
-</style>
+<style>.field{min-width:0;flex:1}fieldset{margin:var(--space-2) 0;padding:var(--space-2) 0 var(--space-2) var(--space-3);border-top:0;border-left:1px solid var(--border-subtle)}.row{display:flex;align-items:start;gap:var(--space-2);padding:var(--space-1) 0;flex-wrap:wrap}label{margin:var(--space-1) 0}small{display:block}p{color:var(--danger)}</style>

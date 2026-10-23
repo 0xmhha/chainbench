@@ -42,7 +42,7 @@
 <section class="bundle" aria-label="구성 가져오기">
   <h3>구성 가져오기</h3>
   <p>선언 하나나 서버, 경로, 프리셋, 케이스 문서 묶음(<code>documents</code> 목록이 있는 JSON 또는 YAML stream)을 가져옵니다. 미리 보기를 확인하기 전에는 아무것도 저장하지 않습니다. 개인 SSH 값은 지우며, 내 자격증명으로 다시 연결해야 합니다.</p>
-  <label>구성 파일 <input aria-label="가져올 구성 파일" type="file" accept=".json,.yaml,.yml" disabled={busy} onchange={choose} /></label>
+  <label>구성 파일 <input name="bundle-import-input-1" aria-label="가져올 구성 파일" type="file" accept=".json,.yaml,.yml" disabled={busy} onchange={choose} /></label>
   {#if preview}
     <div data-testid="import-preview" data-valid={preview.validation.valid}>
       {#if preview.validation.valid}
@@ -58,13 +58,13 @@
     </div>
   {/if}
   {#if set && config}
-    <label>Workspace 이름 <input aria-label="가져온 workspace 이름" bind:value={workspaceName} /></label>
+    <label>Workspace 이름 <input name="workspace-name" aria-label="가져온 workspace 이름" bind:value={workspaceName} /></label>
     <button disabled={busy} onclick={createWorkspace}>가져온 문서로 workspace 만들기</button>
   {/if}
   {#if status}<p role="status" data-testid="import-status">{status}</p>{/if}
 </section>
 
 <style>
-  .bundle { border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 16px 0; min-width: 0 }
-  .error { color: var(--danger) } .notice { color: var(--warn) } li { overflow-wrap: anywhere }
+  .bundle { margin: var(--space-4) 0; padding-top: var(--space-3); border-top: 1px solid var(--border-subtle); min-width: 0 }
+  li { overflow-wrap: anywhere }
 </style>
