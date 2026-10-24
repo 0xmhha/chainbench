@@ -7,6 +7,7 @@
   import { follow } from './nav.mjs'
   import { nodeTally, attentionJobs, shortId } from './dashboard-view.mjs'
   import { statusIcon } from './status-icon.mjs'
+  import StatusMark from './StatusMark.svelte'
   // runs, busDrops and connected come from the shell's legacy event stream.
   let { runs = [], busDrops = null, connected = false, onrefresh = () => {} } = $props()
   const feed = jobStream(), live = feed.state
@@ -58,7 +59,7 @@
     {@const t = nodeTally(n.nodes)}
     <div class="network">
       <p class="net-head"><b class="mono" title={n.id}>{shortId(n.id)}</b> <span class="muted">{n.ownership} · 실행 {t.running} · 정지 {t.stopped}{t.other ? ` · 기타 ${t.other}` : ''}</span></p>
-      <ul class="grid">{#each n.nodes as node (node.id)}{@const s = statusIcon(node.state)}<li><a class="cell {s.tone}" href={`/nodes/${n.id}/${node.id}`} onclick={e => follow(e, `/nodes/${n.id}/${node.id}`)}><span class="node">{node.id}</span><span class="role">{node.role}</span><span class="state"><span aria-hidden="true">{s.icon}</span> {node.state}</span></a></li>{/each}</ul>
+      <ul class="grid">{#each n.nodes as node (node.id)}{@const s = statusIcon(node.state)}<li><a class="cell {s.tone}" href={`/nodes/${n.id}/${node.id}`} onclick={e => follow(e, `/nodes/${n.id}/${node.id}`)}><span class="node">{node.id}</span><span class="role">{node.role}</span><span class="state"><StatusMark state={node.state} /> {node.state}</span></a></li>{/each}</ul>
     </div>
   {:else}<p class="muted">기록된 네트워크가 없습니다.</p>{/each}
 </section>
@@ -86,7 +87,7 @@
   .open { white-space: nowrap; }
   small { display: block; }
   .steps { display: flex; gap: 2px; width: 120px; margin-bottom: 2px; }
-  .steps i { flex: 1; height: 6px; border-radius: 2px; background: var(--border-strong); }
+  .steps i { flex: 1; height: 6px; background: var(--border-strong); }
   .steps i.succeeded { background: var(--ok); } .steps i.running { background: var(--accent); } .steps i.failed { background: var(--danger); }
   .network { margin-top: var(--space-3); }
   .net-head { margin: 0 0 var(--space-2); }

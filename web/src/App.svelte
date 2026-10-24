@@ -85,7 +85,7 @@
   const runOk = s => s === 'success' || s === 'pass'
 </script>
 
-<svelte:head><title>{current[1]} · chainbench</title><meta name="theme-color" content="#0b1018" /></svelte:head>
+<svelte:head><title>{current[1]} · chainbench</title><meta name="theme-color" content="#e6ece4" media="(prefers-color-scheme: light)" /><meta name="theme-color" content="#131a15" media="(prefers-color-scheme: dark)" /></svelte:head>
 <a class="skip-link" href="#content">본문으로 이동</a>
 <div class="shell">
   <aside aria-label="주 메뉴">
@@ -138,32 +138,34 @@
 
 <style>
   .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 100vh; }
-  aside { min-width: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4) var(--space-3); background: var(--sidebar); border-right: 1px solid var(--border-subtle); }
-  .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); color: var(--text); font-size: var(--text-lg); font-weight: 650; }
+  aside { min-width: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4); }
+  .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0 var(--space-3); border-bottom: var(--rule-strong); color: var(--text); font: 700 var(--text-md) var(--font-cond); letter-spacing: .08em; }
   .brand:hover { text-decoration: none; }
-  .brand-symbol { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--accent-border); border-radius: var(--radius-sm); color: var(--accent); font: 600 var(--text-sm) var(--font-mono); }
-  nav { display: grid; gap: 2px; margin-top: var(--space-5); }
-  nav a { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); color: var(--text-muted); }
-  nav a:hover { color: var(--text); background: var(--surface); text-decoration: none; }
-  nav a[aria-current] { color: var(--accent-strong); background: var(--surface-raised); }
-  .workspace { min-width: 0; }
-  .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 44px; padding: var(--space-2) var(--space-5); background: color-mix(in srgb, var(--bg) 92%, transparent); border-bottom: 1px solid var(--border-subtle); font-size: var(--text-sm); color: var(--text-muted); }
+  .brand-symbol { display: grid; place-items: center; width: 26px; height: 26px; border: 1.5px solid var(--danger); color: var(--danger); font: 700 var(--text-sm) var(--font-mono); letter-spacing: 0; }
+  nav { display: grid; margin-top: var(--space-3); counter-reset: page; }
+  nav a { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: var(--rule); color: var(--text-muted); counter-increment: page; }
+  nav a::after { content: counter(page, decimal-leading-zero); font: var(--text-xs) var(--font-mono); color: var(--text-faint); }
+  nav a:hover { color: var(--text); text-decoration: none; }
+  nav a[aria-current] { color: var(--text); font-weight: 700; border-bottom: 1px solid var(--text); }
+  .workspace { min-width: 0; border-left: var(--rule-strong); }
+  .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 44px; padding: var(--space-2) var(--space-5); background: var(--bg); border-bottom: var(--rule-strong); font-size: var(--text-sm); color: var(--text-muted); }
   .context, .status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-width: 0; }
   .context .label { color: var(--text-faint); }
   .context a { color: var(--warn); } .context a.quiet { color: var(--text-muted); }
-  .signal { display: inline-block; width: 7px; height: 7px; margin-right: var(--space-2); border-radius: 50%; background: var(--danger); }
+  .signal { display: inline-block; width: 7px; height: 7px; margin-right: var(--space-2); background: var(--danger); }
   .signal.on { background: var(--ok); }
   main { max-width: 1440px; margin: 0 auto; padding: var(--space-4) var(--space-5) var(--space-5); }
   .page-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
-  .page-heading h1 { font-size: var(--text-xl); letter-spacing: -.01em; }
+  .page-heading h1 { font: 700 var(--text-xl) var(--font-cond); letter-spacing: .01em; }
   .page-heading p { margin: 0; color: var(--text-muted); font-size: var(--text-sm); }
   .events { list-style: none; padding: 0; margin: 0; }
   .events li { display: grid; grid-template-columns: 170px 110px 110px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); align-items: start; }
   time, .kind { color: var(--text-muted); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
   @media (max-width: 800px) {
     .shell { grid-template-columns: minmax(0, 1fr); }
+    .workspace { border-left: 0; }
     aside { position: static; height: auto; padding: var(--space-2) var(--space-4); border-right: 0; border-bottom: 1px solid var(--border-subtle); }
-    nav { display: flex; margin-top: var(--space-2); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; mask-image: linear-gradient(to right, black 85%, transparent); }
+    nav { display: flex; gap: var(--space-4); margin-top: var(--space-2); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; mask-image: linear-gradient(to right, black 85%, transparent); }
     nav a { white-space: nowrap; scroll-snap-align: start; }
     .topbar { position: static; padding: var(--space-2) var(--space-4); flex-direction: column; align-items: flex-start; gap: var(--space-1); }
     main { padding: var(--space-3) var(--space-4); }
