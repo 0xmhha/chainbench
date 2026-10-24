@@ -8,6 +8,7 @@
  import RecorderStrip from './RecorderStrip.svelte'
  import Readings from './Readings.svelte'
  import {cursorDefaults} from './recorder.mjs'
+ import {LOG_PAGE_MAX,logQuery} from './log-view.mjs'
 
  let {networkId,nodes=[],node=$bindable(),from,to,start=null,end=null,tests=[],chosen=null,onchoose=()=>{},logTitle='',logTestid='cause-logs',focus=null}=$props()
 
@@ -17,7 +18,7 @@
  let generation=0
 
  async function logs(label,levels){
-  const q=new URLSearchParams({from,to,level:levels,limit:'200'})
+  const q=logQuery({from,to,levels,limit:LOG_PAGE_MAX})
   const r=await fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+label)}/logs?${q}`,{cache:'no-store'})
   if(!r.ok)throw await responseError(r)
   return (await r.json()).entries.map(e=>({...e,node:label}))
@@ -28,8 +29,8 @@
   try{
    const [m,mineEvents,others]=await Promise.all([
     fetch(`/api/v1/networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,{cache:'no-store'}).then(async r=>r.ok?r.json():Promise.reject(await responseError(r))),
-    node&&node!==ALL?logs(node,'ERROR,WARN,CRIT'):Promise.resolve([]),
-    Promise.all(nodes.filter(n=>n!==node).map(n=>logs(n,'ERROR,CRIT').catch(()=>[]))).then(x=>x.flat()),
+    node&&node!==ALL?logs(node,['ERROR','WARN','CRIT']):Promise.resolve([]),
+    Promise.all(nodes.filter(n=>n!==node).map(n=>logs(n,['ERROR','CRIT']).catch(()=>[]))).then(x=>x.flat()),
    ])
    if(mine!==generation)return
    metrics=m;events=mineEvents;otherEvents=others

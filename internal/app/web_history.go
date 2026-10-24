@@ -201,10 +201,20 @@ func historyMatches(run WebRun, q WebHistoryQuery) bool {
 	return true
 }
 
+// historyCaptureID accepts either a capture ID or the engine session
+// reference a job records in RunIDs ("web:..."), which captures are keyed by
+// the digest of.
+func historyCaptureID(id string) string {
+	if strings.HasPrefix(id, "web:") {
+		return historySessionID(id)
+	}
+	return id
+}
+
 func (s *WebHistory) Get(id string) (WebRun, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	capture, found := s.state.Captures[id]
+	capture, found := s.state.Captures[historyCaptureID(id)]
 	if !found {
 		return WebRun{}, ErrDeploymentNotFound
 	}

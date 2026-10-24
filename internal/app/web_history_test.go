@@ -292,3 +292,36 @@ func TestHistoryDeletionRemovesTheWebOwnedSessionAndAcceptsTestlessCLISessions(t
 		t.Fatalf("deleting the capture removed the CLI's own artifacts: %v", err)
 	}
 }
+
+// A job names its engine sessions by reference (WebJob.RunIDs, "web:..."),
+// while History keys captures by a digest of that reference. The job detail
+// page reads a run by the reference it holds, so History must answer to it.
+func TestWebHistoryFindsARunByTheJobsSessionReference(t *testing.T) {
+	root := t.TempDir()
+	ref, _ := historyFixture(t, filepath.Join(root, "sessions"), 8, session.StatusFail)
+	jobs, err := OpenWebJobs(root, nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload, _ := json.Marshal(webChainPayload{Binary: ManifestBinaryEvidence{Chain: "stablenet", SHA256: strings.Repeat("b", 64)}})
+	jobs.state.Plans["test-plan"] = savedWebPlan{Prepared: WebPreparedJob{Payload: payload, Fingerprint: strings.Repeat("c", 64)}}
+	jobs.state.Jobs["test-job"] = WebJob{ID: "test-job", ActorID: "operator", WorkspaceID: "owned", PlanID: "test-plan", Operation: "test.run", State: "failed", RunIDs: []string{"web:" + ref}}
+	history, err := OpenWebHistory(root, "", jobs, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = history.Sync(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	reference := jobs.state.Jobs["test-job"].RunIDs[0]
+	run, err := history.Detail(DeploymentActor{ID: "viewer", Role: "viewer"}, reference)
+	if err != nil {
+		t.Fatalf("run named by the job's session reference %q is not found: %v", reference, err)
+	}
+	if run.ID != historySessionID(reference) || run.JobID != "test-job" || run.State != "failed" {
+		t.Fatal("reference resolved to the wrong run", run)
+	}
+	if _, err = history.Get("web:unknown/session"); !errors.Is(err, ErrDeploymentNotFound) {
+		t.Fatal("an unknown reference must stay not found", err)
+	}
+}

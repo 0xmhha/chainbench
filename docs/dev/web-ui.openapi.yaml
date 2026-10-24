@@ -1726,6 +1726,7 @@ paths:
     get:
       operationId: getHistory
       summary: Read run results and engine-session references
+      description: The run is addressed by its capture ID or by the engine-session reference a job lists in runIds ("web:...").
       x-minimum-role: viewer
       responses:
         '200':
