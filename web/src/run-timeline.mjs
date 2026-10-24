@@ -75,3 +75,14 @@ export function phaseSegments(phases) {
  const total = timed.reduce((sum, p) => sum + (p.durationMs ?? 0), 0)
  return timed.map(p => ({ ...p, timed: p.durationMs !== null, share: total && p.durationMs !== null ? Math.round((p.durationMs / total) * 1000) / 10 : 0 }))
 }
+
+const INTEGER = /^-?\d+$/
+
+// assertDiff is actual minus expected when both are integers, signed, exact
+// for any size; otherwise ''. Two long numbers then differ at a glance.
+export function assertDiff(expected, actual) {
+ const e = String(expected ?? ''), a = String(actual ?? '')
+ if (!INTEGER.test(e) || !INTEGER.test(a)) return ''
+ const d = BigInt(a) - BigInt(e)
+ return d === 0n ? '' : d > 0n ? `+${d}` : String(d)
+}

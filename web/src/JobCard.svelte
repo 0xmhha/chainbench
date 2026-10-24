@@ -5,7 +5,9 @@
   import { jobSummary } from './job-view.mjs'
   import { follow } from './nav.mjs'
   // link shows the way to the job's own page; the detail page leaves it off.
-  let { job, webSession, onchanged = () => {}, link = false } = $props()
+  // compact drops what the detail page already shows above it: the heading,
+  // the phases and the error.
+  let { job, webSession, onchanged = () => {}, link = false, compact = false } = $props()
   const api = $derived(webApi(webSession))
   const summary = $derived(jobSummary(job))
   const owner = $derived(webSession && (job.actorId === webSession.user.id || webSession.user.role === 'administrator'))
@@ -15,11 +17,11 @@
 </script>
 
 <article data-job-id={job.id}>
-  <div class="heading"><strong>{job.operation}</strong><StatusBadge state={job.state} /></div>
+  {#if !compact}<div class="heading"><strong>{job.operation}</strong><StatusBadge state={job.state} /></div>
   <p>{#if link}<a href={'/jobs/' + job.id} onclick={e => follow(e, '/jobs/' + job.id)}><code>{job.id}</code></a>{:else}<code>{job.id}</code>{/if} · {formatTime(job.createdAt)} · 노드 처리: {job.nodeDisposition}</p>
-  <ol>{#each job.phases as phase}<li>{phase.name} · <StatusBadge state={phase.state} />{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>
+  <ol>{#each job.phases as phase}<li>{phase.name} · <StatusBadge state={phase.state} />{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>{/if}
   {#if job.runIds?.length}<p>실제 엔진 세션: {job.runIds.join(', ')}</p><a href={'/history?search=' + encodeURIComponent(job.id)}>세션 결과 보기</a>{/if}
-  {#if job.error}<p class:error={job.state !== 'cancelled'}>{job.error.message}</p>{/if}
+  {#if job.error && !compact}<p class:error={job.state !== 'cancelled'}>{job.error.message}</p>{/if}
   {#if summary.effects.length}<details><summary>수행된 변경</summary><ul>{#each summary.effects as effect}<li>{effect}</li>{/each}</ul></details>{/if}
   {#if summary.unresolved.length}<p class="error">확인이 필요한 자원: {summary.unresolved.join(', ')}</p>{/if}
   {#if job.reconciliation}<div data-testid={'reconciliation-' + job.id}><p>실제 상태 확인 {formatTime(job.reconciliation.checkedAt)} · {outcomes[job.reconciliation.outcome] ?? job.reconciliation.outcome}{job.reconciliation.message ? ' · ' + job.reconciliation.message : ''}</p>{#if job.reconciliation.nodes?.length}<ul>{#each job.reconciliation.nodes as n}<li>{n.nodeId}: 프로세스 {n.process} · 데이터 {n.data}</li>{/each}</ul>{/if}</div>{/if}
