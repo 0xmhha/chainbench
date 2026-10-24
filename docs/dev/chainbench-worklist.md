@@ -199,6 +199,10 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 **2026-10-23 진행:** 위 2번의 Web UI 리팩토링 첫 묶음(실패 우선 UX)을 PR #458로 병합했다(main `5397659e`).
 남은 Web UX 후속, 확인하지 못한 것, 다음 단계의 목적과 완료 조건은 [인수인계](web-ux-handoff-2026-10-23.md)에 있다. PR #460, #461 뒤의 현재 상태와 남은 순서는 [2026-10-25 인수인계](web-ux-handoff-2026-10-25.md)에 있다.
 
+**2026-10-25 사용자 결정:** Web UI 리팩토링의 남은 부분은 데이터부터 한다. 쓸 수 있고 수집할 수 있는 데이터를
+조사해 구조체와 타입, 수집과 갱신 구조를 정한 뒤 화면을 만든다([Web 데이터 모델 계획](web-data-model-plan.md)).
+위 3번의 Web 14개 재capture는 Web 리뉴얼을 마치고 주요 기능 몇 개를 실제로 확인한 뒤 한 번만 한다.
+
 **2026-10-22 Web 최종 인수 완료 처리 (사용자 결정):**
 `f11116de`에서 WEB-01~13을 모두 새로 capture해 통과했다. WEB-14는 `make check`·docker 준비를 통과했고, live race 직렬 실행에서
 5,370개가 통과했으며 `TestNativeEstimateMinusOneBoundary/stablenet` 하나가 간헐적으로 실패했다(#454로 수정, `-race` 4회 반복 통과).
