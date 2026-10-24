@@ -28,6 +28,8 @@
  const entries=$derived(mergeByTime(byNode,shownNodes))
  const total=$derived(Object.values(totals).reduce((a,b)=>a+b,0))
  const more=$derived(Object.values(cursors).some(Boolean))
+ // A short result keeps the viewer to its lines instead of an empty box.
+ const viewHeight=$derived(Math.min(height,entries.length*ROW+14))
  const range=$derived(visibleRange({scrollTop,height,rowHeight:ROW,count:entries.length,overscan:10}))
  // Gaps are listed per node; the same outage on several nodes is one line.
  const gaps=$derived(Object.entries(coverage).flatMap(([label,c])=>(c?.gaps??[]).map(g=>({label,...g}))))
@@ -170,7 +172,7 @@
   <p class="empty">{filtered?`이 범위(${time(span.from??coverage[shownNodes[0]]?.from)} – ${time(span.to??coverage[shownNodes[0]]?.to)})에 조건과 일치하는 줄이 없습니다.`:'이 범위에 보관된 로그가 없습니다.'}{gaps.length?' 누락 구간에는 로그가 없을 수 있습니다.':''}</p>
   {#if filtered}<p class="empty-actions"><button type="button" onclick={()=>{clearSearch();levels=[]}}>필터 해제하고 모든 줄 보기</button></p>{/if}
  {:else if entries.length}
-  <div class="viewport" bind:this={viewport} style:height="{height}px" onscroll={scrolled} tabindex="0" role="listbox" aria-label="로그 줄" aria-activedescendant={selected>=0?`${testid}-row-${selected}`:undefined}>
+  <div class="viewport" bind:this={viewport} style:height="{viewHeight}px" onscroll={scrolled} tabindex="0" role="listbox" aria-label="로그 줄" aria-activedescendant={selected>=0?`${testid}-row-${selected}`:undefined}>
    <ol style:height="{entries.length*ROW}px">
     {#each entries.slice(range.start,range.end) as entry, offset (range.start+offset)}
      {@const index=range.start+offset}
@@ -231,10 +233,11 @@
  .detail pre { max-height: 10rem; overflow: auto; margin-bottom: var(--space-2); font-size: var(--text-xs); }
  .empty-actions { margin: 0; text-align: center; }
  .keys { margin: var(--space-2) 0 0; color: var(--text-faint); font-size: var(--text-xs); }
- /* On a narrow screen the message gets the width: the level stays as its
-    colored edge and the time moves to the selected line's detail. */
+ /* On a narrow screen the message gets the width: the level keeps its colored
+    edge and its first letter (E, W, I), and the time moves to the selected
+    line's detail. */
  @media (max-width: 700px) {
-  li > .level { flex-basis: 6px; padding: 0; font-size: 0; }
+  li > .level { flex: 0 0 calc(1ch + 6px); padding-left: 4px; overflow: hidden; white-space: nowrap; }
   li > .level.info, li > .level.faint, li > .level.none { border-left-color: var(--border-subtle); }
   li > time { display: none; }
  }

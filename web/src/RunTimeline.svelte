@@ -4,10 +4,13 @@
  // logs of the moments it ran.
  import StatusBadge from './StatusBadge.svelte'
  import LogViewer from './LogViewer.svelte'
- import {testRows,verdictSegments,placeOnAxis,testLogSpan} from './run-timeline.mjs'
+ import FailureMetrics from './FailureMetrics.svelte'
+ import {testRows,verdictSegments,placeOnAxis,testLogSpan,assertDiff} from './run-timeline.mjs'
  import {stateLabel,formatTime} from './labels.mjs'
 
- let {run,nodes=[]}=$props()
+ // test and focusNode name the chosen test and log node; a parent binds them
+ // to keep the choice (the job detail keeps it in the URL).
+ let {run,nodes=[],test=$bindable(''),focusNode=$bindable('')}=$props()
 
  const PAD_SECONDS=5
  const FAILED=['fail','blocked']
@@ -21,18 +24,18 @@
  const segments=$derived(verdictSegments(run?.summary?.counts))
  const failures=$derived(rows.filter(r=>FAILED.includes(r.status)))
 
- let chosen=$state(null)
- // A node picked from an assertion or step row overrides the default log node.
- let pickedNode=$state(null)
- const selected=$derived(rows.find(r=>r.seq===chosen)??failures[0]??null)
+ const ALL='*'
+ const selected=$derived(rows.find(r=>r.id===test)??failures[0]??null)
  const span=$derived(selected?testLogSpan(selected,PAD_SECONDS):null)
  const logNodes=$derived(nodes.length?nodes:selected?.nodes??[])
  // The node an assertion failed on is the likeliest cause, then a step error's node.
  const evidenceNodes=$derived([...(selected?.failedAsserts??[]).map(a=>a.on),...(selected?.stepErrors??[]).map(s=>s.on)].filter(Boolean))
- const firstNode=$derived(pickedNode&&logNodes.includes(pickedNode)?pickedNode:evidenceNodes.find(n=>logNodes.includes(n))??logNodes[0]??'')
+ // A node picked from an assertion or step row, or in the log viewer, overrides it.
+ const firstNode=$derived(focusNode&&(logNodes.includes(focusNode)||focusNode===ALL&&logNodes.length>1)?focusNode:evidenceNodes.find(n=>logNodes.includes(n))??logNodes[0]??'')
+ const nodeName=$derived(firstNode===ALL?'모든 노드':firstNode)
  const failedTest=$derived(FAILED.includes(selected?.status))
- function choose(seq){chosen=seq;pickedNode=null}
- function showNode(node){pickedNode=node}
+ function choose(row){test=row.id;focusNode=''}
+ function showNode(node){focusNode=node}
 
  const time=formatTime
  const duration=ms=>ms===null?'시각 없음':ms<1000?`${ms}ms`:ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
@@ -53,7 +56,7 @@
  {#if timed.length}
   <div class="axis" aria-label="테스트 시간축">
    {#each timed as row (row.seq)}
-    <button type="button" class="bar {row.status}" class:chosen={selected?.seq===row.seq} style:left="{row.left}%" style:width="{row.width}%" title="{row.id} · {verdictName[row.status]??row.status} · {duration(row.durationMs)}" aria-label="{row.id} {verdictName[row.status]??row.status}" onclick={()=>choose(row.seq)}></button>
+    <button type="button" class="bar {row.status}" class:chosen={selected?.seq===row.seq} style:left="{row.left}%" style:width="{row.width}%" title="{row.id} · {verdictName[row.status]??row.status} · {duration(row.durationMs)}" aria-label="{row.id} {verdictName[row.status]??row.status}" onclick={()=>choose(row)}></button>
    {/each}
   </div>
  {/if}
@@ -62,7 +65,7 @@
   <div class="split">
    <ol class="tests" aria-label="테스트">
     {#each rows as row (row.seq)}
-     <li><button type="button" class="test" class:chosen={selected?.seq===row.seq} aria-pressed={selected?.seq===row.seq} onclick={()=>choose(row.seq)}>
+     <li><button type="button" class="test" class:chosen={selected?.seq===row.seq} aria-pressed={selected?.seq===row.seq} onclick={()=>choose(row)}>
       <StatusBadge state={row.status} />
       <span class="name">{row.id}</span>
       <span class="meta">{[duration(row.durationMs),row.failedAsserts.length?`단언 ${row.failedAsserts.length}건 실패`:'',row.stepErrors.length?`스텝 오류 ${row.stepErrors.length}건`:''].filter(Boolean).join(' · ')}</span>
@@ -74,11 +77,12 @@
     <div class="cause" data-testid="run-cause" data-test={selected.id}>
      <h3><StatusBadge state={selected.status} /> {selected.id}</h3>
      <p class="muted">{time(selected.startedAt)} – {time(selected.finishedAt)} · {duration(selected.durationMs)}</p>
-     {#if selected.reason}<p class={FAILED.includes(selected.status)?'error':'muted'}>{selected.reason}</p>{/if}
+     <!-- The assertion table says more than the reason, so the reason shows only without it. -->
+     {#if selected.reason&&!selected.failedAsserts.length}<p class={FAILED.includes(selected.status)?'error':'muted'}>{selected.reason}</p>{/if}
      {#if selected.failedAsserts.length}
-      <div class="table-wrap"><table>
+      <div class="table-wrap"><table class="asserts">
        <thead><tr><th>실패한 단언</th><th>노드</th><th>기대</th><th>실제</th><th><span class="sr">로그</span></th></tr></thead>
-       <tbody>{#each selected.failedAsserts as a}<tr><td><code>{a.assert ?? a.id}</code></td><td>{a.on||'—'}</td><td><code>{shown(a.expected)}</code></td><td><code class="actual">{shown(a.actual)}</code></td><td>{#if a.on&&logNodes.includes(a.on)}<button type="button" class="link" onclick={()=>showNode(a.on)}>{a.on} 로그</button>{/if}</td></tr>{/each}</tbody>
+       <tbody>{#each selected.failedAsserts as a}{@const diff=assertDiff(a.expected,a.actual)}<tr><td data-label="단언"><code>{a.assert ?? a.id}</code></td><td data-label="노드">{a.on||'—'}</td><td data-label="기대"><code>{shown(a.expected)}</code></td><td data-label="실제"><code class="actual">{shown(a.actual)}</code>{#if diff}<small class="diff">차이 {diff}</small>{/if}</td><td>{#if a.on&&logNodes.includes(a.on)}<button type="button" class="link" onclick={()=>showNode(a.on)}>{a.on} 로그</button>{/if}</td></tr>{/each}</tbody>
       </table></div>
      {/if}
      {#if selected.stepErrors.length}
@@ -86,9 +90,13 @@
      {/if}
      {#if observations&&logNodes.length}
       {#if !span.exact}<p class="notice">이 기록에는 테스트별 시각이 없어 실행 전체 범위의 로그를 엽니다.</p>{/if}
-      {#key `${selected.seq}-${firstNode}`}
-       <LogViewer networkId={observations.networkId} nodes={logNodes} node={firstNode} from={span.exact?span.from:null} to={span.exact?span.to:null} runId={span.exact?null:run.id} initialLevels={failedTest||!span.exact?['ERROR','WARN']:[]} focus={selected.finishedAt} title={span.exact?`${firstNode} · 이 테스트 구간(앞뒤 ${PAD_SECONDS}초)${failedTest?' · ERROR·WARN 먼저':''}`:`${firstNode} · 실행 전체 범위 · ERROR·WARN 먼저`} testid="cause-logs" />
+      {#key selected.seq}
+       <LogViewer networkId={observations.networkId} nodes={logNodes} bind:node={()=>firstNode,v=>{focusNode=v}} from={span.exact?span.from:null} to={span.exact?span.to:null} runId={span.exact?null:run.id} initialLevels={failedTest||!span.exact?['ERROR','WARN']:[]} focus={selected.finishedAt} title={span.exact?`${nodeName} · 이 테스트 구간(앞뒤 ${PAD_SECONDS}초)${failedTest?' · ERROR·WARN 먼저':''}`:`${nodeName} · 실행 전체 범위 · ERROR·WARN 먼저`} testid="cause-logs" />
       {/key}
+      {#if failedTest&&span.exact}
+       {#if firstNode===ALL}<p class="muted">노드 하나를 고르면 그 노드의 지표를 같은 구간으로 봅니다.</p>
+       {:else}<FailureMetrics networkId={observations.networkId} node={firstNode} from={span.from} to={span.to} at={selected.finishedAt} atLabel="테스트가 끝난 시각" />{/if}
+      {/if}
      {:else if !observations}
       <p class="muted">이 실행에는 보관된 노드 로그·지표 구간이 없습니다.</p>
      {/if}
@@ -124,5 +132,17 @@
  .steps { margin: var(--space-2) 0; padding-left: var(--space-4); }
  .error-text { color: var(--danger); }
  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+ .diff { display: block; color: var(--text-muted); font: var(--text-xs) var(--font-mono); font-variant-numeric: tabular-nums; }
  @media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } .tests { max-height: 280px; } }
+ /* On a narrow screen each assertion is a stack of labelled values, so a long
+    number stays on one line (scrolling sideways) instead of breaking up. */
+ @media (max-width: 700px) {
+  .asserts thead { display: none; }
+  .asserts, .asserts tbody, .asserts tr, .asserts td { display: block; }
+  .asserts tr { padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); }
+  .asserts td { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: var(--space-2); padding: 2px 0; border: 0; }
+  .asserts td[data-label]::before { content: attr(data-label); color: var(--text-muted); font-size: var(--text-xs); }
+  .asserts td code { overflow-x: auto; overflow-wrap: normal; white-space: nowrap; }
+  .asserts td .diff { grid-column: 2; }
+ }
 </style>
