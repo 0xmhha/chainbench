@@ -126,3 +126,20 @@ func TestWebAttachBindsKeyFileAccountsToPrivateCredentials(t *testing.T) {
 		t.Fatal("the written key differs from the credential")
 	}
 }
+
+// TestRedactWebHidesARegisteredAccountKey: RedactWeb is the last filter on
+// Web responses and streams, so a registered account key must be cut out
+// wherever it appears, like an SSH password.
+func TestRedactWebHidesARegisteredAccountKey(t *testing.T) {
+	s, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.SaveCredential(DeploymentActor{ID: "alice", Role: "operator"}, DeploymentCredentialInput{Label: "payer", Kind: "account-key", AccountKey: testAccountKey}); err != nil {
+		t.Fatal(err)
+	}
+	clean := s.RedactWeb(`{"message":"signer ` + testAccountKey + ` rejected"}`)
+	if strings.Contains(clean, strings.TrimPrefix(testAccountKey, "0x")) {
+		t.Fatalf("account key left in a Web response: %s", clean)
+	}
+}

@@ -5,12 +5,12 @@
  // them interleaved by time, and jump to the lines around a moment.
  import {untrack} from 'svelte'
  import {responseError} from './api-error.mjs'
- import {LOG_LEVELS,levelTone,highlightSegments,mergeByTime,logQuery,visibleRange,nearestIndex} from './log-view.mjs'
+ import {LOG_LEVELS,LOG_PAGE_MAX,levelTone,highlightSegments,mergeByTime,logQuery,visibleRange,nearestIndex} from './log-view.mjs'
 
  let {networkId,nodes=[],node=$bindable(nodes[0]??''),from=null,to=null,runId=null,initialLevels=[],focus=null,title='',height=420,testid='log-viewer',...attributes}=$props()
 
  const ALL='*'
- const PAGE=100
+ const PAGE=LOG_PAGE_MAX
  const ROW=22
  const SEARCH_DELAY=300
  const CONTEXT_SECONDS=30

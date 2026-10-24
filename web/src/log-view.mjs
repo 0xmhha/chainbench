@@ -38,6 +38,10 @@ export function mergeByTime(byNode, order) {
  return all.sort((a, b) => (Date.parse(a.time) - Date.parse(b.time)) || (rank.get(a.node) - rank.get(b.node)) || (a.seq - b.seq))
 }
 
+// LOG_PAGE_MAX is the largest page the log API serves; internal/dashboard
+// refuses a larger limit with 400, so a query never asks for more.
+export const LOG_PAGE_MAX = 100
+
 export function logQuery({ from, to, runId, search, levels, cursor, limit }) {
  const q = new URLSearchParams()
  if (runId) q.set('runId', runId)
@@ -47,7 +51,7 @@ export function logQuery({ from, to, runId, search, levels, cursor, limit }) {
  if (needle) q.set('q', needle)
  if (levels?.length) q.set('level', levels.join(','))
  if (cursor) q.set('cursor', cursor)
- if (limit) q.set('limit', String(limit))
+ if (limit) q.set('limit', String(Math.min(limit, LOG_PAGE_MAX)))
  return q.toString()
 }
 

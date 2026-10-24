@@ -54,3 +54,11 @@ test('levels map to a tone, and every server level has one', () => {
  assert.equal(levelTone('WARN'), 'warn')
  assert.equal(levelTone(undefined), 'none')
 })
+
+test('a log query never asks for more lines than the server accepts', async () => {
+ const { LOG_PAGE_MAX } = await import('../../web/src/log-view.mjs')
+ // internal/dashboard/monitor.go refuses limit above 100 with 400.
+ assert.equal(LOG_PAGE_MAX, 100)
+ assert.equal(new URLSearchParams(logQuery({ limit: 200 })).get('limit'), '100')
+ assert.equal(new URLSearchParams(logQuery({ limit: 40 })).get('limit'), '40')
+})
