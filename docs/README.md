@@ -87,6 +87,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/web-ui-spec.md`](dev/web-ui-spec.md) | **Web UI 동작 명세** — 개인·팀 체인 구성·배포·노드 제어·DSL 작성·실행·모니터링·히스토리 9개 요구, 체인 명령·옵션, 권한·작업 복구. [화면 디자인](dev/web-ui-design.md) · [OpenAPI](dev/web-ui.openapi.yaml) · [인수 기준](dev/web-ui-acceptance.md) · [실행 Seed](dev/architecture/chainbench-web-ui.seed.yaml) · [보강 기록](dev/architecture/chainbench-web-ui.seed-revision.md). |
 | [`dev/web-ui-worklist.md`](dev/web-ui-worklist.md) | **Web UI 작업 목록과 완료 기준** — 상태 정본은 `web-ui-worklist.json`. 출시 기록은 완료 14/14, 누락 목록은 닫힘 48/48. |
 | [`dev/web-ux-handoff-2026-10-23.md`](dev/web-ux-handoff-2026-10-23.md) | **[측정] Web UX 개선 인수인계** — PR #458 로 끝난 것, 확인하지 못한 것, 남은 순서(Web UX 후속 → 코드 리팩토링 → 문서 정리 → Web 14개 재capture)와 각 단계의 목적·완료 조건, 바꾸면 안 되는 UI·API 계약. |
+| [`dev/web-ux-handoff-2026-10-25.md`](dev/web-ux-handoff-2026-10-25.md) | **[측정] Web UX 인수인계 (작업 상세 개편 뒤)** — PR #460~#462 로 바뀐 것, 뒤집은 시각 방향(기관 일지 테마), 10-23 남은 일의 항목별 현재 상태, 처리하지 못한 것과 남은 순서. |
 | [`dev/web-ui-gap-review.md`](dev/web-ui-gap-review.md) | **Web UI 계획 대비 누락 검토** — 인수 기준 통과 뒤에도 Seed·명세·OpenAPI·디자인과 코드가 어긋난 곳을 찾은 근거. 상태 정본은 `web-ui-gaps.json`. |
 | [`dev/web-ui-implementation.md`](dev/web-ui-implementation.md) | **Web UI 구현 진행 기록** (2026-10-08~11). 뒤에 해결된 한계를 미완료로 적은 곳이 있어 상태는 위 작업 목록을 따른다. |
 | [`dev/web-ui-manifests.md`](dev/web-ui-manifests.md) | **WEB-04 manifest 모듈** — 내장 플러그인 목록, manifest·템플릿 가져오기 검증, 내용 주소 번들 저장·내보내기. |
