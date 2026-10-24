@@ -8,7 +8,7 @@ import (
 )
 
 var webPEM = regexp.MustCompile(`(?s)-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----`)
-var webSecretField = regexp.MustCompile(`(?i)("(?:password|passwordHash|privateKey|private_key|passphrase|setupToken|key_passphrase)"\s*:\s*)"(?:\\.|[^"\\])*"`)
+var webSecretField = regexp.MustCompile(`(?i)("(?:password|passwordHash|privateKey|private_key|passphrase|setupToken|key_passphrase|accountKey|account_key)"\s*:\s*)"(?:\\.|[^"\\])*"`)
 
 // RedactWeb removes all users' registered material from logs and exports.
 // Parse serialized JSON before replacing values so quotes and short passwords
@@ -31,6 +31,10 @@ func (s *DeploymentStore) RedactWeb(text string) string {
 			continue
 		}
 		secrets = append(secrets, in.Password, in.PrivateKey, in.Passphrase)
+		// An account key may be printed with or without its 0x prefix.
+		if key := strings.TrimPrefix(strings.TrimPrefix(in.AccountKey, "0x"), "0X"); key != "" {
+			secrets = append(secrets, in.AccountKey, key)
+		}
 	}
 	prefix, suffix := "", ""
 	raw := text
@@ -56,7 +60,7 @@ func redactWebObject(value any, secrets []string) any {
 	case map[string]any:
 		for key, item := range v {
 			switch strings.ToLower(key) {
-			case "password", "passwordhash", "privatekey", "private_key", "passphrase", "setuptoken", "key_passphrase":
+			case "password", "passwordhash", "privatekey", "private_key", "passphrase", "setuptoken", "key_passphrase", "accountkey", "account_key":
 				v[key] = "[REDACTED]"
 			default:
 				v[key] = redactWebObject(item, secrets)
