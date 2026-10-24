@@ -208,10 +208,10 @@
  .node { flex: 0 0 auto; }
  .search { flex: 1 1 240px; min-width: 0; } .search input { width: 100%; }
  .levels { display: flex; flex-wrap: wrap; gap: var(--space-1); }
- .chip { min-height: 30px; padding: 2px 10px; border-radius: 999px; font: 600 var(--text-xs) var(--font-mono); color: var(--text-muted); background: none; }
- .chip[aria-pressed=true] { color: var(--bg); border-color: transparent; }
- .chip.danger[aria-pressed=true] { background: var(--danger); } .chip.warn[aria-pressed=true] { background: var(--warn); }
- .chip.info[aria-pressed=true] { background: var(--accent); } .chip.faint[aria-pressed=true] { background: var(--text-muted); }
+ .chip { min-height: 30px; padding: 2px 10px; font: 600 var(--text-xs) var(--font-mono); color: var(--text-muted); background: none; }
+ /* A chosen level is inked in and underlined, not filled: fill colour stays for faults. */
+ .chip[aria-pressed=true] { color: var(--text); border-color: var(--text); border-bottom-width: 3px; background: var(--surface-raised); }
+ .chip.danger[aria-pressed=true] { color: var(--danger); border-color: var(--danger); } .chip.warn[aria-pressed=true] { color: var(--warn); border-color: var(--warn); }
  .status, .context { margin: var(--space-2) 0; color: var(--text-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
  .count { color: var(--text); font-weight: 600; }
  .viewport { position: relative; overflow: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg); }

@@ -108,15 +108,15 @@
 
 <style>
  .run-timeline { margin-top: var(--space-4); min-width: 0; }
- .verdicts { display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: var(--border-subtle); }
+ .verdicts { display: flex; gap: 2px; height: 10px; overflow: hidden; background: var(--border-subtle); }
  .seg { flex: none; min-width: 4px; }
  .seg.fail, .key.fail i { background: var(--danger); } .seg.blocked, .key.blocked i { background: var(--warn); }
  .seg.pass, .key.pass i { background: var(--ok); } .seg.skip, .key.skip i { background: var(--border-strong); }
  .legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--text-sm); }
- .key { display: inline-flex; align-items: center; gap: 6px; } .key i { width: 8px; height: 8px; border-radius: 2px; } .key b { color: var(--text); font-variant-numeric: tabular-nums; }
+ .key { display: inline-flex; align-items: center; gap: 6px; } .key i { width: 8px; height: 8px; } .key b { color: var(--text); font-variant-numeric: tabular-nums; }
  .range { margin-left: auto; font-variant-numeric: tabular-nums; }
  .axis { position: relative; height: 28px; margin-top: var(--space-3); border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border-subtle); }
- .bar { position: absolute; top: 5px; height: 16px; min-height: 0; min-width: 4px; padding: 0; border: 0; border-radius: 3px; opacity: .75; }
+ .bar { position: absolute; top: 5px; height: 16px; min-height: 0; min-width: 4px; padding: 0; border: 0; opacity: .75; }
  .bar.fail { background: var(--danger); } .bar.blocked { background: var(--warn); } .bar.pass { background: var(--ok); } .bar.skip { background: var(--border-strong); }
  .bar:hover, .bar.chosen { opacity: 1; box-shadow: 0 0 0 2px var(--text); }
  .split { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: var(--space-4); margin-top: var(--space-4); align-items: start; }

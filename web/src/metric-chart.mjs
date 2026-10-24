@@ -113,18 +113,18 @@ export function timeRange(choice, now = Date.now()) {
 // The three gauges that place a failure: chain progress, connectivity and
 // queued work. Each lists the rpc spelling before the metrics-endpoint one.
 const FAILURE_METRICS = [
- {label: '블록 높이', names: ['block_height', 'chain_head_block']},
- {label: '피어 수', names: ['peer_count', 'p2p_peers']},
- {label: '대기 트랜잭션', names: ['txpool_pending']},
+ {label: '블록 높이', short: '블록', names: ['block_height', 'chain_head_block']},
+ {label: '피어 수', short: '피어', names: ['peer_count', 'p2p_peers']},
+ {label: '대기 트랜잭션', short: '대기 tx', names: ['txpool_pending']},
 ]
 
 // failureMetrics picks, for one node, the first collected spelling of each
 // failure gauge; a gauge with no series keeps its first name and no series.
 export function failureMetrics(metrics, node) {
  const all = metrics?.series ?? []
- return FAILURE_METRICS.map(({label, names}) => {
+ return FAILURE_METRICS.map(({label, short, names}) => {
   const name = names.find(n => all.some(s => s.name === n && s.nodeId === node)) ?? names[0]
-  return {label, name, series: all.filter(s => s.name === name && s.nodeId === node)}
+  return {label, short, name, series: all.filter(s => s.name === name && s.nodeId === node)}
  })
 }
 
