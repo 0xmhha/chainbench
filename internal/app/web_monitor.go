@@ -61,6 +61,10 @@ type WebMonitor struct {
 	resumed map[string]bool
 	remote  map[string]int
 	runs    func(string) (webObservationWindow, error)
+	// seen holds the latest node readings per network, under its own lock so a
+	// list can read them while a collection round holds mu.
+	seenMu sync.Mutex
+	seen   map[string]map[string]WebNodeObserved
 }
 
 type webMonitorSample struct {
@@ -178,6 +182,7 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 		return err
 	}
 	now := m.now().UTC()
+	m.observeNetwork(ctx, network, state, target.Transport == "local", now)
 	since := now.Add(-m.interval)
 	var closed, gaps []webMonitorGap
 	if m.resumed[network] && !cursor.LastCollected.IsZero() && cursor.LastCollected.Before(now) {

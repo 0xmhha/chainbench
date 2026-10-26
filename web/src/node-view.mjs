@@ -1,3 +1,5 @@
+import { formatTime } from './labels.mjs'
+
 // latestSamples gives the last recorded value of each series one node has.
 // A series with no value yet stays listed with null, never as zero.
 export function latestSamples(metrics, nodeId) {
@@ -17,4 +19,16 @@ export function nodeControls(node, operations, busy) {
   const offered = (node.supportedControls ?? []).includes(o.id)
   return { id: o.id, label: o.label, enabled: offered && !busy, reason: limit || (offered && busy ? busy : '') }
  })
+}
+
+// stateSource says where a node's shown state came from: a check the reader
+// just made (fresh), the collector's latest reading with its time, or nothing
+// yet. Only a fresh check opens controls, so the collector case says so.
+export function stateSource(node, fresh) {
+ const pid = node?.observedPid ? String(node.observedPid) : '없음'
+ if (fresh) return { note: `확인 ${formatTime(node?.observedAt)}`, pid }
+ // A running reading carries no reason, so only not_observed (or an unknown
+ // state with no reason, from a server before readings) means nothing seen.
+ if (node?.observationReason === 'not_observed' || (node?.state === 'unknown' && !node?.observationReason)) return { note: '아직 관측하지 않음 · 기록된 PID는 실제 가동 증거가 아닙니다', pid: '확인 안 함' }
+ return { note: `수집기 관측 ${formatTime(node.observedAt)} · 제어하려면 노드 상태를 확인하세요`, pid: `${pid} (수집기)` }
 }

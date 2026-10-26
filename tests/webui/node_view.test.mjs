@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { latestSamples, nodeControls } from '../../web/src/node-view.mjs'
+import { latestSamples, nodeControls, stateSource } from '../../web/src/node-view.mjs'
+import { formatTime } from '../../web/src/labels.mjs'
 
 test('the latest sample of each series of one node, skipping gaps', () => {
  const metrics = { series: [
@@ -23,4 +24,12 @@ test('controls follow the operations contract and carry the server reason when r
  const busy = nodeControls(node, operations, '다른 작업이 실행 중입니다')
  assert.ok(busy.every(c => !c.enabled && c.reason))
  assert.equal(busy.find(c => c.id === 'node.reset').reason, '생산자', 'a permanent limit is not hidden by a busy network')
+})
+
+test('a node state says where it came from: a fresh check, the collector, or nothing yet', () => {
+ const at = '2026-10-27T08:00:00Z'
+ assert.deepEqual(stateSource({ state: 'running', observedPid: 333, observedAt: at }, true), { note: `확인 ${formatTime(at)}`, pid: '333' })
+ assert.deepEqual(stateSource({ state: 'stopped', observationReason: 'no_matching_process', observedAt: at }, false), { note: `수집기 관측 ${formatTime(at)} · 제어하려면 노드 상태를 확인하세요`, pid: '없음 (수집기)' })
+ assert.deepEqual(stateSource({ state: 'running', observedPid: 333, observedAt: at }, false), { note: `수집기 관측 ${formatTime(at)} · 제어하려면 노드 상태를 확인하세요`, pid: '333 (수집기)' })
+ assert.deepEqual(stateSource({ state: 'unknown', observationReason: 'not_observed', observedAt: at }, false), { note: '아직 관측하지 않음 · 기록된 PID는 실제 가동 증거가 아닙니다', pid: '확인 안 함' })
 })

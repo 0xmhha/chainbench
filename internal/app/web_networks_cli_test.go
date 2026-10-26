@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
@@ -112,4 +113,39 @@ func (observeCLI) Run(ctx context.Context, args ...string) ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(out)
+}
+
+// TestWebNetworksCarryTheCollectorsLatestReading: the list shows what the
+// collector last saw on each node's machine and when, and says when it has
+// seen nothing yet. The reading never opens a control on its own.
+func TestWebNetworksCarryTheCollectorsLatestReading(t *testing.T) {
+	engine, dir := networksFixture(t, 111)
+	engine.UseCLI(statusCLI{dir: {Chain: "stablenet", Nodes: []node.Record{{Index: 1, Label: "node1", Role: "en", PID: 222}}}})
+	networks, err := engine.Networks(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := networks[0].Nodes[0]; n.State != "unknown" || n.ObservationReason != "not_observed" {
+		t.Fatalf("without a collector reading: state %q reason %q", n.State, n.ObservationReason)
+	}
+	monitor, err := OpenWebMonitor(t.TempDir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	at := time.Date(2026, 10, 27, 8, 0, 0, 0, time.UTC)
+	monitor.seen = map[string]map[string]WebNodeObserved{filepath.Base(dir): {"node1": {State: "stopped", Reason: "no_matching_process", Executable: "ready", At: at}}}
+	engine.UseMonitor(monitor)
+	networks, err = engine.Networks(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := networks[0].Nodes[0]
+	if n.State != "stopped" || n.ObservationReason != "no_matching_process" || !n.ObservedAt.Equal(at) {
+		t.Fatalf("with a reading: state %q reason %q at %s", n.State, n.ObservationReason, n.ObservedAt)
+	}
+	monitor.seen[filepath.Base(dir)]["node1"] = WebNodeObserved{State: "running", PID: 333, Executable: "ready", At: at}
+	networks, _ = engine.Networks(context.Background())
+	if n = networks[0].Nodes[0]; n.State != "running" || n.ObservedPID != 333 {
+		t.Fatalf("running reading: %+v", n)
+	}
 }

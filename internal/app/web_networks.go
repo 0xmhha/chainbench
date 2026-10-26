@@ -58,7 +58,10 @@ type WebNetwork struct {
 }
 
 // Networks returns only compositions in the Web service's owned control tree.
-// Recorded PIDs are not liveness proof; callers see unknown until live probing.
+// Recorded PIDs are not liveness proof. Each node carries the collector's
+// latest reading of its machine with the time it was taken, or unknown with
+// not_observed; the reading never opens a control, which still needs a fresh
+// observation with the caller's own logins.
 func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 	networks := []WebNetwork{}
 	for _, w := range e.documents.Workspaces() {
@@ -85,6 +88,10 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			}
 		}
 		network := WebNetwork{ID: w.ID, WorkspaceID: w.ID, Ownership: "owned", Version: w.Revision, Nodes: []WebNode{}}
+		readings := map[string]WebNodeObserved{}
+		if e.monitor != nil {
+			readings = e.monitor.Observed(w.ID)
+		}
 		for _, ns := range st.Nodes {
 			controls := []string{"node.start", "node.stop"}
 			if ns.Binary == "" {
@@ -102,6 +109,11 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			}
 			n := WebNode{ID: string(ns.NodeLabel()), Ref: w.ID + "." + string(ns.NodeLabel()), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
 			n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
+			if seen, ok := readings[n.ID]; ok {
+				n.State, n.ObservationReason, n.ObservedPID, n.ObservedAt = seen.State, seen.Reason, seen.PID, seen.At
+			} else {
+				n.ObservationReason = "not_observed"
+			}
 			network.Nodes = append(network.Nodes, n)
 		}
 		networks = append(networks, network)
