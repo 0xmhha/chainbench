@@ -90,7 +90,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/web-ux-handoff-2026-10-25.md`](dev/web-ux-handoff-2026-10-25.md) | **[측정] Web UX 인수인계 (작업 상세 개편 뒤)** — PR #460~#462 로 바뀐 것, 뒤집은 시각 방향(기관 일지 테마), 10-23 남은 일의 항목별 현재 상태, 처리하지 못한 것과 남은 순서. |
 | [`dev/web-data-model-plan.md`](dev/web-data-model-plan.md) | **[측정] Web 데이터 모델 계획** — 화면보다 먼저 정할 데이터 인벤토리, 실제 표본, 도메인 모델, 계약의 단일 출처, 수집과 전달 구조, 설정 입력 모델. 조사한 문제와 정한 방식. |
 | [`dev/web-data-inventory.md`](dev/web-data-inventory.md) | **[측정] Web 데이터 인벤토리** — 데이터 모델 계획 3-1단계 결과. API마다 필드의 타입, 비어 있을 수 있는지, 원본, 화면이 읽는지와, 확인한 문제와 #466에서 고친 결함. |
-| [`dev/web-domain-model.md`](dev/web-domain-model.md) | **[제안] Web 도메인 모델** — 데이터 모델 계획 3-3단계 결과. 화면이 받을 개념마다 필드, 타입, 필수 여부, 출처와 상태 어휘, 노출 결정. |
+| [`dev/web-domain-model.md`](dev/web-domain-model.md) | **[현행 설계] Web 도메인 모델** — 데이터 모델 계획 3-3단계 결과. 2026-10-26 사용자 승인. 화면이 받을 개념마다 필드, 타입, 필수 여부, 출처와 상태 어휘, 노출 결정. |
 | [`dev/web-ui-gap-review.md`](dev/web-ui-gap-review.md) | **Web UI 계획 대비 누락 검토** — 인수 기준 통과 뒤에도 Seed·명세·OpenAPI·디자인과 코드가 어긋난 곳을 찾은 근거. 상태 정본은 `web-ui-gaps.json`. |
 | [`dev/web-ui-implementation.md`](dev/web-ui-implementation.md) | **Web UI 구현 진행 기록** (2026-10-08~11). 뒤에 해결된 한계를 미완료로 적은 곳이 있어 상태는 위 작업 목록을 따른다. |
 | [`dev/web-ui-manifests.md`](dev/web-ui-manifests.md) | **WEB-04 manifest 모듈** — 내장 플러그인 목록, manifest·템플릿 가져오기 검증, 내용 주소 번들 저장·내보내기. |

@@ -2198,14 +2198,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      type: object
-                required:
-                - items
+                type: array
+                description: A bare array, unlike the paged lists
+                items:
+                  type: object
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2921,7 +2917,7 @@ components:
             asset:<id>; this list contains that ID. Import derives the same
             dependency. Job planning verifies the kind and pins its checksum.
           items: *id002
-        caseRefs:
+        caseRefs: &caserefs
           type: array
           description: >-
             Only for a run-definition, whose content is {"cases":[case ids in order],"description"?}. The shared case revision for each listed id, in the same order. Saving checks each is a case with that id; exporting brings the cases and their presets; a test.run job may name runDefinitionRef instead of caseRefs to run them in this order.
@@ -2954,6 +2950,7 @@ components:
         content: *id013
         assetRefs: *id014
         presetRefs: *presetrefs
+        caseRefs: *caserefs
         id: *id002
         revision: *id005
         updatedAt: *id006
@@ -2966,6 +2963,9 @@ components:
       - name
       - contractVersion
       - content
+      - assetRefs
+      - updatedAt
+      - updatedBy
     DocumentImport:
       type: object
       properties:
@@ -3086,9 +3086,6 @@ components:
         role: *id001
         hostIdentity: *id001
         dataPath: *id001
-        ports:
-          type: object
-          additionalProperties: *id005
         pid: *id005
         observedPid:
           type: integer
@@ -3127,6 +3124,9 @@ components:
       - id
       - networkId
       - role
+      - hostIdentity
+      - dataPath
+      - pid
       - state
       - supportedControls
       - controlLimits
@@ -3313,6 +3313,7 @@ components:
       required:
       - name
       - state
+      - startedAt
     Job:
       type: object
       properties:
@@ -3366,11 +3367,35 @@ components:
           description: The request that accepted the job; its error carries the same id
         reconciliation:
           type: object
-          description: Latest read-only check of an interrupted job's machines; outcome absent, present or unverified
-          additionalProperties: true
+          description: Latest read-only check of an interrupted job's machines
+          properties:
+            checkedAt: *id006
+            outcome:
+              type: string
+              enum: [absent, present, unverified]
+            nodes:
+              type: array
+              items:
+                type: object
+                properties:
+                  nodeId: *id002
+                  process:
+                    type: string
+                    enum: [running, stopped, unknown]
+                  data:
+                    type: string
+                    enum: [present, absent, unknown]
+                additionalProperties: false
+                required: [nodeId, process, data]
+            message: *id001
+          additionalProperties: false
+          required: [checkedAt, outcome, nodes]
         runIds:
           type: array
-          items: *id002
+          description: Engine session references such as web:<process>/<run>; each one is accepted by GET /api/v1/history/{runId}
+          items:
+            type: string
+            minLength: 1
         partialEffects:
           type: array
           items: *id001
@@ -3387,9 +3412,14 @@ components:
       - planId
       - operation
       - state
+      - phases
       - createdAt
       - retention
       - nodeDisposition
+      - credentialRefs
+      - runIds
+      - partialEffects
+      - unresolvedResources
     CancelInput:
       type: object
       properties:
@@ -3454,6 +3484,9 @@ components:
           - mixed
       additionalProperties: false
       required:
+      - from
+      - to
+      - sampleIntervalSeconds
       - complete
       - gaps
       - downsampled
@@ -3573,7 +3606,9 @@ components:
       - chain
       - state
       - sessionRefs
+      - fingerprints
       - summary
+      - artifactRefs
     CompareInput:
       type: object
       properties:
