@@ -4,7 +4,8 @@
  // server, highlight the hits here, filter by level, read one node or all of
  // them interleaved by time, and jump to the lines around a moment.
  import {untrack} from 'svelte'
- import {responseError} from './api-error.mjs'
+ import {readApi} from './api-client.mjs'
+ import {decodeLogs} from './api-decode.mjs'
  import {LOG_LEVELS,LOG_PAGE_MAX,levelTone,highlightSegments,mergeByTime,logQuery,visibleRange,nearestIndex} from './log-view.mjs'
 
  let {networkId,nodes=[],node=$bindable(nodes[0]??''),from=null,to=null,runId=null,initialLevels=[],focus=null,title='',height=420,testid='log-viewer',...attributes}=$props()
@@ -33,8 +34,8 @@
  const range=$derived(visibleRange({scrollTop,height,rowHeight:ROW,count:entries.length,overscan:10}))
  // Gaps are listed per node; the same outage on several nodes is one line.
  const gaps=$derived(Object.entries(coverage).flatMap(([label,c])=>(c?.gaps??[]).map(g=>({label,...g}))))
- const gapReasons=$derived([...new Set(gaps.map(g=>g.reason))])
- const gapWords=$derived([...new Set(gaps.map(g=>gapText(g.reason).text.replace(/^\S+ · /,'')))])
+ const gapCodes=$derived([...new Set(gaps.map(g=>g.code))])
+ const gapWords=$derived([...new Set(gaps.map(g=>gapText({...g,scope:'network'}).text))])
  const stamp=$derived(stampText(Object.values(coverage).map(c=>c?.timestampSource)))
  const filtered=$derived(applied.trim()!==''||levels.length>0)
  const statusTail=$derived([entries.length<total?`${entries.length.toLocaleString()}줄 불러옴`:'',selected>=0?`${selected+1}번째 선택`:'',stamp?`시각 출처 ${stamp}`:''].filter(Boolean).map(part=>` · ${part}`).join(''))
@@ -51,9 +52,7 @@
 
  async function page(label,cursor){
   const query=logQuery({runId:cursor||context?null:runId,from:cursor?null:span.from,to:cursor?null:span.to,search:applied,levels,cursor,limit:PAGE})
-  const response=await fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+label)}/logs?${query}`,{cache:'no-store'})
-  if(!response.ok)throw await responseError(response)
-  return response.json()
+  return readApi(`nodes/${encodeURIComponent(networkId+'.'+label)}/logs?${query}`,{cache:'no-store',decode:decodeLogs})
  }
 
  // reload fetches the first page of every shown node. A later call supersedes
@@ -163,17 +162,17 @@
  {#if error}<p class="error" role="alert">{error}</p>{/if}
  {#if gaps.length}
   <details class="notice gaps"><summary>누락 구간 {gaps.length}개 · {gapWords.join(', ')} · 이 구간의 로그는 보관되지 않았을 수 있습니다</summary>
-   <ul>{#each gaps as gap}<li>{shownNodes.length>1?`${gap.label} · `:''}{time(gap.from)} – {time(gap.to)} · {gapText(gap.reason).text} <code>{gapText(gap.reason).code}</code></li>{/each}</ul>
+   <ul>{#each gaps as gap}<li>{shownNodes.length>1?`${gap.label} · `:''}{time(gap.from)} – {time(gap.to)} · {gapText(gap).text} <code>{gap.code}</code></li>{/each}</ul>
   </details>
  {/if}
- {#if gapReasons.some(r=>r.endsWith('remote_log_collection_unavailable'))}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
+ {#if gapCodes.includes('remote_log_collection_unavailable')}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
 
  {#if !error&&!loading&&entries.length===0}
   <p class="empty">{filtered?`이 범위(${time(span.from??coverage[shownNodes[0]]?.from)} – ${time(span.to??coverage[shownNodes[0]]?.to)})에 조건과 일치하는 줄이 없습니다.`:'이 범위에 보관된 로그가 없습니다.'}{gaps.length?' 누락 구간에는 로그가 없을 수 있습니다.':''}</p>
   {#if filtered}<p class="empty-actions"><button type="button" onclick={()=>{clearSearch();levels=[]}}>필터 해제하고 모든 줄 보기</button></p>{/if}
  {:else if entries.length}
   <div class="viewport" bind:this={viewport} style:height="{viewHeight}px" onscroll={scrolled} tabindex="0" role="listbox" aria-label="로그 줄" aria-activedescendant={selected>=0?`${testid}-row-${selected}`:undefined}>
-   <ol style:height="{entries.length*ROW}px">
+   <ol role="none" style:height="{entries.length*ROW}px">
     {#each entries.slice(range.start,range.end) as entry, offset (range.start+offset)}
      {@const index=range.start+offset}
      <li id="{testid}-row-{index}" role="option" aria-selected={index===selected} class:selected={index===selected} style:top="{index*ROW}px" data-log-time={entry.time} data-level={entry.level} onclick={()=>choose(index)}>

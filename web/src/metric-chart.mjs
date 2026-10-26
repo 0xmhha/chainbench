@@ -49,7 +49,7 @@ export function gapBands(model, coverage) {
   const from = Math.max(Date.parse(g.from), model.tMin), to = Math.min(Date.parse(g.to), model.tMax)
   if (!(to > from)) return []
   const x = toX(model, from)
-  return [{x, width: toX(model, to) - x, reason: g.reason}]
+  return [{x, width: toX(model, to) - x, gap: g}]
  })
 }
 
@@ -88,7 +88,7 @@ export function logWindow(time, seconds) {
 
 export function gapSummary(coverage) {
  return (coverage?.gaps ?? []).map(g => {
-  const {text, code} = gapText(g.reason)
+  const {text, code} = gapText(g)
   return `${text}${text.endsWith(code) ? '' : ` · ${code}`} (${formatTime(g.from)} – ${formatTime(g.to)})`
  })
 }
@@ -110,21 +110,24 @@ export function timeRange(choice, now = Date.now()) {
  return {from: new Date(from).toISOString(), to: new Date(to).toISOString()}
 }
 
-// The three gauges that place a failure: chain progress, connectivity and
-// queued work. Each lists the rpc spelling before the metrics-endpoint one.
+// The three concepts that place a failure: chain progress, connectivity and
+// queued work.
 const FAILURE_METRICS = [
- {label: '블록 높이', short: '블록', names: ['block_height', 'chain_head_block']},
- {label: '피어 수', short: '피어', names: ['peer_count', 'p2p_peers']},
- {label: '대기 트랜잭션', short: '대기 tx', names: ['txpool_pending']},
+ {label: '블록 높이', short: '블록', metric: 'block_height'},
+ {label: '피어 수', short: '피어', metric: 'peer_count'},
+ {label: '대기 트랜잭션', short: '대기 tx', metric: 'txpool_pending'},
 ]
 
-// failureMetrics picks, for one node, the first collected spelling of each
-// failure gauge; a gauge with no series keeps its first name and no series.
+// failureMetrics picks, for one node, the series of each failure concept: the
+// canonical one when it was collected, else the second source the server
+// marked. A concept with no series keeps its own name and no series.
 export function failureMetrics(metrics, node) {
  const all = metrics?.series ?? []
- return FAILURE_METRICS.map(({label, short, names}) => {
-  const name = names.find(n => all.some(s => s.name === n && s.nodeId === node)) ?? names[0]
-  return {label, short, name, series: all.filter(s => s.name === name && s.nodeId === node)}
+ return FAILURE_METRICS.map(({label, short, metric}) => {
+  const mine = all.filter(s => s.metric === metric && s.nodeId === node)
+  const chosen = mine.find(s => s.canonical) ?? mine[0]
+  const name = chosen?.name ?? metric
+  return {label, short, name, series: mine.filter(s => s.name === name)}
  })
 }
 

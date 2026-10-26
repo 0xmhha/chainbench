@@ -71,5 +71,7 @@ test('decoders name the first field that breaks the model', () => {
  check(decodeMetrics, { networkId: 'n', series: [], coverage: { from: 'a', to: 'b', sampleIntervalSeconds: 5, complete: true, downsampled: false, gaps: [{ from: 'a', to: 'b', reason: 'collector not_collected' }] } }, 'coverage.gaps[0].scope')
  check(decodeMetrics, { networkId: 'n', series: [{ nodeId: 'node1', name: 'x', metric: 'x', canonical: true, source: 'rpc', samples: [{ time: 'a', value: Infinity }] }], coverage: { from: 'a', to: 'b', sampleIntervalSeconds: 5, complete: true, downsampled: false, gaps: [] } }, 'series[0].samples[0].value')
  check(decodeRun, { id: 'r', workspaceId: '', chain: '', state: 'failed', sessionRefs: [], fingerprints: {}, summary: {}, artifactRefs: [], tests: [{ seq: 1, id: 't', state: 'failed', assertions: [{ assert: 'x', expected: 0, passed: false }], steps: [], postActions: [], artifacts: [] }] }, 'tests[0].assertions[0].expected')
- assert.match(new FormatError('terminal', 'boolean', 'yes').message, /^데이터 형식 오류: terminal에 boolean/)
+ assert.equal(new FormatError('terminal', 'boolean', 'yes').message, '데이터 형식 오류: terminal 값은 참·거짓이어야 하는데 문자열입니다')
+ assert.equal(new FormatError('tests[0].assertions[0].expected', 'string', undefined).message, '데이터 형식 오류: tests[0].assertions[0].expected 값은 문자열이어야 하는데 값이 없습니다')
+ assert.equal(new FormatError('', '객체', []).message, '데이터 형식 오류: 응답 값은 객체여야 하는데 배열입니다')
 })

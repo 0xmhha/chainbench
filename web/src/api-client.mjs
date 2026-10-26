@@ -60,3 +60,13 @@ export function apiClient(session, fetcher = (...args) => fetch(...args)) {
 
  return { request, send }
 }
+
+/**
+ * readApi reads without a session token: GET requests are authorised by the
+ * session cookie alone.
+ * @param {string} path
+ * @param {RequestOptions} [options]
+ */
+export function readApi(path, options = {}) {
+ return apiClient(null).request(path, options)
+}

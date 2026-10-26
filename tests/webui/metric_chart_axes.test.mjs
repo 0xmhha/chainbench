@@ -7,7 +7,7 @@ const metrics = {
   { nodeId: 'node1', name: 'block_height', unit: 'blocks', source: 'rpc', samples: [{ time: '2026-10-09T00:00:00Z', value: 10 }, { time: '2026-10-09T00:00:10Z', value: 12 }, { time: '2026-10-09T00:00:20Z', value: 14 }] },
   { nodeId: 'node2', name: 'block_height', unit: 'blocks', source: 'rpc', samples: [{ time: '2026-10-09T00:00:00Z', value: 10 }, { time: '2026-10-09T00:00:10Z', value: 11 }, { time: '2026-10-09T00:00:20Z', value: null }] }
  ],
- coverage: { gaps: [{ from: '2026-10-09T00:00:15Z', to: '2026-10-09T00:00:30Z', reason: 'node2 rpc rpc_unavailable' }, { from: '2026-10-08T00:00:00Z', to: '2026-10-08T00:01:00Z', reason: 'outside' }] }
+ coverage: { gaps: [{ from: '2026-10-09T00:00:15Z', to: '2026-10-09T00:00:30Z', scope: 'node', nodeId: 'node2', source: 'rpc', code: 'rpc_unavailable' }, { from: '2026-10-08T00:00:00Z', to: '2026-10-08T00:01:00Z', scope: 'network', source: 'collector', code: 'not_collected' }] }
 }
 const model = chartModel(metrics, 'block_height', { width: 200, height: 100 })
 
@@ -19,7 +19,7 @@ test('the time axis gets evenly spaced ticks at both ends', () => {
 })
 
 test('collection gaps become bands clipped to the chart, gaps outside it are dropped', () => {
- assert.deepEqual(gapBands(model, metrics.coverage).map(b => [b.x, b.width, b.reason]), [[150, 50, 'node2 rpc rpc_unavailable']])
+ assert.deepEqual(gapBands(model, metrics.coverage).map(b => [b.x, b.width, b.gap.nodeId, b.gap.code]), [[150, 50, 'node2', 'rpc_unavailable']])
 })
 
 test('the latest value of each node and the spread between them show a lagging node', () => {

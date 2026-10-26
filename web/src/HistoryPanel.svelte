@@ -3,7 +3,8 @@
   import StatusBadge from './StatusBadge.svelte'
   import LogViewer from './LogViewer.svelte'
   import RunTimeline from './RunTimeline.svelte'
-  import { responseError } from './api-error.mjs'
+  import { apiClient } from './api-client.mjs'
+  import { decodeMetrics, decodeRun, decodeRunPage } from './api-decode.mjs'
   import { allItems } from './pages.mjs'
   import { untrack } from 'svelte'
   import { parseHistoryJSON } from './history-json.js'
@@ -16,11 +17,9 @@
   const administrator = $derived(webSession?.user.role === 'administrator')
   const terminal = run => ['succeeded', 'failed', 'cancelled', 'interrupted'].includes(run.state)
   const format = time => time ? formatTime(time) : '자료 없음'
-  async function api(path, method = 'GET', body) {
-    const response = await fetch('/api/v1/' + path, { method, headers: { 'Content-Type': 'application/json', ...(method !== 'GET' ? { 'X-CSRF-Token': webSession?.csrfToken ?? '' } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) })
-    if (!response.ok) throw await responseError(response)
-    return response
-  }
+  const client = $derived(apiClient(webSession))
+  // History keeps large integers exact: the text is read by parseHistoryJSON.
+  const runRead = decode => ({ parse: parseHistoryJSON, decode })
   function remember(rows) {
     knownChains = [...new Set([...knownChains, ...rows.map(r => r.chain).filter(Boolean)])].sort()
     knownActors = [...new Set([...knownActors, ...rows.map(r => r.actorId).filter(Boolean)])].sort()
@@ -33,7 +32,7 @@
       for (const [key, value] of Object.entries({ search, chain, workspaceId, actorId, state, caseId, cursor })) if (value) query.set(key, value)
       if (from) query.set('from', new Date(from).toISOString())
       if (to) query.set('to', new Date(to).toISOString())
-      const page = parseHistoryJSON(await (await api('history?' + query)).text())
+      const page = await client.request('history?' + query, runRead(decodeRunPage))
       items = cursor ? [...items, ...page.items] : page.items; next = page.nextCursor
       remember(page.items)
     } catch (e) { error = e.message } finally { busy = false }
@@ -42,7 +41,7 @@
     if (!webSession) return
     untrack(() => {
       load()
-      allItems(p => api(p).then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() }), 'workspaces').then(items => { workspaces = items }).catch(e => { error = e.message })
+      allItems(p => client.request(p), 'workspaces').then(items => { workspaces = items }).catch(e => { error = e.message })
     })
   })
   function select(id, checked) {
@@ -51,7 +50,7 @@
   }
   async function open(id) {
     busy = true; error = ''; pendingDelete = null; observed = null
-    try { detail = parseHistoryJSON(await (await api('history/' + encodeURIComponent(id))).text()) } catch (e) { error = e.message } finally { busy = false }
+    try { detail = await client.request('history/' + encodeURIComponent(id), runRead(decodeRun)) } catch (e) { error = e.message } finally { busy = false }
     loadRunNodes(detail)
     // The detail opens below the list; bring it into view so the failure is what the reader sees.
     requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -63,24 +62,24 @@
     const network = run?.summary?.observations?.networkId
     if (!network) return
     try {
-      const metrics = await (await api(`networks/${encodeURIComponent(network)}/metrics?runId=${encodeURIComponent(run.id)}`)).json()
+      const metrics = await client.request(`networks/${encodeURIComponent(network)}/metrics?runId=${encodeURIComponent(run.id)}`, { decode: decodeMetrics })
       if (detail?.id === run.id) runNodeIds = [...new Set(metrics.series.map(s => s.nodeId))].sort()
     } catch { runNodeIds = [] }
   }
   async function loadObserved(run) {
     busy = true; error = ''
-    try { observed = { id: run.id, metrics: await (await api(`networks/${encodeURIComponent(run.summary.observations.networkId)}/metrics?runId=${encodeURIComponent(run.id)}`)).json() } } catch (e) { error = e.message } finally { busy = false }
+    try { observed = { id: run.id, metrics: await client.request(`networks/${encodeURIComponent(run.summary.observations.networkId)}/metrics?runId=${encodeURIComponent(run.id)}`, { decode: decodeMetrics }) } } catch (e) { error = e.message } finally { busy = false }
   }
   const seconds = value => value == null ? '자료 없음' : `${Math.round(value * 10) / 10}초`
   const metricValue = value => value ? `${value.samples}개 · 최소 ${value.min ?? '—'} · 최대 ${value.max ?? '—'} · 마지막 ${value.last ?? '—'}` : '표본 없음'
   async function compare() {
     busy = true; error = ''
-    try { comparison = await (await api('history/compare', 'POST', { runIds: selected })).json() } catch (e) { error = e.message } finally { busy = false }
+    try { comparison = await client.request('history/compare', { method: 'POST', body: { runIds: selected } }) } catch (e) { error = e.message } finally { busy = false }
   }
   async function download(id) {
     busy = true; error = ''
     try {
-      const response = await api('history/' + encodeURIComponent(id) + '/export')
+      const response = await client.send('history/' + encodeURIComponent(id) + '/export')
       const url = URL.createObjectURL(await response.blob()), link = document.createElement('a')
       link.href = url; link.download = id + '.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (e) { error = e.message } finally { busy = false }
@@ -88,8 +87,7 @@
   async function remove() {
     busy = true; error = ''
     try {
-      const response = await fetch('/api/v1/history/' + encodeURIComponent(pendingDelete.id), { method: 'DELETE', headers: { 'X-CSRF-Token': webSession?.csrfToken ?? '' } })
-      if (!response.ok) throw await responseError(response)
+      await client.request('history/' + encodeURIComponent(pendingDelete.id), { method: 'DELETE' })
       selected = selected.filter(id => id !== pendingDelete.id)
       pendingDelete = null; detail = null; comparison = null
       await load()

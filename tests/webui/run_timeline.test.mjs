@@ -2,31 +2,31 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { testRows, verdictSegments, placeOnAxis, testLogSpan, phaseSegments } from '../../web/src/run-timeline.mjs'
 
-const summary = {
+// A run detail as the server sends it: each test with its result files read.
+const test_ = (seq, id, state, over = {}) => ({ seq, id, state, assertions: [], steps: [], postActions: [], artifacts: [], ...over })
+const run = {
  tests: [
-  { seq: 1, id: 'deploy', status: 'pass', startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:10Z' },
-  { seq: 2, id: 'transfer', status: 'fail', startedAt: '2026-10-23T07:00:10Z', finishedAt: '2026-10-23T07:00:40Z' },
-  { seq: 3, id: 'governance', status: 'blocked' },
-  { seq: 4, id: 'cleanup', status: 'skip' }
+  test_(1, 'deploy', 'succeeded', { startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:10Z' }),
+  test_(2, 'transfer', 'failed', {
+   startedAt: '2026-10-23T07:00:10Z', finishedAt: '2026-10-23T07:00:40Z', reason: 'assertion a1 failed',
+   assertions: [
+    { assert: 'balance', nodeId: 'node2', compare: 'Equal', expected: '10', actual: '9', passed: false, detail: 'node2: actual=9 expected=10' },
+    { assert: 'height', nodeId: 'node1', expected: '0', actual: '5', passed: true },
+   ],
+   steps: [{ index: 0, type: 'tx', nodeId: 'node3', error: 'nonce too low' }, { index: 1, type: 'tx', nodeId: 'node1' }],
+  }),
+  test_(3, 'governance', 'blocked', { reason: 'pre-action failed' }),
+  test_(4, 'cleanup', 'skipped'),
  ],
- results: {
-  'tests/002_transfer/assert.json': [
-   { ID: 'a1', Source: 'rpc', On: 'node2', Assert: 'balance == 10', Expected: '10', Actual: '9', Pass: false },
-   { ID: 'a2', Source: 'rpc', On: 'node1', Assert: 'height > 0', Expected: '>0', Actual: '5', Pass: true }
-  ],
-  'tests/002_transfer/steps.json': [{ Index: 0, Type: 'tx', On: 'node3', Error: 'nonce too low' }, { Index: 1, Type: 'tx', On: 'node1', Error: '' }],
-  'tests/002_transfer/status.json': { result: 'fail', reason: 'assertion a1 failed' },
-  'tests/003_governance/status.json': { result: 'blocked', reason: 'pre-action failed' }
- }
 }
 
 test('failures come first, each with the assertions and steps that broke', () => {
- const rows = testRows(summary)
+ const rows = testRows(run)
  assert.deepEqual(rows.map(r => r.id), ['transfer', 'governance', 'deploy', 'cleanup'])
  const failed = rows[0]
  assert.equal(failed.durationMs, 30000)
  assert.equal(failed.reason, 'assertion a1 failed')
- assert.deepEqual(failed.failedAsserts.map(a => [a.id, a.on, a.expected, a.actual]), [['a1', 'node2', '10', '9']])
+ assert.deepEqual(failed.failedAsserts.map(a => [a.assert, a.on, a.compare, a.expected, a.actual]), [['balance', 'node2', 'Equal', '10', '9']])
  assert.deepEqual(failed.stepErrors.map(s => [s.index, s.on, s.error]), [[0, 'node3', 'nonce too low']])
  assert.deepEqual(failed.nodes, ['node2', 'node3'])
  assert.equal(rows[1].reason, 'pre-action failed')
@@ -35,20 +35,22 @@ test('failures come first, each with the assertions and steps that broke', () =>
 
 test('a run with no tests or results gives no rows instead of throwing', () => {
  assert.deepEqual(testRows({}), [])
- assert.deepEqual(testRows({ tests: [{ seq: 1, id: 'x', status: 'pass' }] }).map(r => r.failedAsserts), [[]])
+ assert.deepEqual(testRows(null), [])
+ assert.deepEqual(testRows({ tests: [test_(1, 'x', 'succeeded')] }).map(r => [r.status, r.failedAsserts]), [['succeeded', []]])
 })
 
 test('the verdict bar shows only verdicts that occurred, in a fixed order', () => {
+ // session.json still counts pass/fail/blocked/skip; segments speak the run states.
  assert.deepEqual(verdictSegments({ pass: 6, fail: 2, blocked: 0, skip: 2 }), [
-  { status: 'fail', count: 2, percent: 20 },
-  { status: 'pass', count: 6, percent: 60 },
-  { status: 'skip', count: 2, percent: 20 }
+  { status: 'failed', count: 2, percent: 20 },
+  { status: 'succeeded', count: 6, percent: 60 },
+  { status: 'skipped', count: 2, percent: 20 }
  ])
  assert.deepEqual(verdictSegments({}), [])
 })
 
 test('timed tests sit on the run axis; untimed ones are left off it', () => {
- const placed = placeOnAxis(testRows(summary), '2026-10-23T07:00:00Z', '2026-10-23T07:01:40Z')
+ const placed = placeOnAxis(testRows(run), '2026-10-23T07:00:00Z', '2026-10-23T07:01:40Z')
  const transfer = placed.find(r => r.id === 'transfer')
  assert.deepEqual([transfer.left, transfer.width], [10, 30])
  assert.equal(placed.find(r => r.id === 'governance').left, null)
@@ -58,7 +60,7 @@ test('timed tests sit on the run axis; untimed ones are left off it', () => {
 })
 
 test('a failed test opens the logs of its own span, or the whole run when it has no times', () => {
- const rows = testRows(summary)
+ const rows = testRows(run)
  assert.deepEqual(testLogSpan(rows[0], 5), { from: '2026-10-23T07:00:05.000Z', to: '2026-10-23T07:00:45.000Z', exact: true })
  assert.deepEqual(testLogSpan(rows[1], 5), { from: null, to: null, exact: false })
 })

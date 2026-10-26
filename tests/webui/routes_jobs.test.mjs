@@ -14,16 +14,20 @@ test('routes name the fixed screens and one job detail', () => {
 })
 
 test('a job summary names the failed phase, its reason and what is left to check', () => {
- const failed = jobSummary({ state: 'failed', nodeDisposition: 'unknown', phases: [{ name: 'validate', state: 'succeeded' }, { name: 'launch', state: 'failed', message: 'node2 did not start' }], error: { code: 'execution_failed', message: 'launch failed' }, partialEffects: ['node1 started'], unresolvedResources: ['node2'] })
+ const failed = jobSummary({ state: 'failed', terminal: true, needsCheck: true, nodeDisposition: 'unknown', phases: [{ name: 'validate', state: 'succeeded' }, { name: 'launch', state: 'failed', message: 'node2 did not start' }], error: { code: 'execution_failed', message: 'launch failed' }, partialEffects: ['node1 started'], unresolvedResources: ['node2'] })
  assert.equal(failed.active, false)
  assert.deepEqual(failed.failedPhase, { name: 'launch', state: 'failed', message: 'node2 did not start' })
  assert.equal(failed.failure, 'launch failed')
  assert.deepEqual(failed.effects, ['node1 started'])
  assert.deepEqual(failed.unresolved, ['node2'])
  assert.equal(failed.needsCheck, true)
- const running = jobSummary({ state: 'running', nodeDisposition: 'unknown', phases: [{ name: 'launch', state: 'running' }] })
+ const running = jobSummary({ state: 'running', terminal: false, needsCheck: false, nodeDisposition: 'unknown', phases: [{ name: 'launch', state: 'running' }] })
  assert.equal(running.active, true)
  assert.equal(running.failedPhase, null)
  assert.equal(running.needsCheck, false)
+ // The server decides what has ended and what needs a check; a state the
+ // screen has never heard of still reads correctly.
+ const novel = jobSummary({ state: 'archived_later', terminal: true, needsCheck: true, phases: [] })
+ assert.deepEqual([novel.active, novel.needsCheck], [false, true])
  assert.deepEqual(running.effects, [])
 })

@@ -3,7 +3,8 @@
  // same window as its logs, with the failure moment marked, so a stall or a
  // lost peer next to the failure is visible without leaving the page.
  import {formatTime,gapText} from './labels.mjs'
- import {responseError} from './api-error.mjs'
+ import {readApi} from './api-client.mjs'
+ import {decodeMetrics} from './api-decode.mjs'
  import {chartModel,gapBands,nearestPoints,failureMetrics,timeX} from './metric-chart.mjs'
  import {monitorRange,selectNetwork} from './selection.svelte.js'
  import {go} from './nav.mjs'
@@ -21,9 +22,7 @@
   const mine=++generation
   loading=true;error=''
   try{
-   const response=await fetch(`/api/v1/networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,{cache:'no-store'})
-   if(!response.ok)throw await responseError(response)
-   const value=await response.json()
+   const value=await readApi(`networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,{cache:'no-store',decode:decodeMetrics})
    if(mine===generation)metrics=value
   }catch(failure){if(mine===generation){metrics=null;error=failure.message}}
   finally{if(mine===generation)loading=false}
@@ -65,7 +64,7 @@
      <figcaption><span>{g.label}</span>{#if at}<b title="{atLabel}의 값">{value??'—'}</b>{/if}</figcaption>
      {#if !model.nodes.length}<p class="none">수집 안 됨 <code>{g.name}</code></p>{:else}
       <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="img" aria-label="{g.label} {model.yMin}–{model.yMax}{model.unit?' '+model.unit:''}, 실패 시점 {value??'값 없음'}">
-       {#each gapBands(model,metrics.coverage) as band}<rect class="gap" x={band.x} y="0" width={band.width} height={H}><title>누락 · {gapText(band.reason).text}</title></rect>{/each}
+       {#each gapBands(model,metrics.coverage) as band}<rect class="gap" x={band.x} y="0" width={band.width} height={H}><title>누락 · {gapText(band.gap).text}</title></rect>{/each}
        {#each model.nodes as series}<path d={series.path} fill="none" />{/each}
        {#if marker!==null}<line class="marker" x1={marker} y1="0" x2={marker} y2={H} />{/if}
       </svg>

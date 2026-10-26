@@ -54,7 +54,7 @@ import { formatTime } from './labels.mjs'
   const controlNodes=$derived((observedNodes??nodes).filter(n=>(!configSwap||observedNodes)&&n.supportedControls.includes(operation)&&(operation!=='node.reset'||(['en','pn'].includes(n.role)&&(n.pid>0||observedNodes&&n.state==='stopped')))))
   const currentBinarySHA=$derived(controlNodes.find(n=>n.id===nodeId)?.binarySHA256??assets.find(a=>a.id===assetId)?.sha256)
   const replacementAssets=$derived(assets.filter(a=>a.chain===(manifest?.manifest.protocol||manifest?.manifest.id)&&a.sha256!==currentBinarySHA))
-  const active=j=>['accepted','running','cancelling'].includes(j.state)
+  const active=j=>!j.terminal
   async function api(path,method='GET',data,key) {
     const headers={'Content-Type':'application/json','X-CSRF-Token':webSession?.csrfToken??''}
     if(key)headers['Idempotency-Key']=key

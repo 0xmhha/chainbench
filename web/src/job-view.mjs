@@ -1,23 +1,21 @@
 import { testRows } from './run-timeline.mjs'
 
-const terminal = ['succeeded', 'failed', 'cancelled', 'interrupted']
-
 // jobSummary reads what a job detail shows first: whether it is still active,
 // the phase that failed and why, the changes it already made, and whether its
 // machines must be checked because the outcome on them is unknown.
 export function jobSummary(job) {
  const failedPhase = (job?.phases ?? []).find(p => p.state === 'failed') ?? null
  return {
-  active: !terminal.includes(job?.state),
+  active: !job?.terminal,
   failedPhase,
   failure: job?.error?.message ?? '',
   effects: job?.partialEffects ?? [],
   unresolved: job?.unresolvedResources ?? [],
-  needsCheck: job?.state === 'interrupted' || (terminal.includes(job?.state) && job?.nodeDisposition === 'unknown'),
+  needsCheck: Boolean(job?.needsCheck),
  }
 }
 
-const FAILED_TESTS = ['fail', 'blocked']
+const FAILED_TESTS = ['failed', 'blocked']
 
 // set reads a recorded time; the server writes an unset time as year 1.
 const set = value => {
@@ -34,11 +32,11 @@ const shown = value => (typeof value === 'string' ? value : JSON.stringify(value
 export function failureHeadline(job, summary, failingRuns) {
  const base = { tone: 'fail', title: '', reason: '', phase: summary?.failedPhase?.name ?? '', test: '', node: '', runId: '' }
  for (const run of failingRuns ?? []) {
-  const row = testRows(run.summary).find(r => FAILED_TESTS.includes(r.status))
+  const row = testRows(run).find(r => FAILED_TESTS.includes(r.status))
   if (!row) continue
   const a = row.failedAsserts[0], s = row.stepErrors[0]
   const node = a?.on || s?.on || ''
-  const reason = a ? `${a.assert ?? a.id} · 기대 ${shown(a.expected)} · 실제 ${shown(a.actual)}` : s ? `#${s.index} ${s.type} · ${s.error}` : row.reason
+  const reason = a ? `${a.assert} · 기대 ${shown(a.expected)} · 실제 ${shown(a.actual)}` : s ? `#${s.index} ${s.type} · ${s.error}` : row.reason
   return { ...base, title: `${row.id} 테스트가 ${node ? node + '에서 ' : ''}실패했습니다`, reason, test: row.id, node, runId: run.id }
  }
  if (summary?.failedPhase) return { ...base, title: `${summary.failedPhase.name} 단계에서 실패했습니다`, reason: summary.failedPhase.message || summary.failure }

@@ -13,10 +13,10 @@
  let {run,nodes=[],test=$bindable(''),focusNode=$bindable('')}=$props()
 
  const PAD_SECONDS=5
- const FAILED=['fail','blocked']
+ const FAILED=['failed','blocked']
 
  const observations=$derived(run?.summary?.observations??null)
- const rows=$derived(testRows(run?.summary))
+ const rows=$derived(testRows(run))
  const axisFrom=$derived(observations?.from??run?.startedAt??rows.find(r=>r.startedAt)?.startedAt??null)
  const axisTo=$derived(observations?.to??run?.finishedAt??[...rows].reverse().find(r=>r.finishedAt)?.finishedAt??null)
  const placed=$derived(placeOnAxis(rows,axisFrom,axisTo))
@@ -39,7 +39,7 @@
 
  const time=formatTime
  const duration=ms=>ms===null?'시각 없음':ms<1000?`${ms}ms`:ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
- const verdictName=Object.fromEntries(['fail','blocked','pass','skip'].map(s=>[s,stateLabel(s)]))
+ const verdictName=Object.fromEntries(['failed','blocked','succeeded','skipped'].map(s=>[s,stateLabel(s)]))
  const shown=value=>typeof value==='string'?value:JSON.stringify(value)
 </script>
 
@@ -82,7 +82,7 @@
      {#if selected.failedAsserts.length}
       <div class="table-wrap"><table class="asserts">
        <thead><tr><th>실패한 단언</th><th>노드</th><th>기대</th><th>실제</th><th><span class="sr">로그</span></th></tr></thead>
-       <tbody>{#each selected.failedAsserts as a}{@const diff=assertDiff(a.expected,a.actual)}<tr><td data-label="단언"><code>{a.assert ?? a.id}</code></td><td data-label="노드">{a.on||'—'}</td><td data-label="기대"><code>{shown(a.expected)}</code></td><td data-label="실제"><code class="actual">{shown(a.actual)}</code>{#if diff}<small class="diff">차이 {diff}</small>{/if}</td><td>{#if a.on&&logNodes.includes(a.on)}<button type="button" class="link" onclick={()=>showNode(a.on)}>{a.on} 로그</button>{/if}</td></tr>{/each}</tbody>
+       <tbody>{#each selected.failedAsserts as a}{@const diff=assertDiff(a.expected,a.actual)}<tr><td data-label="단언"><code>{a.assert}</code></td><td data-label="노드">{a.on||'—'}</td><td data-label="기대"><code>{shown(a.expected)}</code></td><td data-label="실제"><code class="actual">{shown(a.actual)}</code>{#if diff}<small class="diff">차이 {diff}</small>{/if}</td><td>{#if a.on&&logNodes.includes(a.on)}<button type="button" class="link" onclick={()=>showNode(a.on)}>{a.on} 로그</button>{/if}</td></tr>{/each}</tbody>
       </table></div>
      {/if}
      {#if selected.stepErrors.length}
@@ -110,14 +110,14 @@
  .run-timeline { margin-top: var(--space-4); min-width: 0; }
  .verdicts { display: flex; gap: 2px; height: 10px; overflow: hidden; background: var(--border-subtle); }
  .seg { flex: none; min-width: 4px; }
- .seg.fail, .key.fail i { background: var(--danger); } .seg.blocked, .key.blocked i { background: var(--warn); }
- .seg.pass, .key.pass i { background: var(--ok); } .seg.skip, .key.skip i { background: var(--border-strong); }
+ .seg.failed, .key.failed i { background: var(--danger); } .seg.blocked, .key.blocked i { background: var(--warn); }
+ .seg.succeeded, .key.succeeded i { background: var(--ok); } .seg.skipped, .key.skipped i { background: var(--border-strong); }
  .legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--text-sm); }
  .key { display: inline-flex; align-items: center; gap: 6px; } .key i { width: 8px; height: 8px; } .key b { color: var(--text); font-variant-numeric: tabular-nums; }
  .range { margin-left: auto; font-variant-numeric: tabular-nums; }
  .axis { position: relative; height: 28px; margin-top: var(--space-3); border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border-subtle); }
  .bar { position: absolute; top: 5px; height: 16px; min-height: 0; min-width: 4px; padding: 0; border: 0; opacity: .75; }
- .bar.fail { background: var(--danger); } .bar.blocked { background: var(--warn); } .bar.pass { background: var(--ok); } .bar.skip { background: var(--border-strong); }
+ .bar.failed { background: var(--danger); } .bar.blocked { background: var(--warn); } .bar.succeeded { background: var(--ok); } .bar.skipped { background: var(--border-strong); }
  .bar:hover, .bar.chosen { opacity: 1; box-shadow: 0 0 0 2px var(--text); }
  .split { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: var(--space-4); margin-top: var(--space-4); align-items: start; }
  .tests { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 640px; overflow: auto; }

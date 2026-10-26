@@ -1,4 +1,6 @@
 import { snapshotState, applyJobChange } from './job-observation.mjs'
+import { readApi } from './api-client.mjs'
+import { decodeSnapshot } from './api-decode.mjs'
 
 // jobStream follows the server's committed job state: it restores a snapshot,
 // then applies ordered changes from /api/v1/events, and restores again on a
@@ -14,9 +16,7 @@ export function jobStream() {
   const current = ++epoch
   s.connection = '복원 중'
   try {
-   const response = await fetch('/api/v1/snapshot', { signal: request.signal, cache: 'no-store' })
-   if (!response.ok) throw new Error(`실행 상태 조회 실패 (${response.status})`)
-   const value = await response.json()
+   const value = await readApi('snapshot', { signal: request.signal, cache: 'no-store', decode: decodeSnapshot })
    if (!active || current !== epoch) return
    s.snapshot = snapshotState(s.snapshot, value); s.drops = value.jobDeliveryDropsTotal; s.busDrops = value.busDeliveryDropsTotal; s.lastObserved = value.observedAt; s.error = ''
    stream = new EventSource('/api/v1/events?cursor=' + encodeURIComponent(s.snapshot.cursor))

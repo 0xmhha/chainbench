@@ -6,7 +6,7 @@
  import {assertDiff} from './run-timeline.mjs'
  import {formatTime} from './labels.mjs'
  let {rows=[],chosen=null,onchoose=()=>{},onnode=()=>{},nodes=[]}=$props()
- const FAILED=['fail','blocked']
+ const FAILED=['failed','blocked']
  const duration=ms=>ms===null?'—':ms<1000?`${ms}ms`:ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
  const shown=value=>typeof value==='string'?value:JSON.stringify(value)
  const summary=row=>[row.failedAsserts.length?`단언 ${row.failedAsserts.length}건 실패`:'',row.stepErrors.length?`스텝 오류 ${row.stepErrors.length}건`:'',!row.failedAsserts.length&&!row.stepErrors.length?row.reason:''].filter(Boolean).join(' · ')
@@ -29,7 +29,7 @@
       {#if row.failedAsserts.length}
        <table class="asserts"><thead><tr><th>실패한 단언</th><th>노드</th><th>기대</th><th>실제</th></tr></thead><tbody>
         {#each row.failedAsserts as a}{@const diff=assertDiff(a.expected,a.actual)}<tr>
-         <td data-label="단언"><code>{a.assert ?? a.id}</code></td>
+         <td data-label="단언"><code>{a.assert}</code></td>
          <td data-label="노드">{#if a.on&&nodes.includes(a.on)}<button type="button" class="link" onclick={()=>onnode(a.on)}>{a.on}</button>{:else}{a.on||'—'}{/if}</td>
          <td data-label="기대"><code class="struck">{shown(a.expected)}</code></td>
          <td data-label="실제"><code class="actual">{shown(a.actual)}</code>{#if diff}<small class="diff">차이 {diff}</small>{/if}</td>

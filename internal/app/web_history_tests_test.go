@@ -25,12 +25,12 @@ func sampleRun(t *testing.T, name string) WebRun {
 }
 
 func TestWebRunTestsReadTheEngineResultFiles(t *testing.T) {
-	failed := webRunTests(sampleRun(t, "history-session-dc79d156e026c1c3473a07396ec1825a"))
+	failed := webRunTests(sampleRun(t, "history-session-9c72fc8abc42fe79c0fd00f3efc63fd5"))
 	want := []WebRunTest{{
 		Seq: 1, ID: "sample-fails", State: "failed", Reason: "1 assertion(s) failed", Env: "env-b5f52a59ddb9",
-		StartedAt: "2026-10-25T08:14:02.59831Z", FinishedAt: "2026-10-25T08:14:04.618204Z",
-		Assertions: []WebAssertion{{Assert: "blockNumber", NodeID: "node1", Compare: "Less", Expected: "0", Actual: "7", Passed: false,
-			Detail: "node1: actual=7 expected=0", Provenance: map[string]any{"assert": "blockNumber", "compare": "Less", "expected": json.Number("0"), "on": "node1"}}},
+		StartedAt: "2026-10-26T22:07:44.816642Z", FinishedAt: "2026-10-26T22:07:46.841293Z",
+		Assertions: []WebAssertion{{Assert: "blockNumber", NodeID: "node1", Compare: "Less", Expected: "0", Actual: "8", Passed: false,
+			Detail: "node1: actual=8 expected=0", Provenance: map[string]any{"assert": "blockNumber", "compare": "Less", "expected": json.Number("0"), "on": "node1"}}},
 		Steps:       []WebStep{{Index: 0, Type: "read", NodeID: "node1"}},
 		PostActions: []WebPostAction{},
 		Artifacts:   []WebArtifactRef{{Kind: "genesis", Ref: "genesis.json"}},
@@ -38,8 +38,8 @@ func TestWebRunTestsReadTheEngineResultFiles(t *testing.T) {
 	if !reflect.DeepEqual(failed, want) {
 		t.Fatalf("tests = %#v\nwant    %#v", failed, want)
 	}
-	passed := webRunTests(sampleRun(t, "history-session-7cb268ea6436499fda20201a363d4627"))
-	if len(passed) != 1 || passed[0].State != "succeeded" || passed[0].Assertions[0].Expected != "15" || !passed[0].Assertions[0].Passed {
+	passed := webRunTests(sampleRun(t, "history-session-0c591b6f08b740a5f09e89eb0205f1da"))
+	if len(passed) != 1 || passed[0].State != "succeeded" || passed[0].Assertions[0].Expected != "17" || !passed[0].Assertions[0].Passed {
 		t.Fatalf("passing run tests = %#v", passed)
 	}
 }
@@ -74,12 +74,14 @@ func decodedNumber(t *testing.T, literal string) any {
 }
 
 func TestWebRunMissingDropsAnEndTheDetailFound(t *testing.T) {
-	run := sampleRun(t, "history-session-dc79d156e026c1c3473a07396ec1825a")
-	if got := webRunMissing(run); !reflect.DeepEqual(got, []string{}) {
+	// As captured: the session recorded no end, so finishedAt was missing.
+	run := sampleRun(t, "history-session-9c72fc8abc42fe79c0fd00f3efc63fd5")
+	run.Summary["missingDimensions"] = []any{"finishedAt", "metrics"}
+	if got := webRunMissing(run); !reflect.DeepEqual(got, []string{"metrics"}) {
 		t.Fatalf("missing = %q although finishedAt is %q", got, run.FinishedAt)
 	}
 	run.FinishedAt = ""
-	if got := webRunMissing(run); !reflect.DeepEqual(got, []string{"finishedAt"}) {
+	if got := webRunMissing(run); !reflect.DeepEqual(got, []string{"finishedAt", "metrics"}) {
 		t.Fatalf("missing without an end = %q", got)
 	}
 }

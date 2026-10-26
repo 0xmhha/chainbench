@@ -1,6 +1,8 @@
 <script>
  import { formatTime, gapText } from './labels.mjs'
  import {onMount} from 'svelte'
+ import {readApi} from './api-client.mjs'
+ import {decodeMetrics} from './api-decode.mjs'
  import {chartModel,logWindow,gapSummary,metricNames,timeRange,timeTicks,gapBands,latestValues,nearestPoints,pointerTime} from './metric-chart.mjs'
  import {monitorRange} from './selection.svelte.js'
  import LogViewer from './LogViewer.svelte'
@@ -44,9 +46,7 @@
   try{
    const range=timeRange(monitorRange)
    if(!range)throw new Error('시작 시각이 끝 시각보다 앞서야 합니다.')
-   const response=await fetch(`/api/v1/networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,{cache:'no-store'})
-   if(!response.ok)throw new Error(`지표 조회 실패 (${response.status})`)
-   const value=await response.json()
+   const value=await readApi(`networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,{cache:'no-store',decode:decodeMetrics})
    if(order>applied){applied=order;metrics=value;error=''}
   }catch(failure){if(order>applied)error=failure.message}
  }
@@ -85,14 +85,14 @@
       <svg data-testid={'metric-chart-'+m.name} data-segments={model.nodes.reduce((n,x)=>n+x.segments.length,0)} viewBox={`0 0 ${W+ML+MR} ${H+MT+MB}`} role="group" tabindex="0" aria-label={`${label} 차트. 좌우 화살표로 시점을 옮기고 Enter로 그 시점 로그를 엽니다.`}
        onpointermove={event=>{cursor=pointerTime(model,chartX(event))}} onpointerleave={()=>{cursor=null}} onkeydown={event=>chartKey(event,model)}>
        <g transform={`translate(${ML},${MT})`}>
-        {#each gapBands(model,metrics.coverage) as band}<rect class="gap" x={band.x} y="0" width={band.width} height={H}><title>누락 · {gapText(band.reason).text} ({gapText(band.reason).code})</title></rect>{/each}
+        {#each gapBands(model,metrics.coverage) as band}<rect class="gap" x={band.x} y="0" width={band.width} height={H}><title>누락 · {gapText(band.gap).text} ({band.gap.code})</title></rect>{/each}
         <line class="base" x1="0" y1={H} x2={W} y2={H}/>
         <text class="tick y" x="-6" y="4">{model.yMax}</text><text class="tick y" x="-6" y={H}>{model.yMin}</text>
         {#each timeTicks(model,TICKS) as tick, i}<text class="tick x" x={tick.x} y={H+15} text-anchor={i===0?'start':i===TICKS-1?'end':'middle'}>{clock(tick.time)}</text>{/each}
         {#each model.nodes as series (series.node)}
          <path d={series.path} data-node={series.node} fill="none" style:stroke={nodeColor(series.node,allNodes)} stroke-width="1.75"/>
          {#each series.points as point (point.time)}
-          <circle cx={point.x} cy={point.y} r="3" style:fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="-1" aria-label={`${series.node} ${time(point.time)} ${point.value} ${model.unit} 시점 로그 보기`} onclick={()=>select(series.node,point,model)}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source}</title></circle>
+          <circle cx={point.x} cy={point.y} r="3" style:fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="-1" onclick={()=>select(series.node,point,model)}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source} · 시점 로그 보기</title></circle>
          {/each}
         {/each}
         {#if cursor}
