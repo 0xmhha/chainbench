@@ -16,17 +16,37 @@ import (
 // fails when docs/dev/web-ui.openapi.yaml no longer describes them. It checks
 // field names, which fields are always present, and the JSON kind of each.
 var webContractSchemas = map[string]any{
-	"Node":      WebNode{},
-	"Network":   WebNetwork{},
-	"Phase":     WebJobPhase{},
-	"Job":       WebJob{},
-	"Coverage":  WebCoverage{},
-	"Metrics":   WebMetrics{},
-	"Logs":      WebLogs{},
-	"Run":       WebRun{},
-	"RunPage":   WebRunPage{},
-	"Document":  DeploymentDocument{},
-	"Workspace": DeploymentWorkspace{},
+	"Node":              WebNode{},
+	"Network":           WebNetwork{},
+	"Phase":             WebJobPhase{},
+	"Job":               WebJob{},
+	"Coverage":          WebCoverage{},
+	"Metrics":           WebMetrics{},
+	"Logs":              WebLogs{},
+	"Run":               WebRun{},
+	"RunPage":           WebRunPage{},
+	"Document":          DeploymentDocument{},
+	"Workspace":         DeploymentWorkspace{},
+	"User":              WebUser{},
+	"Session":           WebSession{},
+	"Credential":        DeploymentCredential{},
+	"Asset":             WebAsset{},
+	"AuditRecord":       WebAuditRecord{},
+	"AuditRecordPage":   WebAuditPage{},
+	"Plan":              WebPlan{},
+	"ResourceConflict":  WebResourceConflict{},
+	"Comparison":        WebComparison{},
+	"Vocabulary":        TestCaseContract{},
+	"ChainSurface":      WebChainSurface{},
+	"ChainSurfaceRef":   WebChainSurfaceRef{},
+	"ChainCommand":      WebChainCommand{},
+	"ChainOption":       WebChainOption{},
+	"SurfaceSource":     WebSurfaceSource{},
+	"SurfaceSupport":    WebSurfaceSupport{},
+	"BinaryFingerprint": WebBinaryFingerprint{},
+	"Validation":        DocumentValidation{},
+	"ImportPreview":     DocumentImportPreview{},
+	"ImportCommit":      DocumentImportCommit{},
 }
 
 // webInputOnly names fields a response struct inherits from its input struct
@@ -58,11 +78,36 @@ func (s openAPISchemas) resolve(schema map[string]any) map[string]any {
 	for i := 0; i < 8; i++ {
 		ref, ok := schema["$ref"].(string)
 		if !ok {
-			return schema
+			break
 		}
 		schema = s[strings.TrimPrefix(ref, "#/components/schemas/")]
 	}
-	return schema
+	parts, ok := schema["allOf"].([]any)
+	if !ok {
+		return schema
+	}
+	// allOf adds constraints: the union of the parts' properties and
+	// required lists describes what the value must carry.
+	merged := map[string]any{"properties": map[string]any{}, "required": []any{}}
+	for _, part := range parts {
+		p, _ := part.(map[string]any)
+		p = s.resolve(p)
+		for k, v := range p {
+			switch k {
+			case "properties":
+				props, _ := v.(map[string]any)
+				for name, prop := range props {
+					merged["properties"].(map[string]any)[name] = prop
+				}
+			case "required":
+				list, _ := v.([]any)
+				merged["required"] = append(merged["required"].([]any), list...)
+			default:
+				merged[k] = v
+			}
+		}
+	}
+	return merged
 }
 
 func schemaTypes(schema map[string]any) []string {
@@ -265,6 +310,29 @@ properties:
 		"Sample.renamed: written by Go, missing from schema",
 	}
 	if !reflect.DeepEqual(problems, want) {
+		t.Fatalf("problems = %q, want %q", problems, want)
+	}
+}
+
+// TestWebOpenAPIComparisonReadsAllOf: a required list added through allOf
+// binds the fields its other parts declare.
+func TestWebOpenAPIComparisonReadsAllOf(t *testing.T) {
+	type sample struct {
+		Refs []string `json:"refs,omitempty"`
+	}
+	var schema map[string]any
+	if err := yaml.Unmarshal([]byte(`
+allOf:
+- type: object
+  properties:
+    refs: {type: array, items: {type: string}}
+- required: [refs]
+`), &schema); err != nil {
+		t.Fatal(err)
+	}
+	problems := []string{}
+	openAPISchemas{}.compare("Sample", reflect.TypeOf(sample{}), schema, &problems)
+	if want := []string{"Sample.refs: schema requires it, Go omits it when empty"}; !reflect.DeepEqual(problems, want) {
 		t.Fatalf("problems = %q, want %q", problems, want)
 	}
 }
