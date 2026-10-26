@@ -619,3 +619,116 @@ func TestWebMonitorDoesNotObserveRemoteNodesWithoutLogins(t *testing.T) {
 		t.Fatalf("observed = %+v", m.Observed(f.network))
 	}
 }
+
+// drainObservations reads what one round published, in order.
+func drainObservations(events <-chan WebObservationEvent) []WebObservationEvent {
+	var out []WebObservationEvent
+	for {
+		select {
+		case e := <-events:
+			out = append(out, e)
+		default:
+			return out
+		}
+	}
+}
+
+func eventsOfType(events []WebObservationEvent, kind string) []WebObservationEvent {
+	var out []WebObservationEvent
+	for _, e := range events {
+		if e.Type == kind {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// TestWebMonitorPublishesWhatEachRoundSaw: a subscriber hears each round's
+// samples and new log lines, a gap when it opens, and a node only when its
+// reading changes, so a screen can follow live without polling.
+func TestWebMonitorPublishesWhatEachRoundSaw(t *testing.T) {
+	f := newMonitorFixture(t)
+	if err := os.WriteFile(f.logPath, []byte("INFO [10-09|00:47:00.000] started\nWARN [10-09|00:47:00.500] slow peer\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m := f.monitor()
+	readings := &ChainObserveOut{Nodes: []chainsetup.NodeObservation{observation("node1", "running", 101, ""), observation("node2", "running", 102, ""), observation("node3", "stopped", 0, "no_matching_process")}}
+	m.UseCLI(observingCLI{observe: readings})
+	events, stop := m.SubscribeObservations()
+	defer stop()
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	first := drainObservations(events)
+	if nodes := eventsOfType(first, "node"); len(nodes) != 3 || nodes[0].NetworkID != f.network || nodes[0].Node.State == "" {
+		t.Fatalf("first round node events = %+v", nodes)
+	}
+	metrics := eventsOfType(first, "metrics")
+	if len(metrics) != 1 || len(metrics[0].Samples) == 0 {
+		t.Fatalf("metrics events = %+v", metrics)
+	}
+	canonical := 0
+	for _, s := range metrics[0].Samples {
+		if s.NodeID != "node1" || s.Metric == "" {
+			t.Fatalf("sample = %+v", s)
+		}
+		if s.Canonical && s.Metric == "block_height" {
+			canonical++
+		}
+	}
+	if canonical != 1 {
+		t.Fatalf("canonical block_height samples = %d", canonical)
+	}
+	opened := map[string]bool{}
+	for _, e := range eventsOfType(first, "gap") {
+		if e.GapState != "opened" {
+			t.Fatalf("first round gap = %+v", e)
+		}
+		opened[e.Gap.NodeID+" "+e.Gap.Code] = true
+	}
+	for _, want := range []string{"node2 rpc_unavailable", "node3 node_stopped", "node1 not_exposed"} {
+		if !opened[want] {
+			t.Fatalf("gap %q not announced: %v", want, opened)
+		}
+	}
+	logs := eventsOfType(first, "logs")
+	if len(logs) != 1 || logs[0].NodeID != "node1" || len(logs[0].Lines) != 2 || logs[0].Lines[1].Level != "WARN" {
+		t.Fatalf("log events = %+v", logs)
+	}
+	// Nothing changed on the nodes and no gap is new: only the samples arrive.
+	f.clock = f.clock.Add(5 * time.Second)
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	second := drainObservations(events)
+	if len(eventsOfType(second, "node")) != 0 || len(eventsOfType(second, "gap")) != 0 || len(eventsOfType(second, "metrics")) != 1 {
+		t.Fatalf("second round = %+v", second)
+	}
+	// node2 stops answering its probe as a process: one node event.
+	readings.Nodes[1] = observation("node2", "stopped", 0, "no_matching_process")
+	f.clock = f.clock.Add(5 * time.Second)
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if nodes := eventsOfType(drainObservations(events), "node"); len(nodes) != 1 || nodes[0].Node.ID != "node2" || nodes[0].Node.State != "stopped" {
+		t.Fatalf("changed node events = %+v", nodes)
+	}
+}
+
+// TestWebMonitorDropsEventsForASlowSubscriber: a subscriber that does not read
+// never holds up collection; what it missed is counted.
+func TestWebMonitorDropsEventsForASlowSubscriber(t *testing.T) {
+	f := newMonitorFixture(t)
+	m := f.monitor()
+	_, stop := m.SubscribeObservations()
+	defer stop()
+	for i := 0; i < webObservationBuffer+10; i++ { // at least one event per round
+		if err := m.CollectOnce(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		f.clock = f.clock.Add(5 * time.Second)
+	}
+	if m.ObservationDrops() == 0 {
+		t.Fatal("a full subscriber dropped nothing")
+	}
+}

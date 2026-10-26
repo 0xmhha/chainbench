@@ -93,6 +93,14 @@ func (s *Server) handleJobEvents(w http.ResponseWriter, r *http.Request, authent
 		return
 	}
 	defer unsubscribe()
+	// What the collector sees rides the same stream, best effort and without
+	// an id: a reader that misses one rereads the metrics and logs APIs.
+	var observed <-chan app.WebObservationEvent
+	if s.observations != nil {
+		events, stop := s.observations.SubscribeObservations()
+		defer stop()
+		observed = events
+	}
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming unsupported", 500)
@@ -127,12 +135,31 @@ func (s *Server) handleJobEvents(w http.ResponseWriter, r *http.Request, authent
 				return
 			}
 			flusher.Flush()
+		case event, ok := <-observed:
+			if !ok || !authorized() {
+				return
+			}
+			if workspaceID != "" && event.NetworkID != workspaceID {
+				continue
+			}
+			raw, err := json.Marshal(event)
+			if err != nil {
+				return
+			}
+			if _, err = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event.Type, raw); err != nil {
+				return
+			}
+			flusher.Flush()
 		case <-ticker.C:
 			if !authorized() {
 				return
 			}
 			version, position, drops := s.jobs.StreamPosition()
-			raw, _ := json.Marshal(map[string]any{"version": version, "cursor": position, "jobDeliveryDropsTotal": drops, "observedAt": time.Now().UTC()})
+			heartbeat := map[string]any{"version": version, "cursor": position, "jobDeliveryDropsTotal": drops, "observedAt": time.Now().UTC()}
+			if s.observations != nil {
+				heartbeat["observationDropsTotal"] = s.observations.ObservationDrops()
+			}
+			raw, _ := json.Marshal(heartbeat)
 			// Heartbeats must not advance Last-Event-ID past changes the client missed.
 			if _, err = fmt.Fprintf(w, "event: observation\ndata: %s\n\n", raw); err != nil {
 				return

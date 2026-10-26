@@ -27,10 +27,13 @@ var indexHTML []byte
 
 // Server serves the dashboard API and page over one http.Handler.
 type Server struct {
-	bus              *collector.Bus
-	store            collector.Store
-	artifactRoot     string
-	jobs             *app.WebJobs
+	bus          *collector.Bus
+	store        collector.Store
+	artifactRoot string
+	jobs         *app.WebJobs
+	// observations is the collector's live events, merged into the job
+	// events stream; nil when no collector runs.
+	observations     observationSource
 	mux              *http.ServeMux
 	validateDocument http.HandlerFunc
 	security         http.HandlerFunc

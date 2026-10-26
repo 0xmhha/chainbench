@@ -1561,6 +1561,15 @@ paths:
             on revocation or disconnect, and limits concurrent subscribers to 64.
             Job snapshots contain cached owned network metadata, not live PID proof;
             metrics and historical log coverage have separate contracts below.
+
+            When the collector runs, the stream also carries what it saw, best effort
+            and without an SSE id, so these frames never move the replay cursor; a
+            reader that misses one rereads the metrics and logs APIs. Each is an
+            ObservationEvent scoped like jobs (workspaceId is the networkId):
+            node when a node's reading changes, metrics with one round's samples of a
+            network, gap when a coverage gap opens or closes (gapState), and logs with
+            a node's new lines, at most 50 per round with linesDropped counting the
+            rest. Heartbeats add observationDropsTotal, the events slow readers missed.
   /api/v1/networks/{networkId}/metrics:
     get:
       operationId: metrics
@@ -3758,6 +3767,59 @@ components:
             required: [kind, ref]
       additionalProperties: false
       required: [seq, id, state, assertions, steps, postActions, artifacts]
+    ObservationEvent:
+      type: object
+      description: One live change the collector saw, sent on GET /api/v1/events as the SSE event named by type.
+      properties:
+        type:
+          type: string
+          enum: [node, metrics, gap, logs]
+        networkId: *id002
+        observedAt: *id006
+        node:
+          type: object
+          properties:
+            id: *id002
+            state: *id001
+            observationReason: *id001
+            observedPid:
+              type: integer
+              minimum: 0
+            observedAt: *id006
+          additionalProperties: false
+          required: [id, state, observedAt]
+        samples:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId: *id002
+              name: *id001
+              metric: *id001
+              canonical:
+                type: boolean
+              source: *id001
+              unit: *id001
+              time: *id006
+              value:
+                type: number
+            additionalProperties: false
+            required: [nodeId, name, metric, canonical, source, time, value]
+        gap:
+          $ref: '#/components/schemas/Coverage/properties/gaps/items'
+        gapState:
+          type: string
+          enum: [opened, closed]
+        nodeId: *id002
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Logs/properties/entries/items'
+        linesDropped:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+      required: [type, networkId, observedAt]
     CompareInput:
       type: object
       properties:

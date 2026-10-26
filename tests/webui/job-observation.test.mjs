@@ -34,3 +34,15 @@ test('malformed or inconsistent positions never become a trusted snapshot',()=>{
  const state=snapshotState(null,snapshot())
  assert.equal(applyJobChange(state,{type:'job_changed',version:5,cursor:cursor(5)}).resync,true)
 })
+test('a node reading updates that node in the snapshot without touching the job version', async () => {
+ const {applyNodeReading} = await import('../../web/src/job-observation.mjs')
+ const state = {...snapshot(), networks: [{id: 'net', nodes: [{id: 'node1', state: 'running', observedPid: 11, observedAt: 'a'}, {id: 'node2', state: 'running', observedAt: 'a'}]}]}
+ const next = applyNodeReading(state, {type: 'node', networkId: 'net', observedAt: 'b', node: {id: 'node2', state: 'stopped', observationReason: 'no_matching_process', observedAt: 'b'}})
+ assert.deepEqual(next.networks[0].nodes[1], {id: 'node2', state: 'stopped', observationReason: 'no_matching_process', observedPid: undefined, observedAt: 'b'})
+ assert.equal(next.networks[0].nodes[0], state.networks[0].nodes[0])
+ assert.equal(next.version, state.version)
+ assert.equal(state.networks[0].nodes[1].state, 'running', 'the old snapshot is not changed')
+ // A node or network the snapshot does not know is ignored, not invented.
+ assert.equal(applyNodeReading(state, {type: 'node', networkId: 'other', node: {id: 'node1', state: 'stopped', observedAt: 'b'}}), state)
+ assert.equal(applyNodeReading(null, {type: 'node', networkId: 'net', node: {id: 'node1', state: 'stopped', observedAt: 'b'}}), null)
+})

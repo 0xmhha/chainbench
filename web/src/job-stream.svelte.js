@@ -1,4 +1,4 @@
-import { snapshotState, applyJobChange } from './job-observation.mjs'
+import { snapshotState, applyJobChange, applyNodeReading } from './job-observation.mjs'
 import { readApi } from './api-client.mjs'
 import { decodeSnapshot } from './api-decode.mjs'
 
@@ -26,6 +26,11 @@ export function jobStream() {
     disconnect(); s.connection = '연결 끊김'; s.gap = '연결이 끊긴 동안의 이벤트 전체 수신을 보장하지 않습니다. 최신 실행 상태를 다시 확인합니다.'
     retry = setTimeout(() => restore(), 2000)
    }
+   // A node reading is not a job change: it updates the node and nothing else.
+   stream.addEventListener('node', message => {
+    if (!active || current !== epoch) return
+    try { s.snapshot = applyNodeReading(s.snapshot, JSON.parse(message.data)) } catch { restore('수신한 노드 관측을 해석할 수 없어 최신 스냅샷을 다시 확인합니다.') }
+   })
    for (const type of ['job_changed', 'version_changed', 'resync_required', 'observation']) stream.addEventListener(type, message => {
     if (!active || current !== epoch) return
     try {
