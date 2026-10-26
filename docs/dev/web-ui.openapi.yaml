@@ -2705,12 +2705,8 @@ components:
           - family
           - preset
           - role
-        summary: *id001
         contractId: *id002
         schemaRef: *id001
-        chains:
-          type: array
-          items: *id001
         prerequisites:
           type: array
           items: *id001
@@ -2718,6 +2714,8 @@ components:
       required:
       - name
       - kind
+      - contractId
+      - schemaRef
     Vocabulary:
       type: object
       properties:
@@ -2753,6 +2751,7 @@ components:
       - label
       - kind
       - revoked
+      - createdAt
     CredentialUsage:
       description: Own credential metadata with the workspace servers it is bound to and the caller's unfinished jobs that revoking it would cancel.
       type: object
@@ -2790,6 +2789,7 @@ components:
       - label
       - kind
       - revoked
+      - createdAt
       - bindings
       - activeJobs
     CredentialCreate:
@@ -2900,6 +2900,8 @@ components:
       - name
       - checksum
       - bytes
+      - uploaderId
+      - compatibility
     DocumentInput:
       type: object
       properties:
@@ -3017,8 +3019,11 @@ components:
           $ref: '#/components/schemas/Validation'
         redactedDocuments:
           type: array
+          description: DocumentInput values as the import would save them; assetRefs is always present here
           items:
-            $ref: '#/components/schemas/DocumentInput'
+            allOf:
+            - $ref: '#/components/schemas/DocumentInput'
+            - required: [assetRefs]
         changes:
           type: array
           items: *id001
@@ -3298,6 +3303,10 @@ components:
       - expiresAt
       - validation
       - chainSurfaces
+      - phases
+      - resources
+      - changes
+      - requiredAccess
     JobInput:
       type: object
       properties:
@@ -3804,13 +3813,17 @@ components:
                       type: number
                     last:
                       type: number
+                  required: [samples]
             additionalProperties: false
+            required: [name, source, values]
       additionalProperties: false
       required:
       - runIds
       - comparable
       - limitations
       - results
+      - durations
+      - metrics
     AuditRecord:
       type: object
       properties:
@@ -4005,6 +4018,7 @@ components:
       - version
       - os
       - architecture
+      - verifiedAt
     SurfaceSupport:
       type: object
       properties:
@@ -4047,7 +4061,6 @@ components:
           description: Positional argument placeholders from the command's usage line
           items: *id001
         summary: *id001
-        argumentContractId: *id002
         engineUsecases:
           type: array
           items: *id001
