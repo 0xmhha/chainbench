@@ -170,11 +170,11 @@ Go 응답 구조체와 OpenAPI로 옮기고, 3-5단계는 이 모델을 SSE로 �
 | `scope` | string | 예 | 새로. `network` 또는 `node` |
 | `nodeId` | string | 아니오 | 지금 문자열의 첫 낱말. `scope`가 `node`일 때만 |
 | `source` | string | 예 | 지금 문자열의 둘째 낱말. `collector`, `rpc`, `metrics`, `logs`, `archive` |
-| `reason` | string | 예 | 사유 코드 하나. 인벤토리 "누락 사유 목록" 표의 값 |
+| `code` | string | 예 | 사유 코드 하나. 인벤토리 "누락 사유 목록" 표의 값과 `node_stopped`. 옛 `reason` 문자열과 겹치지 않게 이름을 `code`로 정했다 |
 | `metric` | string | 아니오 | `not_exposed`일 때 어느 지표인지 |
 | `runId` | string | 아니오 | `deleted_by_admin`일 때 어느 실행인지 |
 
-지금의 `"<node> <source> <reason>"` 문자열은 없앤다. 보관본(`gaps.jsonl`)에는 이미 노드, 출처, 사유가 따로 있으므로
+지금의 `"<node> <source> <reason>"` 문자열(`reason`)은 화면이 새 필드로 옮겨 간 뒤 없앤다. 보관본(`gaps.jsonl`)에는 이미 노드, 출처, 사유가 따로 있으므로
 서버는 합치지 않고 그대로 옮기면 된다. 사유 코드에 붙어 있던 지표 이름과 실행 ID는 `metric`, `runId`로 뺀다.
 
 노드가 멈춰 PID가 0이면 수집기는 지금 사유 없이 건너뛴다. 표본에서 node4는 610초 동안 표본이 없었는데 누락 구간은

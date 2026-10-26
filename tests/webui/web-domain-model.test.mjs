@@ -42,9 +42,9 @@ function toGap(g) {
  const scoped = /^node/.test(words[0])
  const [source, ...rest] = scoped ? words.slice(1) : words
  const gap = {from: g.from, to: g.to, scope: scoped ? 'node' : 'network', nodeId: scoped ? words[0] : undefined, source}
- if (rest.at(-1) === 'not_exposed') return compact({...gap, reason: 'not_exposed', metric: rest[0]})
- if (rest[0] === 'deleted_by_admin') return compact({...gap, reason: 'deleted_by_admin', runId: rest[1]})
- return compact({...gap, reason: rest.join('_')})
+ if (rest.at(-1) === 'not_exposed') return compact({...gap, code: 'not_exposed', metric: rest[0]})
+ if (rest[0] === 'deleted_by_admin') return compact({...gap, code: 'deleted_by_admin', runId: rest[1]})
+ return compact({...gap, code: rest.join('_')})
 }
 
 // The server skips a stopped node without a gap; the model records one. Here it
@@ -54,7 +54,7 @@ function stoppedGaps(series, interval) {
  for (const s of series.filter(s => s.canonical && s.metric === 'block_height')) {
   for (let i = 1; i < s.samples.length; i++) {
    const [a, b] = [s.samples[i - 1].time, s.samples[i].time]
-   if (Date.parse(b) - Date.parse(a) > interval * 4000) gaps.push({from: a, to: b, scope: 'node', nodeId: s.nodeId, source: 'collector', reason: 'node_stopped'})
+   if (Date.parse(b) - Date.parse(a) > interval * 4000) gaps.push({from: a, to: b, scope: 'node', nodeId: s.nodeId, source: 'collector', code: 'node_stopped'})
   }
  }
  return gaps
@@ -139,14 +139,14 @@ test('gaps come out structured, and the stopped node gets a gap with a reason', 
  const {gaps} = toMetrics(read('metrics-30min'))
  for (const g of gaps) {
   assert.ok(['network', 'node'].includes(g.scope))
-  assert.ok(g.source && g.reason && !g.reason.includes(' '), JSON.stringify(g))
+  assert.ok(g.source && g.code && !g.code.includes(' '), JSON.stringify(g))
  }
- const stopped = gaps.filter(g => g.reason === 'node_stopped')
+ const stopped = gaps.filter(g => g.code === 'node_stopped')
  assert.equal(stopped.length, 1)
  assert.equal(stopped[0].nodeId, 'node4')
  assert.ok(Date.parse(stopped[0].to) - Date.parse(stopped[0].from) > 600_000)
- assert.deepEqual(toGap({from: 'a', to: 'b', reason: 'node1 metrics txpool_pending not_exposed'}), {from: 'a', to: 'b', scope: 'node', nodeId: 'node1', source: 'metrics', reason: 'not_exposed', metric: 'txpool_pending'})
- assert.deepEqual(toGap({from: 'a', to: 'b', reason: 'archive deleted_by_admin r123'}), {from: 'a', to: 'b', scope: 'network', source: 'archive', reason: 'deleted_by_admin', runId: 'r123'})
+ assert.deepEqual(toGap({from: 'a', to: 'b', reason: 'node1 metrics txpool_pending not_exposed'}), {from: 'a', to: 'b', scope: 'node', nodeId: 'node1', source: 'metrics', code: 'not_exposed', metric: 'txpool_pending'})
+ assert.deepEqual(toGap({from: 'a', to: 'b', reason: 'archive deleted_by_admin r123'}), {from: 'a', to: 'b', scope: 'network', source: 'archive', code: 'deleted_by_admin', runId: 'r123'})
 })
 
 test('jobs and phases use the execution vocabulary and never carry a zero time', () => {

@@ -3466,12 +3466,35 @@ components:
             properties:
               from: *id006
               to: *id006
-              reason: *id001
+              reason:
+                type: string
+                description: Older joined form "<nodeId> <source> <code...>"; read the fields below instead
+              scope:
+                type: string
+                enum: [node, network]
+              nodeId:
+                type: string
+                description: The node lacking data; present when scope is node
+              source:
+                type: string
+                enum: [collector, rpc, metrics, logs, archive]
+              code:
+                type: string
+                enum: [collector_stopped, collector_error, collector_stale, not_collected, node_stopped, remote_log_collection_unavailable, rpc_disabled, rpc_unavailable, metrics_disabled, metrics_unavailable, not_exposed, log_unavailable, log_rotated, log_truncated, log_line_oversized, deleted_by_admin, corrupt_record]
+              metric:
+                type: string
+                description: The gauge a not_exposed gap is about
+              runId:
+                type: string
+                description: The run whose deletion a deleted_by_admin gap records
             additionalProperties: false
             required:
             - from
             - to
             - reason
+            - scope
+            - source
+            - code
         downsampled: *id011
         bucketSeconds:
           type: number
