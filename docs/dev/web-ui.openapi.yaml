@@ -3100,7 +3100,8 @@ components:
           minimum: 0
         observationReason:
           type: string
-          enum: [binary_launch_unavailable, binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
+          description: Why the node is in its state. In GET /api/v1/networks and the snapshot the state is the collector's latest reading (observedAt is when it was taken), not_observed when there is none yet, and remote_observation_unavailable for SSH nodes, which the collector cannot read without an operator's logins. Controls are offered only after a fresh observation.
+          enum: [binary_launch_unavailable, binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch, machine_unavailable, not_observed, remote_observation_unavailable]
         binaryAssetId:
           type: string
           description: Verified registered asset identity for a reviewed per-node executable; omitted when unavailable.

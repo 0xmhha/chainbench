@@ -4,7 +4,7 @@
   import LogViewer from './LogViewer.svelte'
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
-  import { latestSamples, nodeControls } from './node-view.mjs'
+  import { latestSamples, nodeControls, stateSource } from './node-view.mjs'
   import { requestControl, selectWorkspace } from './selection.svelte.js'
   import { follow, go } from './nav.mjs'
   let { networkId, nodeId, webSession } = $props()
@@ -46,8 +46,8 @@
     <dl class="summary">
       <dt>역할</dt><dd data-testid="node-role">{node.role}</dd>
       <dt>소유</dt><dd>{network.ownership === 'owned' ? 'Web이 배포하고 기록한 노드' : 'attach 네트워크의 노드 (제어하지 않음)'}</dd>
-      <dt>상태</dt><dd data-testid="node-state"><StatusBadge state={node.state} />{observed ? ` · 확인 ${time(node.observedAt)}` : ' · 기록된 상태 (실제 프로세스는 확인하지 않음)'}</dd>
-      <dt>PID</dt><dd>기록 {node.pid || '없음'} · 관측 {observed ? node.observedPid || '없음' : '확인 안 함'}{node.observationReason ? ` · ${node.observationReason}` : ''}</dd>
+      <dt>상태</dt><dd data-testid="node-state"><StatusBadge state={node.state} /> · {stateSource(node, Boolean(observed)).note}</dd>
+      <dt>PID</dt><dd>기록 {node.pid || '없음'} · 관측 {stateSource(node, Boolean(observed)).pid}{node.observationReason && node.observationReason !== 'not_observed' ? ` · ${node.observationReason}` : ''}</dd>
       <dt>RPC</dt><dd data-testid="node-rpc">{#if latest.length}{#each latest as s}<span class="metric">{s.name} {s.value ?? '값 없음'}{s.unit ? ' ' + s.unit : ''} · {s.source} · {time(s.time)}</span>{/each}{:else}최근 10분 동안 수집된 값이 없습니다.{/if}</dd>
       <dt>서버</dt><dd class="mono">{node.hostIdentity || '—'}</dd>
       <dt>데이터 경로</dt><dd class="mono">{node.dataPath || '—'}</dd>

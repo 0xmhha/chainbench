@@ -10,11 +10,14 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -534,5 +537,85 @@ func TestWebCoverageGapFieldsSplitTheArchivedReason(t *testing.T) {
 		if got := webCoverageGap(c.in); got != c.want {
 			t.Errorf("webCoverageGap(%+v) = %+v, want %+v", c.in, got, c.want)
 		}
+	}
+}
+
+// observingCLI answers chain status from the record and chain observe with a
+// fixed reading, or an error when observe is nil.
+type observingCLI struct{ observe *ChainObserveOut }
+
+func (observingCLI) ChainStatus(ctx context.Context, dir string) (State, error) {
+	return recordCLI{}.ChainStatus(ctx, dir)
+}
+
+func (c observingCLI) Run(_ context.Context, args ...string) ([]byte, error) {
+	if len(args) < 2 || args[0] != "chain" || args[1] != "observe" {
+		return nil, errors.New("observingCLI answers chain observe only")
+	}
+	if c.observe == nil {
+		return nil, errors.New("the machine did not answer")
+	}
+	return json.Marshal(c.observe)
+}
+
+func observation(label, state string, pid int, reason string) chainsetup.NodeObservation {
+	return chainsetup.NodeObservation{Label: label, LaunchVerdict: process.LaunchVerdict{State: process.Ownership(state), PID: pid, Reason: reason}, Executable: "ready"}
+}
+
+// TestWebMonitorRemembersWhatItObservedForEachNode: every round the collector
+// asks the CLI what each local node's machine shows and keeps that reading
+// with its time, so a list can say what was seen and when rather than unknown.
+func TestWebMonitorRemembersWhatItObservedForEachNode(t *testing.T) {
+	f := newMonitorFixture(t)
+	m := f.monitor()
+	if got := m.Observed(f.network); len(got) != 0 {
+		t.Fatalf("observed before any round = %+v", got)
+	}
+	m.UseCLI(observingCLI{observe: &ChainObserveOut{Nodes: []chainsetup.NodeObservation{
+		observation("node1", "running", 101, ""), observation("node2", "missing", 0, "recorded_pid_absent"), observation("node3", "stopped", 0, "no_matching_process"),
+	}}})
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	got := m.Observed(f.network)
+	want := map[string]WebNodeObserved{
+		"node1": {State: "running", PID: 101, Executable: "ready", At: f.clock.UTC()},
+		"node2": {State: "missing", Reason: "recorded_pid_absent", Executable: "ready", At: f.clock.UTC()},
+		"node3": {State: "stopped", Reason: "no_matching_process", Executable: "ready", At: f.clock.UTC()},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("observed = %+v\nwant     %+v", got, want)
+	}
+	// A machine that does not answer is unknown from now on, not the last
+	// reading carried forward.
+	f.clock = f.clock.Add(5 * time.Second)
+	m.UseCLI(observingCLI{})
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	for label, seen := range m.Observed(f.network) {
+		if seen.State != "unknown" || seen.Reason != "probe_unavailable" || !seen.At.Equal(f.clock.UTC()) {
+			t.Fatalf("%s after a failed probe = %+v", label, seen)
+		}
+	}
+}
+
+// TestWebMonitorDoesNotObserveRemoteNodesWithoutLogins: SSH nodes need an
+// operator's logins, which the collector does not hold.
+func TestWebMonitorDoesNotObserveRemoteNodesWithoutLogins(t *testing.T) {
+	f := newMonitorFixture(t)
+	writeMonitorJSON(t, filepath.Join(f.root, "networks", f.network, "web-target.json"), resource.Inspection{HostIdentity: "fixture", Transport: "ssh"})
+	m := f.monitor()
+	m.UseCLI(observingCLI{observe: &ChainObserveOut{Nodes: []chainsetup.NodeObservation{observation("node1", "running", 101, "")}}})
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	for label, seen := range m.Observed(f.network) {
+		if seen.State != "unknown" || seen.Reason != "remote_observation_unavailable" {
+			t.Fatalf("%s on an SSH target = %+v", label, seen)
+		}
+	}
+	if len(m.Observed(f.network)) != 3 {
+		t.Fatalf("observed = %+v", m.Observed(f.network))
 	}
 }
