@@ -88,8 +88,8 @@ type WebPlan struct {
 type WebJobPhase struct {
 	Name       string    `json:"name"`
 	State      string    `json:"state"`
-	StartedAt  time.Time `json:"startedAt,omitempty"`
-	FinishedAt time.Time `json:"finishedAt,omitempty"`
+	StartedAt  time.Time `json:"startedAt"`
+	FinishedAt time.Time `json:"finishedAt,omitzero"`
 	Message    string    `json:"message,omitempty"`
 }
 
