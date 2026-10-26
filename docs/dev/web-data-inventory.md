@@ -10,7 +10,7 @@
 
 ## 3-1단계에서 아직 끝나지 않은 것
 
-계획의 완료 조건은 둘이다. 화면이 쓰는 모든 응답 필드가 인벤토리 한 줄로 거슬러 올라가야 하고, 서버에 있지만 화면에 오지 않는 데이터마다 노출할지를 정해야 한다. 앞의 것은 이 문서로 채웠다. 뒤의 것은 각 영역 끝에 후보만 모았고 아직 정하지 않았다. 노출 여부는 도메인 모델과 함께 정해야 하므로 3-3단계에서 이 문서에 결정을 적는다.
+계획의 완료 조건은 둘이다. 화면이 쓰는 모든 응답 필드가 인벤토리 한 줄로 거슬러 올라가야 하고, 서버에 있지만 화면에 오지 않는 데이터마다 노출할지를 정해야 한다. 앞의 것은 이 문서로 채웠다. 뒤의 것은 각 영역 끝에 후보만 모았고 아직 정하지 않았다. 노출 여부는 3-3단계에서 정했고 [도메인 모델](web-domain-model.md)의 "노출 결정"에 적었다.
 
 ## 어떻게 확인했나
 
@@ -32,7 +32,7 @@
 
 - **노드 상태가 늘 "unknown"이다.** `/networks`는 저장된 PID만 보고 상태를 정하지 않고 `state := "unknown"`으로 고정한다(`internal/app/web_networks.go`의 `Networks` 반복문). 저장된 PID는 살아 있다는 증거가 아니므로 이 값 자체는 정직하지만, 실제 상태를 관측하는 길은 지금 모니터 쪽에만 있다. 어느 상태를 누가 관측해 화면에 주는지를 3-3단계에서 정한다.
 - **누락 사유를 한 문자열로 합쳐 보낸다.** 서버 내부에는 노드, 출처, 사유가 따로 있는데(`webMonitorGap`), 응답으로 나갈 때 `"<node> <source> <reason>"`로 이어 붙인다(`internal/app/web_monitor_read.go`의 커버리지 병합). 사유 자체에 공백이 들어가는 경우가 있어서 화면의 `gapText`(`web/src/labels.mjs`)가 잘못 읽는다. `"node1 metrics block_height not_exposed"`는 지표 이름이 빠지고 코드가 번역되지 않은 채 "node1 · not_exposed"가 되고, `"archive deleted_by_admin <runId>"`는 실행 ID를 사유 코드로 읽는다. 응답에 필드를 나눠 싣는 것이 맞다.
-- **단계 시각이 `0001-01-01T00:00:00Z`로 나갈 수 있다.** 단계의 `startedAt`, `finishedAt`이 `time.Time`에 `omitempty`를 단 값인데(`internal/app/web_job_contract.go`), Go의 `omitempty`는 구조체인 `time.Time`을 빼지 않는다. 시작하지 않은 단계는 0년 시각을 싣는다. 포인터로 바꾸거나 계약에서 null로 정한다.
+- **단계 시각이 `0001-01-01T00:00:00Z`로 나갈 수 있다.** 단계의 `startedAt`, `finishedAt`이 `time.Time`에 `omitempty`를 단 값인데(`internal/app/web_job_contract.go`), Go의 `omitempty`는 구조체인 `time.Time`을 빼지 않는다. 단계는 시작할 때 목록에 들어가므로 0년 시각이 나가는 것은 실행 중인 단계의 `finishedAt`이다. 같은 구조체를 직렬화해 확인했다([도메인 모델](web-domain-model.md)의 "표본으로 확인한 것"). 모델은 이 필드를 값이 없으면 빼기로 정했다.
 - **목록 API마다 페이지 규칙이 다르다.** 공통 `pageOf`는 기본 25, 최대 100이다(`internal/dashboard/paging.go`). 작업 목록은 기본 50, 최대 200이다(`internal/dashboard/jobs.go`). 로그는 최대 100이다. `JobPanel`은 작업 목록을 `api('jobs')`로 첫 페이지만 읽어 충돌을 확인하는데, 목록이 최신순이라 진행 중인 작업이 빠질 가능성은 낮지만 0은 아니다.
 - **취소 사유를 입력할 곳이 없다.** 서버는 `CancelWithMessage`로 사유를 받아 `cancelMessage`에 저장하고 작업 상세도 그것을 보여 주는데, 두 취소 버튼(`JobCard.svelte`, `MonitorPanel.svelte`)은 빈 본문 `{}`만 보낸다.
 - **작업 시작의 Idempotency-Key가 계획 ID와 같다.** `JobPanel`의 `start`가 `plan.id`를 키로 보낸다. 같은 계획으로 다시 시작하면 새 작업 대신 예전 작업이 돌아온다. 의도한 동작인지는 3-4단계에서 계약으로 적는다.
@@ -54,7 +54,7 @@
 - **로그 한 쪽은 100줄이다.** node4는 30분에 11,363줄이었다. 레벨은 `INFO`와 `WARN`만 나왔다.
 - **실행 기록의 시험 결과는 타입이 섞여 있다.** `assert.json`의 `Expected`는 숫자 `0`, `Actual`은 문자열 `"6"`이다. `ID`와 `On`은 빈 문자열이고 같은 값이 `Provenance` 안에 있다. 세션에는 끝 시각이 없어 `summary.missingDimensions`가 `["finishedAt"]`이다.
 - **진행 문장에 구조화된 정보가 묻혀 있다.** 작업의 `partialEffects`에 "nodemonitor r1 node1 READY: alive, rpc ready, advancing"처럼 노드 준비 상태가 문장으로만 있고, 바이너리 경로가 런타임 절대 경로로 나온다.
-- **단계 시각의 `0001-01-01`은 확인하지 못했다.** 끝난 작업의 단계는 모두 시작과 끝 시각이 있었다. 시작하지 않은 단계가 있는 작업은 이번 표본에 없다.
+- **단계 시각의 `0001-01-01`은 표본에 담기지 않았다.** 끝난 작업의 단계는 모두 시작과 끝 시각이 있었다. 이 값은 실행 중인 단계에서만 나오는데, 표본은 작업이 모두 끝난 뒤에 받았다. 직렬화 실험으로 따로 확인했다.
 
 ## 관측
 
@@ -535,7 +535,7 @@ chainstate 한 줄:
 | `phases[]` | array of `WebJobPhase` | 빈 배열 가능, null 아님 (`web_jobs.go:268`) | | 엔진 보고 | 예 (`JobDetail.svelte:30`, `JobCard.svelte:22`) |
 | `phases[].name` | string | 아니오 | 계획의 단계 이름 중 하나만 허용 (`web_job_execution.go:26-34`) | 엔진 | 예 (`PhaseWatches.svelte:16`) |
 | `phases[].state` | string | 아니오 | `running`, `succeeded`, `failed`, `cancelled`(끝날 때 덮어씀) | 엔진, 끝 처리 (`web_job_execution.go:146-151`) | 예 (`job-view.mjs:9`) |
-| `phases[].startedAt` | string | 실제로 비지 않는다. 설정되지 않으면 `"0001-01-01T00:00:00Z"` | RFC 3339 나노초, UTC | 엔진 (`web_chain_engine.go:778`) | 예 (`job-view.mjs:67`) |
+| `phases[].startedAt` | string | 비지 않는다. 단계는 시작할 때 목록에 들어간다 | RFC 3339 나노초, UTC | 엔진 (`web_chain_engine.go:778`) | 예 (`job-view.mjs:67`) |
 | `phases[].finishedAt` | string | 실행 중이면 `"0001-01-01T00:00:00Z"` | RFC 3339 나노초, UTC | 엔진 (`web_chain_engine.go:781`) 또는 끝 처리 (`web_job_execution.go:149`) | 예 (`job-view.mjs:59`, `:67`) |
 | `phases[].message` | string | omitempty | 엔진 오류 문장, 등록된 비밀 제거 (`web_job_execution.go:19`) | 엔진 | 예 (`JobCard.svelte:22`, `job-view.mjs:44`) |
 | `createdAt` | string | 아니오 | RFC 3339 나노초, UTC | 수락 시각 | 예 (`CasualtyEntry.svelte:38`, `job-view.mjs:58`) |
