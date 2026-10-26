@@ -34,6 +34,25 @@ jobs:
           done < <(find scripts tests -name '*.sh' -print0)
           [ "$fail" -eq 0 ]
 
+  # Gate: the Web screen code type-checks where it opted in (// @ts-check) and
+  # its unit tests pass, including the decoders run against the recorded
+  # stablenet sample in tests/webui/fixtures.
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: npm ci
+        run: npm ci --prefix web
+      - name: svelte-check
+        run: npm run check --prefix web
+      - name: node --test
+        run: node --test tests/webui/*.test.mjs
+
   # Build, vet, format check, and the full test suite (the gated e2e tests skip
   # without their env, so they do not run here).
   test:
