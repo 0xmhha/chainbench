@@ -3642,6 +3642,11 @@ components:
           items: *id001
         coverage:
           $ref: '#/components/schemas/Coverage'
+        tests:
+          type: array
+          description: In detail reads of engine-session runs, each test with its result files read; read these instead of summary.results
+          items:
+            $ref: '#/components/schemas/RunTest'
       additionalProperties: false
       required:
       - id
@@ -3652,6 +3657,97 @@ components:
       - fingerprints
       - summary
       - artifactRefs
+    RunTest:
+      type: object
+      properties:
+        seq:
+          type: integer
+          minimum: 1
+        id: *id001
+        state:
+          type: string
+          enum: [succeeded, failed, blocked, skipped, unknown]
+        reason: *id001
+        startedAt: *id006
+        finishedAt: *id006
+        env: *id001
+        assertions:
+          type: array
+          items:
+            type: object
+            properties:
+              assert: *id001
+              nodeId: *id001
+              compare: *id001
+              expected:
+                type: string
+                description: Decimal text when the engine recorded a number, so large values keep every digit
+              actual:
+                type: string
+                description: Same rule as expected
+              passed:
+                type: boolean
+              detail: *id001
+              provenance:
+                type: object
+                additionalProperties: true
+            additionalProperties: false
+            required: [assert, expected, passed]
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+                minimum: 0
+              type: *id001
+              nodeId: *id001
+              signer: *id001
+              hash: *id001
+              nonce:
+                type: string
+                description: Decimal text; absent when zero
+              gas: *id001
+              error: *id001
+              deployment:
+                type: object
+                properties:
+                  deployer: *id001
+                  nonce:
+                    type: integer
+                    minimum: 0
+                  expectedAddress: *id001
+                  actualAddress: *id001
+                  bytecodeSHA256: *id001
+                  artifact: *id001
+                  observationError: *id001
+                additionalProperties: false
+            additionalProperties: false
+            required: [index, type]
+        postActions:
+          type: array
+          items:
+            type: object
+            properties:
+              name: *id001
+              ok:
+                type: boolean
+              detail: *id001
+            additionalProperties: false
+            required: [name, ok]
+        artifacts:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: *id001
+              ref: *id001
+              node: *id001
+            additionalProperties: false
+            required: [kind, ref]
+      additionalProperties: false
+      required: [seq, id, state, assertions, steps, postActions, artifacts]
     CompareInput:
       type: object
       properties:

@@ -321,6 +321,14 @@ func TestWebHistoryFindsARunByTheJobsSessionReference(t *testing.T) {
 	if run.ID != historySessionID(reference) || run.JobID != "test-job" || run.State != "failed" {
 		t.Fatal("reference resolved to the wrong run", run)
 	}
+	// The detail carries the engine's result files as tests, with the
+	// recorded numbers as decimal text.
+	if len(run.Tests) != 1 || run.Tests[0].State != "failed" || len(run.Tests[0].Assertions) != 1 {
+		t.Fatalf("detail tests = %#v", run.Tests)
+	}
+	if a := run.Tests[0].Assertions[0]; a.Expected != "1" || a.Actual != "2" || a.Passed {
+		t.Fatalf("assertion = %#v", a)
+	}
 	if _, err = history.Get("web:unknown/session"); !errors.Is(err, ErrDeploymentNotFound) {
 		t.Fatal("an unknown reference must stay not found", err)
 	}

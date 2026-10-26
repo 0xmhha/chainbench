@@ -23,6 +23,9 @@ type WebRun struct {
 	Fingerprints map[string]string `json:"fingerprints"`
 	Summary      map[string]any    `json:"summary"`
 	ArtifactRefs []string          `json:"artifactRefs"`
+	// Tests are the session's tests with their result files read, in detail
+	// reads of engine-session runs only.
+	Tests []WebRunTest `json:"tests,omitempty"`
 }
 
 type WebHistoryQuery struct {
