@@ -3082,6 +3082,9 @@ components:
       type: object
       properties:
         id: *id002
+        ref:
+          type: string
+          description: '"<networkId>.<id>", the form GET /api/v1/nodes/{nodeId}/logs addresses the node by'
         networkId: *id002
         role: *id001
         hostIdentity: *id001
@@ -3122,6 +3125,7 @@ components:
       additionalProperties: false
       required:
       - id
+      - ref
       - networkId
       - role
       - hostIdentity
@@ -3332,6 +3336,12 @@ components:
           - failed
           - cancelled
           - interrupted
+        terminal:
+          type: boolean
+          description: The state is final (succeeded, failed, cancelled or interrupted)
+        needsCheck:
+          type: boolean
+          description: The job ended without knowing what it left on its machines; POST /api/v1/jobs/{jobId}/reconcile is allowed
         phases:
           type: array
           items:
@@ -3412,6 +3422,8 @@ components:
       - planId
       - operation
       - state
+      - terminal
+      - needsCheck
       - phases
       - createdAt
       - retention
@@ -3524,6 +3536,12 @@ components:
             properties:
               nodeId: *id002
               name: *id001
+              metric:
+                type: string
+                description: The concept measured; chain_head_block and p2p_peers measure block_height and peer_count
+              canonical:
+                type: boolean
+                description: False for a second source of a concept whose RPC series is canonical
               unit: *id001
               source: *id001
               labels:
@@ -3547,6 +3565,8 @@ components:
             required:
             - nodeId
             - name
+            - metric
+            - canonical
             - source
             - samples
         coverage:

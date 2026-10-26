@@ -34,6 +34,18 @@ var webMetricUnits = map[string]string{
 
 var webMetricOrder = []string{"chain_head_block", "p2p_peers", "txpool_pending", "txpool_queued"}
 
+// webMetricSecondary maps a gauge that repeats an RPC reading to the concept
+// it measures. RPC is canonical: a node answers RPC whenever it is usable,
+// while its metrics endpoint may be off.
+var webMetricSecondary = map[string]string{"chain_head_block": "block_height", "p2p_peers": "peer_count"}
+
+func webMetricConcept(name string) (metric string, canonical bool) {
+	if concept, ok := webMetricSecondary[name]; ok {
+		return concept, false
+	}
+	return name, true
+}
+
 // WebMonitor collects node observations for owned networks into an archive
 // that never expires. Collection only reads: it never changes chain records,
 // signals processes or treats recorded PIDs as proof of liveness.

@@ -64,6 +64,9 @@ func TestWebNetworksShowWhatTheCLIReports(t *testing.T) {
 	if len(networks) != 1 || len(networks[0].Nodes) != 1 || networks[0].Nodes[0].PID != 222 {
 		t.Fatalf("networks = %+v, want node1 with the pid the CLI reports (222)", networks)
 	}
+	if got, want := networks[0].Nodes[0].Ref, networks[0].ID+".node1"; got != want {
+		t.Fatalf("node ref = %q, want %q: the logs API addresses a node by it", got, want)
+	}
 }
 
 // TestWebNetworksRefuseWithoutTheCLI: a dashboard that was not given the CLI

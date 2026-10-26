@@ -302,6 +302,7 @@ func detachedWebJob(job WebJob) WebJob {
 	b, _ := json.Marshal(job)
 	var out WebJob
 	_ = json.Unmarshal(b, &out)
+	out.Terminal, out.NeedsCheck = terminalWebJob(out.State), webJobNeedsCheck(out)
 	return out
 }
 

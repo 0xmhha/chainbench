@@ -93,12 +93,16 @@ type WebMetricSample struct {
 }
 
 type WebMetricSeries struct {
-	NodeID  string            `json:"nodeId"`
-	Name    string            `json:"name"`
-	Unit    string            `json:"unit,omitempty"`
-	Source  string            `json:"source"`
-	Labels  map[string]string `json:"labels,omitempty"`
-	Samples []WebMetricSample `json:"samples"`
+	NodeID string `json:"nodeId"`
+	Name   string `json:"name"`
+	// Metric is the concept the series measures; a concept read from two
+	// sources has one Canonical series and the other marked as the second.
+	Metric    string            `json:"metric"`
+	Canonical bool              `json:"canonical"`
+	Unit      string            `json:"unit,omitempty"`
+	Source    string            `json:"source"`
+	Labels    map[string]string `json:"labels,omitempty"`
+	Samples   []WebMetricSample `json:"samples"`
 }
 
 type WebMetrics struct {
@@ -181,7 +185,8 @@ func (m *WebMonitor) Metrics(a DeploymentActor, network string, q WebMonitorQuer
 			key := s.Node + "\x00" + s.Source + "\x00" + s.Name
 			series, ok := bySeries[key]
 			if !ok {
-				series = &WebMetricSeries{NodeID: s.Node, Name: s.Name, Unit: s.Unit, Source: s.Source, Samples: []WebMetricSample{}}
+				metric, canonical := webMetricConcept(s.Name)
+				series = &WebMetricSeries{NodeID: s.Node, Name: s.Name, Metric: metric, Canonical: canonical, Unit: s.Unit, Source: s.Source, Samples: []WebMetricSample{}}
 				bySeries[key] = series
 			}
 			value := s.Value

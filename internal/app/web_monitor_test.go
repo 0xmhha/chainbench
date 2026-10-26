@@ -161,6 +161,18 @@ func TestWebMonitorRecordsSourcesUnitsAndGapsWithoutInventingValues(t *testing.T
 			t.Fatalf("unreachable or stopped node gained invented series: %+v", s)
 		}
 	}
+	// One canonical series per concept: RPC for height and peers, the
+	// Prometheus spelling of the same value is marked as the second source.
+	for _, want := range []struct {
+		name, metric string
+		canonical    bool
+	}{{"block_height", "block_height", true}, {"chain_head_block", "block_height", false}, {"peer_count", "peer_count", true}, {"p2p_peers", "peer_count", false}, {"txpool_queued", "txpool_queued", true}} {
+		for _, s := range got.Series {
+			if s.NodeID == "node1" && s.Name == want.name && (s.Metric != want.metric || s.Canonical != want.canonical) {
+				t.Fatalf("%s: metric %q canonical %v, want %q %v", want.name, s.Metric, s.Canonical, want.metric, want.canonical)
+			}
+		}
+	}
 	reasons := strings.Join(gapReasons(got.Coverage), ",")
 	for _, want := range []string{"node1 metrics txpool_pending not_exposed", "node2 rpc rpc_unavailable", "node2 metrics metrics_disabled"} {
 		if strings.Count(reasons, want) != 1 {

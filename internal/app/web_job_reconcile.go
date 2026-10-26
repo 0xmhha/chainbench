@@ -55,7 +55,7 @@ func (s *WebJobs) Reconcile(ctx context.Context, a DeploymentActor, id string) (
 	if job.ActorID != a.ID && a.Role != "admin" {
 		return WebJob{}, ErrDeploymentForbidden
 	}
-	if !terminalWebJob(job.State) || job.NodeDisposition != "unknown" && job.State != "interrupted" {
+	if !webJobNeedsCheck(job) {
 		return WebJob{}, errors.New("only an interrupted or unresolved finished job is reconciled")
 	}
 	r, ok := s.engine.(webJobReconciler)
