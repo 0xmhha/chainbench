@@ -159,3 +159,71 @@ func TestJobSnapshotStreamInvalidCursorRequiresResyncWithoutEcho(t *testing.T) {
 		t.Fatal("invalid input became replay position", frame)
 	}
 }
+
+// fakeObservations is a live observation source a test pushes events into.
+type fakeObservations struct{ events chan app.WebObservationEvent }
+
+func (f fakeObservations) SubscribeObservations() (<-chan app.WebObservationEvent, func()) {
+	return f.events, func() {}
+}
+func (fakeObservations) ObservationDrops() uint64 { return 7 }
+
+// TestJobStreamCarriesScopedObservationEventsWithoutMovingTheCursor: the one
+// events stream also carries what the collector saw, scoped to the asked
+// workspace, and those frames carry no id so a reconnect replays jobs exactly.
+func TestJobStreamCarriesScopedObservationEventsWithoutMovingTheCursor(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), snapshotFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial, err := jobs.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := fakeObservations{events: make(chan app.WebObservationEvent, 4)}
+	viewer := func(*http.Request) (app.DeploymentActor, error) {
+		return app.DeploymentActor{ID: "reader", Role: "viewer"}, nil
+	}
+	server := httptest.NewServer(NewServer(nil, nil, WithWebJobs(jobs, viewer), withObservations(source)))
+	defer server.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	defer cancel()
+	request, _ := http.NewRequestWithContext(ctx, "GET", server.URL+"/api/v1/events?workspaceId=owned&cursor="+initial.Cursor, nil)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	at := time.Date(2026, 10, 27, 8, 0, 0, 0, time.UTC)
+	source.events <- app.WebObservationEvent{Type: "metrics", NetworkID: "another", ObservedAt: at, Samples: []app.WebMetricPoint{{NodeID: "node1", Name: "block_height", Metric: "block_height", Canonical: true, Source: "rpc", Time: at, Value: 1}}}
+	source.events <- app.WebObservationEvent{Type: "node", NetworkID: "owned", ObservedAt: at, Node: &app.WebNodeReading{ID: "node4", State: "stopped", ObservationReason: "no_matching_process", ObservedAt: at}}
+	reader := bufio.NewReader(response.Body)
+	for {
+		frame, err := readSnapshotFrame(reader)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if frame.Type == "observation" {
+			var heartbeat map[string]any
+			_ = json.Unmarshal([]byte(frame.Data), &heartbeat)
+			if heartbeat["observationDropsTotal"] != float64(7) {
+				t.Fatalf("heartbeat does not count dropped observations: %s", frame.Data)
+			}
+			continue
+		}
+		if strings.Contains(frame.Data, `"another"`) {
+			t.Fatal("scoped stream leaks another workspace's observations", frame)
+		}
+		if frame.Type != "node" {
+			t.Fatalf("frame = %+v", frame)
+		}
+		if frame.ID != "" {
+			t.Fatal("an observation frame moved the replay cursor", frame)
+		}
+		var event app.WebObservationEvent
+		if err = json.Unmarshal([]byte(frame.Data), &event); err != nil || event.Node.ID != "node4" || event.Node.State != "stopped" {
+			t.Fatalf("node event = %s (%v)", frame.Data, err)
+		}
+		return
+	}
+}

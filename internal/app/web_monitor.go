@@ -65,6 +65,11 @@ type WebMonitor struct {
 	// list can read them while a collection round holds mu.
 	seenMu sync.Mutex
 	seen   map[string]map[string]WebNodeObserved
+	// events fans out what each round saw; see SubscribeObservations.
+	events webObservationHub
+	// heardLines, set only for the length of a local round under mu, hears
+	// the log lines that round archived so they can be announced.
+	heardLines func(label string, lines []webMonitorLogLine)
 }
 
 type webMonitorSample struct {
@@ -199,6 +204,9 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 	}
 	var samples []webMonitorSample
 	var errs []error
+	lines := map[string][]webMonitorLogLine{}
+	m.heardLines = func(label string, got []webMonitorLogLine) { lines[label] = append(lines[label], got...) }
+	defer func() { m.heardLines = nil }()
 	for _, ns := range state.Nodes {
 		label := string(ns.NodeLabel())
 		if ns.PID <= 0 {
@@ -226,10 +234,12 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 		errs = append(errs, err)
 		gaps = append(gaps, webMonitorGap{From: since, To: now, Source: "collector", Reason: "collector_error"})
 	}
+	before := cursor.Open
 	open, ended := mergeWebMonitorGaps(cursor.Open, gaps)
 	if err = appendWebMonitorLines(m.store, network, "gaps.jsonl", append(closed, ended...)); err != nil {
 		return errors.Join(append(errs, err)...) // Keep the cursor: those gaps stay open.
 	}
+	m.publishRound(network, now, samples, before, open, append(closed, ended...), lines)
 	cursor.Open, cursor.LastCollected = open, now
 	raw, err := json.Marshal(cursor)
 	if err == nil {

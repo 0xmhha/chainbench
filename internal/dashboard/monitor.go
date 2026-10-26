@@ -13,6 +13,7 @@ import (
 // signed-in role. The collector itself runs outside request handling.
 func WithWebMonitor(monitor *app.WebMonitor, authenticate DeploymentAuthenticator) Option {
 	return func(s *Server) {
+		s.observations = monitor
 		route := func(pattern string, fn func(http.ResponseWriter, *http.Request, app.DeploymentActor, app.WebMonitorQuery)) {
 			s.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Cache-Control", "no-store")
@@ -81,4 +82,15 @@ func monitorResponse(w http.ResponseWriter, v any, err error) {
 		return
 	}
 	deploymentResponse(w, v, err, http.StatusOK)
+}
+
+// observationSource is what the events stream needs from the collector.
+type observationSource interface {
+	SubscribeObservations() (<-chan app.WebObservationEvent, func())
+	ObservationDrops() uint64
+}
+
+// withObservations sets the live observation source alone, for tests.
+func withObservations(source observationSource) Option {
+	return func(s *Server) { s.observations = source }
 }

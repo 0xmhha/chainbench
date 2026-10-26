@@ -47,6 +47,7 @@ var webContractSchemas = map[string]any{
 	"Validation":        DocumentValidation{},
 	"ImportPreview":     DocumentImportPreview{},
 	"ImportCommit":      DocumentImportCommit{},
+	"ObservationEvent":  WebObservationEvent{},
 }
 
 // webInputOnly names fields a response struct inherits from its input struct
@@ -80,7 +81,13 @@ func (s openAPISchemas) resolve(schema map[string]any) map[string]any {
 		if !ok {
 			break
 		}
-		schema = s[strings.TrimPrefix(ref, "#/components/schemas/")]
+		// A ref may point inside a schema: #/components/schemas/Name/properties/x.
+		parts := strings.Split(strings.TrimPrefix(ref, "#/components/schemas/"), "/")
+		schema = s[parts[0]]
+		for _, part := range parts[1:] {
+			next, _ := schema[part].(map[string]any)
+			schema = next
+		}
 	}
 	parts, ok := schema["allOf"].([]any)
 	if !ok {

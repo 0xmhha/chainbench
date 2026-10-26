@@ -67,9 +67,20 @@ func (m *WebMonitor) observeNetwork(ctx context.Context, network string, state S
 		}
 	}
 	m.seenMu.Lock()
-	defer m.seenMu.Unlock()
+	previous := m.seen[network]
 	if m.seen == nil {
 		m.seen = map[string]map[string]WebNodeObserved{}
 	}
 	m.seen[network] = readings
+	m.seenMu.Unlock()
+	// Announce only what changed; an unchanged reading is not news.
+	for _, ns := range state.Nodes {
+		label := string(ns.NodeLabel())
+		seen, last := readings[label], previous[label]
+		if seen.State == last.State && seen.Reason == last.Reason && seen.PID == last.PID {
+			continue
+		}
+		m.publish(WebObservationEvent{Type: "node", NetworkID: network, ObservedAt: now,
+			Node: &WebNodeReading{ID: label, State: seen.State, ObservationReason: seen.Reason, ObservedPID: seen.PID, ObservedAt: seen.At}})
+	}
 }

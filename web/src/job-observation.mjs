@@ -29,3 +29,13 @@ export function applyJobChange(state, event) {
  }
  return {state:{...state,version:event.version,cursor:event.cursor,jobs},resync:false}
 }
+// applyNodeReading puts a collector reading (a node event) on the node it
+// names. It is not a committed job change, so the version stays; a node the
+// snapshot does not hold is left for the next snapshot rather than invented.
+export function applyNodeReading(state, event) {
+ const reading = event?.node
+ const network = state?.networks?.find(n => n.id === event?.networkId)
+ if (!reading || !network?.nodes?.some(n => n.id === reading.id)) return state
+ const nodes = network.nodes.map(n => n.id === reading.id ? {...n, state: reading.state, observationReason: reading.observationReason, observedPid: reading.observedPid, observedAt: reading.observedAt} : n)
+ return {...state, networks: state.networks.map(n => n === network ? {...n, nodes} : n)}
+}

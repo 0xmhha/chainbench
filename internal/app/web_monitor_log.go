@@ -183,6 +183,8 @@ func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string
 			*pending = append(*pending, webPendingLines{record: day, lines: byDay[day]})
 		} else if err = appendWebMonitorLines(m.store, network, day, byDay[day]); err != nil {
 			return gaps, err
+		} else if m.heardLines != nil {
+			m.heardLines(label, byDay[day])
 		}
 	}
 	cursor.Offsets[label] = offset + int64(end+1)
