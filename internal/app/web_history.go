@@ -228,11 +228,15 @@ func (s *WebHistory) Detail(a DeploymentActor, id string) (WebRun, error) {
 	if err != nil {
 		return run, err
 	}
+	if run.Summary["kind"] == "engine-session" {
+		run.Tests = webRunTests(run)
+	}
 	w, ok := s.windowOf(run)
 	if !ok || w.To.IsZero() {
 		return run, nil
 	}
 	run.FinishedAt = w.To.Format(time.RFC3339Nano)
+	run.Summary["missingDimensions"] = webRunMissing(run)
 	if s.observations != nil {
 		if metrics, err := s.observations.Metrics(a, w.Network, WebMonitorQuery{From: w.From, To: w.To}); err == nil {
 			coverage := metrics.Coverage

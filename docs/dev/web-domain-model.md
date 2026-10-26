@@ -244,7 +244,7 @@ Go 응답 구조체와 OpenAPI로 옮기고, 3-5단계는 이 모델을 SSE로 �
 | `finishedAt` | string | 아니오 | `finishedAt` |
 | `missing` | string[] | 예 | `summary.missingDimensions`. 응답 때 다시 계산한다 |
 | `counts` | `{succeeded, failed, blocked, skipped}` | 아니오 | `summary.counts` |
-| `tests` | `Test[]` | 예 | `summary.tests`와 `summary.results`를 합친다 |
+| `tests` | `Test[]` | 상세에서만 | `summary.tests`와 `summary.results`를 합친다. 목록 응답을 가볍게 두려고 상세에만 싣는다 |
 | `nodes` | `{id, role}[]` | 예 | 새로. 캡처한 `env.json`의 `nodes[]` |
 | `observations` | `{networkId, from, to?}` | 아니오 | `summary.observations` |
 | `captureGaps` | string[] | 예 | `summary.captureGaps` |
@@ -294,7 +294,7 @@ Go 응답 구조체와 OpenAPI로 옮기고, 3-5단계는 이 모델을 SSE로 �
 | `signer`, `hash` | string | 아니오 | `Signer`, `Hash`. 비면 뺀다 |
 | `nonce`, `gas` | string | 아니오 | `Nonce`, `Gas`를 10진 문자열로. 0이거나 비면 뺀다 |
 | `error` | string | 아니오 | `Error` |
-| `deployment` | object | 아니오 | `Deployment` |
+| `deployment` | object | 아니오 | `Deployment`. 그 안의 `nonce`는 엔진 형식 그대로 숫자다 |
 
 영수증 `Receipt` 원본은 모델에 넣지 않는다. 원본 JSON을 보여 주는 내보내기에만 남긴다.
 
