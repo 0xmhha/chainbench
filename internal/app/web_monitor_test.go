@@ -167,8 +167,25 @@ func TestWebMonitorRecordsSourcesUnitsAndGapsWithoutInventingValues(t *testing.T
 			t.Fatalf("gap %q must appear once (merged across samples): %s", want, reasons)
 		}
 	}
-	if strings.Contains(reasons, "node3") {
+	if strings.Contains(reasons, "node3 rpc") || strings.Contains(reasons, "node3 metrics") {
 		t.Fatalf("node without a recorded process was probed: %s", reasons)
+	}
+	// The same gaps arrive as fields, so the screen never splits the string.
+	for _, want := range []WebCoverageGap{
+		{Scope: "node", NodeID: "node1", Source: "metrics", Code: "not_exposed", Metric: "txpool_pending"},
+		{Scope: "node", NodeID: "node2", Source: "rpc", Code: "rpc_unavailable"},
+		{Scope: "node", NodeID: "node3", Source: "collector", Code: "node_stopped"},
+		{Scope: "network", Source: "collector", Code: "not_collected"},
+	} {
+		found := 0
+		for _, g := range got.Coverage.Gaps {
+			if g.Scope == want.Scope && g.NodeID == want.NodeID && g.Source == want.Source && g.Code == want.Code && g.Metric == want.Metric {
+				found++
+			}
+		}
+		if found != 1 {
+			t.Fatalf("structured gap %+v found %d times in %+v", want, found, got.Coverage.Gaps)
+		}
 	}
 	if _, err = m.Metrics(viewer, f.network, WebMonitorQuery{NodeID: "node1", Metric: "p2p_peers"}); err != nil {
 		t.Fatal(err)
@@ -484,4 +501,26 @@ func TestWebMonitorSamplesTheNodesTheCLIReportsRunning(t *testing.T) {
 
 func (recordCLI) Run(context.Context, ...string) ([]byte, error) {
 	return nil, errors.New("recordCLI answers chain status only")
+}
+
+func TestWebCoverageGapFieldsSplitTheArchivedReason(t *testing.T) {
+	at := time.Date(2026, 10, 26, 0, 0, 0, 0, time.UTC)
+	for _, c := range []struct {
+		in   webMonitorGap
+		want WebCoverageGap
+	}{
+		{webMonitorGap{Node: "node1", Source: "logs", Reason: "log_rotated"},
+			WebCoverageGap{Reason: "node1 logs log_rotated", Scope: "node", NodeID: "node1", Source: "logs", Code: "log_rotated"}},
+		{webMonitorGap{Node: "faucet", Source: "metrics", Reason: "p2p_peers not_exposed"},
+			WebCoverageGap{Reason: "faucet metrics p2p_peers not_exposed", Scope: "node", NodeID: "faucet", Source: "metrics", Code: "not_exposed", Metric: "p2p_peers"}},
+		{webMonitorGap{Source: "archive", Reason: "deleted_by_admin job-0123"},
+			WebCoverageGap{Reason: "archive deleted_by_admin job-0123", Scope: "network", Source: "archive", Code: "deleted_by_admin", RunID: "job-0123"}},
+		{webMonitorGap{Source: "collector", Reason: "collector_stale"},
+			WebCoverageGap{Reason: "collector collector_stale", Scope: "network", Source: "collector", Code: "collector_stale"}},
+	} {
+		c.in.From, c.in.To, c.want.From, c.want.To = at, at, at, at
+		if got := webCoverageGap(c.in); got != c.want {
+			t.Errorf("webCoverageGap(%+v) = %+v, want %+v", c.in, got, c.want)
+		}
+	}
 }

@@ -40,9 +40,38 @@ type WebMonitorQuery struct {
 }
 
 type WebCoverageGap struct {
-	From   time.Time `json:"from"`
-	To     time.Time `json:"to"`
-	Reason string    `json:"reason"`
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
+	// Reason is the older joined "<node> <source> <code...>" text; the fields
+	// below carry the same gap without making readers split it.
+	Reason string `json:"reason"`
+	// Scope is "node" when one node lacks data, "network" otherwise.
+	Scope  string `json:"scope"`
+	NodeID string `json:"nodeId,omitempty"`
+	Source string `json:"source"`
+	Code   string `json:"code"`
+	// Metric names the gauge a not_exposed gap is about.
+	Metric string `json:"metric,omitempty"`
+	// RunID names the run whose deletion a deleted_by_admin gap records.
+	RunID string `json:"runId,omitempty"`
+}
+
+// webCoverageGap turns an archived gap into its response form. Two archived
+// reasons carry a value beside the code: "<metric> not_exposed" and
+// "deleted_by_admin <runId>".
+func webCoverageGap(g webMonitorGap) WebCoverageGap {
+	out := WebCoverageGap{From: g.From, To: g.To, Scope: "network", NodeID: g.Node, Source: g.Source, Code: g.Reason,
+		Reason: strings.TrimSpace(strings.Join([]string{g.Node, g.Source, g.Reason}, " "))}
+	if g.Node != "" {
+		out.Scope = "node"
+	}
+	if metric, ok := strings.CutSuffix(g.Reason, " not_exposed"); ok {
+		out.Code, out.Metric = "not_exposed", metric
+	}
+	if run, ok := strings.CutPrefix(g.Reason, "deleted_by_admin "); ok {
+		out.Code, out.RunID = "deleted_by_admin", run
+	}
+	return out
 }
 
 type WebCoverage struct {
@@ -354,10 +383,10 @@ func (m *WebMonitor) coverageGaps(network string, from, to time.Time, corrupt in
 			continue
 		}
 		open[k] = len(out)
-		out = append(out, WebCoverageGap{From: g.From, To: g.To, Reason: strings.TrimSpace(strings.Join([]string{g.Node, g.Source, g.Reason}, " "))})
+		out = append(out, webCoverageGap(g))
 	}
 	if corrupt > 0 {
-		out = append(out, WebCoverageGap{From: from, To: to, Reason: "archive corrupt_record " + strconv.Itoa(corrupt)})
+		out = append(out, WebCoverageGap{From: from, To: to, Reason: "archive corrupt_record " + strconv.Itoa(corrupt), Scope: "network", Source: "archive", Code: "corrupt_record"})
 	}
 	return out, nil
 }

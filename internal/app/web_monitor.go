@@ -185,7 +185,10 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 	for _, ns := range state.Nodes {
 		label := string(ns.NodeLabel())
 		if ns.PID <= 0 {
-			continue // Not recorded as launched; nothing is expected to answer.
+			// Not recorded as launched, so nothing is probed; the missing data
+			// is still a gap, or a stopped node would read as quiet coverage.
+			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "collector", Reason: "node_stopped"})
+			continue
 		}
 		s, g := m.sampleNode(ctx, ns, now, since)
 		samples, gaps = append(samples, s...), append(gaps, g...)
