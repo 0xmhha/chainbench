@@ -28,7 +28,7 @@
     workspace = await api('workspaces/' + network.workspaceId)
     documents = await Promise.all(workspace.documents.map(r => api(`documents/${r.id}?revision=${r.revision}`)))
     operations = (await api('contracts/jobs')).operations
-    activeJobs = (await allItems(api, 'jobs?workspaceId=' + encodeURIComponent(network.workspaceId))).filter(j => ['accepted', 'running', 'cancelling'].includes(j.state))
+    activeJobs = (await allItems(api, 'jobs?workspaceId=' + encodeURIComponent(network.workspaceId))).filter(j => !j.terminal)
     const to = new Date(), from = new Date(to.getTime() - 10 * 60 * 1000)
     logSpan = { from: from.toISOString(), to: to.toISOString() }
     metrics = await api(`networks/${networkId}/metrics?from=${encodeURIComponent(logSpan.from)}&to=${encodeURIComponent(logSpan.to)}`).catch(() => null)

@@ -20,7 +20,7 @@
   {#if !compact}<div class="heading"><strong>{job.operation}</strong><StatusBadge state={job.state} /></div>
   <p>{#if link}<a href={'/jobs/' + job.id} onclick={e => follow(e, '/jobs/' + job.id)}><code>{job.id}</code></a>{:else}<code>{job.id}</code>{/if} · {formatTime(job.createdAt)} · 노드 처리: {job.nodeDisposition}</p>
   <ol>{#each job.phases as phase}<li>{phase.name} · <StatusBadge state={phase.state} />{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>{/if}
-  {#if job.runIds?.length}<p>실제 엔진 세션: {job.runIds.join(', ')}</p><a href={'/history?search=' + encodeURIComponent(job.id)}>세션 결과 보기</a>{/if}
+  {#if job.runIds?.length}<p>실제 엔진 세션: {job.runIds.join(', ')}</p><a class="session-link" href={'/history?search=' + encodeURIComponent(job.id)}>세션 결과 보기</a>{/if}
   {#if job.error && !compact}<p class:error={job.state !== 'cancelled'}>{job.error.message}</p>{/if}
   {#if summary.effects.length}<details><summary>수행된 변경</summary><ul>{#each summary.effects as effect}<li>{effect}</li>{/each}</ul></details>{/if}
   {#if summary.unresolved.length}<p class="error">확인이 필요한 자원: {summary.unresolved.join(', ')}</p>{/if}
@@ -34,5 +34,7 @@
   article { margin-top: var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); }
   .heading { display: flex; justify-content: space-between; gap: var(--space-4); }
   button { margin-top: var(--space-3); }
+  /* A pointer target of at least 24px, as WCAG 2.5.8 asks. */
+  .session-link { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 0; }
   li { margin-top: var(--space-2); } summary { cursor: pointer; }
 </style>

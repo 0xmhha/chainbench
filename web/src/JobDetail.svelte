@@ -1,7 +1,8 @@
 <script>
   import StatusBadge from './StatusBadge.svelte'
   import { onMount } from 'svelte'
-  import { webApi } from './web-api.mjs'
+  import { apiClient } from './api-client.mjs'
+  import { decodeJob, decodeNetworkPage, decodeRun } from './api-decode.mjs'
   import { jobStream } from './job-stream.svelte.js'
   import { jobSummary, failureHeadline, jobDuration, phaseRows, readJobFocus, jobFocusSearch, nodeInMessage } from './job-view.mjs'
   import { formatTime } from './labels.mjs'
@@ -15,18 +16,18 @@
   import { testRows, testLogSpan } from './run-timeline.mjs'
   import { parseHistoryJSON } from './history-json.js'
   let { jobId, webSession } = $props()
-  const api = $derived(webApi(webSession))
+  const client = $derived(apiClient(webSession))
   const feed = jobStream(), live = feed.state
   let fetched = $state(null), error = $state('')
   // The live feed carries every committed change; the first read covers the
   // moment before it connects and names a job that does not exist.
   const job = $derived(live.snapshot?.jobs.find(j => j.id === jobId) ?? fetched)
   const summary = $derived(job ? jobSummary(job) : null)
-  async function load() { error = ''; try { fetched = await api('jobs/' + jobId) } catch (e) { error = e.message } }
+  async function load() { error = ''; try { fetched = await client.request('jobs/' + jobId, { decode: decodeJob }) } catch (e) { error = e.message } }
   // The failed phase is read against the logs of the network the job worked
   // on, and every test run the job produced is shown as its own timeline.
   const PAD_MS = 5000
-  let network = $state(null), runs = $state([]), runsLoaded = $state(false)
+  let network = $state(null), runs = $state([]), runsLoaded = $state(false), runsError = $state('')
   const rows = $derived(phaseRows(job?.phases))
   const failedRow = $derived(rows.find(r => r.open) ?? null)
   const phaseSpan = $derived.by(() => {
@@ -59,8 +60,8 @@
   // first failure unless the URL names another) sets the window and the node.
   const PAD_SECONDS = 5
   const firstRun = $derived(failingRuns[0] ?? null)
-  const testList = $derived(testRows(firstRun?.summary))
-  const chosenTest = $derived(testList.find(r => r.id === focus.test) ?? testList.find(r => ['fail', 'blocked'].includes(r.status)) ?? null)
+  const testList = $derived(testRows(firstRun))
+  const chosenTest = $derived(testList.find(r => r.id === focus.test) ?? testList.find(r => ['failed', 'blocked'].includes(r.status)) ?? null)
   const testSpan = $derived.by(() => {
     if (!chosenTest) return null
     const span = testLogSpan(chosenTest, PAD_SECONDS)
@@ -92,15 +93,16 @@
   $effect(() => {
     const workspace = job?.workspaceId
     if (!workspace || !webSession) return
-    api('networks').then(page => { network = page.items.find(n => n.workspaceId === workspace) ?? null }).catch(() => { network = null })
+    client.request('networks', { decode: decodeNetworkPage }).then(page => { network = page.items.find(n => n.workspaceId === workspace) ?? null }).catch(() => { network = null })
   })
   $effect(() => {
     const ids = job?.runIds ?? []
-    if (!ids.length || !webSession) { runs = []; runsLoaded = true; return }
+    if (!ids.length || !webSession) { runs = []; runsLoaded = true; runsError = ''; return }
     // Raw text keeps large integers exact (parseHistoryJSON), as History does.
-    const read = id => fetch('/api/v1/history/' + encodeURIComponent(id), { cache: 'no-store' }).then(r => r.ok ? r.text() : Promise.reject(new Error(String(r.status)))).then(parseHistoryJSON)
-    Promise.all(ids.map(id => read(id).catch(() => null)))
-      .then(found => { runs = found.filter(Boolean); runsLoaded = true })
+    // A run that cannot be read is named, not dropped without a word.
+    const read = id => client.request('history/' + encodeURIComponent(id), { cache: 'no-store', parse: parseHistoryJSON, decode: decodeRun })
+    Promise.all(ids.map(id => read(id).then(run => ({ run }), e => ({ failure: `${id}: ${e.message}` }))))
+      .then(found => { runs = found.map(f => f.run).filter(Boolean); runsError = found.map(f => f.failure).filter(Boolean).join(' · '); runsLoaded = true })
   })
   $effect(() => { void jobId; if (webSession) load() })
   onMount(() => feed.start())
@@ -123,6 +125,7 @@
       <section class="run" aria-label="실패한 테스트 실행"><RunTimeline run={firstRun} nodes={networkNodes} /></section>
     {/if}
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}
+    {#if runsError}<p class="error" role="alert">테스트 실행 기록을 읽지 못했습니다. {runsError}</p>{/if}
 
     {#if summary.failedPhase && !failingRuns.length}
       <section class="cause" id="cause" aria-label="실패한 단계 시점 로그">

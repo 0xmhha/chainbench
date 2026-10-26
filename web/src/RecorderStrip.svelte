@@ -19,7 +19,7 @@
   for(const s of metrics?.series??[])if(s.name===name&&s.nodeId!==node)for(const p of s.samples)if(typeof p.value==='number')byTime.set(p.time,Math.max(byTime.get(p.time)??-Infinity,p.value))
   return [...byTime].map(([time,value])=>({time,value})).sort((x,y)=>Date.parse(x.time)-Date.parse(y.time))
  })
- const gaps=$derived((metrics?.coverage?.gaps??[]).filter(g=>{const who=String(g.reason).split(/\s+/)[0];return who===node||!/^node|\./.test(who)}).map(g=>({x:stripX(g.from<from?from:g.from,from,to),x2:stripX(g.to>to?to:g.to,from,to),reason:g.reason})).filter(g=>g.x!==null&&g.x2!==null&&g.x2>g.x))
+ const gaps=$derived((metrics?.coverage?.gaps??[]).filter(g=>g.scope!=='node'||g.nodeId===node).map(g=>({x:stripX(g.from<from?from:g.from,from,to),x2:stripX(g.to>to?to:g.to,from,to),gap:g})).filter(g=>g.x!==null&&g.x2!==null&&g.x2>g.x))
  const warns=$derived(events.filter(e=>!ERRORS.includes(e.level)))
  const errors=$derived(events.filter(e=>ERRORS.includes(e.level)))
  const measure=$derived(metrics&&a&&b?measureBetween(metrics,node,a,b):null)
@@ -61,7 +61,7 @@
    {#if tests.length}
     <div class="chan"><span class="lab">테스트<small>{tests.length}건</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
      {#each tests as row (row.seq)}{@const p=bar(row)}{#if p}<rect class="t {row.status}" class:chosen={chosen===row.id} x={p.x} y="4" width={p.w} height="12"><title>{row.id} · {row.status}</title></rect>{/if}{/each}
-    </svg>{#if chosenRow&&bar(chosenRow)}{@const p=bar(chosenRow)}<span class="barname" class:failed={['fail','blocked'].includes(chosenRow.status)} style:left="calc(var(--lab) + (100% - var(--lab)) * {p.x / 100} + 4px)">{chosenRow.id}</span>{/if}</div>
+    </svg>{#if chosenRow&&bar(chosenRow)}{@const p=bar(chosenRow)}<span class="barname" class:failed={['failed','blocked'].includes(chosenRow.status)} style:left="calc(var(--lab) + (100% - var(--lab)) * {p.x / 100} + 4px)">{chosenRow.id}</span>{/if}</div>
    {/if}
    <div class="chan" class:bad={errors.length}><span class="lab">{node} 로그<small>경고 {warns.length} · 오류 {errors.length}</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
     <line class="base" x1="0" y1="17" x2="100" y2="17"/>
@@ -72,7 +72,7 @@
     {@const trace=tracePath(g.series[0]?.samples,from,to,step)}
     {@const m=measure?.gauges[i]}
     <div class="chan" class:bad={m?.abnormal}><span class="lab">{g.label}<small>{trace.segments.length?`${trace.min}–${trace.max}`:'수집 안 됨'}</small></span><svg viewBox="0 -12 100 124" preserveAspectRatio="none">
-     {#each gaps as gap}<rect class="gap" x={gap.x} y="-12" width={gap.x2-gap.x} height="124"><title>누락 · {gapText(gap.reason).text}</title></rect>{/each}
+     {#each gaps as gap}<rect class="gap" x={gap.x} y="-12" width={gap.x2-gap.x} height="124"><title>누락 · {gapText(gap.gap).text}</title></rect>{/each}
      {#if i===0}{#each tracePath(otherBlock,from,to,step).segments as d}<path class="other" d={d}/>{/each}{/if}
      {#each trace.segments as d}<path class="trace" d={d}/>{/each}
     </svg></div>
@@ -126,8 +126,8 @@
  .other { fill: none; stroke: var(--text-faint); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
  .gap { fill: var(--gap-fill); }
  .t { fill: none; stroke: var(--text); stroke-width: 1; vector-effect: non-scaling-stroke; }
- .t.fail { fill: var(--danger); stroke: var(--danger); } .t.blocked { stroke: var(--danger); stroke-dasharray: 3 2; }
- .t.skip { stroke: var(--text-faint); stroke-dasharray: 1 2; }
+ .t.failed { fill: var(--danger); stroke: var(--danger); } .t.blocked { stroke: var(--danger); stroke-dasharray: 3 2; }
+ .t.skipped { stroke: var(--text-faint); stroke-dasharray: 1 2; }
  .t.chosen { stroke-width: 2.5; stroke: var(--text); }
  .cur { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--text-muted); pointer-events: none; }
  .cur b { position: absolute; bottom: 2px; left: 4px; padding: 0 4px; border: 1px solid currentColor; background: var(--bg); font: 700 var(--text-xs) var(--font-mono); white-space: nowrap; }

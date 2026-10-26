@@ -22,7 +22,7 @@
  const networks=$derived((snapshot?.networks??[]).filter(n=>!selection.workspaceId||n.workspaceId===selection.workspaceId))
  const shown=$derived(networks.filter(n=>!selection.networkId||n.id===selection.networkId))
  const jobs=$derived((snapshot?.jobs??[]).filter(j=>!selection.workspaceId||j.workspaceId===selection.workspaceId))
- const activeJob=job=>!['succeeded','failed','cancelled','interrupted'].includes(job.state)
+ const activeJob=job=>!job.terminal
  const mayCancel=job=>activeJob(job)&&webSession&&webSession.user.role!=='viewer'&&(job.actorId===webSession.user.id||webSession.user.role==='administrator')
  async function cancel(job){
   if(!window.confirm(`${job.operation} 작업(${job.id})을 취소합니다. 노드는 작업의 보존 설정에 따라 처리됩니다.`))return
@@ -68,4 +68,7 @@
  .filters{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-4)}
  td{overflow-wrap:anywhere}small,strong{display:block}.network{padding:var(--space-3) 0;border-top:1px solid var(--border-subtle);margin-top:var(--space-2);overflow-wrap:anywhere}
  @media(max-width:800px){.heading{align-items:start;flex-direction:column}table,tbody,tr,td{display:block}thead{display:none}td{padding:var(--space-2) 0;border:0}tr{padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle)}}
+
+  /* Node links sit in muted text; an underline, not colour alone, marks them. */
+  .network small a { text-decoration: underline; text-underline-offset: 2px; }
 </style>

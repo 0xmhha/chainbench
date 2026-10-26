@@ -6,19 +6,15 @@ import { failureMetrics, timeX } from '../../web/src/metric-chart.mjs'
 const ZERO = '0001-01-01T00:00:00Z'
 const failingRun = {
  id: 'run-1',
- summary: {
-  counts: { fail: 1, pass: 1 },
-  tests: [
-   { seq: 1, id: 'deploy', status: 'pass', startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:10Z' },
-   { seq: 2, id: 'transfer', status: 'fail', startedAt: '2026-10-23T07:00:10Z', finishedAt: '2026-10-23T07:00:40Z' }
-  ],
-  results: {
-   'tests/002_transfer/assert.json': [{ ID: 'a1', On: 'node2', Assert: 'balance == 10', Expected: '10', Actual: '9', Pass: false }],
-   'tests/002_transfer/status.json': { reason: 'assertion a1 failed' }
-  }
- }
+ summary: { counts: { fail: 1, pass: 1 } },
+ tests: [
+  { seq: 1, id: 'deploy', state: 'succeeded', startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:10Z', assertions: [], steps: [], postActions: [], artifacts: [] },
+  { seq: 2, id: 'transfer', state: 'failed', startedAt: '2026-10-23T07:00:10Z', finishedAt: '2026-10-23T07:00:40Z', reason: 'assertion a1 failed',
+   assertions: [{ assert: 'balance == 10', nodeId: 'node2', expected: '10', actual: '9', passed: false }], steps: [], postActions: [], artifacts: [] },
+ ],
 }
-const job = (over = {}) => ({ id: 'j1', operation: 'test.run', state: 'failed', createdAt: '2026-10-23T06:59:50Z', phases: [], runIds: [], ...over })
+const ENDED = ['succeeded', 'failed', 'cancelled', 'interrupted']
+const job = (over = {}) => { const state = over.state ?? 'failed'; return { id: 'j1', operation: 'test.run', state, terminal: ENDED.includes(state), needsCheck: false, createdAt: '2026-10-23T06:59:50Z', phases: [], runIds: [], ...over } }
 const headline = (j, runs = []) => failureHeadline(j, jobSummary(j), runs)
 
 test('a failed test names the test, the node and the broken assertion first', () => {
@@ -31,10 +27,10 @@ test('a failed test names the test, the node and the broken assertion first', ()
 
 test('a test without a failing assertion falls back to its step error, then its reason', () => {
  const step = structuredClone(failingRun)
- step.summary.results = { 'tests/002_transfer/steps.json': [{ Index: 3, Type: 'tx', On: 'node3', Error: 'nonce too low' }] }
+ Object.assign(step.tests[1], { assertions: [], steps: [{ index: 3, type: 'tx', nodeId: 'node3', error: 'nonce too low' }] })
  assert.deepEqual([headline(job(), [step]).title, headline(job(), [step]).reason], ['transfer 테스트가 node3에서 실패했습니다', '#3 tx · nonce too low'])
  const bare = structuredClone(failingRun)
- bare.summary.results = { 'tests/002_transfer/status.json': { reason: 'timeout' } }
+ Object.assign(bare.tests[1], { assertions: [], steps: [], reason: 'timeout' })
  assert.deepEqual([headline(job(), [bare]).title, headline(job(), [bare]).reason, headline(job(), [bare]).node], ['transfer 테스트가 실패했습니다', 'timeout', ''])
 })
 
@@ -79,10 +75,13 @@ test('the URL keeps the chosen test and node, and only those', () => {
  assert.equal(jobFocusSearch({ test: '', node: '' }), '')
 })
 
-test('failure metrics pick the rpc spelling first and fall back to the metrics endpoint', () => {
- const series = (name, nodeId) => ({ name, nodeId, unit: 'u', source: 's', samples: [{ time: '2026-10-23T07:00:00Z', value: 1 }] })
- const metrics = { series: [series('chain_head_block', 'node2'), series('block_height', 'node2'), series('p2p_peers', 'node2'), series('txpool_pending', 'node1')] }
+test('failure metrics use the canonical series of each concept and fall back to the second source', () => {
+ const series = (name, metric, canonical, nodeId) => ({ name, metric, canonical, nodeId, unit: 'u', source: canonical ? 'rpc' : 'metrics', samples: [{ time: '2026-10-23T07:00:00Z', value: 1 }] })
+ const metrics = { series: [series('chain_head_block', 'block_height', false, 'node2'), series('block_height', 'block_height', true, 'node2'), series('p2p_peers', 'peer_count', false, 'node2'), series('txpool_pending', 'txpool_pending', true, 'node1')] }
  assert.deepEqual(failureMetrics(metrics, 'node2').map(m => [m.label, m.name, m.series.length]), [['블록 높이', 'block_height', 1], ['피어 수', 'p2p_peers', 1], ['대기 트랜잭션', 'txpool_pending', 0]])
+ // The concept, not a list of spellings, decides: a renamed gauge still lands.
+ const renamed = { series: [series('eth_head', 'block_height', true, 'node2')] }
+ assert.equal(failureMetrics(renamed, 'node2')[0].name, 'eth_head')
 })
 
 test('timeX places a moment on the chart and leaves one outside it unplaced', () => {

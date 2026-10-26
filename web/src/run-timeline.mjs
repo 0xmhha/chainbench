@@ -1,34 +1,29 @@
 // Pure helpers behind the run timeline: which tests failed and how, where each
 // one sits in time, and which log span answers "what happened then".
 
-const FAILED = ['fail', 'blocked']
-const VERDICT_ORDER = ['fail', 'blocked', 'pass', 'skip']
+const FAILED = ['failed', 'blocked']
+// session.json counts verdicts as pass/fail/blocked/skip; the bar speaks the
+// run states the tests themselves carry.
+const VERDICTS = [['fail', 'failed'], ['blocked', 'blocked'], ['pass', 'succeeded'], ['skip', 'skipped']]
 
 const at = value => (value ? Date.parse(value) : NaN)
 
-// The engine writes each test under tests/<seq, three digits>_<id>/.
-const testDir = (seq, id) => `tests/${String(seq).padStart(3, '0')}_${id}/`
-
-// testRows reads the run summary into one row per test, failed and blocked
-// tests first, each carrying the assertions and steps that broke.
-export function testRows(summary) {
- const results = summary?.results ?? {}
- const rows = (summary?.tests ?? []).map(test => {
-  const dir = testDir(test.seq, test.id)
-  const asserts = Array.isArray(results[dir + 'assert.json']) ? results[dir + 'assert.json'] : []
-  const steps = Array.isArray(results[dir + 'steps.json']) ? results[dir + 'steps.json'] : []
-  const status = results[dir + 'status.json'] ?? {}
-  const failedAsserts = asserts.filter(a => a?.Pass === false).map(a => ({ id: a.ID, on: a.On, source: a.Source, assert: a.Assert, expected: a.Expected, actual: a.Actual }))
-  const stepErrors = steps.filter(s => s?.Error).map(s => ({ index: s.Index, type: s.Type, on: s.On, error: s.Error }))
+// testRows turns a run detail's tests (already read from the engine's result
+// files by the server) into one row per test, failed and blocked tests first,
+// each carrying the assertions and steps that broke.
+export function testRows(run) {
+ const rows = (run?.tests ?? []).map(test => {
+  const failedAsserts = (test.assertions ?? []).filter(a => a.passed === false).map(a => ({ assert: a.assert, on: a.nodeId ?? '', compare: a.compare ?? '', source: a.detail ?? '', expected: a.expected, actual: a.actual ?? '' }))
+  const stepErrors = (test.steps ?? []).filter(s => s.error).map(s => ({ index: s.index, type: s.type, on: s.nodeId ?? '', error: s.error }))
   const start = at(test.startedAt), end = at(test.finishedAt)
   return {
    seq: test.seq,
    id: test.id,
-   status: test.status,
+   status: test.state,
    startedAt: test.startedAt ?? null,
    finishedAt: test.finishedAt ?? null,
    durationMs: Number.isFinite(start) && Number.isFinite(end) ? end - start : null,
-   reason: status.reason ?? '',
+   reason: test.reason ?? '',
    failedAsserts,
    stepErrors,
    nodes: [...new Set([...failedAsserts, ...stepErrors].map(x => x.on).filter(Boolean))].sort()
@@ -39,9 +34,9 @@ export function testRows(summary) {
 }
 
 export function verdictSegments(counts) {
- const total = VERDICT_ORDER.reduce((sum, s) => sum + (counts?.[s] ?? 0), 0)
+ const total = VERDICTS.reduce((sum, [key]) => sum + (counts?.[key] ?? 0), 0)
  if (!total) return []
- return VERDICT_ORDER.filter(s => (counts?.[s] ?? 0) > 0).map(s => ({ status: s, count: counts[s], percent: Math.round((counts[s] / total) * 1000) / 10 }))
+ return VERDICTS.filter(([key]) => (counts?.[key] ?? 0) > 0).map(([key, status]) => ({ status, count: counts[key], percent: Math.round((counts[key] / total) * 1000) / 10 }))
 }
 
 // placeOnAxis gives each timed row its left offset and width as percentages of

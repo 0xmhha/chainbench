@@ -10,7 +10,7 @@ const metrics = {
   {nodeId: 'node1', name: 'block_height', unit: 'blocks', source: 'rpc', samples: [{time: '2026-10-09T00:00:05Z', value: 5}, {time: '2026-10-09T00:00:15Z', value: null}]},
   {nodeId: 'node1', name: 'p2p_peers', unit: 'peers', source: 'metrics', samples: [{time: '2026-10-09T00:00:05Z', value: 3}]},
  ],
- coverage: {complete: false, gaps: [{from: '2026-10-09T00:00:10Z', to: '2026-10-09T00:00:15Z', reason: 'node2 rpc rpc_unavailable'}], downsampled: false},
+ coverage: {complete: false, gaps: [{from: '2026-10-09T00:00:10Z', to: '2026-10-09T00:00:15Z', reason: 'node2 rpc rpc_unavailable', scope: 'node', nodeId: 'node2', source: 'rpc', code: 'rpc_unavailable'}], downsampled: false},
 }
 
 test('a chart keeps each node separate, sorted, and scaled to the shared time and value range', () => {
@@ -38,6 +38,13 @@ test('a single value draws a flat line inside the chart', () => {
 
 test('a selected chart time links logs from 30 seconds before to 30 seconds after', () => {
  assert.deepEqual(logWindow('2026-10-09T00:01:00Z', 30), {from: '2026-10-09T00:00:30.000Z', to: '2026-10-09T00:01:30.000Z'})
+})
+
+test('a gap band carries its gap, so a chart can say whose and why', async () => {
+ const {gapBands} = await import('../../web/src/metric-chart.mjs')
+ const model = chartModel(metrics, 'block_height', {width: 100, height: 50})
+ const [band] = gapBands(model, metrics.coverage)
+ assert.equal(band.gap, metrics.coverage.gaps[0])
 })
 
 test('coverage gaps are listed with their reasons rather than hidden', () => {

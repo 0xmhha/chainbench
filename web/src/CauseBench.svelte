@@ -3,7 +3,8 @@
  // window, then the node's logs beside its gauge readings. It reads the
  // window's metrics, the node's warnings and errors and the other nodes'
  // errors, and keeps the cursors on the first warning and the first error.
- import {responseError} from './api-error.mjs'
+ import {readApi} from './api-client.mjs'
+ import {decodeLogs,decodeMetrics} from './api-decode.mjs'
  import LogViewer from './LogViewer.svelte'
  import RecorderStrip from './RecorderStrip.svelte'
  import Readings from './Readings.svelte'
@@ -19,16 +20,15 @@
 
  async function logs(label,levels){
   const q=logQuery({from,to,levels,limit:LOG_PAGE_MAX})
-  const r=await fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+label)}/logs?${q}`,{cache:'no-store'})
-  if(!r.ok)throw await responseError(r)
-  return (await r.json()).entries.map(e=>({...e,node:label}))
+  const page=await readApi(`nodes/${encodeURIComponent(networkId+'.'+label)}/logs?${q}`,{cache:'no-store',decode:decodeLogs})
+  return page.entries.map(e=>({...e,node:label}))
  }
  async function load(){
   const mine=++generation
   error=''
   try{
    const [m,mineEvents,others]=await Promise.all([
-    fetch(`/api/v1/networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,{cache:'no-store'}).then(async r=>r.ok?r.json():Promise.reject(await responseError(r))),
+    readApi(`networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,{cache:'no-store',decode:decodeMetrics}),
     node&&node!==ALL?logs(node,['ERROR','WARN','CRIT']):Promise.resolve([]),
     Promise.all(nodes.filter(n=>n!==node).map(n=>logs(n,['ERROR','CRIT']).catch(()=>[]))).then(x=>x.flat()),
    ])

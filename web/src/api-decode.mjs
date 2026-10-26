@@ -13,10 +13,21 @@
 /** @typedef {import('./api-model.js').Run} Run */
 /** @typedef {import('./api-model.js').Snapshot} Snapshot */
 
+// Korean names of the JSON kinds a checker expects or finds.
+const KINDS = { string: '문자열', number: '숫자', boolean: '참·거짓', object: '객체', 배열: '배열', 객체: '객체' }
+
+/** @param {string} word whether the last syllable has a final consonant */
+const closed = word => {
+ const code = word.charCodeAt(word.length - 1) - 0xac00
+ return code >= 0 && code <= 11171 && code % 28 !== 0
+}
+
 export class FormatError extends Error {
  /** @param {string} path @param {string} expected @param {unknown} value */
  constructor(path, expected, value) {
-  super(`데이터 형식 오류: ${path || '응답'}에 ${expected}이(가) 와야 하는데 ${describe(value)}이(가) 왔습니다`)
+  const want = KINDS[/** @type {keyof typeof KINDS} */ (expected)] ?? expected
+  const got = value === undefined ? '값이 없습니다' : `${describe(value)}입니다`
+  super(`데이터 형식 오류: ${path || '응답'} 값은 ${want}${closed(want) ? '이어야' : '여야'} 하는데 ${got}`)
   this.name = 'FormatError'
   this.kind = 'format'
   this.path = path
@@ -24,7 +35,7 @@ export class FormatError extends Error {
 }
 
 /** @param {unknown} value */
-const describe = value => value === undefined ? '값 없음' : value === null ? 'null' : Array.isArray(value) ? '배열' : typeof value
+const describe = value => value === null ? 'null' : Array.isArray(value) ? '배열' : KINDS[/** @type {keyof typeof KINDS} */ (typeof value)] ?? typeof value
 
 /**
  * A checker validates one value at a path and throws FormatError otherwise.

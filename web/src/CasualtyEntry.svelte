@@ -18,7 +18,7 @@
  <div class="what">
   <h2>{#if head.test&&head.node}{head.test} 테스트가 <span class="ring">{head.node}</span>에서 실패했습니다{:else}{head.title}{/if}</h2>
   {#if evidence}
-   <p class="ev"><code>{evidence.assert ?? evidence.id}</code> · 기대 <del>{shown(evidence.expected)}</del> · 실제 <ins>{shown(evidence.actual)}</ins>{#if diff} · 차이 <ins>{diff}</ins>{/if}</p>
+   <p class="ev"><code>{evidence.assert}</code> · 기대 <del>{shown(evidence.expected)}</del> · 실제 <ins>{shown(evidence.actual)}</ins>{#if diff} · 차이 <ins>{diff}</ins>{/if}</p>
   {:else if head.reason}<p class="ev">{head.reason}</p>{/if}
   {#if head.tone==='fail'&&(head.phase||head.test)}
    <ol class="trail" aria-label="실패 경로">

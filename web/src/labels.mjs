@@ -16,20 +16,24 @@ const GAP_REASONS = {
  log_truncated: '로그 파일이 줄어들어 처음부터 다시 읽음',
  log_line_oversized: '1 MiB를 넘는 줄을 건너뜀',
  remote_log_collection_unavailable: '원격 로그 수집 작업이 없던 구간',
+ node_stopped: '노드가 멈춰 있던 구간',
 }
 
-// Sources name where a gap came from; the collector itself is not a node.
-const NOT_A_NODE = ['collector', 'archive']
-
-// gapText reads a "<node> <source> <code>" gap reason (or "archive
-// corrupt_record <n>") into Korean, keeping the code.
-export function gapText(reason) {
- const parts = String(reason ?? '').trim().split(/\s+/)
- if (parts[0] === 'archive' && parts[1] === 'corrupt_record') return { text: `손상된 보관 기록 ${parts[2] ?? ''}건`.trim(), code: 'corrupt_record' }
- const code = parts.at(-1) ?? ''
- const node = parts.length > 2 && !NOT_A_NODE.includes(parts[0]) ? parts[0] : ''
- const words = GAP_REASONS[code] ?? code
- return { text: node ? `${node} · ${words}` : words, code }
+// gapText reads a coverage gap (api-model.js Gap) into Korean, keeping the
+// engine code beside it. A gap about one node names that node; a code that
+// carries a value (the metric not exposed, the deleted run) names it too.
+export function gapText(gap) {
+ const code = gap?.code ?? ''
+ const nodeId = gap?.scope === 'node' ? gap?.nodeId ?? '' : ''
+ let words = GAP_REASONS[code] ?? code
+ if (code === 'not_exposed') words = `${gap.metric ?? '?'} 지표를 노드가 내놓지 않음`
+ if (code === 'deleted_by_admin') words = `관리자가 지운 실행 ${gap.runId ?? '?'}의 구간`
+ if (code === 'corrupt_record') {
+  // The count lives only in the older joined text, "archive corrupt_record <n>".
+  const count = String(gap.reason ?? '').match(/corrupt_record (\d+)$/)?.[1]
+  words = count ? `손상된 보관 기록 ${count}건` : '손상된 보관 기록'
+ }
+ return { text: nodeId ? `${nodeId} · ${words}` : words, code, nodeId }
 }
 
 const STATES = {

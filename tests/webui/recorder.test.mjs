@@ -12,7 +12,7 @@ test('cursor A sits on the first warning or error and B on the first error, else
  assert.deepEqual(cursorDefaults({ events: [{ time: t(10), level: 'ERROR' }], start: t(6), end: t(24) }), { a: t(6), b: t(10) })
 })
 
-const series = (name, nodeId, values) => ({ name, nodeId, unit: 'u', source: 'rpc', samples: values.map((value, i) => ({ time: t(i * 5), value })) })
+const series = (name, nodeId, values) => ({ name, metric: name, canonical: true, nodeId, unit: 'u', source: 'rpc', samples: values.map((value, i) => ({ time: t(i * 5), value })) })
 const metrics = {
  coverage: { sampleIntervalSeconds: 5 },
  series: [

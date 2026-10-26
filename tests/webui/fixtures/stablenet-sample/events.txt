@@ -1,362 +1,362 @@
-1792916052.850	id: 86909cea53f928c13003a077f2a5bce6:20
-1792916052.851	event: resync_required
-1792916052.851	data: {"type":"resync_required","version":20,"cursor":"86909cea53f928c13003a077f2a5bce6:20","reason":"initial_snapshot_required","observedAt":"2026-10-25T08:14:12.847391Z"}
-1792916052.851	
-1792916053.851	event: observation
-1792916053.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:13.851059Z","version":20}
-1792916053.852	
-1792916054.852	event: observation
-1792916054.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:14.851202Z","version":20}
-1792916054.852	
-1792916055.852	event: observation
-1792916055.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:15.851152Z","version":20}
-1792916055.852	
-1792916056.850	event: observation
-1792916056.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:16.849666Z","version":20}
-1792916056.850	
-1792916057.852	event: observation
-1792916057.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:17.851138Z","version":20}
-1792916057.852	
-1792916058.852	event: observation
-1792916058.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:18.851106Z","version":20}
-1792916058.852	
-1792916059.852	event: observation
-1792916059.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:19.851136Z","version":20}
-1792916059.852	
-1792916060.852	event: observation
-1792916060.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:20.851155Z","version":20}
-1792916060.852	
-1792916061.852	event: observation
-1792916061.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:21.851085Z","version":20}
-1792916061.852	
-1792916062.852	event: observation
-1792916062.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:22.851149Z","version":20}
-1792916062.852	
-1792916063.852	event: observation
-1792916063.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:23.851317Z","version":20}
-1792916063.852	
-1792916064.852	event: observation
-1792916064.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:24.851256Z","version":20}
-1792916064.852	
-1792916065.851	event: observation
-1792916065.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:25.850775Z","version":20}
-1792916065.851	
-1792916066.852	event: observation
-1792916066.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:26.851216Z","version":20}
-1792916066.852	
-1792916067.852	event: observation
-1792916067.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:27.851229Z","version":20}
-1792916067.852	
-1792916068.852	event: observation
-1792916068.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:28.851092Z","version":20}
-1792916068.852	
-1792916069.850	event: observation
-1792916069.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:29.849813Z","version":20}
-1792916069.851	
-1792916070.852	event: observation
-1792916070.853	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:30.8513Z","version":20}
-1792916070.853	
-1792916071.855	event: observation
-1792916071.855	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:31.854213Z","version":20}
-1792916071.855	
-1792916072.850	event: observation
-1792916072.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:32.849698Z","version":20}
-1792916072.851	
-1792916073.852	event: observation
-1792916073.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:33.851198Z","version":20}
-1792916073.852	
-1792916074.852	event: observation
-1792916074.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:34.851149Z","version":20}
-1792916074.852	
-1792916075.852	event: observation
-1792916075.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:35.851281Z","version":20}
-1792916075.852	
-1792916076.851	event: observation
-1792916076.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:36.851108Z","version":20}
-1792916076.851	
-1792916077.859	event: observation
-1792916077.859	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:37.856593Z","version":20}
-1792916077.859	
-1792916078.856	event: observation
-1792916078.856	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:38.854337Z","version":20}
-1792916078.856	
-1792916079.852	event: observation
-1792916079.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:39.851211Z","version":20}
-1792916079.852	
-1792916080.852	event: observation
-1792916080.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:40.851301Z","version":20}
-1792916080.852	
-1792916081.852	event: observation
-1792916081.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:41.851212Z","version":20}
-1792916081.852	
-1792916082.851	event: observation
-1792916082.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:42.85113Z","version":20}
-1792916082.852	
-1792916083.852	event: observation
-1792916083.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:43.851313Z","version":20}
-1792916083.852	
-1792916084.852	event: observation
-1792916084.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:44.851294Z","version":20}
-1792916084.852	
-1792916085.852	event: observation
-1792916085.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:45.851288Z","version":20}
-1792916085.852	
-1792916086.852	event: observation
-1792916086.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:46.851244Z","version":20}
-1792916086.852	
-1792916087.852	event: observation
-1792916087.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:47.851403Z","version":20}
-1792916087.852	
-1792916088.852	event: observation
-1792916088.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:48.851153Z","version":20}
-1792916088.852	
-1792916089.851	event: observation
-1792916089.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:49.851168Z","version":20}
-1792916089.851	
-1792916090.852	event: observation
-1792916090.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:50.851361Z","version":20}
-1792916090.852	
-1792916091.852	event: observation
-1792916091.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:51.851224Z","version":20}
-1792916091.852	
-1792916092.852	event: observation
-1792916092.854	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:52.851353Z","version":20}
-1792916092.854	
-1792916093.852	event: observation
-1792916093.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:53.851168Z","version":20}
-1792916093.852	
-1792916094.852	event: observation
-1792916094.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:54.851273Z","version":20}
-1792916094.852	
-1792916095.852	event: observation
-1792916095.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:55.851636Z","version":20}
-1792916095.852	
-1792916096.852	event: observation
-1792916096.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:56.851211Z","version":20}
-1792916096.852	
-1792916097.852	event: observation
-1792916097.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:57.851261Z","version":20}
-1792916097.852	
-1792916098.852	event: observation
-1792916098.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:58.851193Z","version":20}
-1792916098.852	
-1792916099.852	event: observation
-1792916099.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:14:59.851214Z","version":20}
-1792916099.852	
-1792916100.853	event: observation
-1792916100.853	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:00.851591Z","version":20}
-1792916100.853	
-1792916101.852	event: observation
-1792916101.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:01.851215Z","version":20}
-1792916101.852	
-1792916102.852	event: observation
-1792916102.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:02.851312Z","version":20}
-1792916102.852	
-1792916103.851	event: observation
-1792916103.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:03.851111Z","version":20}
-1792916103.851	
-1792916104.852	event: observation
-1792916104.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:04.851227Z","version":20}
-1792916104.852	
-1792916105.852	event: observation
-1792916105.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:05.851354Z","version":20}
-1792916105.852	
-1792916106.852	event: observation
-1792916106.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:06.851417Z","version":20}
-1792916106.852	
-1792916107.850	event: observation
-1792916107.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:07.849853Z","version":20}
-1792916107.850	
-1792916108.852	event: observation
-1792916108.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:08.851306Z","version":20}
-1792916108.852	
-1792916109.852	event: observation
-1792916109.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:09.851233Z","version":20}
-1792916109.852	
-1792916110.852	event: observation
-1792916110.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:10.851273Z","version":20}
-1792916110.852	
-1792916111.852	event: observation
-1792916111.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:11.851245Z","version":20}
-1792916111.852	
-1792916112.852	event: observation
-1792916112.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:12.851288Z","version":20}
-1792916112.852	
-1792916113.852	event: observation
-1792916113.853	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:13.851487Z","version":20}
-1792916113.853	
-1792916114.852	event: observation
-1792916114.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:14.851331Z","version":20}
-1792916114.852	
-1792916115.852	event: observation
-1792916115.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:15.851217Z","version":20}
-1792916115.852	
-1792916116.852	event: observation
-1792916116.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:16.851016Z","version":20}
-1792916116.852	
-1792916117.851	event: observation
-1792916117.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:17.85078Z","version":20}
-1792916117.852	
-1792916118.852	event: observation
-1792916118.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:18.851386Z","version":20}
-1792916118.852	
-1792916119.851	event: observation
-1792916119.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:19.850783Z","version":20}
-1792916119.851	
-1792916120.853	event: observation
-1792916120.853	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:20.852407Z","version":20}
-1792916120.853	
-1792916121.852	event: observation
-1792916121.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:21.851247Z","version":20}
-1792916121.852	
-1792916122.852	event: observation
-1792916122.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:22.851302Z","version":20}
-1792916122.852	
-1792916123.852	event: observation
-1792916123.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:23.851256Z","version":20}
-1792916123.852	
-1792916124.850	event: observation
-1792916124.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:24.849208Z","version":20}
-1792916124.850	
-1792916125.850	event: observation
-1792916125.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:25.8494Z","version":20}
-1792916125.850	
-1792916126.852	event: observation
-1792916126.853	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:26.85156Z","version":20}
-1792916126.853	
-1792916127.852	event: observation
-1792916127.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:27.851268Z","version":20}
-1792916127.852	
-1792916128.852	event: observation
-1792916128.860	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:28.851231Z","version":20}
-1792916128.860	
-1792916129.852	event: observation
-1792916129.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:29.851039Z","version":20}
-1792916129.852	
-1792916130.852	event: observation
-1792916130.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:30.851328Z","version":20}
-1792916130.852	
-1792916131.852	event: observation
-1792916131.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:31.851295Z","version":20}
-1792916131.852	
-1792916132.852	event: observation
-1792916132.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:32.851317Z","version":20}
-1792916132.853	
-1792916133.852	event: observation
-1792916133.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:33.851267Z","version":20}
-1792916133.852	
-1792916134.851	event: observation
-1792916134.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:34.850343Z","version":20}
-1792916134.851	
-1792916135.852	event: observation
-1792916135.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:35.850848Z","version":20}
-1792916135.852	
-1792916136.851	event: observation
-1792916136.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:36.850414Z","version":20}
-1792916136.851	
-1792916137.852	event: observation
-1792916137.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:37.851388Z","version":20}
-1792916137.852	
-1792916138.852	event: observation
-1792916138.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:38.851285Z","version":20}
-1792916138.852	
-1792916139.853	event: observation
-1792916139.853	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:39.851551Z","version":20}
-1792916139.853	
-1792916140.851	event: observation
-1792916140.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:40.8504Z","version":20}
-1792916140.851	
-1792916141.852	event: observation
-1792916141.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:41.851355Z","version":20}
-1792916141.852	
-1792916142.850	event: observation
-1792916142.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:42.849699Z","version":20}
-1792916142.850	
-1792916143.851	event: observation
-1792916143.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:43.851204Z","version":20}
-1792916143.851	
-1792916144.852	event: observation
-1792916144.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:44.851274Z","version":20}
-1792916144.852	
-1792916145.852	event: observation
-1792916145.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:45.851327Z","version":20}
-1792916145.852	
-1792916146.850	event: observation
-1792916146.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:46.849831Z","version":20}
-1792916146.850	
-1792916147.852	event: observation
-1792916147.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:47.851035Z","version":20}
-1792916147.852	
-1792916148.852	event: observation
-1792916148.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:48.851334Z","version":20}
-1792916148.852	
-1792916149.852	event: observation
-1792916149.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:49.851296Z","version":20}
-1792916149.852	
-1792916150.852	event: observation
-1792916150.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:50.851326Z","version":20}
-1792916150.852	
-1792916151.852	event: observation
-1792916151.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:51.851343Z","version":20}
-1792916151.852	
-1792916152.852	event: observation
-1792916152.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:52.851354Z","version":20}
-1792916152.852	
-1792916153.852	event: observation
-1792916153.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:53.851344Z","version":20}
-1792916153.852	
-1792916154.851	event: observation
-1792916154.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:54.851248Z","version":20}
-1792916154.852	
-1792916155.852	event: observation
-1792916155.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:55.85137Z","version":20}
-1792916155.852	
-1792916156.852	event: observation
-1792916156.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:56.851372Z","version":20}
-1792916156.852	
-1792916157.852	event: observation
-1792916157.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:57.851348Z","version":20}
-1792916157.852	
-1792916158.852	event: observation
-1792916158.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:58.851286Z","version":20}
-1792916158.852	
-1792916159.852	event: observation
-1792916159.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:15:59.851318Z","version":20}
-1792916159.852	
-1792916160.852	event: observation
-1792916160.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:00.851385Z","version":20}
-1792916160.852	
-1792916161.852	event: observation
-1792916161.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:01.851263Z","version":20}
-1792916161.852	
-1792916162.852	event: observation
-1792916162.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:02.851327Z","version":20}
-1792916162.852	
-1792916163.852	event: observation
-1792916163.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:03.851378Z","version":20}
-1792916163.852	
-1792916164.852	event: observation
-1792916164.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:04.851323Z","version":20}
-1792916164.852	
-1792916165.851	event: observation
-1792916165.851	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:05.850658Z","version":20}
-1792916165.851	
-1792916166.850	event: observation
-1792916166.850	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:06.849354Z","version":20}
-1792916166.850	
-1792916167.852	event: observation
-1792916167.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:07.851452Z","version":20}
-1792916167.852	
-1792916168.852	event: observation
-1792916168.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:08.851336Z","version":20}
-1792916168.852	
-1792916169.852	event: observation
-1792916169.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:09.851368Z","version":20}
-1792916169.852	
-1792916170.852	event: observation
-1792916170.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:10.851364Z","version":20}
-1792916170.852	
-1792916171.852	event: observation
-1792916171.852	data: {"cursor":"86909cea53f928c13003a077f2a5bce6:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-25T08:16:11.851419Z","version":20}
-1792916171.852	
-1792916172.852	event: observation
+1793052476.422	id: a439569a7d8b86cada36eaebd69e38f1:20
+1793052476.423	event: resync_required
+1793052476.423	data: {"type":"resync_required","version":20,"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","reason":"initial_snapshot_required","observedAt":"2026-10-26T22:07:56.415399Z"}
+1793052476.423	
+1793052477.421	event: observation
+1793052477.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:07:57.42056Z","version":20}
+1793052477.421	
+1793052478.422	event: observation
+1793052478.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:07:58.420716Z","version":20}
+1793052478.422	
+1793052479.421	event: observation
+1793052479.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:07:59.420453Z","version":20}
+1793052479.421	
+1793052480.421	event: observation
+1793052480.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:00.420023Z","version":20}
+1793052480.421	
+1793052481.419	event: observation
+1793052481.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:01.418982Z","version":20}
+1793052481.419	
+1793052482.421	event: observation
+1793052482.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:02.42011Z","version":20}
+1793052482.421	
+1793052483.422	event: observation
+1793052483.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:03.420694Z","version":20}
+1793052483.422	
+1793052484.420	event: observation
+1793052484.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:04.419684Z","version":20}
+1793052484.420	
+1793052485.421	event: observation
+1793052485.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:05.420519Z","version":20}
+1793052485.422	
+1793052486.422	event: observation
+1793052486.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:06.420723Z","version":20}
+1793052486.422	
+1793052487.422	event: observation
+1793052487.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:07.420142Z","version":20}
+1793052487.422	
+1793052488.421	event: observation
+1793052488.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:08.420344Z","version":20}
+1793052488.421	
+1793052489.421	event: observation
+1793052489.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:09.420379Z","version":20}
+1793052489.421	
+1793052490.421	event: observation
+1793052490.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:10.420334Z","version":20}
+1793052490.421	
+1793052491.421	event: observation
+1793052491.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:11.420382Z","version":20}
+1793052491.421	
+1793052492.420	event: observation
+1793052492.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:12.420259Z","version":20}
+1793052492.420	
+1793052493.425	event: observation
+1793052493.425	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:13.421437Z","version":20}
+1793052493.425	
+1793052494.421	event: observation
+1793052494.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:14.420327Z","version":20}
+1793052494.421	
+1793052495.421	event: observation
+1793052495.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:15.420197Z","version":20}
+1793052495.421	
+1793052496.421	event: observation
+1793052496.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:16.42025Z","version":20}
+1793052496.421	
+1793052497.420	event: observation
+1793052497.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:17.419519Z","version":20}
+1793052497.420	
+1793052498.420	event: observation
+1793052498.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:18.41964Z","version":20}
+1793052498.421	
+1793052499.420	event: observation
+1793052499.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:19.420217Z","version":20}
+1793052499.420	
+1793052500.421	event: observation
+1793052500.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:20.420156Z","version":20}
+1793052500.421	
+1793052501.420	event: observation
+1793052501.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:21.420159Z","version":20}
+1793052501.420	
+1793052502.421	event: observation
+1793052502.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:22.420385Z","version":20}
+1793052502.421	
+1793052503.420	event: observation
+1793052503.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:23.419261Z","version":20}
+1793052503.420	
+1793052504.421	event: observation
+1793052504.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:24.420216Z","version":20}
+1793052504.421	
+1793052505.421	event: observation
+1793052505.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:25.420211Z","version":20}
+1793052505.421	
+1793052506.421	event: observation
+1793052506.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:26.420246Z","version":20}
+1793052506.421	
+1793052507.421	event: observation
+1793052507.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:27.420283Z","version":20}
+1793052507.421	
+1793052508.421	event: observation
+1793052508.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:28.420167Z","version":20}
+1793052508.421	
+1793052509.421	event: observation
+1793052509.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:29.42025Z","version":20}
+1793052509.421	
+1793052510.420	event: observation
+1793052510.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:30.420045Z","version":20}
+1793052510.420	
+1793052511.421	event: observation
+1793052511.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:31.420264Z","version":20}
+1793052511.421	
+1793052512.419	event: observation
+1793052512.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:32.418618Z","version":20}
+1793052512.419	
+1793052513.421	event: observation
+1793052513.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:33.420171Z","version":20}
+1793052513.421	
+1793052514.421	event: observation
+1793052514.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:34.420125Z","version":20}
+1793052514.421	
+1793052515.421	event: observation
+1793052515.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:35.420116Z","version":20}
+1793052515.421	
+1793052516.421	event: observation
+1793052516.424	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:36.420137Z","version":20}
+1793052516.424	
+1793052517.420	event: observation
+1793052517.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:37.42006Z","version":20}
+1793052517.420	
+1793052518.420	event: observation
+1793052518.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:38.420047Z","version":20}
+1793052518.420	
+1793052519.422	event: observation
+1793052519.423	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:39.420466Z","version":20}
+1793052519.423	
+1793052520.420	event: observation
+1793052520.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:40.419942Z","version":20}
+1793052520.420	
+1793052521.420	event: observation
+1793052521.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:41.419561Z","version":20}
+1793052521.420	
+1793052522.421	event: observation
+1793052522.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:42.42016Z","version":20}
+1793052522.421	
+1793052523.421	event: observation
+1793052523.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:43.420101Z","version":20}
+1793052523.421	
+1793052524.421	event: observation
+1793052524.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:44.420112Z","version":20}
+1793052524.421	
+1793052525.420	event: observation
+1793052525.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:45.419908Z","version":20}
+1793052525.420	
+1793052526.420	event: observation
+1793052526.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:46.419962Z","version":20}
+1793052526.420	
+1793052527.421	event: observation
+1793052527.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:47.42004Z","version":20}
+1793052527.421	
+1793052528.420	event: observation
+1793052528.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:48.419942Z","version":20}
+1793052528.420	
+1793052529.421	event: observation
+1793052529.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:49.42011Z","version":20}
+1793052529.421	
+1793052530.420	event: observation
+1793052530.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:50.419839Z","version":20}
+1793052530.420	
+1793052531.420	event: observation
+1793052531.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:51.419842Z","version":20}
+1793052531.420	
+1793052532.420	event: observation
+1793052532.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:52.419924Z","version":20}
+1793052532.420	
+1793052533.418	event: observation
+1793052533.418	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:53.41795Z","version":20}
+1793052533.418	
+1793052534.420	event: observation
+1793052534.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:54.419877Z","version":20}
+1793052534.420	
+1793052535.421	event: observation
+1793052535.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:55.419907Z","version":20}
+1793052535.421	
+1793052536.419	event: observation
+1793052536.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:56.418868Z","version":20}
+1793052536.419	
+1793052537.421	event: observation
+1793052537.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:57.419964Z","version":20}
+1793052537.421	
+1793052538.422	event: observation
+1793052538.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:58.420032Z","version":20}
+1793052538.422	
+1793052539.419	event: observation
+1793052539.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:08:59.418704Z","version":20}
+1793052539.419	
+1793052540.420	event: observation
+1793052540.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:00.419873Z","version":20}
+1793052540.421	
+1793052541.420	event: observation
+1793052541.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:01.419725Z","version":20}
+1793052541.420	
+1793052542.421	event: observation
+1793052542.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:02.419958Z","version":20}
+1793052542.421	
+1793052543.420	event: observation
+1793052543.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:03.419836Z","version":20}
+1793052543.420	
+1793052544.419	event: observation
+1793052544.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:04.41884Z","version":20}
+1793052544.419	
+1793052545.418	event: observation
+1793052545.418	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:05.418184Z","version":20}
+1793052545.418	
+1793052546.423	event: observation
+1793052546.423	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:06.420305Z","version":20}
+1793052546.423	
+1793052547.421	event: observation
+1793052547.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:07.419907Z","version":20}
+1793052547.421	
+1793052548.420	event: observation
+1793052548.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:08.419688Z","version":20}
+1793052548.420	
+1793052549.421	event: observation
+1793052549.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:09.419933Z","version":20}
+1793052549.421	
+1793052550.420	event: observation
+1793052550.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:10.419609Z","version":20}
+1793052550.420	
+1793052551.420	event: observation
+1793052551.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:11.419595Z","version":20}
+1793052551.420	
+1793052552.420	event: observation
+1793052552.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:12.419653Z","version":20}
+1793052552.420	
+1793052553.422	event: observation
+1793052553.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:13.420001Z","version":20}
+1793052553.422	
+1793052554.420	event: observation
+1793052554.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:14.419818Z","version":20}
+1793052554.420	
+1793052555.420	event: observation
+1793052555.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:15.419575Z","version":20}
+1793052555.421	
+1793052556.420	event: observation
+1793052556.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:16.419596Z","version":20}
+1793052556.421	
+1793052557.422	event: observation
+1793052557.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:17.419785Z","version":20}
+1793052557.422	
+1793052558.419	event: observation
+1793052558.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:18.418084Z","version":20}
+1793052558.419	
+1793052559.421	event: observation
+1793052559.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:19.41935Z","version":20}
+1793052559.421	
+1793052560.420	event: observation
+1793052560.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:20.419557Z","version":20}
+1793052560.420	
+1793052561.420	event: observation
+1793052561.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:21.419592Z","version":20}
+1793052561.420	
+1793052562.420	event: observation
+1793052562.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:22.419577Z","version":20}
+1793052562.420	
+1793052563.420	event: observation
+1793052563.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:23.418928Z","version":20}
+1793052563.420	
+1793052564.421	event: observation
+1793052564.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:24.418793Z","version":20}
+1793052564.421	
+1793052565.419	event: observation
+1793052565.419	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:25.418872Z","version":20}
+1793052565.419	
+1793052566.420	event: observation
+1793052566.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:26.419545Z","version":20}
+1793052566.420	
+1793052567.420	event: observation
+1793052567.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:27.419435Z","version":20}
+1793052567.420	
+1793052568.421	event: observation
+1793052568.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:28.41991Z","version":20}
+1793052568.421	
+1793052569.422	event: observation
+1793052569.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:29.421249Z","version":20}
+1793052569.422	
+1793052570.420	event: observation
+1793052570.420	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:30.41951Z","version":20}
+1793052570.420	
+1793052571.421	event: observation
+1793052571.421	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:31.420835Z","version":20}
+1793052571.421	
+1793052572.422	event: observation
+1793052572.422	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:32.422026Z","version":20}
+1793052572.422	
+1793052573.424	event: observation
+1793052573.424	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:33.423469Z","version":20}
+1793052573.424	
+1793052574.425	event: observation
+1793052574.425	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:34.424517Z","version":20}
+1793052574.425	
+1793052575.426	event: observation
+1793052575.426	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:35.425712Z","version":20}
+1793052575.426	
+1793052576.427	event: observation
+1793052576.427	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:36.426694Z","version":20}
+1793052576.427	
+1793052577.428	event: observation
+1793052577.428	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:37.427093Z","version":20}
+1793052577.428	
+1793052578.443	event: observation
+1793052578.443	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:38.429347Z","version":20}
+1793052578.443	
+1793052579.429	event: observation
+1793052579.429	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:39.428679Z","version":20}
+1793052579.429	
+1793052580.431	event: observation
+1793052580.431	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:40.430147Z","version":20}
+1793052580.431	
+1793052581.432	event: observation
+1793052581.432	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:41.430438Z","version":20}
+1793052581.432	
+1793052582.433	event: observation
+1793052582.433	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:42.431142Z","version":20}
+1793052582.433	
+1793052583.433	event: observation
+1793052583.433	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:43.432376Z","version":20}
+1793052583.433	
+1793052584.433	event: observation
+1793052584.433	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:44.432193Z","version":20}
+1793052584.433	
+1793052585.433	event: observation
+1793052585.434	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:45.432016Z","version":20}
+1793052585.434	
+1793052586.436	event: observation
+1793052586.436	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:46.434737Z","version":20}
+1793052586.436	
+1793052587.435	event: observation
+1793052587.436	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:47.434849Z","version":20}
+1793052587.436	
+1793052588.436	event: observation
+1793052588.436	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:48.435171Z","version":20}
+1793052588.436	
+1793052589.435	event: observation
+1793052589.435	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:49.434551Z","version":20}
+1793052589.435	
+1793052590.436	event: observation
+1793052590.436	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:50.435845Z","version":20}
+1793052590.436	
+1793052591.437	event: observation
+1793052591.437	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:51.436428Z","version":20}
+1793052591.437	
+1793052592.437	event: observation
+1793052592.437	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:52.436641Z","version":20}
+1793052592.437	
+1793052593.440	event: observation
+1793052593.441	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:53.438009Z","version":20}
+1793052593.441	
+1793052594.437	event: observation
+1793052594.437	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:54.436533Z","version":20}
+1793052594.437	
+1793052595.438	event: observation
+1793052595.438	data: {"cursor":"a439569a7d8b86cada36eaebd69e38f1:20","jobDeliveryDropsTotal":0,"observedAt":"2026-10-26T22:09:55.437697Z","version":20}
+1793052595.438	
+1793052596.440	event: observation
