@@ -31,7 +31,9 @@ var errNoChainCLI = errors.New("the chainbench CLI is not configured for this da
 func (e *WebChainEngine) UseCLI(c ChainCLI) { e.cli = c }
 
 type WebNode struct {
-	ID                string   `json:"id"`
+	ID string `json:"id"`
+	// Ref is "<networkId>.<id>", the form the logs API addresses a node by.
+	Ref               string   `json:"ref"`
 	NetworkID         string   `json:"networkId"`
 	Role              string   `json:"role"`
 	HostIdentity      string   `json:"hostIdentity"`
@@ -98,7 +100,7 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			if target.HostIdentity == "" {
 				controls = []string{}
 			}
-			n := WebNode{ID: string(ns.NodeLabel()), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
+			n := WebNode{ID: string(ns.NodeLabel()), Ref: w.ID + "." + string(ns.NodeLabel()), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
 			n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
 			network.Nodes = append(network.Nodes, n)
 		}

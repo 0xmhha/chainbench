@@ -94,12 +94,16 @@ type WebJobPhase struct {
 }
 
 type WebJob struct {
-	ID              string        `json:"id"`
-	ActorID         string        `json:"actorId"`
-	WorkspaceID     string        `json:"workspaceId"`
-	PlanID          string        `json:"planId"`
-	Operation       string        `json:"operation"`
-	State           string        `json:"state"`
+	ID          string `json:"id"`
+	ActorID     string `json:"actorId"`
+	WorkspaceID string `json:"workspaceId"`
+	PlanID      string `json:"planId"`
+	Operation   string `json:"operation"`
+	State       string `json:"state"`
+	// Terminal and NeedsCheck are derived on every read so screens do not keep
+	// their own list of final states or their own reconcile rule.
+	Terminal        bool          `json:"terminal"`
+	NeedsCheck      bool          `json:"needsCheck"`
 	Phases          []WebJobPhase `json:"phases"`
 	CreatedAt       time.Time     `json:"createdAt"`
 	Retention       string        `json:"retention"`
@@ -136,4 +140,10 @@ type WebJobEngine interface {
 
 func terminalWebJob(state string) bool {
 	return state == "succeeded" || state == "failed" || state == "cancelled" || state == "interrupted"
+}
+
+// webJobNeedsCheck is whether the job ended without knowing what it left on
+// its machines, which is when Reconcile may run.
+func webJobNeedsCheck(job WebJob) bool {
+	return terminalWebJob(job.State) && (job.State == "interrupted" || job.NodeDisposition == "unknown")
 }

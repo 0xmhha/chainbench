@@ -271,3 +271,23 @@ func TestJobObservationFailedDurableWritePublishesNothing(t *testing.T) {
 	default:
 	}
 }
+
+func TestWebJobsSayWhetherTheyEndedAndNeedACheck(t *testing.T) {
+	for _, c := range []struct {
+		state, disposition   string
+		terminal, needsCheck bool
+	}{
+		{"accepted", "unknown", false, false},
+		{"running", "unknown", false, false},
+		{"cancelling", "unknown", false, false},
+		{"succeeded", "retained", true, false},
+		{"failed", "unknown", true, true},
+		{"cancelled", "cleaned", true, false},
+		{"interrupted", "retained", true, true},
+	} {
+		got := detachedWebJob(WebJob{State: c.state, NodeDisposition: c.disposition})
+		if got.Terminal != c.terminal || got.NeedsCheck != c.needsCheck {
+			t.Errorf("%s/%s: terminal %v needsCheck %v, want %v %v", c.state, c.disposition, got.Terminal, got.NeedsCheck, c.terminal, c.needsCheck)
+		}
+	}
+}
