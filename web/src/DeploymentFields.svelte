@@ -1,19 +1,12 @@
 <script>
   import DeploymentFields from "./DeploymentFields.svelte"
+  import { schemaDefault } from "./schema-problems.mjs"
   // problems maps a field path to what is wrong with it; that field is marked
   // invalid and described by the message.
   let { schema, value, path = 'content', change, problems = {} } = $props()
   const problem = $derived(problems[path] ?? '')
   const invalid = $derived(problem ? { 'aria-invalid': 'true', 'aria-describedby': `${path}-problem` } : {})
   let propertyName = $state('')
-  function defaultValue(s) {
-    if (s.enum) return s.enum[0]
-    if (s.type === 'object') return Object.fromEntries((s.required ?? []).map(k => [k, defaultValue(s.properties[k])]))
-    if (s.type === 'array') return []
-    if (s.type === 'integer') return 0
-    if (s.type === 'boolean') return false
-    return ''
-  }
   function field(k, v) { change({ ...value, [k]: v }) }
   function omit(k) { const next = { ...value }; delete next[k]; change(next) }
 </script>
@@ -29,7 +22,7 @@
           {#if !required}<button type="button" onclick={() => omit(key)}>{key} 빼기</button>{/if}
         </div>
       {:else}
-        <button type="button" onclick={() => field(key, defaultValue(spec))}>{key} 추가</button>
+        <button type="button" onclick={() => field(key, schemaDefault(spec))}>{key} 추가</button>
       {/if}
     {/each}
     {#if schema.additionalProperties}
@@ -38,7 +31,7 @@
         <button type="button" onclick={() => omit(key)}>{key} 삭제</button>
       {/each}
       <label>항목 이름 <input name="property-name" aria-label={`${path}.entry-name`} bind:value={propertyName} /></label>
-      <button type="button" disabled={!propertyName || Object.hasOwn(value ?? {}, propertyName)} onclick={() => { field(propertyName, defaultValue(schema.additionalProperties)); propertyName = '' }}>항목 추가</button>
+      <button type="button" disabled={!propertyName || Object.hasOwn(value ?? {}, propertyName)} onclick={() => { field(propertyName, schemaDefault(schema.additionalProperties)); propertyName = '' }}>항목 추가</button>
     {/if}
   </fieldset>
 {:else if schema.type === 'array'}
@@ -48,7 +41,7 @@
       <DeploymentFields schema={schema.items} value={entry} path={`${path}[${i}]`} {problems} change={v => change(value.map((old, j) => j === i ? v : old))} />
       <button type="button" onclick={() => change(value.filter((_, j) => j !== i))}>{i + 1}번 항목 삭제</button>
     {/each}
-    <button type="button" onclick={() => change([...(value ?? []), defaultValue(schema.items)])}>항목 추가</button>
+    <button type="button" onclick={() => change([...(value ?? []), schemaDefault(schema.items)])}>항목 추가</button>
   </fieldset>
 {:else if schema.enum}
   <label data-field-path={path}>{path}<select name={path} aria-label={path} {...invalid} value={value} onchange={e => change(schema.type === 'integer' ? Number(e.target.value) : e.target.value)}>

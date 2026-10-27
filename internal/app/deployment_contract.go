@@ -10,7 +10,12 @@ import (
 
 // DeploymentField describes engine-owned YAML fields for structured Web editing.
 type DeploymentField struct {
-	Type       string                     `json:"type"`
+	Type        string `json:"type"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	// Default is set only where the engine fills the value itself.
+	Default    any                        `json:"default,omitempty"`
+	MinLength  *int                       `json:"minLength,omitempty"`
 	Minimum    *int                       `json:"minimum,omitempty"`
 	Maximum    *int                       `json:"maximum,omitempty"`
 	Properties map[string]DeploymentField `json:"properties,omitempty"`
@@ -60,7 +65,14 @@ func DeploymentContract() map[string]DeploymentField {
 	chain.Enum = []any{resource.ChainFresh, resource.ChainReuseIfMatching, resource.ChainAttach}
 	execution.Properties["chain"] = chain
 	config.Properties["execution"] = execution
-	return map[string]DeploymentField{"server-set": set, "workspace-config": config}
+	defaults, nonEmpty := deploymentDefaults(), map[string]bool{}
+	for _, path := range deploymentNonEmpty {
+		nonEmpty[path] = true
+	}
+	return map[string]DeploymentField{
+		"server-set":       describeDeploymentField("server-set", set, defaults, nonEmpty),
+		"workspace-config": describeDeploymentField("workspace-config", config, defaults, nonEmpty),
+	}
 }
 func deploymentField(t reflect.Type) DeploymentField {
 	if t.Kind() == reflect.Pointer {
