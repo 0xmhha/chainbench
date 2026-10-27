@@ -132,6 +132,7 @@ func checkWebArguments(operation string, raw json.RawMessage) error {
 	}
 	return nil
 }
+
 type webChainPayload struct {
 	Input             WebPlanInput           `json:"input"`
 	Arguments         webChainArguments      `json:"arguments"`
