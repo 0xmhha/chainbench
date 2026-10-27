@@ -59,6 +59,7 @@ var webArgumentKinds = map[string]WebArgument{
 	"binaryAssets":              {Type: "stringMap", Title: "추가 바이너리", Description: "케이스가 default 밖에 선언한 바이너리 이름마다 등록 바이너리를 고릅니다."},
 	"noSkips":                   {Type: "boolean", Title: "건너뛴 케이스를 실패로", Description: "건너뛴 케이스가 하나라도 있으면 작업이 실패합니다."},
 	"waitBlocks":                {Type: "integer", Title: "시작 전 대기 높이", Description: "체인 머리가 이 높이에 닿은 뒤 케이스를 시작합니다.", Minimum: bound(1), Maximum: bound(1_000_000)},
+	"chainId":                   {Type: "integer", Title: "체인 id", Description: "genesis의 체인 id를 이 값으로 바꿉니다. 비우면 manifest의 체인 id입니다. 체인 구성을 고르면 쓸 수 없습니다.", Minimum: bound(1), Maximum: bound(9007199254740991)},
 	"nodeMonitorTimeoutSeconds": {Type: "integer", Title: "노드 준비 대기(초)", Description: "아직 올라오는 노드를 준비 관문이 기다리는 시간입니다. 비우면 엔진 기본값을 씁니다.", Minimum: bound(1), Maximum: bound(3600)},
 }
 
@@ -70,6 +71,7 @@ func composeArguments() []WebArgument {
 		webArgument("allServers", "--all-servers", "켜면 붙입니다."),
 		webArgument("validators", "--bp", "체인 구성을 고르지 않았을 때 넘깁니다. 비우면 4입니다."),
 		webArgument("chainPresetRef", "--chain-preset", "고정한 revision의 내용을 파일로 써서 넘깁니다."),
+		webArgument("chainId", "--chain-id", "체인 구성을 고르지 않았을 때 그대로 넘깁니다."),
 	}
 }
 

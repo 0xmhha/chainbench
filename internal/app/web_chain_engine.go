@@ -93,6 +93,8 @@ type webChainArguments struct {
 	// NodeMonitorTimeoutSeconds is how long the readiness gate waits on nodes
 	// still coming up; zero keeps the engine default.
 	NodeMonitorTimeoutSeconds int `json:"nodeMonitorTimeoutSeconds,omitempty"`
+	// ChainID replaces the manifest's chain id in the composed genesis.
+	ChainID int64 `json:"chainId,omitempty"`
 }
 
 // checkWebArguments refuses an argument the operation does not read, and a
@@ -212,6 +214,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if args.ChainPresetRef != nil && (in.Operation != "chain.setup" && in.Operation != "chain.deploy" || args.Validators != 0) {
 		return out, errors.New("a saved chain preset applies to composition and supplies its own node layout")
+	}
+	if args.ChainPresetRef != nil && args.ChainID != 0 {
+		return out, errors.New("a saved chain preset decides the chain id; change the preset instead")
 	}
 	if args.Validators == 0 && in.Operation != "test.run" && !webRecordedOperation(in.Operation) && args.ChainPresetRef == nil {
 		args.Validators = 4
@@ -581,6 +586,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
 	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, p.Arguments.Validators, plugin.Protocol().Name)}
+	if p.Arguments.ChainID != 0 {
+		out.Changes = append(out.Changes, fmt.Sprintf("genesis chain id %d instead of the manifest's", p.Arguments.ChainID))
+	}
 	out.Changes = append(out.Changes, fmt.Sprintf("Binary asset %s · SHA-256 %s", p.Binary.ID, p.Binary.SHA256))
 	for _, named := range p.NamedBinaries {
 		out.Changes = append(out.Changes, fmt.Sprintf("Binary %q runs %s asset %s · SHA-256 %s at %s", named.Name, named.Binary.Chain, named.Binary.ID, named.Binary.SHA256, named.ExecutionBinary))

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -23,6 +24,7 @@ var webArgumentSamples = map[string]func(*webChainArguments){
 	"noSkips":                   func(a *webChainArguments) { a.NoSkips = true },
 	"waitBlocks":                func(a *webChainArguments) { a.WaitBlocks = 12 },
 	"nodeMonitorTimeoutSeconds": func(a *webChainArguments) { a.NodeMonitorTimeoutSeconds = 300 },
+	"chainId":                   func(a *webChainArguments) { a.ChainID = 8283 },
 }
 
 // webCommandLine is the chainbench command an operation runs for args, built
@@ -125,5 +127,20 @@ func TestNoSkipsFailsARunThatSkippedACase(t *testing.T) {
 	passed.Summary.Summary.Pass = 2
 	if err := webSuiteVerdict(passed, true); err != nil {
 		t.Errorf("a clean run failed: %v", err)
+	}
+}
+
+// A chain id is composed only without a saved preset, which decides the
+// chain itself; chain up refuses --chain-id beside --chain-preset.
+func TestChainIDAppliesOnlyWithoutAPreset(t *testing.T) {
+	e := &WebChainEngine{}
+	_, err := e.Prepare(context.Background(), DeploymentActor{ID: "a", Role: "operator"}, WebPlanInput{Operation: "chain.deploy",
+		Arguments: json.RawMessage(`{"chainId":8283,"chainPresetRef":{"id":"p","revision":1}}`)})
+	if err == nil || !strings.Contains(err.Error(), "chain id") {
+		t.Fatalf("chain id beside a preset: %v", err)
+	}
+	args := chainUpArgs(webChainPayload{Arguments: webChainArguments{ChainID: 8283, ChainPresetRef: &DeploymentDocumentRef{ID: "p", Revision: 1}}}, "start", "/k", "/s", "/w", nil, "/control/chain-preset.json")
+	if count(args, "--chain-id") != 0 {
+		t.Fatalf("--chain-id passed beside --chain-preset: %v", args)
 	}
 }
