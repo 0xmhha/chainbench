@@ -31,10 +31,12 @@ func (m *WebMonitor) attachRemote(network string) func() {
 		if appendWebMonitorLines(m.store, network, "gaps.jsonl", cursor.RemoteOpen) != nil {
 			return
 		}
+		ended := cursor.RemoteOpen
 		cursor.RemoteOpen = nil
 		if raw, err := json.Marshal(cursor); err == nil {
 			_ = m.store.WriteCursor(network, raw)
 		}
+		m.publishRound(network, m.now().UTC(), nil, ended, nil, ended, nil)
 	}
 }
 
@@ -100,17 +102,20 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 	}
 	// Lines are appended under the lock so an administrative deletion that
 	// rewrites the same segment cannot lose them.
+	lines := map[string][]webMonitorLogLine{}
 	for _, p := range pending {
 		if err = appendWebMonitorLines(m.store, network, p.record, p.lines); err != nil {
 			return err // Positions stay unmoved, so the lines are read again.
 		}
+		lines[p.label] = append(lines[p.label], p.lines...)
 	}
 	for _, label := range done { // The background collector never moves remote positions.
 		cursor.Offsets[label], cursor.Files[label], cursor.Heads[label] = work.Offsets[label], work.Files[label], work.Heads[label]
 		cursor.Skipping[label], cursor.InSecret[label] = work.Skipping[label], work.InSecret[label]
 	}
+	before := cursor.RemoteOpen
+	var ended []webMonitorGap
 	if stop == nil {
-		var ended []webMonitorGap
 		cursor.RemoteOpen, ended = mergeWebMonitorGaps(cursor.RemoteOpen, gaps)
 		if err = appendWebMonitorLines(m.store, network, "gaps.jsonl", ended); err != nil {
 			return err
@@ -124,5 +129,7 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 	if err = m.store.WriteCursor(network, raw.Bytes()); err != nil {
 		return err
 	}
+	// The lines and gap changes reach the events stream as a local round's do.
+	m.publishRound(network, now, nil, before, cursor.RemoteOpen, ended, lines)
 	return stop
 }

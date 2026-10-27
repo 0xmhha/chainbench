@@ -174,7 +174,14 @@ svelte-check로 검사한다(6절의 2). 화면에는 응답을 받는 공용 �
 `gap`, 노드마다 새 로그 줄을 회차당 50줄까지 `logs`로 보낸다. 이 이벤트에는 SSE id가 없어 작업 스트림의 재생 위치를
 옮기지 않고, 느린 구독자가 놓친 수는 하트비트의 `observationDropsTotal`로 센다. 화면은 지금 `node` 이벤트만 받아
 노드 목록을 새로고침 없이 바꾼다. 지표와 로그를 REST 대신 스트림으로 받는 일은 화면 구조가 바뀌므로 3-7단계에서 한다.
-원격(SSH) 로그 수집 경로는 아직 `logs` 이벤트를 보내지 않는다.
+원격(SSH) 로그 수집 작업이 받은 줄과, 그 작업이 여닫는 누락도 같은 `logs`와 `gap` 이벤트로 보낸다. 작업이 끝나 수집이
+떨어질 때 닫히는 누락도 `gap` 이벤트로 알린다.
+
+2026-10-27에 loopback `sshd` 고정 환경(`tests/webui/fixtures/ssh_prepare.sh`)으로 SSH 대상 stablenet 4노드 표본을 받았다.
+원격 노드의 RPC와 지표는 5초마다 들어왔고, 노드 상태는 `unknown`과 `remote_observation_unavailable`로 남았다.
+수집 작업이 없을 때는 노드마다 `remote_log_collection_unavailable` 누락이 열렸고, 작업을 붙이자 그 누락이 닫히고 줄이
+들어왔으며, 작업을 취소하자 같은 누락이 다시 열렸다. node4를 멈춘 동안은 `node_stopped` 누락이 됐다. 이 표본에서
+원격 로그 줄이 이벤트로 오지 않는 것을 확인하고 위처럼 고쳤다.
 
 옛 경로는 2026-10-27 사용자 결정대로 정리했다. Web 모드는 `/events`와 `/api/runs`를 더 등록하지 않고, CLI 실행이
 `POST /api/events`로 보내는 엔진 이벤트는 `/api/v1/events`의 `engine` 이벤트로 받는다(작업 공간을 지정하지 않은
