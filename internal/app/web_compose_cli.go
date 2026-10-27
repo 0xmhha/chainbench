@@ -123,11 +123,7 @@ func (e *WebChainEngine) composeChain(ctx context.Context, a DeploymentActor, p 
 		}
 	}
 	files := filestore.Local{}
-	set, err := ExportDeploymentDocument(p.Set.DeploymentDocumentInput, "yaml")
-	if err != nil {
-		return "new", err
-	}
-	if err = files.Write(ctx, setPath, set, 0o600); err != nil {
+	if err := writeWebServerSet(ctx, p.Set.DeploymentDocumentInput, setPath); err != nil {
 		return "new", err
 	}
 	config, err := e.composeWorkspaceConfig(ctx, p, asset)
@@ -184,6 +180,11 @@ func chainUpArgs(p webChainPayload, stage, keysDir, setPath, configPath string, 
 		args = append(args, "--all-servers")
 	case p.Arguments.ServerRef != "":
 		args = append(args, "--server", p.Arguments.ServerRef)
+	}
+	if webDocker(p.Set.DeploymentDocumentInput) {
+		// Recorded by chain new, so every later command on this network dials
+		// through the localmap written beside the server set.
+		args = append(args, "--docker")
 	}
 	args = append(args, chain...)
 	if preset != "" {
@@ -272,7 +273,7 @@ func webRecordedWorkspaceConfig(p webChainPayload) ([]byte, error) {
 // recordedDeclarationsMatch refuses a network whose recorded server set or
 // workspace config is no longer what the reviewed documents compose.
 func recordedDeclarationsMatch(state State, p webChainPayload) error {
-	set, err := ExportDeploymentDocument(p.Set.DeploymentDocumentInput, "yaml")
+	set, localmap, err := webServerSetFiles(p.Set.DeploymentDocumentInput)
 	if err != nil {
 		return err
 	}
@@ -280,7 +281,16 @@ func recordedDeclarationsMatch(state State, p webChainPayload) error {
 	if err != nil {
 		return err
 	}
-	for path, expected := range map[string][]byte{state.WorkspaceConfig: config, state.ServerSet: set} {
+	expect := map[string][]byte{state.WorkspaceConfig: config, state.ServerSet: set}
+	// A docker network was composed with its localmap, and the record keeps
+	// dialing through it; a pool that gained or lost one is another network.
+	if localmap != nil || state.Docker {
+		if localmap == nil || !state.Docker {
+			return webConflict("the recorded network and the server pool disagree about docker")
+		}
+		expect[resource.LocalMapNear(state.ServerSet)] = localmap
+	}
+	for path, expected := range expect {
 		actual, err := os.ReadFile(path)
 		if err != nil || manifestHash(actual) != manifestHash(expected) {
 			return webConflict("the recorded declarations differ from the reviewed documents")

@@ -170,7 +170,7 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 		}
 		pinnedGenesis = &webPresetGenesis{Asset: *genesis, Fingerprint: fingerprint, Path: path}
 	}
-	in := RunSuiteIn{DataDir: filepath.Join(dir, "planning"), Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), Server: resource.ServerRef{SetPath: filepath.Join(dir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(dir, "workspace-config.yaml")}
+	in := RunSuiteIn{DataDir: filepath.Join(dir, "planning"), Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), Server: resource.ServerRef{SetPath: filepath.Join(dir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(dir, "workspace-config.yaml"), Docker: webDocker(p.Set.DeploymentDocumentInput)}
 	projection, err := planPresetThroughCLI(ctx, e.cli, content, in)
 	if err != nil {
 		return out, err

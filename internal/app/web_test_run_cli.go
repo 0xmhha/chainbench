@@ -72,6 +72,9 @@ func suiteCLIArgs(ctx context.Context, in RunSuiteIn, dir, logins string, flags 
 	if in.KeepUp {
 		args = append(args, "--keep-up")
 	}
+	if in.Docker {
+		args = append(args, "--docker")
+	}
 	return append(args, flags...), nil
 }
 

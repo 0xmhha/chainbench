@@ -28,6 +28,7 @@ func newAccessCmd() *cobra.Command {
 	cmd.Flags().StringVar(&in.Server, "server", "", "server name to check")
 	cmd.Flags().StringVar(&in.DataRoot, "data-root", "", "absolute target data root whose permission is checked")
 	cmd.Flags().StringVar(&logins, "server-logins", "", "private logins separate from the declared server set")
+	cmd.Flags().BoolVar(&in.Docker, "docker", false, "servers are local docker containers: dial through the localmap next to the server set")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit authentication and permission observations as JSON")
 	_ = cmd.MarkFlagRequired("server-set")
 	_ = cmd.MarkFlagRequired("server")

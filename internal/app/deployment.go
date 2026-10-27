@@ -150,9 +150,23 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 				}
 			}
 		}
+		// A docker pool's localmap is the Web's part of the document; the
+		// engine reads the server set without it.
+		engineSet, localmap, err := splitWebServerSet(in.Content)
+		if err != nil {
+			return errors.New("invalid content")
+		}
+		if b, err = yaml.Marshal(engineSet); err != nil {
+			return errors.New("invalid content")
+		}
 		set, err := resource.ParseSet(b)
 		if err != nil {
 			return err
+		}
+		if len(localmap) != 0 {
+			if _, err = parseWebLocalMap(localmap, set); err != nil {
+				return err
+			}
 		}
 		// The custom engine host decoder accepts shorthand. Refuse unregistered
 		// object fields here rather than silently changing an imported declaration.
@@ -208,8 +222,8 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 }
 
 func deploymentSet(in DeploymentDocumentInput) (*resource.Set, error) {
-	var value any
-	if err := json.Unmarshal(in.Content, &value); err != nil {
+	value, _, err := splitWebServerSet(in.Content)
+	if err != nil {
 		return nil, err
 	}
 	b, err := yaml.Marshal(value)

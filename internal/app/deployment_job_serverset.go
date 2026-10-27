@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // sshPathFields are the ssh fields that name a file. A set written into a job
@@ -32,8 +32,12 @@ func (s *DeploymentStore) writeJobServerSet(ctx context.Context, a DeploymentAct
 	if err != nil {
 		return "", err
 	}
-	var doc map[string]any
-	if err = json.Unmarshal(document.Content, &doc); err != nil {
+	doc, _, err := splitWebServerSet(document.Content)
+	if err != nil {
+		return "", err
+	}
+	_, localmap, err := webServerSetFiles(document)
+	if err != nil {
 		return "", err
 	}
 	pool, _ := doc["pool"].(map[string]any)
@@ -102,7 +106,12 @@ func (s *DeploymentStore) writeJobServerSet(ctx context.Context, a DeploymentAct
 		return "", err
 	}
 	path := filepath.Join(dir, "server-set.yaml")
-	return path, (filestore.Local{}).Write(ctx, path, raw, 0o600)
+	if err = (filestore.Local{}).Write(ctx, path, raw, 0o600); err != nil || localmap == nil {
+		return path, err
+	}
+	// A command given this file as its server set finds the docker localmap
+	// beside it, as it would beside the recorded one.
+	return path, (filestore.Local{}).Write(ctx, resource.LocalMapNear(path), localmap, 0o600)
 }
 
 // absoluteSSHPaths makes every relative file path in an ssh block absolute

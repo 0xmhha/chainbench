@@ -353,7 +353,11 @@ func (e *WebChainEngine) runUpload(ctx context.Context, a DeploymentActor, state
 	if err != nil {
 		return err
 	}
-	_, err = e.cli.Run(ctx, "file", "upload", local, "--remote", destination, "--sha256", sha256, "--mode", "0755",
-		"--server", server, "--server-set", state.ServerSet, "--workspace-config", state.WorkspaceConfig, "--server-logins", logins)
+	args := []string{"file", "upload", local, "--remote", destination, "--sha256", sha256, "--mode", "0755",
+		"--server", server, "--server-set", state.ServerSet, "--workspace-config", state.WorkspaceConfig, "--server-logins", logins}
+	if state.Docker {
+		args = append(args, "--docker") // the recorded network dials through its localmap
+	}
+	_, err = e.cli.Run(ctx, args...)
 	return errors.Join(err, cleanup())
 }

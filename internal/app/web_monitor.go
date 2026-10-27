@@ -210,6 +210,8 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 	lines := map[string][]webMonitorLogLine{}
 	m.heardLines = func(label string, got []webMonitorLogLine) { lines[label] = append(lines[label], got...) }
 	defer func() { m.heardLines = nil }()
+	// A docker network is reached through the localmap it was composed with.
+	reach := resource.Opener{ServerSet: state.ServerSet, Docker: state.Docker}.HTTPEndpoint
 	for _, ns := range state.Nodes {
 		label := string(ns.NodeLabel())
 		if ns.PID <= 0 {
@@ -218,7 +220,7 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "collector", Reason: "node_stopped"})
 			continue
 		}
-		s, g := m.sampleNode(ctx, ns, now, since)
+		s, g := m.sampleNode(ctx, reach, ns, now, since)
 		samples, gaps = append(samples, s...), append(gaps, g...)
 		if target.Transport != "local" {
 			if m.remote[network] == 0 { // No operator-started collection job is running.
@@ -278,7 +280,9 @@ func mergeWebMonitorGaps(open, current []webMonitorGap) (next, ended []webMonito
 	return next, ended
 }
 
-func (m *WebMonitor) sampleNode(ctx context.Context, ns node.Record, now, from time.Time) ([]webMonitorSample, []webMonitorGap) {
+// sampleNode reads one node's RPC and metrics; reach turns the node's own
+// address into the URL this machine dials.
+func (m *WebMonitor) sampleNode(ctx context.Context, reach func(host string, port int) (string, error), ns node.Record, now, from time.Time) ([]webMonitorSample, []webMonitorGap) {
 	label := string(ns.NodeLabel())
 	host := ns.Host
 	if host == "" {
@@ -292,12 +296,17 @@ func (m *WebMonitor) sampleNode(ctx context.Context, ns node.Record, now, from t
 	if ns.HTTP <= 0 {
 		gap("rpc", "rpc_disabled")
 	} else {
-		probe, cancel := context.WithTimeout(ctx, 2*time.Second)
-		client := rpc.Dial(fmt.Sprintf("http://%s:%d", host, ns.HTTP))
-		height, herr := client.BlockNumber(probe)
-		peers, perr := client.PeerCount(probe)
-		cancel()
-		if herr != nil || perr != nil {
+		var herr, perr error
+		var height, peers uint64
+		url, err := reach(host, ns.HTTP)
+		if err == nil {
+			probe, cancel := context.WithTimeout(ctx, 2*time.Second)
+			client := rpc.Dial(url)
+			height, herr = client.BlockNumber(probe)
+			peers, perr = client.PeerCount(probe)
+			cancel()
+		}
+		if err != nil || herr != nil || perr != nil {
 			gap("rpc", "rpc_unavailable")
 		} else {
 			samples = append(samples,
@@ -309,7 +318,11 @@ func (m *WebMonitor) sampleNode(ctx context.Context, ns node.Record, now, from t
 		gap("metrics", "metrics_disabled")
 		return samples, gaps
 	}
-	values, err := collector.ScrapeMetrics(ctx, collector.MetricsURL(host, ns.Metrics))
+	endpoint, err := reach(host, ns.Metrics)
+	var values map[string]float64
+	if err == nil {
+		values, err = collector.ScrapeMetrics(ctx, collector.MetricsURLOn(endpoint))
+	}
 	if err != nil {
 		gap("metrics", "metrics_unavailable")
 		return samples, gaps
