@@ -59,6 +59,30 @@ func WithWebHistory(history *app.WebHistory, authenticate DeploymentAuthenticato
 			comparison, err := history.Compare(a, in.RunIDs)
 			deploymentResponse(w, comparison, err, 200)
 		})
+		route("GET /api/v1/history/{runId}/evidence", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			evidence, err := history.Evidence(a, r.PathValue("runId"))
+			deploymentResponse(w, evidence, err, 200)
+		})
+		route("GET /api/v1/history/{runId}/evidence/{seq}/{file}", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			seq, err := strconv.Atoi(r.PathValue("seq"))
+			offset, oerr := queryInt(r, "offset")
+			limit, lerr := queryInt(r, "limit")
+			if err != nil || oerr != nil || lerr != nil {
+				http.Error(w, app.ErrEvidenceQuery.Error(), http.StatusBadRequest)
+				return
+			}
+			page, err := history.EvidencePage(a, r.PathValue("runId"), seq, r.PathValue("file"), offset, limit)
+			if errors.Is(err, app.ErrEvidenceQuery) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			if errors.Is(err, app.ErrEvidenceBusy) {
+				w.Header().Set("Retry-After", "1")
+				http.Error(w, err.Error(), http.StatusTooManyRequests)
+				return
+			}
+			deploymentResponse(w, page, err, 200)
+		})
 		route("GET /api/v1/history/{runId}/export", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			b, err := history.Export(r.PathValue("runId"))
 			if err != nil {
@@ -104,4 +128,13 @@ func historyQuery(r *http.Request) (app.WebHistoryQuery, error) {
 		q.To, err = time.Parse(time.RFC3339Nano, v.Get("to"))
 	}
 	return q, err
+}
+
+// queryInt reads an optional whole-number query parameter; absent is zero.
+func queryInt(r *http.Request, name string) (int, error) {
+	raw := r.URL.Query().Get(name)
+	if raw == "" {
+		return 0, nil
+	}
+	return strconv.Atoi(raw)
 }

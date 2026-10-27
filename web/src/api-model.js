@@ -190,6 +190,22 @@
  */
 
 /**
+ * @typedef {object} RunEvidence what a run's failed tests gathered when they failed
+ * @property {string} runId
+ * @property {{seq: number, id: string, files: {name: string, kind: string, bytes: number}[]}[]} tests
+ */
+
+/**
+ * @typedef {object} EvidencePage lines of one redacted evidence file
+ * @property {string} name
+ * @property {string} kind health, processes, log or problems
+ * @property {number} offset
+ * @property {number} totalLines
+ * @property {string[]} lines
+ * @property {number|null} nextOffset
+ */
+
+/**
  * @typedef {object} Snapshot
  * @property {number} version
  * @property {string} cursor
