@@ -68,6 +68,24 @@ func TestErrorsCarryMachineCodesAndFieldPaths(t *testing.T) {
 			t.Errorf("validate %s: %d %v", want, code, body)
 		}
 	}
+	// Each saved revision is listed with who saved it, newest first.
+	code, saved := call("POST", "/api/v1/documents", `{"kind":"server-set","name":"pool","contractVersion":"2","content":{"version":2,"pool":{"hosts":["10.0.0.1"],"slots":1}},"assetRefs":[]}`, nil)
+	if code != 201 {
+		t.Fatalf("save: %d %v", code, saved)
+	}
+	r := httptest.NewRequest("GET", "/api/v1/documents/"+saved["id"].(string)+"/revisions", nil)
+	r.AddCookie(&http.Cookie{Name: webCookie, Value: token})
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, r)
+	var revisions struct {
+		Items []app.DeploymentDocumentRevision `json:"items"`
+	}
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &revisions) != nil || len(revisions.Items) != 1 || revisions.Items[0].UpdatedBy != session.User.ID {
+		t.Errorf("revisions: %d %s", w.Code, w.Body.String())
+	}
+	if code, body = call("GET", "/api/v1/documents/absent/revisions", "", nil); code != 404 {
+		t.Errorf("absent revisions: %d %v", code, body)
+	}
 	if code, body = call("GET", "/api/v1/documents/absent", "", nil); code != 404 || body["code"] != "not_found" {
 		t.Errorf("absent document: %d %v", code, body)
 	}

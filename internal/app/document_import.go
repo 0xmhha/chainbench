@@ -36,7 +36,14 @@ type DocumentImportPreview struct {
 	Changes                 []string                  `json:"changes"`
 	PrivateBindingsRequired []string                  `json:"privateBindingsRequired"`
 	SourcePreserved         bool                      `json:"sourcePreserved"`
+	// ExpiresAt is when the encrypted source is discarded and the preview can
+	// no longer be committed.
+	ExpiresAt time.Time `json:"expiresAt"`
 }
+
+// webImportLifetime is how long an import preview keeps its encrypted source.
+const webImportLifetime = 15 * time.Minute
+
 type DocumentImportCommit struct {
 	PreviewID     string         `json:"previewId"`
 	BaseRevisions map[string]int `json:"baseRevisions,omitempty"`
@@ -126,6 +133,7 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 	if _, err = rand.Read(nonce); err != nil {
 		return preview, err
 	}
+	preview.ExpiresAt = time.Now().UTC().Add(webImportLifetime)
 	ciphertext := s.aead.Seal(nonce, nonce, []byte(in.Source), []byte(preview.PreviewID+":"+a.ID))
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -138,7 +146,7 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 				delete(next.Imports, id) // Expired previews can no longer be committed.
 			}
 		}
-		next.Imports[preview.PreviewID] = deploymentImport{OwnerID: a.ID, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Preview: preview, Ciphertext: ciphertext}
+		next.Imports[preview.PreviewID] = deploymentImport{OwnerID: a.ID, ExpiresAt: preview.ExpiresAt, Preview: preview, Ciphertext: ciphertext}
 	})
 	return preview, err
 }

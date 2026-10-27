@@ -272,6 +272,30 @@ func (s *DeploymentStore) Documents(kind string) []DeploymentDocument {
 	return out
 }
 
+// DeploymentDocumentRevision is one saved revision of a shared document: who
+// saved it and when, without its content.
+type DeploymentDocumentRevision struct {
+	Revision  int       `json:"revision"`
+	Name      string    `json:"name"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	UpdatedBy string    `json:"updatedBy"`
+}
+
+// DocumentRevisions lists every revision of a shared document, newest first.
+func (s *DeploymentStore) DocumentRevisions(id string) ([]DeploymentDocumentRevision, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	h := s.state.Documents[id]
+	if len(h) == 0 {
+		return nil, ErrDeploymentNotFound
+	}
+	out := make([]DeploymentDocumentRevision, 0, len(h))
+	for i := len(h) - 1; i >= 0; i-- {
+		out = append(out, DeploymentDocumentRevision{Revision: h[i].Revision, Name: h[i].Name, UpdatedAt: h[i].UpdatedAt, UpdatedBy: h[i].UpdatedBy})
+	}
+	return out, nil
+}
+
 // Document reads a shared latest revision.
 func (s *DeploymentStore) Document(id string) (DeploymentDocument, error) {
 	return s.DocumentRevision(id, 0)
