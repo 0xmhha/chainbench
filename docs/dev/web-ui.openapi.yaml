@@ -3106,6 +3106,21 @@ components:
           description: '"<networkId>.<id>", the form GET /api/v1/nodes/{nodeId}/logs addresses the node by'
         networkId: *id002
         role: *id001
+        server:
+          type: string
+          description: The server-set entry the node runs on
+        syncMode:
+          type: string
+          description: The sync mode the node's config renders
+        ports:
+          type: object
+          description: Ports the node listens on; a port it does not open is absent
+          properties:
+            p2p: *id005
+            http: *id005
+            ws: *id005
+            metrics: *id005
+          additionalProperties: false
         hostIdentity: *id001
         dataPath: *id001
         pid: *id005
@@ -3116,6 +3131,13 @@ components:
           type: string
           description: Why the node is in its state. In GET /api/v1/networks and the snapshot the state is the collector's latest reading (observedAt is when it was taken), not_observed when there is none yet, and remote_observation_unavailable for SSH nodes, which the collector cannot read without an operator's logins. Controls are offered only after a fresh observation.
           enum: [binary_launch_unavailable, binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch, machine_unavailable, not_observed, remote_observation_unavailable]
+        observationDetail:
+          type: string
+          description: Why the node could not be observed, when it could not
+        executable:
+          type: string
+          enum: [ready, unavailable, unknown]
+          description: Whether the node's binary can be launched on its machine
         binaryAssetId:
           type: string
           description: Verified registered asset identity for a reviewed per-node executable; omitted when unavailable.
@@ -3170,6 +3192,21 @@ components:
           items:
             $ref: '#/components/schemas/Node'
         version: *id005
+        collector:
+          type: object
+          description: What the collector has done for this network, when one runs
+          properties:
+            firstCollected: *id006
+            lastCollected: *id006
+            intervalSeconds:
+              type: number
+              minimum: 0
+            remoteLogs:
+              type: string
+              enum: [attached, detached]
+              description: For an SSH network, whether an operator's log collection job is attached
+          additionalProperties: false
+          required: [intervalSeconds]
       additionalProperties: false
       required:
       - id
@@ -3621,6 +3658,10 @@ components:
                 - INFO
                 - DEBUG
                 - TRACE
+              timeSource:
+                type: string
+                enum: [source, collection]
+                description: source when time is the node's own log timestamp, collection when the line had none and the collection time stands in
             additionalProperties: false
             required:
             - time

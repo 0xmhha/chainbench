@@ -84,3 +84,49 @@ func (m *WebMonitor) observeNetwork(ctx context.Context, network string, state S
 			Node: &WebNodeReading{ID: label, State: seen.State, ObservationReason: seen.Reason, ObservedPID: seen.PID, ObservedAt: seen.At}})
 	}
 }
+
+// WebCollectorStatus is what the collector has done for one network: when it
+// first and last completed a round, how often it runs, and for an SSH network
+// whether an operator's log collection job is attached.
+type WebCollectorStatus struct {
+	FirstCollected  *time.Time `json:"firstCollected,omitempty"`
+	LastCollected   *time.Time `json:"lastCollected,omitempty"`
+	IntervalSeconds float64    `json:"intervalSeconds"`
+	RemoteLogs      string     `json:"remoteLogs,omitempty"`
+}
+
+// CollectorStatus reads the network's collection position, which the
+// collector replaces atomically, so it needs no collection lock.
+func (m *WebMonitor) CollectorStatus(network string) WebCollectorStatus {
+	status := WebCollectorStatus{IntervalSeconds: m.interval.Seconds()}
+	if cursor, err := m.readCursor(network); err == nil {
+		if !cursor.FirstCollected.IsZero() {
+			first := cursor.FirstCollected.UTC()
+			status.FirstCollected = &first
+		}
+		if !cursor.LastCollected.IsZero() {
+			last := cursor.LastCollected.UTC()
+			status.LastCollected = &last
+		}
+	}
+	m.seenMu.Lock()
+	status.RemoteLogs = m.remoteLogs[network]
+	m.seenMu.Unlock()
+	return status
+}
+
+func (m *WebMonitor) noteRemoteLogs(network string, remote, attached bool) {
+	m.seenMu.Lock()
+	defer m.seenMu.Unlock()
+	if m.remoteLogs == nil {
+		m.remoteLogs = map[string]string{}
+	}
+	switch {
+	case !remote:
+		delete(m.remoteLogs, network)
+	case attached:
+		m.remoteLogs[network] = "attached"
+	default:
+		m.remoteLogs[network] = "detached"
+	}
+}

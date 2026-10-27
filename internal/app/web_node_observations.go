@@ -46,7 +46,7 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	}
 	network := WebNetwork{ID: workspace.ID, WorkspaceID: workspace.ID, Ownership: "owned", Version: workspace.Revision, Nodes: []WebNode{}}
 	for _, ns := range state.Nodes {
-		n := WebNode{ID: string(ns.NodeLabel()), Ref: workspace.ID + "." + string(ns.NodeLabel()), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()}
+		n := WebNode{ID: string(ns.NodeLabel()), Ref: workspace.ID + "." + string(ns.NodeLabel()), Server: ns.Server, SyncMode: ns.SyncMode, Ports: webNodePorts(ns), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()}
 		n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
 		network.Nodes = append(network.Nodes, n)
 	}
@@ -89,18 +89,28 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	}
 	bindings := e.documents.Bindings(a, workspace.ID)
 	p.Input.CredentialBindings = bindings
+	// unobserved explains every node still unobserved; the network is
+	// returned as it stands, its nodes unknown with the reason why.
+	unobserved := func(detail string) (WebNetwork, error) {
+		for i := range network.Nodes {
+			if network.Nodes[i].ObservationReason == "probe_unavailable" {
+				network.Nodes[i].ObservationDetail = detail
+			}
+		}
+		return network, nil
+	}
 	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
-		return network, nil
+		return unobserved("cannot reach the target with your logins: " + err.Error())
 	}
 	lookup = lookup.observationSnapshot()
 	opener := lookup
 	actual, err := opener.Inspect(ctx, state.Target)
 	if err != nil {
-		return network, nil
+		return unobserved("cannot inspect the target machine: " + err.Error())
 	}
 	if actual != target {
-		return network, nil
+		return unobserved("the target machine is not the one this network was deployed on")
 	}
 	// What each node's machine shows comes from `chainbench chain observe`,
 	// read with the caller's own logins; the Web adds what only it knows: the
@@ -108,17 +118,24 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	p.Input.CredentialBindings = bindings
 	observed, err := e.observeThroughCLI(ctx, a, p)
 	if err != nil {
-		return network, nil
+		return unobserved(err.Error())
 	}
 	for i, ns := range state.Nodes {
 		machine, err := opener.Inspect(ctx, webNodeTarget(state, ns))
-		if err != nil || machine != expectedOf(ns) {
+		if err != nil {
+			network.Nodes[i].ObservationDetail = "cannot inspect the node's machine: " + err.Error()
+			continue
+		}
+		if machine != expectedOf(ns) {
+			network.Nodes[i].ObservationDetail = "the node's machine is not the one recorded for its server"
 			continue
 		}
 		seen, ok := observed[ns.Index]
 		if !ok {
+			network.Nodes[i].ObservationDetail = "chainbench chain observe did not report this node"
 			continue
 		}
+		network.Nodes[i].Executable = seen.Executable
 		if !ledgerMatches && seen.State != "unrecorded_running" {
 			seen.State, seen.Reason = "ownership_mismatch", "ledger_mismatch"
 		}

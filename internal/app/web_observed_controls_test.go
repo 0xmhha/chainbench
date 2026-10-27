@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -82,9 +83,13 @@ func TestObservedControlsFollowExecutablePermissionWithoutLosingLiveState(t *tes
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
 	inspectionCalls := 0
+	failObserve := false
 	engine.UseCLI(targetTestCLI{run: func(ctx context.Context, args []string) ([]byte, error) {
 		if len(args) > 1 && args[0] == "resource" && args[1] == "inspect" {
 			inspectionCalls++
+		}
+		if failObserve && len(args) > 1 && args[0] == "chain" && args[1] == "observe" {
+			return nil, errors.New("the node machine refused the process listing")
 		}
 		return (observeCLI{}).Run(ctx, args...)
 	}})
@@ -121,6 +126,12 @@ func TestObservedControlsFollowExecutablePermissionWithoutLosingLiveState(t *tes
 		if launchable && n.ObservationReason != "" {
 			t.Errorf("restored permission still unexplained: %+v", n)
 		}
+		if want := map[bool]string{true: "ready", false: "unavailable"}[launchable]; n.Executable != want {
+			t.Errorf("executable = %q, want %q", n.Executable, want)
+		}
+		if n.ObservationDetail != "" {
+			t.Errorf("a successful observation carries a failure detail: %q", n.ObservationDetail)
+		}
 	}
 	check(true)
 	if err = os.Chmod(binary, 0600); err != nil {
@@ -131,6 +142,16 @@ func TestObservedControlsFollowExecutablePermissionWithoutLosingLiveState(t *tes
 		t.Fatal(err)
 	}
 	check(true)
+	// A probe that fails says why, not only that it failed.
+	failObserve = true
+	network, err := engine.ObserveNetwork(ctx, actor, workspace.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := network.Nodes[0]; n.State != "unknown" || n.ObservationReason != "probe_unavailable" || !strings.Contains(n.ObservationDetail, "refused the process listing") {
+		t.Fatalf("failed probe = state %q reason %q detail %q", n.State, n.ObservationReason, n.ObservationDetail)
+	}
+	failObserve = false
 	recordAfter, err := os.ReadFile(filepath.Join(control, "chain-record.json"))
 	if err != nil || string(recordAfter) != string(recordBefore) {
 		t.Fatal("read-only permission probe changed record", err)

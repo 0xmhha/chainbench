@@ -246,6 +246,10 @@ func TestWebMonitorArchivesTimeLinkedLogsAcrossRestart(t *testing.T) {
 	if !first.Time.Equal(time.Date(2026, 10, 9, 0, 46, 20, 597000000, time.Local)) || first.TimestampSource != "source" || strings.Contains(first.Text, "secret-value") {
 		t.Fatalf("source-timed redacted entry = %+v", first)
 	}
+	// Each line says where its time came from, in the response itself.
+	if raw, _ := json.Marshal(logs.Entries[1]); !strings.Contains(string(raw), `"timeSource":"collection"`) {
+		t.Fatalf("log line JSON lacks its time source: %s", raw)
+	}
 	if second := logs.Entries[1]; !second.Time.Equal(f.clock) || second.TimestampSource != "collection" {
 		t.Fatalf("collection-timed entry = %+v", second)
 	}
@@ -730,5 +734,33 @@ func TestWebMonitorDropsEventsForASlowSubscriber(t *testing.T) {
 	}
 	if m.ObservationDrops() == 0 {
 		t.Fatal("a full subscriber dropped nothing")
+	}
+}
+
+// TestWebMonitorSaysWhenItCollected: the collector's own state is readable, so
+// a screen tells an idle collector from a quiet network without guessing from gaps.
+func TestWebMonitorSaysWhenItCollected(t *testing.T) {
+	f := newMonitorFixture(t)
+	m := f.monitor()
+	if s := m.CollectorStatus(f.network); s.FirstCollected != nil || s.LastCollected != nil || s.IntervalSeconds != 5 {
+		t.Fatalf("before any round = %+v", s)
+	}
+	first := f.clock.UTC()
+	for i := 0; i < 2; i++ {
+		if err := m.CollectOnce(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		f.clock = f.clock.Add(5 * time.Second)
+	}
+	s := m.CollectorStatus(f.network)
+	if s.FirstCollected == nil || !s.FirstCollected.Equal(first) || s.LastCollected == nil || !s.LastCollected.Equal(first.Add(5*time.Second)) || s.RemoteLogs != "" {
+		t.Fatalf("after two rounds = %+v", s)
+	}
+	writeMonitorJSON(t, filepath.Join(f.root, "networks", f.network, "web-target.json"), resource.Inspection{HostIdentity: "fixture", Transport: "ssh"})
+	if err := m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if s = m.CollectorStatus(f.network); s.RemoteLogs != "detached" {
+		t.Fatalf("SSH network without a collection job = %+v", s)
 	}
 }

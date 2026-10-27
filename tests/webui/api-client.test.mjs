@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { apiClient } from '../../web/src/api-client.mjs'
-import { FormatError, decodeJob, decodeMetrics, decodeRun } from '../../web/src/api-decode.mjs'
+import { FormatError, decodeJob, decodeMetrics, decodeNetwork, decodeRun } from '../../web/src/api-decode.mjs'
 
 const reply = (status, text) => new Response(status === 204 ? null : text, { status })
 
@@ -74,4 +74,13 @@ test('decoders name the first field that breaks the model', () => {
  assert.equal(new FormatError('terminal', 'boolean', 'yes').message, '데이터 형식 오류: terminal 값은 참·거짓이어야 하는데 문자열입니다')
  assert.equal(new FormatError('tests[0].assertions[0].expected', 'string', undefined).message, '데이터 형식 오류: tests[0].assertions[0].expected 값은 문자열이어야 하는데 값이 없습니다')
  assert.equal(new FormatError('', '객체', []).message, '데이터 형식 오류: 응답 값은 객체여야 하는데 배열입니다')
+})
+
+test('optional node placement and collector fields are checked when they come', () => {
+ const node = { id: 'node1', ref: 'n.node1', networkId: 'n', role: 'bp', state: 'running', pid: 1, observedAt: 'a', supportedControls: [], controlLimits: {} }
+ const network = over => ({ id: 'n', workspaceId: 'n', ownership: 'owned', version: 1, nodes: [{ ...node, ...over }] })
+ assert.ok(decodeNetwork(network({})))
+ assert.ok(decodeNetwork({ ...network({ server: 'east', syncMode: 'full', ports: { p2p: 30303, http: 8545 }, executable: 'ready' }), collector: { intervalSeconds: 5, lastCollected: 'b' } }))
+ assert.throws(() => decodeNetwork(network({ ports: { http: '8545' } })), err => err.path === 'nodes[0].ports.http')
+ assert.throws(() => decodeNetwork({ ...network({}), collector: { lastCollected: 'b' } }), err => err.path === 'collector.intervalSeconds')
 })

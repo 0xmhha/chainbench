@@ -33,8 +33,13 @@
  * @property {string} ref "<networkId>.<id>", what the logs API takes
  * @property {string} networkId
  * @property {string} role
+ * @property {string} [server] the server-set entry the node runs on
+ * @property {string} [syncMode]
+ * @property {{p2p?: number, http?: number, ws?: number, metrics?: number}} [ports] ports the node listens on
  * @property {string} state
  * @property {string} [observationReason]
+ * @property {string} [observationDetail] why the node could not be observed
+ * @property {string} [executable] ready, unavailable or unknown
  * @property {number} pid
  * @property {number} [observedPid]
  * @property {string} observedAt
@@ -49,6 +54,7 @@
  * @property {string} ownership
  * @property {number} version
  * @property {NodeView[]} nodes
+ * @property {{firstCollected?: string, lastCollected?: string, intervalSeconds: number, remoteLogs?: string}} [collector]
  */
 
 /**
@@ -80,6 +86,7 @@
  * @property {string} time
  * @property {string} text
  * @property {string} [level]
+ * @property {string} [timeSource] source (the node's own timestamp) or collection
  */
 
 /**
