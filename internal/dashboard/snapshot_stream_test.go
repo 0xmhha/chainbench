@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 type snapshotFrame struct{ ID, Type, Data string }
@@ -225,5 +226,107 @@ func TestJobStreamCarriesScopedObservationEventsWithoutMovingTheCursor(t *testin
 			t.Fatalf("node event = %s (%v)", frame.Data, err)
 		}
 		return
+	}
+}
+
+// TestJobStreamCarriesEngineEventsOnlyWhenUnscoped: what a CLI run publishes
+// to the bus reaches the Web through the one events stream, as engine frames
+// without an id. A workspace- or job-scoped stream does not carry them: bus
+// events name no workspace, so scoping cannot be checked.
+func TestJobStreamCarriesEngineEventsOnlyWhenUnscoped(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), snapshotFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial, err := jobs.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	viewer := func(*http.Request) (app.DeploymentActor, error) {
+		return app.DeploymentActor{ID: "reader", Role: "viewer"}, nil
+	}
+	server := httptest.NewServer(NewServer(bus, nil, WithWebJobs(jobs, viewer)))
+	defer server.Close()
+	open := func(query string) *bufio.Reader {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		t.Cleanup(cancel)
+		request, _ := http.NewRequestWithContext(ctx, "GET", server.URL+"/api/v1/events?cursor="+initial.Cursor+query, nil)
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { response.Body.Close() })
+		return bufio.NewReader(response.Body)
+	}
+	scoped, unscoped := open("&workspaceId=owned"), open("")
+	stop := make(chan struct{})
+	defer close(stop)
+	go func() {
+		tick := time.NewTicker(20 * time.Millisecond)
+		defer tick.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-tick.C:
+				bus.Publish(collector.Event{Phase: collector.PhaseTest, Kind: collector.KindResult, Message: "engine-says-hello"})
+			}
+		}
+	}()
+	for {
+		frame, err := readSnapshotFrame(unscoped)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if frame.Type == "observation" {
+			if !strings.Contains(frame.Data, "busDeliveryDropsTotal") {
+				t.Fatalf("heartbeat lacks the bus drop count: %s", frame.Data)
+			}
+			continue
+		}
+		if frame.Type != "engine" || frame.ID != "" || !strings.Contains(frame.Data, "engine-says-hello") {
+			t.Fatalf("engine frame = %+v", frame)
+		}
+		break
+	}
+	for i := 0; i < 2; i++ {
+		frame, err := readSnapshotFrame(scoped)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if frame.Type == "engine" {
+			t.Fatal("a scoped stream carried an engine event", frame)
+		}
+	}
+}
+
+// TestWebModeLeavesTheLegacyStreamToLegacyObservation: the old bus stream and
+// the run index exist only in -legacy-observation mode.
+func TestWebModeLeavesTheLegacyStreamToLegacyObservation(t *testing.T) {
+	bus := collector.NewBus()
+	defer bus.Close()
+	web := httptest.NewServer(NewServer(bus, collector.NewMemStore()))
+	defer web.Close()
+	for _, path := range []string{"/events", "/api/runs"} {
+		response, err := http.Get(web.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		response.Body.Close()
+		if response.StatusCode == 200 && (strings.HasPrefix(response.Header.Get("Content-Type"), "text/event-stream") || strings.HasPrefix(response.Header.Get("Content-Type"), "application/json")) {
+			t.Fatalf("Web mode still serves %s (%s)", path, response.Header.Get("Content-Type"))
+		}
+	}
+	legacy := httptest.NewServer(NewServer(bus, collector.NewMemStore(), WithLegacyObservation()))
+	defer legacy.Close()
+	response, err := http.Get(legacy.URL + "/api/runs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if response.StatusCode != 200 {
+		t.Fatalf("legacy run index = %d", response.StatusCode)
 	}
 }

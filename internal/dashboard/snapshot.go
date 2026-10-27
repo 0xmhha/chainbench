@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 func (s *Server) handleJobSnapshot(w http.ResponseWriter, r *http.Request) {
@@ -101,6 +102,14 @@ func (s *Server) handleJobEvents(w http.ResponseWriter, r *http.Request, authent
 		defer stop()
 		observed = events
 	}
+	// What a CLI run publishes to the bus names no workspace, so only an
+	// unscoped stream carries it.
+	var engine <-chan collector.Event
+	if s.bus != nil && workspaceID == "" && jobID == "" {
+		events, stop := s.bus.SubscribeWithCancel()
+		defer stop()
+		engine = events
+	}
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming unsupported", 500)
@@ -135,6 +144,18 @@ func (s *Server) handleJobEvents(w http.ResponseWriter, r *http.Request, authent
 				return
 			}
 			flusher.Flush()
+		case event, ok := <-engine:
+			if !ok || !authorized() {
+				return
+			}
+			raw, err := json.Marshal(event)
+			if err != nil {
+				continue
+			}
+			if _, err = fmt.Fprintf(w, "event: engine\ndata: %s\n\n", raw); err != nil {
+				return
+			}
+			flusher.Flush()
 		case event, ok := <-observed:
 			if !ok || !authorized() {
 				return
@@ -158,6 +179,9 @@ func (s *Server) handleJobEvents(w http.ResponseWriter, r *http.Request, authent
 			heartbeat := map[string]any{"version": version, "cursor": position, "jobDeliveryDropsTotal": drops, "observedAt": time.Now().UTC()}
 			if s.observations != nil {
 				heartbeat["observationDropsTotal"] = s.observations.ObservationDrops()
+			}
+			if s.bus != nil {
+				heartbeat["busDeliveryDropsTotal"] = s.bus.Dropped()
 			}
 			raw, _ := json.Marshal(heartbeat)
 			// Heartbeats must not advance Last-Event-ID past changes the client missed.

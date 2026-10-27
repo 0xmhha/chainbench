@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -44,7 +45,7 @@ func TestWebSecuritySessionsRolesAndRedaction(t *testing.T) {
 		s.ServeHTTP(w, r)
 		return w
 	}
-	if w := call("GET", "/api/runs", "", "", "", ""); w.Code != 401 {
+	if w := call("GET", "/api/v1/snapshot", "", "", "", ""); w.Code != 401 {
 		t.Fatal(w.Code)
 	}
 	setup, _ := os.ReadFile(filepath.Join(root, "setup.token"))
@@ -163,9 +164,17 @@ func TestWebSecurityClosesRevokedStream(t *testing.T) {
 	}
 	bus := collector.NewBus()
 	defer bus.Close()
-	server := httptest.NewServer(NewServer(bus, nil, WithWebSecurity(auth, store)))
+	jobs, err := app.OpenWebJobs(root, snapshotFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := jobs.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(NewServer(bus, nil, WithWebJobs(jobs, WebAuthenticator(auth)), WithWebSecurity(auth, store)))
 	defer server.Close()
-	req, _ := http.NewRequest("GET", server.URL+"/events", nil)
+	req, _ := http.NewRequest("GET", server.URL+"/api/v1/events?cursor="+snapshot.Cursor, nil)
 	req.AddCookie(&http.Cookie{Name: webCookie, Value: token})
 	client := &http.Client{Timeout: 3 * time.Second}
 	response, err := client.Do(req)
@@ -204,9 +213,17 @@ func TestWebSecurityRedactsActualSSE(t *testing.T) {
 	}
 	bus := collector.NewBus()
 	defer bus.Close()
-	server := httptest.NewServer(NewServer(bus, nil, WithWebSecurity(auth, store)))
+	jobs, err := app.OpenWebJobs(root, snapshotFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := jobs.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(NewServer(bus, nil, WithWebJobs(jobs, WebAuthenticator(auth)), WithWebSecurity(auth, store)))
 	defer server.Close()
-	req, _ := http.NewRequest("GET", server.URL+"/events", nil)
+	req, _ := http.NewRequest("GET", server.URL+"/api/v1/events?cursor="+snapshot.Cursor, nil)
 	req.AddCookie(&http.Cookie{Name: webCookie, Value: token})
 	client := &http.Client{Timeout: 3 * time.Second}
 	response, err := client.Do(req)
@@ -219,16 +236,18 @@ func TestWebSecurityRedactsActualSSE(t *testing.T) {
 	}
 	bus.Publish(collector.Event{Kind: collector.KindInfo, Message: "unique-stream-secret"})
 	reader := bufio.NewReader(response.Body)
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatal(err, line)
+	var frame snapshotFrame
+	for frame.Type != "engine" {
+		if frame, err = readSnapshotFrame(reader); err != nil {
+			t.Fatal(err)
+		}
 	}
 	var event collector.Event
-	if err = json.Unmarshal([]byte(strings.TrimSpace(strings.TrimPrefix(line, "data: "))), &event); err != nil {
-		t.Fatal(err, line)
+	if err = json.Unmarshal([]byte(frame.Data), &event); err != nil {
+		t.Fatal(err, frame.Data)
 	}
 	if event.Message != "[REDACTED]" {
-		t.Fatal(line)
+		t.Fatal(frame.Data)
 	}
 }
 

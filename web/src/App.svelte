@@ -1,6 +1,5 @@
 <script>
   import { formatTime } from './labels.mjs'
-  import { responseError } from './api-error.mjs'
   import { onMount } from 'svelte'
   import DSLEditor from './DSLEditor.svelte'
   import LoginPanel from './LoginPanel.svelte'
@@ -18,6 +17,7 @@
   import { selection, monitorRange } from './selection.svelte.js'
   import { timeRange } from './metric-chart.mjs'
   import { webApi } from './web-api.mjs'
+  import { jobStream } from './job-stream.svelte.js'
 
   const pages = [
     ['/', '대시보드', '전체 실행과 최근 결과를 확인합니다.'],
@@ -35,9 +35,12 @@
   let webSession = $state(undefined), ready = $state(false)
   let assetRevision = $state(0)
   let catalogRevision = $state(0)
-  let events = $state([]), runs = $state([]), sessions = $state([])
-  let connected = $state(false), error = $state('')
-  let drops = $state(null), observedAt = $state(null), now = $state(Date.now())
+  let error = $state(''), now = $state(Date.now())
+  // Engine events (what CLI runs publish) arrive on the one events stream.
+  const feed = jobStream(), live = feed.state
+  const events = $derived(live.engine)
+  const connected = $derived(live.connection === '연결됨')
+  const drops = $derived(live.busDrops), observedAt = $derived(live.lastObserved)
   const stale = $derived(observedAt !== null && now - Date.parse(observedAt) > 5000)
   const details = { '/jobs': ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'], '/nodes': ['/nodes', '노드 상세', '노드 하나의 상태, 구성, 로그와 쓸 수 있는 제어를 확인합니다.'] }
   const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
@@ -49,40 +52,14 @@
     const clock = setInterval(() => { now = Date.now() }, 1000)
     return () => { window.removeEventListener('popstate', change); clearInterval(clock) }
   })
-  async function read(path) {
-    const response = await fetch(path)
-    if (!response.ok) throw await responseError(response)
-    return response.json()
-  }
-  async function loadRuns() {
-    try { runs = (await read('/api/runs')) ?? [] } catch (e) { error = e.message }
-  }
-  async function loadSessions() {
-    try { sessions = ((await read('/api/sessions')) ?? []).map(id => ({ id })) } catch (e) { error = e.message }
-  }
   $effect(() => {
     if (!ready || webSession === null) return
-    loadRuns(); loadSessions()
-    const es = new EventSource('/events')
-    es.onopen = () => { connected = true }
-    es.onerror = () => { connected = false }
-    es.addEventListener('observation', m => {
-      try { const metadata = JSON.parse(m.data); drops = metadata.busDeliveryDropsTotal; observedAt = metadata.observedAt } catch { error = '관측 상태를 해석할 수 없습니다.' }
-    })
-    es.onmessage = m => {
-      try {
-        const e = JSON.parse(m.data)
-        events = [e, ...events].slice(0, 200)
-        if (e.kind === 'result') { loadRuns(); loadSessions() }
-      } catch { error = '해석할 수 없는 이벤트를 받았습니다.' }
-    }
-    return () => { es.close(); connected = false }
+    return feed.start()
   })
   // The monitoring range also narrows the event timeline.
   const range = $derived(timeRange(monitorRange, now))
   const rangedEvents = $derived(range ? events.filter(e => { const t = Date.parse(e.time); return !Number.isFinite(t) || (t >= Date.parse(range.from) && t <= Date.parse(range.to)) }) : events)
   const fmtTime = formatTime
-  const runOk = s => s === 'success' || s === 'pass'
 </script>
 
 <svelte:head><title>{current[1]} · chainbench</title><meta name="theme-color" content="#e6ece4" media="(prefers-color-scheme: light)" /><meta name="theme-color" content="#131a15" media="(prefers-color-scheme: dark)" /></svelte:head>
@@ -116,7 +93,7 @@
           <div hidden={route !== '/history'}><HistoryPanel {webSession} /></div>
         {/key}
         {#if route === '/'}
-          <Dashboard {runs} busDrops={drops} {connected} onrefresh={loadRuns} />
+          <Dashboard />
         {:else if route === '/jobs'}
           {#key parsed.jobId}<JobDetail jobId={parsed.jobId} {webSession} />{/key}
         {:else if route === '/nodes'}

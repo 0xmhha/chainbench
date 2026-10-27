@@ -39,3 +39,8 @@ export function applyNodeReading(state, event) {
  const nodes = network.nodes.map(n => n.id === reading.id ? {...n, state: reading.state, observationReason: reading.observationReason, observedPid: reading.observedPid, observedAt: reading.observedAt} : n)
  return {...state, networks: state.networks.map(n => n === network ? {...n, nodes} : n)}
 }
+// appendEngineEvent keeps what CLI runs published, newest first, at most
+// limit of them; the list is what this connection received, not a history.
+export function appendEngineEvent(list, event, limit = 200) {
+ return [event, ...(list ?? [])].slice(0, limit)
+}

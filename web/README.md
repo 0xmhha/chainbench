@@ -1,8 +1,10 @@
 # web — chainbench dashboard SPA
 
 Svelte 5 + Vite source for the dashboard (decision D5). It consumes the Go
-dashboard server's contract: the SSE stream at `/events` (obs.Event JSON) and the
-run list at `/api/runs` (obs.RunRecord JSON).
+dashboard server's `/api/v1` contract (`docs/dev/web-ui.openapi.yaml`): REST
+reads through `src/api-client.mjs` with the decoders in `src/api-decode.mjs`, and
+the one SSE stream at `/api/v1/events` for job changes, collector observations and
+engine events.
 
 ## Build
 
