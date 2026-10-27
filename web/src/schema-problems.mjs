@@ -44,3 +44,16 @@ export function fieldPath(schema, pointer) {
  }
  return path === 'content' ? '' : path
 }
+
+// schemaDefault is the value a newly added field starts with: the engine
+// default the contract offers, else the first choice or an empty value of
+// its type. An object starts with its required fields filled the same way.
+export function schemaDefault(schema) {
+ if (schema.default !== undefined) return schema.default
+ if (schema.enum) return schema.enum[0]
+ if (schema.type === 'object') return Object.fromEntries((schema.required ?? []).map(k => [k, schemaDefault(schema.properties[k])]))
+ if (schema.type === 'array') return []
+ if (schema.type === 'integer') return 0
+ if (schema.type === 'boolean') return false
+ return ''
+}
