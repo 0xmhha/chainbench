@@ -53,8 +53,20 @@ func TestErrorsCarryMachineCodesAndFieldPaths(t *testing.T) {
 	}
 	code, body := call("POST", "/api/v1/documents", `{"kind":"server-set","name":"pool","contractVersion":"2","content":{"version":2,"pool":{"hosts":[],"slots":2}},"assetRefs":[]}`, nil)
 	fields, _ := body["fieldErrors"].([]any)
-	if code != 422 || body["code"] != "invalid" || len(fields) != 1 || fields[0].(map[string]any)["path"] != "/content" {
+	if code != 422 || body["code"] != "invalid" || len(fields) != 1 || fields[0].(map[string]any)["path"] != "/content/pool/hosts" {
 		t.Errorf("invalid document: %d %v", code, body)
+	}
+	// Validation points at the same field the save would, for every kind.
+	for want, doc := range map[string]string{
+		"/content/pool/hosts/1/addr": `{"kind":"server-set","name":"pool","contractVersion":"2","content":{"version":2,"pool":{"hosts":["10.0.0.1","10.0.0.1."],"slots":1}},"assetRefs":[]}`,
+		"/name":                      `{"kind":"workspace-config","name":" ","contractVersion":"2","content":{},"assetRefs":[]}`,
+		"/content/steps/0/expect":    `{"kind":"case","name":"c","contractVersion":"2","content":{"schemaVersion":"2","kind":"case","id":"c","chainPreset":{"chain":"stablenet","binaries":{"default":"gstable"}},"steps":[{"expect":"unknown","is":1}]},"assetRefs":[]}`,
+	} {
+		code, body = call("POST", "/api/v1/documents/validate", doc, nil)
+		issues, _ := body["errors"].([]any)
+		if code != 200 || len(issues) != 1 || !strings.HasPrefix(issues[0].(map[string]any)["path"].(string), want) {
+			t.Errorf("validate %s: %d %v", want, code, body)
+		}
 	}
 	if code, body = call("GET", "/api/v1/documents/absent", "", nil); code != 404 || body["code"] != "not_found" {
 		t.Errorf("absent document: %d %v", code, body)

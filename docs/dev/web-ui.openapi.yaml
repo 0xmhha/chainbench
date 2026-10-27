@@ -2669,6 +2669,7 @@ components:
         requestId: *id001
         fieldErrors:
           type: array
+          description: Each path is a JSON pointer into the request. A refusal about one field of a server set or workspace config points at that field (/content/pool/hosts/1/addr); a refusal of the content as a whole points at /content.
           items:
             type: object
             properties:
@@ -2687,6 +2688,12 @@ components:
             additionalProperties: true
         details:
           type: object
+          description: A 409 for a draft opened against an engine contract that has since changed carries reason contract_changed, so an editor reloads the contract instead of reading the message.
+          properties:
+            reason:
+              type: string
+              enum:
+              - contract_changed
           additionalProperties: true
       additionalProperties: false
       required:

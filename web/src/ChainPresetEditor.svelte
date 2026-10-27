@@ -81,7 +81,7 @@
       savedId = entry.id; revision = entry.revision; onsaved(); await refreshSaved()
     } catch(e) {
       error = e.message
-      if (contractChanged(e.message)) {
+      if (contractChanged(e)) {
         // The engine contract changed under the draft: load the new one,
         // validate the draft against it and say which parts differ.
         const before = contract

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { schemaProblems } from '../../web/src/schema-problems.mjs'
+import { schemaProblems, fieldPath } from '../../web/src/schema-problems.mjs'
 
 const schema = { type: 'object', required: ['pool'], properties: { pool: { type: 'object', required: ['hosts', 'slots'], properties: {
  hosts: { type: 'array', items: { type: 'object', required: ['addr'], properties: { name: { type: 'string' }, addr: { type: 'string', minLength: 1 } } } },
@@ -21,4 +21,15 @@ test('a required string left empty is as missing as an absent one', () => {
  const s = { type: 'object', required: ['addr'], properties: { addr: { type: 'string' } } }
  assert.deepEqual(schemaProblems(s, { addr: '' }).map(p => p.path), ['content.addr'])
  assert.deepEqual(schemaProblems(s, { addr: 'x' }), [])
+})
+
+test('a server pointer into the content names the same field the form does', () => {
+ const s = { type: 'object', properties: { pool: schema.properties.pool, aliases: { type: 'object', additionalProperties: { type: 'string' } } } }
+ assert.equal(fieldPath(s, '/content/pool/hosts/1/addr'), 'content.pool.hosts[1].addr')
+ assert.equal(fieldPath(s, '/content/pool/slots'), 'content.pool.slots')
+ assert.equal(fieldPath(s, '/content/aliases/linux~1amd'), 'content.aliases.linux/amd')
+ assert.equal(fieldPath(s, '/content/aliases/0'), 'content.aliases.0')
+ assert.equal(fieldPath(s, '/name'), 'name')
+ assert.equal(fieldPath(s, '/content'), '')
+ assert.equal(fieldPath(s, undefined), '')
 })

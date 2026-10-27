@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
@@ -14,7 +13,15 @@ const DocumentContractVersion = webEngineContractVersion
 
 // ErrContractChanged refuses a draft opened against an engine contract that
 // has since changed; the editor validates it again and shows what differs.
-var ErrContractChanged = fmt.Errorf("%w: the engine contract changed since this draft was opened; validate it again before saving", ErrDeploymentConflict)
+// It is a conflict, but not a revision conflict, so it says only its own reason.
+var ErrContractChanged error = contractChangedError{}
+
+type contractChangedError struct{}
+
+func (contractChangedError) Error() string {
+	return "the engine contract changed since this draft was opened; validate it again before saving"
+}
+func (contractChangedError) Is(target error) bool { return target == ErrDeploymentConflict }
 
 // ContractWithDigest returns a contract as a JSON object carrying its digest
 // and document version. The digest is over the contract alone, so it changes

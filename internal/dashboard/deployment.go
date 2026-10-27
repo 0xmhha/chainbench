@@ -90,7 +90,7 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			err := store.ValidateDocument(in)
 			issues := []map[string]string{}
 			if err != nil {
-				issues = append(issues, map[string]string{"path": "/content", "code": "invalid", "message": err.Error()})
+				issues = append(issues, map[string]string{"path": app.WebFieldPath(err), "code": "invalid", "message": err.Error()})
 			}
 			deploymentJSON(w, 200, map[string]any{"valid": err == nil, "errors": issues, "contractVersion": "2", "warnings": []string{"SSH access requires a personal credential and actual target permission check."}})
 		})
@@ -336,6 +336,13 @@ func deploymentError(w http.ResponseWriter, err error) {
 		// The caller's own missing bindings; no other user's access is named.
 		body, _ := json.Marshal(map[string]any{"message": err.Error(), "details": map[string]any{"missingAccess": access.Missing}})
 		http.Error(w, string(body), http.StatusUnprocessableEntity)
+		return
+	}
+	if errors.Is(err, app.ErrContractChanged) {
+		// The editor reacts to this conflict by reloading the contract, so it
+		// gets a reason it can read rather than a sentence to match.
+		body, _ := json.Marshal(map[string]any{"message": err.Error(), "details": map[string]any{"reason": "contract_changed"}})
+		http.Error(w, string(body), http.StatusConflict)
 		return
 	}
 	var field *app.WebFieldError

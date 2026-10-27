@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -142,28 +143,31 @@ func legacyHint(b []byte) string {
 
 func (c *Set) validate() error {
 	if c.Version != SupportedVersion {
-		return fmt.Errorf("serverset: %s has version %d, want %d (see %s)", c.path, c.Version, SupportedVersion, DefaultSampleFile)
+		return fieldError(fmt.Errorf("serverset: %s has version %d, want %d (see %s)", c.path, c.Version, SupportedVersion, DefaultSampleFile), "version")
 	}
 	if len(c.PoolSpec.Hosts) == 0 {
-		return fmt.Errorf("serverset: %s declares no pool hosts", c.path)
+		return fieldError(fmt.Errorf("serverset: %s declares no pool hosts", c.path), "pool", "hosts")
 	}
 	for i, h := range c.PoolSpec.Hosts {
 		if h.Addr == "" {
-			return fmt.Errorf("serverset: pool host %d (%q) has no addr", i+1, h.Name)
+			return fieldError(fmt.Errorf("serverset: pool host %d (%q) has no addr", i+1, h.Name), "pool", "hosts", strconv.Itoa(i), "addr")
 		}
 	}
 	if c.PoolSpec.Slots < 0 {
-		return fmt.Errorf("serverset: %s declares %d slots per host, want >= 1", c.path, c.PoolSpec.Slots)
+		return fieldError(fmt.Errorf("serverset: %s declares %d slots per host, want >= 1", c.path, c.PoolSpec.Slots), "pool", "slots")
 	}
 	seenIndex := map[int]bool{}
 	seenName := map[string]bool{}
+	// Servers are derived from the pool hosts one for one, so server i is
+	// pool host i.
 	for i, s := range c.Servers {
 		where := s.label(i)
+		host := []string{"pool", "hosts", strconv.Itoa(i)}
 		if s.Host == "" {
-			return fmt.Errorf("serverset: server %s has no host", where)
+			return fieldError(fmt.Errorf("serverset: server %s has no host", where), append(host, "addr")...)
 		}
 		if s.Index == 0 && s.Name == "" {
-			return fmt.Errorf("serverset: server %s needs an index or a name to select it by", where)
+			return fieldError(fmt.Errorf("serverset: server %s needs an index or a name to select it by", where), append(host, "name")...)
 		}
 		switch s.Kind {
 		case "", KindLocal, KindRemote:
@@ -178,23 +182,23 @@ func (c *Set) validate() error {
 		}
 		if s.Name != "" {
 			if seenName[s.Name] {
-				return fmt.Errorf("serverset: duplicate server name %q", s.Name)
+				return fieldError(fmt.Errorf("serverset: duplicate server name %q", s.Name), append(host, "name")...)
 			}
 			seenName[s.Name] = true
 		}
 		if err := c.resolve(s).Ports.validate(where); err != nil {
-			return err
+			return err // Ports name their own band under pool.ports.
 		}
 	}
 	if err := c.SSH.validateFields(); err != nil {
-		return fmt.Errorf("serverset: %s: %w", c.path, err)
+		return underField(fmt.Errorf("serverset: %s: %w", c.path, err), "ssh")
 	}
-	for _, h := range c.PoolSpec.Hosts {
+	for i, h := range c.PoolSpec.Hosts {
 		if h.SSH == nil {
 			continue
 		}
 		if err := h.SSH.validateFields(); err != nil {
-			return fmt.Errorf("serverset: %s: host %s: %w", c.path, h.Name, err)
+			return underField(fmt.Errorf("serverset: %s: host %s: %w", c.path, h.Name, err), "pool", "hosts", strconv.Itoa(i), "ssh")
 		}
 	}
 	return nil
@@ -205,7 +209,7 @@ func (c *Set) validate() error {
 // not when the server is first dialed mid-run.
 func (s SSH) validateFields() error {
 	if s.Port < 0 || s.Port > MaxListenPort {
-		return fmt.Errorf("ssh port must be 0 (default) or 1..%d", MaxListenPort)
+		return fieldError(fmt.Errorf("ssh port must be 0 (default) or 1..%d", MaxListenPort), "port")
 	}
 	if s.Password != "" && s.PasswordFile != "" {
 		return fmt.Errorf("ssh sets both password and password_file — keep exactly one")
@@ -226,25 +230,25 @@ func (p Ports) validate(where string) error {
 	// family fact checked where the family is known (portplan, at allocate);
 	// the file itself only requires a usable stride.
 	if p.P2PStep < 1 {
-		return fmt.Errorf("serverset: server %s p2pStep is %d, want >= 1", where, p.P2PStep)
+		return fieldError(fmt.Errorf("serverset: server %s p2pStep is %d, want >= 1", where, p.P2PStep), "pool", "ports", "p2p", "step")
 	}
 	derived := p.WS == nil || p.Auth == nil
 	if derived && p.RPCStep < minRPCStep {
-		return fmt.Errorf("serverset: server %s rpcStep is %d, want >= %d (http, ws, auth — or declare ws/auth bands of their own)", where, p.RPCStep, minRPCStep)
+		return fieldError(fmt.Errorf("serverset: server %s rpcStep is %d, want >= %d (http, ws, auth — or declare ws/auth bands of their own)", where, p.RPCStep, minRPCStep), "pool", "ports", "rpc", "step")
 	}
 	if !derived && p.RPCStep < 1 {
-		return fmt.Errorf("serverset: server %s rpcStep is %d, want >= 1", where, p.RPCStep)
+		return fieldError(fmt.Errorf("serverset: server %s rpcStep is %d, want >= 1", where, p.RPCStep), "pool", "ports", "rpc", "step")
 	}
 	if p.P2PBase <= 0 || p.RPCBase <= 0 {
-		return fmt.Errorf("serverset: server %s needs a positive p2pBase and rpcBase", where)
+		return fieldError(fmt.Errorf("serverset: server %s needs a positive p2pBase and rpcBase", where), "pool", "ports")
 	}
 	for name, b := range map[string]*BandSpec{"ws": p.WS, "auth": p.Auth} {
 		if b != nil && (b.Base <= 0 || b.Step < 1) {
-			return fmt.Errorf("serverset: server %s %s band needs a positive base and step >= 1", where, name)
+			return fieldError(fmt.Errorf("serverset: server %s %s band needs a positive base and step >= 1", where, name), "pool", "ports", name)
 		}
 	}
 	if p.Metrics != nil && (p.Metrics.Base <= 0 || p.Metrics.Step < 0) {
-		return fmt.Errorf("serverset: server %s metrics band needs a positive base and step >= 0", where)
+		return fieldError(fmt.Errorf("serverset: server %s metrics band needs a positive base and step >= 0", where), "pool", "ports", "metrics")
 	}
 	return nil
 }

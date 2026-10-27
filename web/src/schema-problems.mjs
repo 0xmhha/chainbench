@@ -26,3 +26,21 @@ export function schemaProblems(schema, value, path = 'content') {
  }
  return out
 }
+
+// fieldPath turns a server pointer (/content/pool/hosts/1/addr) into the field
+// path the form uses (content.pool.hosts[1].addr), following the schema so an
+// array position and an object key that happens to be a number stay apart.
+// A request field outside the content keeps its name (/name is name), and a
+// refusal of the content as a whole names no field.
+export function fieldPath(schema, pointer) {
+ if (typeof pointer !== 'string' || !pointer.startsWith('/')) return ''
+ const keys = pointer.slice(1).split('/').map(k => k.replaceAll('~1', '/').replaceAll('~0', '~'))
+ if (keys[0] !== 'content') return keys.join('.')
+ let path = 'content', spec = schema
+ for (const key of keys.slice(1)) {
+  if (spec?.type === 'array') { path += `[${key}]`; spec = spec.items; continue }
+  path += `.${key}`
+  spec = spec?.properties?.[key] ?? spec?.additionalProperties
+ }
+ return path === 'content' ? '' : path
+}

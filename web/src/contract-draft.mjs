@@ -5,8 +5,10 @@ export function draftMeta(contract) {
  return { contractVersion: contract?.['x-contractVersion'], contractDigest: contract?.['x-contractDigest'] }
 }
 
-export function contractChanged(message) {
- return /engine contract changed/.test(message ?? '')
+// contractChanged recognises the server's refusal of a draft whose contract
+// has changed, by the reason it carries rather than by its wording.
+export function contractChanged(error) {
+ return error?.status === 409 && error?.details?.reason === 'contract_changed'
 }
 
 // changedDefinitions names the parts of a contract that differ: each $defs

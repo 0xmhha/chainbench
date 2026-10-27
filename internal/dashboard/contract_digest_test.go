@@ -51,12 +51,19 @@ func TestContractsCarryADigestThatSavedDraftsMustMatch(t *testing.T) {
 		t.Errorf("the deployment contract has no digest of its own: %v", deployment["x-contractDigest"])
 	}
 	preset := `{"schemaVersion":"2","kind":"chain-preset","id":"p","chain":"stablenet"}`
+	var refusal map[string]any
 	save := func(d string) int {
-		code, _ := call("POST", "/api/v1/documents", `{"kind":"chain-preset","name":"p","contractVersion":"2","content":`+preset+`,"assetRefs":[]`+d+`}`)
+		code, body := call("POST", "/api/v1/documents", `{"kind":"chain-preset","name":"p","contractVersion":"2","content":`+preset+`,"assetRefs":[]`+d+`}`)
+		refusal = body
 		return code
 	}
 	if c := save(`,"contractDigest":"` + strings.Repeat("0", 64) + `"`); c != 409 {
 		t.Errorf("a draft opened against another contract was saved: %d", c)
+	}
+	// The editor tells this refusal from a revision conflict by a reason it
+	// can read, not by the wording of the message.
+	if details, _ := refusal["details"].(map[string]any); details["reason"] != "contract_changed" {
+		t.Errorf("contract change refusal: %v", refusal)
 	}
 	if c := save(`,"contractDigest":"` + digest + `"`); c != 201 {
 		t.Errorf("a draft opened against the current contract was refused: %d", c)
