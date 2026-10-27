@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strconv"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
@@ -29,18 +30,18 @@ type cliRunReport struct {
 // A run whose tests failed exits non-zero with a complete document: that is a
 // verdict, returned without an error. A run that never produced a session
 // returns the reason the CLI gave.
-func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, logins string) (RunSuiteOut, error) {
+func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, logins string, flags ...string) (RunSuiteOut, error) {
 	if cli == nil {
 		return RunSuiteOut{}, errNoChainCLI
 	}
-	args, err := suiteCLIArgs(ctx, in, dir, logins)
+	args, err := suiteCLIArgs(ctx, in, dir, logins, flags...)
 	if err != nil {
 		return RunSuiteOut{}, err
 	}
 	return runCLIDocument(ctx, cli, args)
 }
 
-func suiteCLIArgs(ctx context.Context, in RunSuiteIn, dir, logins string) ([]string, error) {
+func suiteCLIArgs(ctx context.Context, in RunSuiteIn, dir, logins string, flags ...string) ([]string, error) {
 	args, err := writeCLICases(ctx, in.SpecContent, dir)
 	if err != nil {
 		return nil, err
@@ -71,7 +72,23 @@ func suiteCLIArgs(ctx context.Context, in RunSuiteIn, dir, logins string) ([]str
 	if in.KeepUp {
 		args = append(args, "--keep-up")
 	}
-	return args, nil
+	return append(args, flags...), nil
+}
+
+// webRunFlags are the test.run arguments the contract passes to chainbench
+// run as they are.
+func webRunFlags(args webChainArguments) []string {
+	var flags []string
+	if args.NoSkips {
+		flags = append(flags, "--no-skips")
+	}
+	if args.WaitBlocks != 0 {
+		flags = append(flags, "--wait-blocks", strconv.FormatUint(args.WaitBlocks, 10))
+	}
+	if args.NodeMonitorTimeoutSeconds != 0 {
+		flags = append(flags, "--node-monitor-timeout", strconv.Itoa(args.NodeMonitorTimeoutSeconds)+"s")
+	}
+	return flags
 }
 
 // attachThroughCLI runs the reviewed cases against the network recorded at

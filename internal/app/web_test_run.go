@@ -338,9 +338,9 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 			return err
 		}
 		var runErr error
-		out, runErr = runSuiteThroughCLI(ctx, e.cli, in, work, serverSet)
-		if runErr == nil && out.Summary.Failed() {
-			runErr = errors.New("one or more selected test cases failed or were blocked")
+		out, runErr = runSuiteThroughCLI(ctx, e.cli, in, work, serverSet, webRunFlags(p.Arguments)...)
+		if runErr == nil {
+			runErr = webSuiteVerdict(out, p.Arguments.NoSkips)
 		}
 		return runErr
 	})
@@ -357,6 +357,19 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
 	}
 	return result, err
+}
+
+// webSuiteVerdict fails a run whose document reports a failed or blocked
+// case, or, when the job asked for no skips, a skipped one. The CLI answers
+// a skip under --no-skips with a complete document, so the job judges it.
+func webSuiteVerdict(out RunSuiteOut, noSkips bool) error {
+	if out.Summary.Failed() {
+		return errors.New("one or more selected test cases failed or were blocked")
+	}
+	if noSkips && out.Summary.Summary.Skip > 0 {
+		return fmt.Errorf("%d selected test case(s) were skipped and the job asked that none be", out.Summary.Summary.Skip)
+	}
+	return nil
 }
 
 func webTestSessionRef(root, dir string) (string, error) {

@@ -86,7 +86,53 @@ type webChainArguments struct {
 	// to the registered asset that runs under it.
 	BinaryAssets   map[string]string      `json:"binaryAssets,omitempty"`
 	ChainPresetRef *DeploymentDocumentRef `json:"chainPresetRef,omitempty"`
+	// NoSkips fails a test job that skipped any case, as run --no-skips does.
+	NoSkips bool `json:"noSkips,omitempty"`
+	// WaitBlocks holds the cases until the head reaches this height.
+	WaitBlocks uint64 `json:"waitBlocks,omitempty"`
+	// NodeMonitorTimeoutSeconds is how long the readiness gate waits on nodes
+	// still coming up; zero keeps the engine default.
+	NodeMonitorTimeoutSeconds int `json:"nodeMonitorTimeoutSeconds,omitempty"`
 }
+
+// checkWebArguments refuses an argument the operation does not read, and a
+// number outside the range the contract states. A zero number is one left out.
+func checkWebArguments(operation string, raw json.RawMessage) error {
+	var present map[string]json.RawMessage
+	if len(bytes.TrimSpace(raw)) != 0 {
+		if err := json.Unmarshal(raw, &present); err != nil {
+			return errors.New("one argument object required")
+		}
+	}
+	names := make([]string, 0, len(present))
+	for name := range present {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	for _, name := range names {
+		if !webOperationReads(operation, name) {
+			return fmt.Errorf("%s does not read argument %s", operation, name)
+		}
+	}
+	for _, op := range webOperations {
+		if op.ID != operation {
+			continue
+		}
+		for _, a := range op.Arguments {
+			value, ok := present[a.Name]
+			if !ok || a.Type != "integer" || a.Minimum == nil {
+				continue
+			}
+			var n int64
+			// Zero is the value left out, which keeps the engine's own choice.
+			if json.Unmarshal(value, &n) != nil || n != 0 && (n < *a.Minimum || n > *a.Maximum) {
+				return fmt.Errorf("%s must be a whole number between %d and %d", a.Name, *a.Minimum, *a.Maximum)
+			}
+		}
+	}
+	return nil
+}
+
 type webChainPayload struct {
 	Input             WebPlanInput           `json:"input"`
 	Arguments         webChainArguments      `json:"arguments"`
@@ -136,6 +182,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if !webKnownOperation(in.Operation) {
 		return out, errors.New("operation requires an execution adapter that is not available")
+	}
+	if err := checkWebArguments(in.Operation, in.Arguments); err != nil {
+		return out, err
 	}
 	var args webChainArguments
 	dec := json.NewDecoder(bytes.NewReader(in.Arguments))

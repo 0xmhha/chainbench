@@ -50,6 +50,9 @@ var webContractSchemas = map[string]any{
 	"ObservationEvent":  WebObservationEvent{},
 	"RunEvidence":       WebRunEvidence{},
 	"EvidencePage":      WebEvidencePage{},
+	"JobsContract":      WebJobsContract{},
+	"Operation":         WebOperation{},
+	"OperationArgument": WebArgument{},
 }
 
 // webInputOnly names fields a response struct inherits from its input struct
@@ -343,5 +346,27 @@ allOf:
 	openAPISchemas{}.compare("Sample", reflect.TypeOf(sample{}), schema, &problems)
 	if want := []string{"Sample.refs: schema requires it, Go omits it when empty"}; !reflect.DeepEqual(problems, want) {
 		t.Fatalf("problems = %q, want %q", problems, want)
+	}
+}
+
+// The plan arguments OpenAPI documents are exactly the ones the engine decodes.
+func TestWebOpenAPIPlanArgumentsMatchTheEngine(t *testing.T) {
+	schemas := loadOpenAPISchemas(t)
+	arguments, _ := schemas["PlanInput"]["properties"].(map[string]any)["arguments"].(map[string]any)
+	if arguments == nil {
+		t.Fatal("PlanInput has no arguments schema")
+	}
+	problems := []string{}
+	all := []string{}
+	schemas.compare("PlanInput.arguments", reflect.TypeFor[webChainArguments](), arguments, &all)
+	for _, p := range all {
+		// The comparison is written for responses; a request field is never
+		// required just because the engine's copy of it is always encoded.
+		if !strings.Contains(p, "always written") {
+			problems = append(problems, p)
+		}
+	}
+	if len(problems) > 0 {
+		t.Errorf("docs/dev/web-ui.openapi.yaml disagrees with the engine's plan arguments:\n  %s", strings.Join(problems, "\n  "))
 	}
 }
