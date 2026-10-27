@@ -105,6 +105,7 @@
  * @property {string} startedAt
  * @property {string} [finishedAt] absent while the phase runs
  * @property {string} [message]
+ * @property {{state: string, detail?: string}} [failure] the engine's classification of a failed phase
  */
 
 /**
@@ -185,6 +186,7 @@
  * @property {string[]} artifactRefs
  * @property {Coverage} [coverage]
  * @property {RunTest[]} [tests] in detail reads of engine sessions
+ * @property {{id: string, role: string}[]} [nodes] in detail reads of engine sessions, the nodes the run used
  */
 
 /**

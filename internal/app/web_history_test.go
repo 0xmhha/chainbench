@@ -6,10 +6,12 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -23,6 +25,7 @@ func historyFixture(t *testing.T, artifactRoot string, second int, status sessio
 	if err != nil {
 		t.Fatal(err)
 	}
+	e.PopulateNodeTable(node.NodeSet{Chain: "stablenet", Nodes: []node.Node{{Index: 1, Role: "bp"}, {Index: 2, Role: "en"}}})
 	if err = e.Save(); err != nil {
 		t.Fatal(err)
 	}
@@ -328,6 +331,11 @@ func TestWebHistoryFindsARunByTheJobsSessionReference(t *testing.T) {
 	}
 	if a := run.Tests[0].Assertions[0]; a.Expected != "1" || a.Actual != "2" || a.Passed {
 		t.Fatalf("assertion = %#v", a)
+	}
+	// The detail names the nodes the run used, from its recorded environment,
+	// so a screen does not rebuild the list from metric series.
+	if want := []WebRunNode{{ID: "node1", Role: "bp"}, {ID: "node2", Role: "en"}}; !reflect.DeepEqual(run.Nodes, want) {
+		t.Fatalf("run nodes = %+v, want %+v", run.Nodes, want)
 	}
 	if _, err = history.Get("web:unknown/session"); !errors.Is(err, ErrDeploymentNotFound) {
 		t.Fatal("an unknown reference must stay not found", err)

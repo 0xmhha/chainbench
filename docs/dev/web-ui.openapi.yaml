@@ -3374,6 +3374,16 @@ components:
         startedAt: *id006
         finishedAt: *id006
         message: *id001
+        failure:
+          type: object
+          description: The kind of failure that stopped a failed phase, as the engine classified it, when it did
+          properties:
+            state:
+              type: string
+              description: The designed failure state, for example ChainLaunchNodesFailPortBusy
+            detail: *id001
+          additionalProperties: false
+          required: [state]
       additionalProperties: false
       required:
       - name
@@ -3712,6 +3722,16 @@ components:
           description: In detail reads of engine-session runs, each test with its result files read; read these instead of summary.results
           items:
             $ref: '#/components/schemas/RunTest'
+        nodes:
+          type: array
+          description: In detail reads of engine-session runs, the nodes the run's recorded environments name
+          items:
+            type: object
+            properties:
+              id: *id002
+              role: *id001
+            additionalProperties: false
+            required: [id, role]
       additionalProperties: false
       required:
       - id
