@@ -93,7 +93,7 @@ const network = shape({ id: string, workspaceId: string, ownership: string, vers
 const series = shape({ nodeId: string, name: string, metric: string, canonical: boolean, source: string, 'unit?': string, samples: arrayOf(shape({ time: string, value: nullable(number) })) })
 const metrics = shape({ networkId: string, series: arrayOf(series), coverage })
 const logs = shape({ nodeId: string, entries: arrayOf(shape({ time: string, text: string, 'level?': string, 'timeSource?': string })), total: number, coverage, nextCursor: nullable(string) })
-const phase = shape({ name: string, state: string, startedAt: string, 'finishedAt?': string, 'message?': string })
+const phase = shape({ name: string, state: string, startedAt: string, 'finishedAt?': string, 'message?': string, 'failure?': shape({ state: string, 'detail?': string }) })
 const job = shape({
  id: string, actorId: string, workspaceId: string, planId: string, operation: string, state: string, terminal: boolean, needsCheck: boolean,
  phases: arrayOf(phase), createdAt: string, retention: string, nodeDisposition: string, 'cancelReason?': string, 'cancelMessage?': string,
@@ -109,7 +109,7 @@ const runTest = shape({
 })
 const run = shape({
  id: string, 'jobId?': string, workspaceId: string, chain: string, 'actorId?': string, state: string, 'startedAt?': string, 'finishedAt?': string,
- sessionRefs: arrayOf(string), fingerprints: mapOf(string), summary: mapOf(any), artifactRefs: arrayOf(string), 'coverage?': coverage, 'tests?': arrayOf(runTest),
+ sessionRefs: arrayOf(string), fingerprints: mapOf(string), summary: mapOf(any), artifactRefs: arrayOf(string), 'coverage?': coverage, 'tests?': arrayOf(runTest), 'nodes?': arrayOf(shape({ id: string, role: string })),
 })
 const snapshot = shape({ version: number, cursor: string, jobs: arrayOf(job), networks: arrayOf(network), busDeliveryDropsTotal: number, jobDeliveryDropsTotal: number, observedAt: string })
 

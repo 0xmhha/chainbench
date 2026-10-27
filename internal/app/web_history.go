@@ -230,6 +230,7 @@ func (s *WebHistory) Detail(a DeploymentActor, id string) (WebRun, error) {
 	}
 	if run.Summary["kind"] == "engine-session" {
 		run.Tests = webRunTests(run)
+		run.Nodes = s.runNodes(id)
 	}
 	w, ok := s.windowOf(run)
 	if !ok || w.To.IsZero() {

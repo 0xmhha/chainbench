@@ -26,6 +26,15 @@ type WebRun struct {
 	// Tests are the session's tests with their result files read, in detail
 	// reads of engine-session runs only.
 	Tests []WebRunTest `json:"tests,omitempty"`
+	// Nodes are the nodes the run's recorded environments name, in detail
+	// reads of engine-session runs only.
+	Nodes []WebRunNode `json:"nodes,omitempty"`
+}
+
+// WebRunNode is one node of a run's recorded environment.
+type WebRunNode struct {
+	ID   string `json:"id"`
+	Role string `json:"role"`
 }
 
 type WebHistoryQuery struct {

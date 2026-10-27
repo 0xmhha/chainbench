@@ -91,6 +91,17 @@ type WebJobPhase struct {
 	StartedAt  time.Time `json:"startedAt"`
 	FinishedAt time.Time `json:"finishedAt,omitzero"`
 	Message    string    `json:"message,omitempty"`
+	// Failure is the kind of failure that stopped a failed phase, as the
+	// engine classified it, when it did.
+	Failure *WebPhaseFailure `json:"failure,omitempty"`
+}
+
+// WebPhaseFailure is an engine-classified failure: State names the designed
+// failure state (for example ChainLaunchNodesFailPortBusy) and Detail what the
+// engine recorded about it.
+type WebPhaseFailure struct {
+	State  string `json:"state"`
+	Detail string `json:"detail,omitempty"`
 }
 
 type WebJob struct {

@@ -17,6 +17,11 @@ func (s *WebJobs) sanitized(text string) string {
 
 func (s *WebJobs) progress(id string, phase WebJobPhase) error {
 	phase.Message = s.sanitized(phase.Message)
+	if phase.Failure != nil {
+		failure := *phase.Failure
+		failure.Detail = s.sanitized(failure.Detail)
+		phase.Failure = &failure
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	job := s.state.Jobs[id]

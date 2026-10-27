@@ -6,8 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
@@ -20,6 +22,8 @@ type composeCLI struct {
 	steps  []string
 	done   int
 	failAt string
+	// failed is the step record the CLI leaves for failAt, when set.
+	failed chainsetup.Step
 	args   []string
 	ended  chan struct{}
 }
@@ -33,6 +37,9 @@ func (c *composeCLI) ChainStatus(context.Context, string) (State, error) {
 			break
 		}
 		st.Steps[name] = chainsetup.Step{Done: true}
+	}
+	if c.done < len(c.steps) && c.steps[c.done] == c.failAt && c.failed != (chainsetup.Step{}) {
+		st.Steps[c.failAt] = c.failed
 	}
 	if c.done < len(c.steps) && c.steps[c.done] != c.failAt {
 		c.done++
@@ -114,6 +121,27 @@ func TestComposeThroughCLINamesTheStepThatFailed(t *testing.T) {
 			t.Fatalf("a step after the failure was reported: %+v", p)
 		}
 	}
+	if last.Failure != nil {
+		t.Fatalf("an unclassified failure carries a classification: %+v", last.Failure)
+	}
+}
+
+// TestComposeThroughCLICarriesTheClassifiedFailure: when the CLI recorded what
+// kind of failure stopped a step, the failed phase carries that state and its
+// detail, so a screen need not read the reason out of the message.
+func TestComposeThroughCLICarriesTheClassifiedFailure(t *testing.T) {
+	steps := []string{"new", "place", "deploy", "init"}
+	cli := &composeCLI{steps: steps, failAt: "deploy", ended: make(chan struct{}),
+		failed: chainsetup.Step{Err: "listen tcp :30303: address already in use", Failed: "ChainLaunchNodesFailPortBusy", Detail: "node2 p2p port 30303 is in use"}}
+	got, failed, err := phaseLog(t, cli, steps, []string{"chain", "up"})
+	if err == nil || failed != "deploy" {
+		t.Fatalf("compose = %q %v", failed, err)
+	}
+	last := got[len(got)-1]
+	want := &WebPhaseFailure{State: "ChainLaunchNodesFailPortBusy", Detail: "node2 p2p port 30303 is in use"}
+	if last.Failure == nil || *last.Failure != *want {
+		t.Fatalf("failed phase failure = %+v, want %+v", last.Failure, want)
+	}
 }
 
 // TestRunControlRunsOneCommandWithTheJobsLogins: a node control is one
@@ -136,5 +164,28 @@ func TestRunControlRunsOneCommandWithTheJobsLogins(t *testing.T) {
 	}
 	if _, err := os.Stat(logins); !os.IsNotExist(err) {
 		t.Fatalf("the job's logins outlived the command: %v", err)
+	}
+}
+
+// TestWebJobsCleanAPhaseFailureDetail: a classified failure's detail is cleaned
+// like the phase message before the job records it.
+func TestWebJobsCleanAPhaseFailureDetail(t *testing.T) {
+	jobs, err := OpenWebJobs(t.TempDir(), nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs.state.Plans["plan"] = savedWebPlan{Prepared: WebPreparedJob{Phases: []string{"deploy"}}}
+	jobs.state.Jobs["job"] = WebJob{ID: "job", ActorID: "operator", PlanID: "plan", State: "running", Phases: []WebJobPhase{}}
+	pem := "-----BEGIN PRIVATE KEY-----\nMIIEsecret\n-----END PRIVATE KEY-----"
+	phase := WebJobPhase{Name: "deploy", State: "failed", StartedAt: time.Now().UTC(), Failure: &WebPhaseFailure{State: "ChainLaunchNodesFailPortBusy", Detail: "key file held " + pem}}
+	if err = jobs.progress("job", phase); err != nil {
+		t.Fatal(err)
+	}
+	got := jobs.state.Jobs["job"].Phases[0].Failure
+	if got == nil || strings.Contains(got.Detail, "MIIEsecret") || !strings.Contains(got.Detail, "[REDACTED]") {
+		t.Fatalf("recorded failure = %+v", got)
+	}
+	if strings.Contains(phase.Failure.Detail, "[REDACTED]") {
+		t.Fatal("cleaning changed the caller's phase")
 	}
 }

@@ -3,8 +3,10 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -171,6 +173,42 @@ func webRunMissing(run WebRun) []string {
 			continue
 		}
 		out = append(out, name)
+	}
+	return out
+}
+
+// runNodes reads the node table of every environment the run captured. A node
+// two environments share is listed once.
+func (s *WebHistory) runNodes(id string) []WebRunNode {
+	s.mu.Lock()
+	capture, ok := s.state.Captures[historyCaptureID(id)]
+	s.mu.Unlock()
+	if !ok {
+		return nil
+	}
+	names := make([]string, 0, len(capture.Files))
+	for name := range capture.Files {
+		if strings.HasPrefix(name, "environments/") && strings.HasSuffix(name, "/env.json") {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	seen := map[string]bool{}
+	var out []WebRunNode
+	for _, name := range names {
+		var env struct {
+			Nodes []node.Node `json:"nodes"`
+		}
+		if json.Unmarshal([]byte(capture.Files[name]), &env) != nil {
+			continue
+		}
+		for _, n := range env.Nodes {
+			label := string(node.LabelFor(n.Index))
+			if !seen[label] {
+				seen[label] = true
+				out = append(out, WebRunNode{ID: label, Role: string(n.Role)})
+			}
+		}
 	}
 	return out
 }

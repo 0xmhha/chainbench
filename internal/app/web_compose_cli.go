@@ -82,7 +82,9 @@ func composeThroughCLI(ctx context.Context, cli ChainCLI, dir string, steps, arg
 			if running != next {
 				started = time.Now().UTC()
 			}
-			if err := report(WebJobPhase{Name: failed, State: "failed", StartedAt: started, FinishedAt: time.Now().UTC(), Message: runErr.Error()}); err != nil {
+			phase := WebJobPhase{Name: failed, State: "failed", StartedAt: started, FinishedAt: time.Now().UTC(), Message: runErr.Error()}
+			phase.Failure = recordedFailure(ctx, cli, dir, failed)
+			if err := report(phase); err != nil {
 				return failed, err
 			}
 			return failed, runErr
@@ -321,4 +323,21 @@ func nodeSwapArgs(index int, binary string, changes []string) []string {
 		args = append(args, "--config", change)
 	}
 	return args
+}
+
+// recordedFailure reads how the CLI classified the failure of step, when the
+// record says; a step that failed before its stage could classify it has none.
+func recordedFailure(ctx context.Context, cli ChainCLI, dir, step string) *WebPhaseFailure {
+	if _, err := os.Stat(filepath.Join(dir, "chain-record.json")); err != nil {
+		return nil
+	}
+	st, err := cli.ChainStatus(ctx, dir)
+	if err != nil {
+		return nil
+	}
+	recorded := st.Steps[step]
+	if recorded.Failed == "" {
+		return nil
+	}
+	return &WebPhaseFailure{State: recorded.Failed, Detail: recorded.Detail}
 }
