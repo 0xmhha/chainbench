@@ -1,5 +1,5 @@
 <script>
-  import { responseError } from './api-error.mjs'
+  import { apiClient } from './api-client.mjs'
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
@@ -66,7 +66,7 @@
   async function saveWorkspace() { const documents = [setRef, configRef].map(ref => { const [id, rev] = ref.split(':'); return { id, revision: Number(rev) } }); const w = await api(workspaceId ? `workspaces/${workspaceId}` : 'workspaces', workspaceId ? 'PATCH' : 'POST', { name: workspaceName, documents }, workspaceRevision); onsaved(); await refresh(); await loadWorkspace(w.id); status = `공유 workspace revision ${w.revision} 저장됨` }
   function download(blob, filename) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
   async function exportDocument() { download(new Blob([JSON.stringify(await api(`documents/${docId}/export`), null, 2)], { type: 'application/json' }), `${kind}.json`); status = '공유 선언을 내보냈습니다' }
-  async function exportWorkspace() { const response = await fetch(`/api/v1/workspaces/${workspaceId}/export`); if (!response.ok) throw await responseError(response); download(await response.blob(), `${workspaceName}.bundle.json`); status = 'workspace 묶음을 내보냈습니다' }
+  async function exportWorkspace() { const response = await apiClient(webSession).send(`workspaces/${workspaceId}/export`); download(await response.blob(), `${workspaceName}.bundle.json`); status = 'workspace 묶음을 내보냈습니다' }
   $effect(() => { if (webSession) action(async () => { contract = await api('contracts/deployment'); await refresh(); newDocument('server-set'); if (selection.workspaceId && workspaces.some(w => w.id === selection.workspaceId)) await loadWorkspace(selection.workspaceId) }) })
   const hosts = $derived.by(() => { const id = setRef.split(':')[0]; const rev = Number(setRef.split(':')[1]); return docs.find(d => d.id === id && d.revision === rev)?.content.pool.hosts ?? [] })
   const hostName = h => typeof h === 'string' ? h : h.name || h.addr

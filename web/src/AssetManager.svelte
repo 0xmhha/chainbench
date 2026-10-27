@@ -1,22 +1,21 @@
 <script>
-  import { responseError } from './api-error.mjs'
+  import { apiClient } from './api-client.mjs'
   import { allItems } from './pages.mjs'
   let { webSession, onuploaded = () => {} } = $props()
   let items = $state([]), kind = $state('binary'), selected = $state(null), busy = $state(false), message = $state(''), filter = $state('all')
   const writable = $derived(['administrator', 'operator'].includes(webSession?.user.role))
   const visible = $derived(items.filter(item => filter === 'all' || item.kind === filter))
   const names = {binary:'체인 바이너리',configuration:'설정 선언',template:'템플릿',material:'테스트 자료'}
+  const client = $derived(apiClient(webSession))
   async function refresh() {
-    items = await allItems(async path => { const response = await fetch('/api/v1/' + path); if (!response.ok) throw await responseError(response); return response.json() }, 'assets')
+    items = await allItems(path => client.request(path), 'assets')
   }
   $effect(() => { if (webSession) refresh().catch(error => { message = error.message }) })
   async function upload() {
     busy = true; message = ''
     try {
       const body = new FormData(); body.append('kind', kind); body.append('file', selected)
-      const response = await fetch('/api/v1/assets', {method:'POST',headers:{'X-CSRF-Token':webSession.csrfToken},body})
-      if (!response.ok) throw await responseError(response)
-      const item = await response.json(); await refresh(); onuploaded()
+      const item = await client.request('assets', { method: 'POST', body }); await refresh(); onuploaded()
       message = `등록 완료 · ${item.name} · ${item.id}`
     } catch (error) { message = error.message } finally { busy = false }
   }
