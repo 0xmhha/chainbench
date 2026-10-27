@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -33,14 +34,24 @@ func (e *WebChainEngine) UseCLI(c ChainCLI) { e.cli = c }
 type WebNode struct {
 	ID string `json:"id"`
 	// Ref is "<networkId>.<id>", the form the logs API addresses a node by.
-	Ref               string   `json:"ref"`
-	NetworkID         string   `json:"networkId"`
-	Role              string   `json:"role"`
-	HostIdentity      string   `json:"hostIdentity"`
-	DataPath          string   `json:"dataPath"`
-	PID               int      `json:"pid"`
-	ObservedPID       int      `json:"observedPid,omitempty"`
-	ObservationReason string   `json:"observationReason,omitempty"`
+	Ref string `json:"ref"`
+	// Server is the server-set entry the node runs on; SyncMode is the sync
+	// mode its config renders; Ports are the ports it listens on.
+	Server            string        `json:"server,omitempty"`
+	SyncMode          string        `json:"syncMode,omitempty"`
+	Ports             *WebNodePorts `json:"ports,omitempty"`
+	NetworkID         string        `json:"networkId"`
+	Role              string        `json:"role"`
+	HostIdentity      string        `json:"hostIdentity"`
+	DataPath          string        `json:"dataPath"`
+	PID               int           `json:"pid"`
+	ObservedPID       int           `json:"observedPid,omitempty"`
+	ObservationReason string        `json:"observationReason,omitempty"`
+	// ObservationDetail is why an observation could not be made, when it
+	// could not; Executable is whether the node's binary can be launched on
+	// its machine (ready, unavailable or unknown).
+	ObservationDetail string   `json:"observationDetail,omitempty"`
+	Executable        string   `json:"executable,omitempty"`
 	BinaryAssetID     string   `json:"binaryAssetId,omitempty"`
 	BinarySHA256      string   `json:"binarySHA256,omitempty"`
 	State             string   `json:"state"`
@@ -55,6 +66,25 @@ type WebNetwork struct {
 	Ownership   string    `json:"ownership"`
 	Nodes       []WebNode `json:"nodes"`
 	Version     int       `json:"version"`
+	// Collector is what the collector has done for this network, when one runs.
+	Collector *WebCollectorStatus `json:"collector,omitempty"`
+}
+
+// WebNodePorts are the ports a node listens on; a port it does not open is
+// left out.
+type WebNodePorts struct {
+	P2P     int `json:"p2p,omitempty"`
+	HTTP    int `json:"http,omitempty"`
+	WS      int `json:"ws,omitempty"`
+	Metrics int `json:"metrics,omitempty"`
+}
+
+func webNodePorts(ns node.Record) *WebNodePorts {
+	ports := WebNodePorts{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Metrics: ns.Metrics}
+	if ports == (WebNodePorts{}) {
+		return nil
+	}
+	return &ports
 }
 
 // Networks returns only compositions in the Web service's owned control tree.
@@ -91,6 +121,8 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 		readings := map[string]WebNodeObserved{}
 		if e.monitor != nil {
 			readings = e.monitor.Observed(w.ID)
+			status := e.monitor.CollectorStatus(w.ID)
+			network.Collector = &status
 		}
 		for _, ns := range st.Nodes {
 			controls := []string{"node.start", "node.stop"}
@@ -107,10 +139,10 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			if target.HostIdentity == "" {
 				controls = []string{}
 			}
-			n := WebNode{ID: string(ns.NodeLabel()), Ref: w.ID + "." + string(ns.NodeLabel()), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
+			n := WebNode{ID: string(ns.NodeLabel()), Ref: w.ID + "." + string(ns.NodeLabel()), Server: ns.Server, SyncMode: ns.SyncMode, Ports: webNodePorts(ns), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
 			n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
 			if seen, ok := readings[n.ID]; ok {
-				n.State, n.ObservationReason, n.ObservedPID, n.ObservedAt = seen.State, seen.Reason, seen.PID, seen.At
+				n.State, n.ObservationReason, n.ObservedPID, n.ObservedAt, n.Executable = seen.State, seen.Reason, seen.PID, seen.At, seen.Executable
 			} else {
 				n.ObservationReason = "not_observed"
 			}

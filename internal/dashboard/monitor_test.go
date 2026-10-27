@@ -85,7 +85,7 @@ func TestMonitorRoutesServeViewersAndRejectBadQueries(t *testing.T) {
 	var logs struct {
 		Entries []map[string]any `json:"entries"`
 	}
-	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &logs) != nil || len(logs.Entries) != 1 || len(logs.Entries[0]) != 2 {
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &logs) != nil || len(logs.Entries) != 1 || len(logs.Entries[0]) != 3 || logs.Entries[0]["timeSource"] != "collection" || logs.Entries[0]["level"] != nil {
 		t.Fatalf("viewer logs = %d %s", w.Code, w.Body.String())
 	}
 	for query, total := range map[string]float64{"q=IMPORTED": 1, "q=absent": 0, "level=info": 0} {

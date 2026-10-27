@@ -57,10 +57,13 @@ func networksFixture(t *testing.T, recordPID int) (*WebChainEngine, string) {
 // node's pid even when the record on disk is behind the process ledger.
 func TestWebNetworksShowWhatTheCLIReports(t *testing.T) {
 	engine, dir := networksFixture(t, 111)
-	engine.UseCLI(statusCLI{dir: {Chain: "stablenet", Nodes: []node.Record{{Index: 1, Label: "node1", Role: "en", PID: 222}}}})
+	engine.UseCLI(statusCLI{dir: {Chain: "stablenet", Nodes: []node.Record{{Index: 1, Label: "node1", Role: "en", PID: 222, Server: "east", SyncMode: "full", Endpoints: node.Endpoints{P2P: 30303, HTTP: 8545, Metrics: 6060}}}}})
 	networks, err := engine.Networks(context.Background())
 	if err != nil {
 		t.Fatal(err)
+	}
+	if n := networks[0].Nodes[0]; n.Server != "east" || n.SyncMode != "full" || n.Ports == nil || *n.Ports != (WebNodePorts{P2P: 30303, HTTP: 8545, Metrics: 6060}) {
+		t.Fatalf("node placement = server %q sync %q ports %+v", n.Server, n.SyncMode, n.Ports)
 	}
 	if len(networks) != 1 || len(networks[0].Nodes) != 1 || networks[0].Nodes[0].PID != 222 {
 		t.Fatalf("networks = %+v, want node1 with the pid the CLI reports (222)", networks)
@@ -139,8 +142,11 @@ func TestWebNetworksCarryTheCollectorsLatestReading(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if c := networks[0].Collector; c == nil || c.IntervalSeconds != 5 {
+		t.Fatalf("network collector status = %+v", c)
+	}
 	n := networks[0].Nodes[0]
-	if n.State != "stopped" || n.ObservationReason != "no_matching_process" || !n.ObservedAt.Equal(at) {
+	if n.State != "stopped" || n.ObservationReason != "no_matching_process" || !n.ObservedAt.Equal(at) || n.Executable != "ready" {
 		t.Fatalf("with a reading: state %q reason %q at %s", n.State, n.ObservationReason, n.ObservedAt)
 	}
 	monitor.seen[filepath.Base(dir)]["node1"] = WebNodeObserved{State: "running", PID: 333, Executable: "ready", At: at}

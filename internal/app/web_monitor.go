@@ -65,6 +65,8 @@ type WebMonitor struct {
 	// list can read them while a collection round holds mu.
 	seenMu sync.Mutex
 	seen   map[string]map[string]WebNodeObserved
+	// remoteLogs says, per SSH network, whether log collection is attached.
+	remoteLogs map[string]string
 	// events fans out what each round saw; see SubscribeObservations.
 	events webObservationHub
 	// heardLines, set only for the length of a local round under mu, hears
@@ -188,6 +190,7 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 	}
 	now := m.now().UTC()
 	m.observeNetwork(ctx, network, state, target.Transport == "local", now)
+	m.noteRemoteLogs(network, target.Transport != "local", m.remote[network] > 0)
 	since := now.Add(-m.interval)
 	var closed, gaps []webMonitorGap
 	if m.resumed[network] && !cursor.LastCollected.IsZero() && cursor.LastCollected.Before(now) {

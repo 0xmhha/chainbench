@@ -86,11 +86,13 @@ const shape = fields => (value, path) => {
 
 const gap = shape({ from: string, to: string, scope: string, 'nodeId?': string, source: string, code: string, 'metric?': string, 'runId?': string })
 const coverage = shape({ from: string, to: string, sampleIntervalSeconds: number, complete: boolean, downsampled: boolean, 'bucketSeconds?': number, 'timestampSource?': string, gaps: arrayOf(gap) })
-const node = shape({ id: string, ref: string, networkId: string, role: string, state: string, 'observationReason?': string, pid: number, 'observedPid?': number, observedAt: string, supportedControls: arrayOf(string), controlLimits: mapOf(string) })
-const network = shape({ id: string, workspaceId: string, ownership: string, version: number, nodes: arrayOf(node) })
+const ports = shape({ 'p2p?': number, 'http?': number, 'ws?': number, 'metrics?': number })
+const node = shape({ id: string, ref: string, networkId: string, role: string, 'server?': string, 'syncMode?': string, 'ports?': ports, state: string, 'observationReason?': string, 'observationDetail?': string, 'executable?': string, pid: number, 'observedPid?': number, observedAt: string, supportedControls: arrayOf(string), controlLimits: mapOf(string) })
+const collector = shape({ 'firstCollected?': string, 'lastCollected?': string, intervalSeconds: number, 'remoteLogs?': string })
+const network = shape({ id: string, workspaceId: string, ownership: string, version: number, nodes: arrayOf(node), 'collector?': collector })
 const series = shape({ nodeId: string, name: string, metric: string, canonical: boolean, source: string, 'unit?': string, samples: arrayOf(shape({ time: string, value: nullable(number) })) })
 const metrics = shape({ networkId: string, series: arrayOf(series), coverage })
-const logs = shape({ nodeId: string, entries: arrayOf(shape({ time: string, text: string, 'level?': string })), total: number, coverage, nextCursor: nullable(string) })
+const logs = shape({ nodeId: string, entries: arrayOf(shape({ time: string, text: string, 'level?': string, 'timeSource?': string })), total: number, coverage, nextCursor: nullable(string) })
 const phase = shape({ name: string, state: string, startedAt: string, 'finishedAt?': string, 'message?': string })
 const job = shape({
  id: string, actorId: string, workspaceId: string, planId: string, operation: string, state: string, terminal: boolean, needsCheck: boolean,

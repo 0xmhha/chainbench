@@ -112,10 +112,12 @@ type WebMetrics struct {
 }
 
 type WebLogEntry struct {
-	Time            time.Time `json:"time"`
-	Text            string    `json:"text"`
-	Level           LogLevel  `json:"level,omitempty"`
-	TimestampSource string    `json:"-"`
+	Time  time.Time `json:"time"`
+	Text  string    `json:"text"`
+	Level LogLevel  `json:"level,omitempty"`
+	// TimestampSource is where Time came from: source, the node's own log
+	// timestamp, or collection, when the line had none.
+	TimestampSource string `json:"timeSource,omitempty"`
 }
 
 type WebLogs struct {
