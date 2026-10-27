@@ -277,10 +277,10 @@ const supportedVersion = SupportedWorkspaceVersion
 // present and traversal-free, and a coherent inputs/execution selection.
 func (c WorkspaceConfig) validate() error {
 	if c.Version != supportedVersion {
-		return fmt.Errorf("workspace-config: version %d is not supported (want %d)", c.Version, supportedVersion)
+		return fieldError(fmt.Errorf("workspace-config: version %d is not supported (want %d)", c.Version, supportedVersion), "version")
 	}
 	if err := validateTargetRoot(c.DataRoot); err != nil {
-		return err
+		return fieldError(err, "dataRoot")
 	}
 	for _, purpose := range []Purpose{
 		PurposeBinaries, PurposeConfigs, PurposeGenesis, PurposeKeystore,
@@ -288,27 +288,27 @@ func (c WorkspaceConfig) validate() error {
 	} {
 		dir, _ := c.Paths.dirFor(purpose)
 		if err := validateRelative(fmt.Sprintf("paths.%s", purpose), dir); err != nil {
-			return err
+			return fieldError(err, "paths", string(purpose))
 		}
 	}
 	for name, alias := range c.BinaryAliases {
 		if err := validateRelative(fmt.Sprintf("binaryAliases.%s", name), alias); err != nil {
-			return err
+			return fieldError(err, "binaryAliases", name)
 		}
 	}
 	if strings.TrimSpace(c.Control.ArtifactRoot) == "" {
-		return fmt.Errorf("workspace-config: control.artifactRoot is required")
+		return fieldError(fmt.Errorf("workspace-config: control.artifactRoot is required"), "control", "artifactRoot")
 	}
 	if err := c.Inputs.validate(); err != nil {
 		return err
 	}
 	if name, ok := c.Inputs.existingName(); ok {
 		if _, found := c.ExistingInputs[name]; !found {
-			return fmt.Errorf("workspace-config: inputs.name %q has no entry in existingInputs", name)
+			return fieldError(fmt.Errorf("workspace-config: inputs.name %q has no entry in existingInputs", name), "inputs", "name")
 		}
 	}
 	if _, err := c.Limits.MinFreeDiskBytes(); err != nil {
-		return fmt.Errorf("workspace-config: limits.minFreeDisk: %w", err)
+		return fieldError(fmt.Errorf("workspace-config: limits.minFreeDisk: %w", err), "limits", "minFreeDisk")
 	}
 	return c.Execution.validate()
 }
@@ -317,14 +317,14 @@ func (in Inputs) validate() error {
 	switch in.Mode {
 	case InputExisting:
 		if in.Name == "" {
-			return fmt.Errorf("workspace-config: inputs.mode existing needs inputs.name")
+			return fieldError(fmt.Errorf("workspace-config: inputs.mode existing needs inputs.name"), "inputs", "name")
 		}
 	case InputGenerated:
 		if in.Name != "" {
-			return fmt.Errorf("workspace-config: inputs.name is set but inputs.mode is generated — a generated run names no existing inputs")
+			return fieldError(fmt.Errorf("workspace-config: inputs.name is set but inputs.mode is generated — a generated run names no existing inputs"), "inputs", "name")
 		}
 	default:
-		return fmt.Errorf("workspace-config: inputs.mode %q is unknown (want %s or %s)", in.Mode, InputExisting, InputGenerated)
+		return fieldError(fmt.Errorf("workspace-config: inputs.mode %q is unknown (want %s or %s)", in.Mode, InputExisting, InputGenerated), "inputs", "mode")
 	}
 	return nil
 }
@@ -342,8 +342,8 @@ func (e Execution) validate() error {
 	case ChainFresh, ChainReuseIfMatching, ChainAttach:
 		return nil
 	default:
-		return fmt.Errorf("workspace-config: execution.chain %q is unknown (want %s, %s, or %s)",
-			e.Chain, ChainFresh, ChainReuseIfMatching, ChainAttach)
+		return fieldError(fmt.Errorf("workspace-config: execution.chain %q is unknown (want %s, %s, or %s)",
+			e.Chain, ChainFresh, ChainReuseIfMatching, ChainAttach), "execution", "chain")
 	}
 }
 

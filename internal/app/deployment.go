@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -41,8 +42,8 @@ var errCasePresetsNeedStore = errors.New("a case with preset references is valid
 
 // WebFieldError names the part of a request that failed validation, so a
 // refusal can point the editor at it. Path is a JSON pointer into the
-// request. The engine validators report a reason but not a position inside
-// the content, so a content failure points at /content as a whole.
+// request. A content failure points at the field the engine names, or at
+// /content as a whole when it names none.
 type WebFieldError struct {
 	Path string
 	Err  error
@@ -50,6 +51,17 @@ type WebFieldError struct {
 
 func (e *WebFieldError) Error() string { return e.Err.Error() }
 func (e *WebFieldError) Unwrap() error { return e.Err }
+
+// WebFieldPath is the JSON pointer a refusal points at: the part a
+// WebFieldError names, or else the place an engine error about a document
+// starts with.
+func WebFieldPath(err error) string {
+	var field *WebFieldError
+	if errors.As(err, &field) {
+		return field.Path
+	}
+	return ContentErrorPath(err)
+}
 
 func webFieldError(path string, err error) error {
 	var field *WebFieldError
@@ -78,7 +90,31 @@ func validateDeploymentDocument(in DeploymentDocumentInput, presets map[string]j
 	if err := validateWebDocumentAssetRefs(in); err != nil {
 		return webFieldError("/assetRefs", err)
 	}
-	return webFieldError("/content", validateDeploymentContent(in, presets))
+	err := validateDeploymentContent(in, presets)
+	return webFieldError(contentErrorPath(in.Kind, err), err)
+}
+
+// contentErrorPath points a content refusal at the field it is about: the
+// field the engine names for a server set or workspace config, or the place an
+// engine error about a chain preset or case starts with. Anything else
+// belongs to the content as a whole.
+func contentErrorPath(kind string, err error) string {
+	var field *resource.FieldError
+	if errors.As(err, &field) {
+		path := "/content"
+		for _, key := range field.Path {
+			path += "/" + strings.NewReplacer("~", "~0", "/", "~1").Replace(key)
+		}
+		return path
+	}
+	if err != nil && (kind == "chain-preset" || kind == "case") {
+		return ContentErrorPath(err)
+	}
+	return "/content"
+}
+
+func contentFieldError(err error, path ...string) error {
+	return &resource.FieldError{Path: path, Err: err}
 }
 
 func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]json.RawMessage) error {
@@ -110,7 +146,7 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 		if sshBlock, ok := content["ssh"].(map[string]any); ok {
 			for _, field := range []string{"password", "password_file", "key_file", "key_passphrase_file"} {
 				if _, exists := sshBlock[field]; exists {
-					return errors.New("SSH secrets and secret paths must use a personal credential binding")
+					return contentFieldError(errors.New("SSH secrets and secret paths must use a personal credential binding"), "ssh", field)
 				}
 			}
 		}
@@ -122,40 +158,44 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 		// object fields here rather than silently changing an imported declaration.
 		pool, ok := plain.(map[string]any)["pool"].(map[string]any)
 		if !ok {
-			return errors.New("pool required")
+			return contentFieldError(errors.New("pool required"), "pool")
 		}
 		hosts, ok := pool["hosts"].([]any)
 		if !ok {
-			return errors.New("pool.hosts required")
+			return contentFieldError(errors.New("pool.hosts required"), "pool", "hosts")
 		}
 		addresses := map[string]bool{}
-		for _, h := range hosts {
+		for i, h := range hosts {
 			if obj, ok := h.(map[string]any); ok {
 				for k := range obj {
 					if k != "name" && k != "addr" {
-						return fmt.Errorf("unknown host field %s", k)
+						return contentFieldError(fmt.Errorf("unknown host field %s", k), "pool", "hosts", strconv.Itoa(i), k)
 					}
 				}
 			}
 		}
-		for _, h := range set.PoolSpec.Hosts {
+		for i, h := range set.PoolSpec.Hosts {
 			identity := strings.ToLower(strings.TrimSuffix(h.Addr, "."))
 			if addresses[identity] {
-				return errors.New("duplicate host address")
+				return contentFieldError(errors.New("duplicate host address"), "pool", "hosts", strconv.Itoa(i), "addr")
 			}
 			addresses[identity] = true
 			if strings.ContainsAny(h.Addr, " \t\r\n/;@") {
-				return errors.New("host must be an address or DNS name")
+				return contentFieldError(errors.New("host must be an address or DNS name"), "pool", "hosts", strconv.Itoa(i), "addr")
 			}
 		}
 		p, err := set.Pool(1, 0)
 		if err != nil {
-			return err
+			return contentFieldError(err, "pool")
 		}
 		if p.Slots > 4096 || len(p.Hosts) > 4096 || p.Cap() > 4096 {
-			return errors.New("placement exceeds 4096 slots")
+			return contentFieldError(errors.New("placement exceeds 4096 slots"), "pool", "slots")
 		}
-		return p.Validate()
+		if err := p.Validate(); err != nil {
+			// The pool's own checks cover its hosts, slots and port bands together.
+			return contentFieldError(err, "pool")
+		}
+		return nil
 	case "workspace-config":
 		_, err := resource.ParseWorkspaceConfig(b)
 		return err

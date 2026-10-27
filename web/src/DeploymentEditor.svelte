@@ -5,7 +5,7 @@
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import { selection, selectWorkspace } from './selection.svelte.js'
   import DeploymentFields from './DeploymentFields.svelte'
-  import { schemaProblems } from './schema-problems.mjs'
+  import { schemaProblems, fieldPath } from './schema-problems.mjs'
   import { tick } from 'svelte'
   import BundleImport from './BundleImport.svelte'
   let { webSession = undefined, onsaved = () => {} } = $props()
@@ -18,13 +18,17 @@
   // problems are what the form or the server found wrong in the open document.
   let problems = $state([])
   const problemMap = $derived(Object.fromEntries(problems.filter(p => p.path).map(p => [p.path, p.message])))
-  async function focusProblem(path) { await tick(); globalThis.document.querySelector(`[data-field-path="${path}"] input, [data-field-path="${path}"] select`)?.focus() }
+  async function focusProblem(path) { await tick(); globalThis.document.querySelector(`[data-field-path="${CSS.escape(path)}"] input, [data-field-path="${CSS.escape(path)}"] select`)?.focus() }
   // The contract's own rules are checked first; the engine then judges the rest.
   async function check() {
     problems = schemaProblems(contract[kind], content)
     if (problems.length) throw new Error(`입력 ${problems.length}곳을 고쳐야 합니다.`)
     const result = await api('documents/validate', 'POST', documentInput())
-    if (!result.valid) { problems = result.errors.map(e => ({ path: '', message: e.message })); throw new Error('엔진 검증 실패') }
+    if (!result.valid) { problems = serverProblems(result.errors); throw new Error('엔진 검증 실패') }
+  }
+  // serverProblems places the engine's refusals on the fields they point at.
+  function serverProblems(errors) {
+    return (errors ?? []).map(e => ({ path: fieldPath(contract?.[kind], e.path), message: e.message }))
   }
   const kindNames = { 'server-set': '서버 풀', 'workspace-config': '대상 경로' }
   const api = $derived(webApi(webSession))
@@ -53,7 +57,7 @@
   async function saveDocument() {
     try { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); status = `공유 문서 revision ${revision} 저장됨` }
     catch (e) {
-      if (!contractChanged(e.message)) throw e
+      if (!contractChanged(e)) { if (e.errors?.length) problems = serverProblems(e.errors); throw e }
       const before = contract; contract = await api('contracts/deployment')
       const result = await api('documents/validate', 'POST', documentInput())
       throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: ' + (changedDefinitions(before, contract).join(', ') || '세부 항목') + '. 새 계약 검증 ' + (result.valid ? '통과' : '실패: ' + result.errors.map(x => x.message).join('; ')) + '. 확인한 뒤 다시 저장하세요.')
@@ -78,7 +82,7 @@
       <label>저장된 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision}</option>{/each}</select></label>
       {#if canEdit}
         <button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>
-        <label>이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>
+        <label data-field-path="name">이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>
         {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button onclick={() => focusProblem(p.path)}>{p.path}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
         {#if contract}<DeploymentFields schema={contract[kind]} value={content} problems={problemMap} change={v => { content = v; problems = [] }} />{/if}
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>

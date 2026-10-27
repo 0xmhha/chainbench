@@ -1032,6 +1032,7 @@ assert의 `Actual`은 대부분 십진 문자열이다. 블록 번호, 체인 ID
 | `warnings[]` | array of string | 아니오 | 영어 고정 문장 | 핸들러별 상수(`deployment.go:95`, `chainpreset.go:79`, `testcase.go:110`) | `ChainPresetEditor`만 (`ChainPresetEditor.svelte:231`) |
 
 - **문제**: 같은 경로 하나가 세 핸들러로 갈라지고, 경로 정밀도와 받는 필드가 다르다. 배치 핸들러는 저장 때라면 `/name`이나 `/assetRefs`를 알려 줄 오류를 검증 때는 `/content`로 뭉갠다. `DeploymentEditor`는 그 경로마저 `''`로 바꿔 버리고(`DeploymentEditor.svelte:27`), 화면 필드 경로는 `content.pool.hosts[0].addr` 같은 점 표기라(`DeploymentFields.svelte:28`, `48`) 서버의 JSON pointer(`/content/...`)와 맞지 않는다. `ChainPresetEditor`는 `/content/...` pointer를 그대로 필드 키로 쓴다(`ChainPresetEditor.svelte:20-27`). 같은 앱 안에 경로 표기가 두 가지다. `ChainPresetEditor.validate`는 `contractDigest`를 보내지 않고 `contractVersion`만 보낸다(`ChainPresetEditor.svelte:157`).
+- **3-6단계에서 고친 것**: 세 핸들러가 모두 `app.WebFieldPath`로 같은 위치를 돌려준다. 엔진의 `resource` 검증이 오류에 필드 위치(`resource.FieldError`)를 싣고, 서버 세트와 workspace-config 오류는 `/content/pool/hosts/1/addr`처럼 그 필드를 가리킨다. 문장은 바뀌지 않아 CLI 출력은 그대로다. `DeploymentEditor`는 이 pointer를 스키마를 따라 화면 경로(`content.pool.hosts[1].addr`)로 바꿔 해당 칸에 오류를 붙인다. 계약 변경 409는 `details.reason: "contract_changed"`를 싣고 문장 앞머리의 "revision changed"를 뗐으며, 화면은 문구 정규식 대신 이 값으로 알아본다.
 
 ### `GET /api/v1/documents/{id}/export?format=`
 

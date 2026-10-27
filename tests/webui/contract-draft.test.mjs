@@ -8,8 +8,11 @@ test('a draft carries the version and digest of the contract it was opened with'
 })
 
 test('a refusal for a changed contract is recognised and the changed parts are named', () => {
-  assert.ok(contractChanged('409: deployment object conflict: the engine contract changed since this draft was opened; validate it again before saving'))
-  assert.ok(!contractChanged('409: revision changed; reload before editing'))
+  const refusal = (status, details) => Object.assign(new Error(`${status}: refused`), { status, details })
+  assert.ok(contractChanged(refusal(409, { reason: 'contract_changed' })))
+  assert.ok(!contractChanged(refusal(409, {})))
+  assert.ok(!contractChanged(new Error('409: the engine contract changed')))
+  assert.ok(!contractChanged(undefined))
   const before = { $defs: { envSpec: { a: 1 }, step: { b: 1 } }, title: 'x', 'x-contractDigest': 'one' }
   const after = { $defs: { envSpec: { a: 2 }, step: { b: 1 }, reader: {} }, title: 'x', 'x-contractDigest': 'two' }
   assert.deepEqual(changedDefinitions(before, after), ['$defs.envSpec', '$defs.reader'])
