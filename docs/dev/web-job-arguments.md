@@ -32,6 +32,7 @@ Web에서 작업을 계획할 때 보내는 인자(`POST /api/v1/plans`의 `argu
 | `allServers` | 모든 서버 | `--all-servers` | 켜면 붙입니다. |
 | `validators` | 블록 생산자 수 | `--bp` | 체인 구성을 고르지 않았을 때 넘깁니다. 비우면 4입니다. |
 | `chainPresetRef` | 체인 구성 | `--chain-preset` | 고정한 revision의 내용을 파일로 써서 넘깁니다. |
+| `chainId` | 체인 id | `--chain-id` | 체인 구성을 고르지 않았을 때 그대로 넘깁니다. |
 
 ### `chain.deploy` 노드 구축 · 실행
 
@@ -45,6 +46,7 @@ Web에서 작업을 계획할 때 보내는 인자(`POST /api/v1/plans`의 `argu
 | `allServers` | 모든 서버 | `--all-servers` | 켜면 붙입니다. |
 | `validators` | 블록 생산자 수 | `--bp` | 체인 구성을 고르지 않았을 때 넘깁니다. 비우면 4입니다. |
 | `chainPresetRef` | 체인 구성 | `--chain-preset` | 고정한 revision의 내용을 파일로 써서 넘깁니다. |
+| `chainId` | 체인 id | `--chain-id` | 체인 구성을 고르지 않았을 때 그대로 넘깁니다. |
 
 ### `node.start` 노드 시작
 
@@ -150,7 +152,8 @@ Web에서 작업을 계획할 때 보내는 인자(`POST /api/v1/plans`의 `argu
 
 ## 아직 Web에서 표현할 수 없는 CLI 인자
 
-`chain up`의 `--docker`와 `--chain-id`는 2026-10-27에 Web에서 열기로 정했고, 서버 세트 모델과 genesis 처리를 확인한 뒤
+`chain up`의 `--docker`는 2026-10-27에 Web에서 열기로 정했다. 이 플래그는 하네스의 접속 주소를 서버 세트 옆
+`localmap.yaml`로 바꾸므로 배포 뒤의 모든 작업에 함께 필요하다. 그래서 작업 인자가 아니라 서버 풀 문서의 속성으로
 다음 변경에서 연다. 체인 프리셋으로 표현할 수 있는 인자(`--en`, `--pn`, `--topology` 등)는 프리셋으로 고른다.
 `run --chain-presets`처럼 여러 실행을 묶는 인자와 서버 세트 없이 대상을 정하는 인자(`--target` 등)는 이번에 열지
 않았고, 열지 말자고 정한 것도 아니다. 판단 근거는 인벤토리의 "`chain up` 플래그 가운데 Web이 표현하지 못하는 것"과

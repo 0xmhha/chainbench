@@ -189,7 +189,11 @@ func chainUpArgs(p webChainPayload, stage, keysDir, setPath, configPath string, 
 	if preset != "" {
 		return append(args, "--chain-preset", preset)
 	}
-	return append(args, "--bp", strconv.Itoa(p.Arguments.Validators))
+	args = append(args, "--bp", strconv.Itoa(p.Arguments.Validators))
+	if p.Arguments.ChainID != 0 {
+		args = append(args, "--chain-id", strconv.FormatInt(p.Arguments.ChainID, 10))
+	}
+	return args
 }
 
 // composePoll is how often a running composition's record is read for the
