@@ -53,7 +53,7 @@ func TestSPAAssetServed(t *testing.T) {
 func TestRunsAPI(t *testing.T) {
 	store := collector.NewMemStore()
 	_ = store.SaveRun(collector.RunRecord{ID: "test/a", Phase: collector.PhaseTest, Status: collector.RunSucceeded})
-	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), store))
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), store, dashboard.WithLegacyObservation()))
 	defer srv.Close()
 
 	var runs []collector.RunRecord
@@ -69,7 +69,7 @@ func TestRunsAPI(t *testing.T) {
 func TestSSE_StreamsPublishedEvents(t *testing.T) {
 	bus := collector.NewBus()
 	defer bus.Close()
-	srv := httptest.NewServer(dashboard.NewServer(bus, nil))
+	srv := httptest.NewServer(dashboard.NewServer(bus, nil, dashboard.WithLegacyObservation()))
 	defer srv.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

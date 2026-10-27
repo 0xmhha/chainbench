@@ -1570,6 +1570,11 @@ paths:
             network, gap when a coverage gap opens or closes (gapState), and logs with
             a node's new lines, at most 50 per round with linesDropped counting the
             rest. Heartbeats add observationDropsTotal, the events slow readers missed.
+
+            An unscoped stream also carries engine events, the obs events CLI runs
+            publish through POST /api/events, as SSE event engine without an id, and
+            heartbeats add busDeliveryDropsTotal. A workspace- or job-scoped stream does
+            not carry them, since engine events name no workspace.
   /api/v1/networks/{networkId}/metrics:
     get:
       operationId: metrics
@@ -1946,7 +1951,7 @@ paths:
     get:
       operationId: legacyRuns
       summary: List runs the event bus has observed
-      description: Observation index kept for the original event page; each item names the run id, phase, chain, network and status.
+      description: Observation index kept for the original event page, served only in the loopback -legacy-observation mode; each item names the run id, phase, chain, network and status. The Web reads runs from /api/v1/history and engine events from /api/v1/events.
       x-minimum-role: viewer
       responses:
         '200':

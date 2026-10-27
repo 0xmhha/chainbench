@@ -1,4 +1,4 @@
-import { snapshotState, applyJobChange, applyNodeReading } from './job-observation.mjs'
+import { snapshotState, applyJobChange, applyNodeReading, appendEngineEvent } from './job-observation.mjs'
 import { readApi } from './api-client.mjs'
 import { decodeSnapshot } from './api-decode.mjs'
 
@@ -6,7 +6,7 @@ import { decodeSnapshot } from './api-decode.mjs'
 // then applies ordered changes from /api/v1/events, and restores again on a
 // gap, a restart or a dropped connection. start() returns the stop function.
 export function jobStream() {
- const s = $state({ snapshot: null, connection: '복원 중', error: '', gap: '', drops: null, busDrops: null, lastObserved: null })
+ const s = $state({ snapshot: null, connection: '복원 중', error: '', gap: '', drops: null, busDrops: null, lastObserved: null, engine: [] })
  let active = false, epoch = 0, stream = null, request = null, retry = null
  function disconnect() { stream?.close(); stream = null; clearTimeout(retry) }
  async function restore(reason = '') {
@@ -26,6 +26,11 @@ export function jobStream() {
     disconnect(); s.connection = '연결 끊김'; s.gap = '연결이 끊긴 동안의 이벤트 전체 수신을 보장하지 않습니다. 최신 실행 상태를 다시 확인합니다.'
     retry = setTimeout(() => restore(), 2000)
    }
+   // What CLI runs publish to the engine bus: kept for the event timeline.
+   stream.addEventListener('engine', message => {
+    if (!active || current !== epoch) return
+    try { s.engine = appendEngineEvent(s.engine, JSON.parse(message.data)) } catch { restore('수신한 엔진 이벤트를 해석할 수 없어 최신 스냅샷을 다시 확인합니다.') }
+   })
    // A node reading is not a job change: it updates the node and nothing else.
    stream.addEventListener('node', message => {
     if (!active || current !== epoch) return
@@ -38,6 +43,7 @@ export function jobStream() {
      if (result.resync) { restore(event.missingTo ? `변경 ${event.missingTo - event.missingFrom + 1}건(버전 ${event.missingFrom}–${event.missingTo})을 다시 받을 수 없습니다. 최신 스냅샷으로 복원합니다.` : '변경 이력 누락 또는 서버 재시작을 확인했습니다. 최신 스냅샷으로 복원합니다.'); return }
      s.snapshot = result.state; s.lastObserved = event.observedAt ?? s.lastObserved
      if (event.jobDeliveryDropsTotal !== undefined) s.drops = event.jobDeliveryDropsTotal
+     if (event.busDeliveryDropsTotal !== undefined) s.busDrops = event.busDeliveryDropsTotal
     } catch { restore('수신한 변경 내용을 해석할 수 없어 최신 스냅샷을 다시 확인합니다.') }
    })
   } catch (failure) {

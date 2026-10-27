@@ -96,7 +96,7 @@ func TestLocalBrowserAccessKeepsControlsCSRFAndAudit(t *testing.T) {
 	if w := call("POST", "/api/v1/auth/local", "", token, "", ""); w.Code != 200 || len(w.Result().Cookies()) != 0 {
 		t.Fatal("refresh did not reuse the local browser session")
 	}
-	for _, path := range []string{"/api/runs", "/api/v1/auth/me", "/api/v1/contracts/access", "/api/v1/documents", "/api/v1/credentials", "/api/v1/snapshot", "/api/v1/audit"} {
+	for _, path := range []string{"/api/v1/auth/me", "/api/v1/contracts/access", "/api/v1/documents", "/api/v1/credentials", "/api/v1/snapshot", "/api/v1/audit"} {
 		if w := call("GET", path, "", token, "", ""); w.Code != 200 {
 			t.Fatalf("local read %s: %d", path, w.Code)
 		}

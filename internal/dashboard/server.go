@@ -31,6 +31,9 @@ type Server struct {
 	store        collector.Store
 	artifactRoot string
 	jobs         *app.WebJobs
+	// legacyObservation serves the raw bus stream at /events and the run
+	// index at /api/runs; see WithLegacyObservation.
+	legacyObservation bool
 	// observations is the collector's live events, merged into the job
 	// events stream; nil when no collector runs.
 	observations     observationSource
@@ -79,8 +82,12 @@ func NewServer(bus *collector.Bus, store collector.Store, opts ...Option) *Serve
 	s.mux.Handle("GET /", spaHandler())
 	s.mux.HandleFunc("GET /legacy", s.handleLegacy)
 	s.mux.HandleFunc("GET /healthz", s.handleHealth)
-	s.mux.HandleFunc("GET /events", s.handleEvents)
-	s.mux.HandleFunc("GET /api/runs", s.handleRuns)
+	// The raw bus stream and the run index belong to -legacy-observation; the
+	// Web reads engine events from GET /api/v1/events instead.
+	if s.legacyObservation {
+		s.mux.HandleFunc("GET /events", s.handleEvents)
+		s.mux.HandleFunc("GET /api/runs", s.handleRuns)
+	}
 	s.mux.HandleFunc("POST /api/events", s.handlePublish)
 	s.mux.HandleFunc("GET /api/sessions", s.handleSessions)
 	s.mux.HandleFunc("GET /api/sessions/{id}", s.handleSession)
@@ -194,4 +201,10 @@ func (s *Server) handlePublishSanitized(w http.ResponseWriter, r *http.Request, 
 	}
 	s.bus.Publish(e)
 	w.WriteHeader(http.StatusAccepted)
+}
+
+// WithLegacyObservation serves the loopback event observer's two routes: the
+// raw bus stream at /events and the run index at /api/runs.
+func WithLegacyObservation() Option {
+	return func(s *Server) { s.legacyObservation = true }
 }

@@ -46,3 +46,14 @@ test('a node reading updates that node in the snapshot without touching the job 
  assert.equal(applyNodeReading(state, {type: 'node', networkId: 'other', node: {id: 'node1', state: 'stopped', observedAt: 'b'}}), state)
  assert.equal(applyNodeReading(null, {type: 'node', networkId: 'net', node: {id: 'node1', state: 'stopped', observedAt: 'b'}}), null)
 })
+test('engine events are kept newest first, at most the limit, and never change the snapshot', async () => {
+ const {appendEngineEvent} = await import('../../web/src/job-observation.mjs')
+ let list = []
+ for (let i = 0; i < 205; i++) list = appendEngineEvent(list, {kind: 'info', message: String(i)})
+ assert.equal(list.length, 200)
+ assert.equal(list[0].message, '204')
+ assert.equal(list.at(-1).message, '5')
+ const before = list
+ appendEngineEvent(before, {kind: 'info'})
+ assert.equal(before.length, 200, 'the old list is not changed')
+})

@@ -8,8 +8,6 @@
   import { nodeTally, attentionJobs, shortId } from './dashboard-view.mjs'
   import { statusIcon } from './status-icon.mjs'
   import StatusMark from './StatusMark.svelte'
-  // runs, busDrops and connected come from the shell's legacy event stream.
-  let { runs = [], busDrops = null, connected = false, onrefresh = () => {} } = $props()
   const feed = jobStream(), live = feed.state
   const jobs = $derived(live.snapshot?.jobs ?? [])
   const running = $derived(jobs.filter(j => jobSummary(j).active))
@@ -18,9 +16,8 @@
   const ATTENTION_LIMIT = 5
   const attention = $derived(attentionJobs(jobs, ATTENTION_LIMIT))
   const tally = $derived(nodeTally(networks.flatMap(n => n.nodes)))
-  const drops = $derived((live.drops ?? 0) + (busDrops ?? 0))
+  const drops = $derived((live.drops ?? 0) + (live.busDrops ?? 0))
   const fmt = formatTime
-  const runOk = s => s === 'success' || s === 'pass'
   onMount(() => feed.start())
 </script>
 
@@ -28,7 +25,7 @@
   <span>실행 중 작업 <b data-testid="running-count">{running.length}</b></span>
   <span>네트워크 <b>{networks.length}</b></span>
   <span>노드 <b>{tally.total}</b>{#if tally.total}<span class="tally"> · 실행 {tally.running} · 정지 {tally.stopped}{tally.other ? ` · 기타 ${tally.other}` : ''}</span>{/if}</span>
-  <span class:warn={drops > 0} title="작업 {live.drops ?? '확인 중'} · 이벤트 버스 {busDrops ?? '확인 중'} · 작업 연결 {live.connection} · 이벤트 연결 {connected ? '연결됨' : '끊김'}">관측 누락 <b data-testid="observation-drops">{drops}</b></span>
+  <span class:warn={drops > 0} title="작업 {live.drops ?? '확인 중'} · 이벤트 버스 {live.busDrops ?? '확인 중'} · 연결 {live.connection}">관측 누락 <b data-testid="observation-drops">{drops}</b></span>
 </p>
 
 {#if attention.length}
@@ -54,7 +51,7 @@
 </section>
 
 <section class="panel" aria-label="노드 상태"><h2>노드 상태</h2>
-  <p class="muted">작업이 마지막으로 기록한 상태입니다. 실제 프로세스는 노드 상세의 상태 확인으로 봅니다.</p>
+  <p class="muted">서버 수집기가 5초마다 본 마지막 모습입니다. 노드를 제어하기 전에는 노드 상세에서 상태를 다시 확인합니다.</p>
   {#each networks as n (n.id)}
     {@const t = nodeTally(n.nodes)}
     <div class="network">
@@ -64,14 +61,11 @@
   {:else}<p class="muted">기록된 네트워크가 없습니다.</p>{/each}
 </section>
 
-<section class="panel" aria-label="최근 결과"><div class="panel-heading"><h2>최근 결과</h2><button onclick={onrefresh}>새로고침</button></div>
+<section class="panel" aria-label="최근 결과"><div class="panel-heading"><h2>최근 결과</h2><button onclick={() => feed.refresh()}>새로고침</button></div>
   {#if recent.length}<div class="table-wrap"><table><thead><tr><th>작업</th><th>결과</th><th>노드 처리</th><th>생성</th></tr></thead><tbody>
     {#each recent as j (j.id)}<tr data-job-id={j.id}><td><a href={'/jobs/' + j.id} onclick={e => follow(e, '/jobs/' + j.id)}>{j.operation}</a></td><td><StatusBadge state={j.state} /></td><td>{j.nodeDisposition}</td><td>{fmt(j.createdAt)}</td></tr>{/each}
   </tbody></table></div>{/if}
-  {#if runs.length === 0 && recent.length === 0}<div class="empty"><h3>관측된 실행이 없습니다</h3><p>체인 구성과 테스트 정의를 준비하세요.</p><a href="/chains" onclick={e => follow(e, '/chains')}>체인 구성 열기 →</a></div>{:else if runs.length}
-    <h3>엔진 실행 인덱스</h3>
-    <div class="table-wrap"><table><thead><tr><th>실행 ID</th><th>단계</th><th>체인</th><th>네트워크</th><th>판정</th></tr></thead><tbody>{#each runs as r (r.id)}<tr><td class="mono">{r.id}</td><td>{r.phase}</td><td>{r.chain}</td><td class="mono" title={r.network}>{shortId(r.network)}</td><td><StatusBadge state={r.status} /></td></tr>{/each}</tbody></table></div>
-  {/if}
+  {#if recent.length === 0}<div class="empty"><h3>관측된 실행이 없습니다</h3><p>체인 구성과 테스트 정의를 준비하세요.</p><a href="/chains" onclick={e => follow(e, '/chains')}>체인 구성 열기 →</a></div>{/if}
 </section>
 
 <style>

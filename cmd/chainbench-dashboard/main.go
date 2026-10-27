@@ -93,6 +93,9 @@ func main() {
 	store := collector.NewMemStore()
 
 	opts := []dashboard.Option{dashboard.WithTrustedProxies(proxies)}
+	if *legacy {
+		opts = append(opts, dashboard.WithLegacyObservation())
+	}
 	if !*legacy && *presetRoot != "" {
 		opts = append(opts, dashboard.WithChainPresets(*presetRoot))
 	}

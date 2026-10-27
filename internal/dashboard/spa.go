@@ -12,8 +12,8 @@ import (
 // spaFiles is the built Svelte SPA (decision D5). The sources live in web/ and
 // are compiled with `npm --prefix web run build`, which writes the static bundle
 // to internal/dashboard/spa/ (committed) so it embeds into the binary. The SPA is
-// served at the site root and speaks the same contract as the legacy page — the
-// SSE stream at /events and the run list at /api/runs.
+// served at the site root and reads the /api/v1 contract, with live updates on
+// the one stream at /api/v1/events.
 //
 //go:embed all:spa
 var spaFiles embed.FS

@@ -286,8 +286,11 @@ catalog. Either way the chain package must be blank-imported from
 
 ## Dashboard
 
-`chainbench-dashboard` serves the Web UI, a Server-Sent Events stream at
-`/events` and run state at `/api/runs`. Registered accounts are optional:
+`chainbench-dashboard` serves the Web UI and its API under `/api/v1`, whose one
+Server-Sent Events stream at `/api/v1/events` carries job changes, what the
+collector observes and the engine events CLI runs publish. The loopback-only
+`-legacy-observation` mode serves the raw engine event stream at `/events` and
+its run index at `/api/runs` instead. Registered accounts are optional:
 `-accounts` defaults to `false`, and `-accounts=true` enables the existing
 login, user management and role restrictions. Event ingestion uses a separate
 publisher token.
