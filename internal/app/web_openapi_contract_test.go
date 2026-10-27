@@ -48,6 +48,8 @@ var webContractSchemas = map[string]any{
 	"ImportPreview":     DocumentImportPreview{},
 	"ImportCommit":      DocumentImportCommit{},
 	"ObservationEvent":  WebObservationEvent{},
+	"RunEvidence":       WebRunEvidence{},
+	"EvidencePage":      WebEvidencePage{},
 }
 
 // webInputOnly names fields a response struct inherits from its input struct

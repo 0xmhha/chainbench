@@ -33,6 +33,9 @@ type WebHistory struct {
 	jobs            *WebJobs
 	redact          func(string) string
 	observations    *WebMonitor
+	// evidenceReads bounds concurrent evidence reads; see evidenceSlots.
+	evidenceOnce  sync.Once
+	evidenceReads chan struct{}
 }
 
 func OpenWebHistory(root, artifactRoot string, jobs *WebJobs, redact func(string) string) (*WebHistory, error) {

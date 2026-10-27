@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { apiClient } from '../../web/src/api-client.mjs'
-import { FormatError, decodeJob, decodeMetrics, decodeNetwork, decodeRun } from '../../web/src/api-decode.mjs'
+import { FormatError, decodeEvidencePage, decodeJob, decodeMetrics, decodeNetwork, decodeRun, decodeRunEvidence } from '../../web/src/api-decode.mjs'
 
 const reply = (status, text) => new Response(status === 204 ? null : text, { status })
 
@@ -83,4 +83,10 @@ test('optional node placement and collector fields are checked when they come', 
  assert.ok(decodeNetwork({ ...network({ server: 'east', syncMode: 'full', ports: { p2p: 30303, http: 8545 }, executable: 'ready' }), collector: { intervalSeconds: 5, lastCollected: 'b' } }))
  assert.throws(() => decodeNetwork(network({ ports: { http: '8545' } })), err => err.path === 'nodes[0].ports.http')
  assert.throws(() => decodeNetwork({ ...network({}), collector: { lastCollected: 'b' } }), err => err.path === 'collector.intervalSeconds')
+})
+
+test('evidence listings and pages are checked like every other read', () => {
+ assert.ok(decodeRunEvidence({ runId: 'r', tests: [{ seq: 1, id: 'fails', files: [{ name: 'node1.log', kind: 'log', bytes: 12 }] }] }))
+ assert.ok(decodeEvidencePage({ name: 'node1.log', kind: 'log', offset: 0, totalLines: 1, lines: ['INFO'], nextOffset: null }))
+ assert.throws(() => decodeEvidencePage({ name: 'node1.log', kind: 'log', offset: 0, totalLines: 1, lines: ['INFO'] }), err => err.path === 'nextOffset')
 })

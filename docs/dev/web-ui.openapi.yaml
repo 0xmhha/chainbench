@@ -1846,6 +1846,90 @@ paths:
         schema: *id001
         description: Required for cookie-authenticated changes; publisher bearer ingestion
           uses its own authentication.
+  /api/v1/history/{runId}/evidence:
+    get:
+      operationId: historyEvidence
+      summary: List what a run's failed tests gathered when they failed
+      description: Node health, the process ledger, each node's log and what could not be gathered, per failed test of an engine-session run. A run without an engine session lists none.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: The evidence files of the run's failed tests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunEvidence'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: runId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+  /api/v1/history/{runId}/evidence/{seq}/{file}:
+    get:
+      operationId: historyEvidencePage
+      summary: Read lines of one evidence file
+      description: The whole file is redacted before it is cut into lines, so a private key block (PGP included) is hidden whatever page boundary falls in it, including a block that never ends, and secret fields are hidden in any case and inside escaped JSON. JSON evidence is laid out one value per line. A line longer than 64 KiB is cut and says how much was cut; a page stops before 1 MiB of lines. The process ledger keeps only pid, label, host and revision; command lines, binaries and data paths are never returned. Node log lines keep the paths they print, as GET /api/v1/nodes/{nodeId}/logs does. At most two files are read at once; a read beyond that is 429 with Retry-After.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: One page of lines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidencePage'
+        '429':
+          description: Every evidence read slot is taken; retry after the Retry-After seconds
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: runId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: seq
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: file
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^(health\.json|processes\.json|gather-problems\.txt|node[0-9]+\.log)$
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 200
   /api/v1/history/{runId}/export:
     get:
       operationId: exportHistory
@@ -3886,6 +3970,60 @@ components:
           minimum: 0
       additionalProperties: false
       required: [type, networkId, observedAt]
+    RunEvidence:
+      type: object
+      properties:
+        runId: *id001
+        tests:
+          type: array
+          items:
+            type: object
+            properties:
+              seq:
+                type: integer
+                minimum: 1
+              id: *id001
+              files:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name: *id001
+                    kind:
+                      type: string
+                      enum: [health, processes, log, problems]
+                    bytes:
+                      type: integer
+                      minimum: 0
+                  additionalProperties: false
+                  required: [name, kind, bytes]
+            additionalProperties: false
+            required: [seq, id, files]
+      additionalProperties: false
+      required: [runId, tests]
+    EvidencePage:
+      type: object
+      properties:
+        name: *id001
+        kind:
+          type: string
+          enum: [health, processes, log, problems]
+        offset:
+          type: integer
+          minimum: 0
+        totalLines:
+          type: integer
+          minimum: 0
+        lines:
+          type: array
+          items:
+            type: string
+        nextOffset:
+          type:
+          - integer
+          - 'null'
+      additionalProperties: false
+      required: [name, kind, offset, totalLines, lines, nextOffset]
     CompareInput:
       type: object
       properties:

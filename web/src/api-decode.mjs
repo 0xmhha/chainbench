@@ -139,5 +139,11 @@ export const decodeJobPage = decoder(shape({ items: arrayOf(job), nextCursor: nu
 export const decodeRun = decoder(run)
 /** @type {(value: unknown) => {items: Run[], nextCursor: string|null}} */
 export const decodeRunPage = decoder(shape({ items: arrayOf(run), nextCursor: nullable(string) }))
+/** @typedef {import('./api-model.js').RunEvidence} RunEvidence */
+/** @typedef {import('./api-model.js').EvidencePage} EvidencePage */
+/** @type {(value: unknown) => RunEvidence} */
+export const decodeRunEvidence = decoder(shape({ runId: string, tests: arrayOf(shape({ seq: number, id: string, files: arrayOf(shape({ name: string, kind: string, bytes: number })) })) }))
+/** @type {(value: unknown) => EvidencePage} */
+export const decodeEvidencePage = decoder(shape({ name: string, kind: string, offset: number, totalLines: number, lines: arrayOf(string), nextOffset: nullable(number) }))
 /** @type {(value: unknown) => Snapshot} */
 export const decodeSnapshot = decoder(snapshot)

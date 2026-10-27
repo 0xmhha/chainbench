@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"strings"
 )
 
@@ -22,27 +21,7 @@ type CapturedSession struct {
 // The caller owns persistence and registered-secret redaction of this copy.
 func Capture(root, id string) (CapturedSession, error) {
 	out := CapturedSession{Files: map[string]string{}, Gaps: []string{}}
-	parts := strings.Split(id, "/")
-	if len(parts) > 2 {
-		return out, errors.New("invalid session reference")
-	}
-	for _, part := range parts {
-		if !fs.ValidPath(part) || part == "." || strings.Contains(part, `\`) {
-			return out, errors.New("invalid session reference")
-		}
-	}
-	base, err := os.OpenRoot(root)
-	if err != nil {
-		return out, err
-	}
-	defer func() { _ = base.Close() }()
-	for i := range parts {
-		info, err := base.Lstat(path.Join(parts[:i+1]...))
-		if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return out, errors.New("session must be an owned directory without links")
-		}
-	}
-	run, err := base.OpenRoot(id)
+	run, err := openSessionRoot(root, id)
 	if err != nil {
 		return out, err
 	}
