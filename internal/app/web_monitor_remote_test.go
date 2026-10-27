@@ -150,3 +150,55 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 		}
 	}
 }
+
+// TestWebRemoteLogsReachTheEventStream: lines a remote collection job archives
+// reach the events stream as local lines do, and so does a remote read that
+// starts or stops failing.
+func TestWebRemoteLogsReachTheEventStream(t *testing.T) {
+	f := newMonitorFixture(t)
+	writeMonitorJSON(t, filepath.Join(f.root, "networks", f.network, "web-target.json"), resource.Inspection{HostIdentity: "remote", Transport: "ssh"})
+	if err := os.WriteFile(f.logPath, []byte("INFO [10-09|00:46:58.000] remote one\nWARN [10-09|00:46:59.000] remote two\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m := f.monitor()
+	detach := m.attachRemote(f.network)
+	events, stop := m.SubscribeObservations()
+	defer stop()
+	failing := false
+	open := func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
+		if failing && ns.Label == "node1" {
+			return nil, errors.New("remote read failed")
+		}
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
+	}
+	if err := m.CollectRemoteLogs(context.Background(), f.network, open); err != nil {
+		t.Fatal(err)
+	}
+	logs := eventsOfType(drainObservations(events), "logs")
+	if len(logs) != 1 || logs[0].NetworkID != f.network || logs[0].NodeID != "node1" || len(logs[0].Lines) != 2 || logs[0].Lines[1].Level != "WARN" {
+		t.Fatalf("remote log events = %+v", logs)
+	}
+	failing = true
+	f.clock = f.clock.Add(5 * time.Second)
+	if err := m.CollectRemoteLogs(context.Background(), f.network, open); err != nil {
+		t.Fatal(err)
+	}
+	opened := eventsOfType(drainObservations(events), "gap")
+	if len(opened) != 1 || opened[0].GapState != "opened" || opened[0].Gap.NodeID != "node1" || opened[0].Gap.Code != "collector_error" {
+		t.Fatalf("remote gap opened events = %+v", opened)
+	}
+	failing = false
+	f.clock = f.clock.Add(5 * time.Second)
+	if err := m.CollectRemoteLogs(context.Background(), f.network, open); err != nil {
+		t.Fatal(err)
+	}
+	closed := eventsOfType(drainObservations(events), "gap")
+	if len(closed) != 1 || closed[0].GapState != "closed" || closed[0].Gap.Code != "collector_error" {
+		t.Fatalf("remote gap closed events = %+v", closed)
+	}
+	// Detaching closes what is still open: node2's log never existed remotely.
+	detach()
+	if gone := eventsOfType(drainObservations(events), "gap"); len(gone) != 1 || gone[0].GapState != "closed" || gone[0].Gap.NodeID != "node2" || gone[0].Gap.Code != "log_unavailable" {
+		t.Fatalf("detach gap events = %+v", gone)
+	}
+}
