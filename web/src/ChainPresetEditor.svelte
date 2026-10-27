@@ -1,5 +1,5 @@
 <script>
-  import { responseError } from './api-error.mjs'
+  import { apiClient } from './api-client.mjs'
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
@@ -38,12 +38,9 @@
   // The chain being configured becomes every screen's selected chain.
   $effect(() => { if (document?.chain) selectChain(document.chain) })
 
-  async function shared(path, method = 'GET', data, expectedRevision) {
-    const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': webSession?.csrfToken ?? '' }
-    if (expectedRevision) headers['If-Match'] = `"${expectedRevision}"`
-    const response = await fetch('/api/v1/' + path, { method, headers, body: data === undefined ? undefined : JSON.stringify(data) })
-    if (!response.ok) throw await responseError(response)
-    return response.json()
+  const client = $derived(apiClient(webSession))
+  function shared(path, method = 'GET', data, expectedRevision) {
+    return client.request(path, { method, body: data, revision: expectedRevision })
   }
   async function refreshSaved() { saved = await allItems(shared, 'documents?kind=chain-preset') }
   $effect(() => { void assetRevision; if (webSession) { refreshSaved().catch(e => { error = e.message }); allItems(shared, 'assets').then(v=>{assets=v}).catch(e=>{error=e.message}) } })
@@ -97,10 +94,7 @@
   }
 
   $effect(() => {
-    fetch('/api/v1/chain-presets').then(async response => {
-      if (!response.ok) return
-      presets = await response.json()
-    }).catch(() => { error = '체인 프리셋을 불러오지 못했습니다.' })
+    client.request('chain-presets').then(items => { presets = items }).catch(e => { error = `체인 프리셋을 불러오지 못했습니다. ${e.message}` })
   })
 
   async function choose(event) {
@@ -116,11 +110,9 @@
     savedId = ''; revision = 0; preview = null; generatedGenesis = null
     if (preset) {
       try {
-        const response = await fetch(`/api/v1/contracts/chain-preset?chain=${encodeURIComponent(preset.chain)}`)
-        if (!response.ok) throw new Error('체인 계약을 불러오지 못했습니다.')
-        const schema = await response.json()
+        const schema = await client.request(`contracts/chain-preset?chain=${encodeURIComponent(preset.chain)}`)
         if (selected === preset.id) contract = schema
-      } catch (e) { if (selected === preset.id) error = e.message }
+      } catch (e) { if (selected === preset.id) error = `체인 계약을 불러오지 못했습니다. ${e.message}` }
     }
   }
 
@@ -152,12 +144,9 @@
     pending = true
     error = ''
     try {
-      const response = await fetch('/api/v1/documents/validate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}) },
-        body: JSON.stringify({ kind: 'chain-preset', name: document.id, contractVersion: draftMeta(contract).contractVersion, content: document, assetRefs })
+      const validation = await client.request('documents/validate', {
+        method: 'POST', body: { kind: 'chain-preset', name: document.id, contractVersion: draftMeta(contract).contractVersion, content: document, assetRefs },
       })
-      if (!response.ok) throw await responseError(response)
-      const validation = await response.json()
       if (version === requestVersion) result = validation
     } catch (e) {
       if (version === requestVersion) error = e.message

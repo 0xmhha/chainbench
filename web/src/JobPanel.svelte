@@ -1,6 +1,6 @@
 <script>
 import { formatTime } from './labels.mjs'
-  import { responseError } from './api-error.mjs'
+  import { apiClient } from './api-client.mjs'
   import { allItems } from './pages.mjs'
   import { onMount } from 'svelte'
   import Field from './DSLField.svelte'
@@ -63,11 +63,7 @@ import { formatTime } from './labels.mjs'
   const replacementAssets=$derived(assets.filter(a=>a.chain===(manifest?.manifest.protocol||manifest?.manifest.id)&&a.sha256!==currentBinarySHA))
   const active=j=>!j.terminal
   async function api(path,method='GET',data,key) {
-    const headers={'Content-Type':'application/json','X-CSRF-Token':webSession?.csrfToken??''}
-    if(key)headers['Idempotency-Key']=key
-    const r=await fetch('/api/v1/'+path,{method,headers,body:data===undefined?undefined:JSON.stringify(data)})
-    if(!r.ok)throw await responseError(r)
-    return r.json()
+    return apiClient(webSession).request(path,{method,body:data,idempotencyKey:key})
   }
 
   $effect(()=>{

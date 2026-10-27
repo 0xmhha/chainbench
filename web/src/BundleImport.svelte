@@ -1,13 +1,10 @@
 <script>
-  import { responseError } from './api-error.mjs'
+  import { apiClient } from './api-client.mjs'
   let { webSession = undefined, onsaved = () => {} } = $props()
   let preview = $state(null), saved = $state([]), filename = $state(''), status = $state(''), busy = $state(false)
   let workspaceName = $state('가져온 workspace')
-  async function api(path, method, data) {
-    const response = await fetch('/api/v1/' + path, { method, headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': webSession?.csrfToken ?? '' }, body: JSON.stringify(data) })
-    if (!response.ok) throw await responseError(response)
-    return response.json()
-  }
+  const client = $derived(apiClient(webSession))
+  function api(path, method, data) { return client.request(path, { method, body: data }) }
   async function work(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
   async function choose(event) {
     const file = event.currentTarget.files?.[0]
