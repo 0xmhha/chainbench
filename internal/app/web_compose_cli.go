@@ -140,32 +140,22 @@ func (e *WebChainEngine) composeChain(ctx context.Context, a DeploymentActor, p 
 	if err = writeWebTargetNotes(ctx, p); err != nil {
 		return "new", err
 	}
-	args := []string{"chain", "up", "--workspace-dir", p.ControlDir, "--stage", steps[len(steps)-1], "--keys", keysDir,
-		"--binary", p.ExecutionBinary, "--server-set", setPath, "--workspace-config", configPath}
-	switch {
-	case p.Arguments.AllServers:
-		args = append(args, "--all-servers")
-	case p.Arguments.ServerRef != "":
-		args = append(args, "--server", p.Arguments.ServerRef)
-	}
+	chain := []string{"--chain", p.Manifest.ID}
 	if p.Manifest.Source == "external" {
 		manifest, template, err := e.manifests.files.Pin(p.ControlDir, p.Manifest.Manifest, []byte(p.Manifest.Template))
 		if err != nil {
 			return "new", err
 		}
-		args = append(args, "--manifest", manifest, "--genesis-template", template)
-	} else {
-		args = append(args, "--chain", p.Manifest.ID)
+		chain = []string{"--manifest", manifest, "--genesis-template", template}
 	}
+	preset := ""
 	if p.Preset != nil {
-		preset := filepath.Join(p.ControlDir, "chain-preset.json")
+		preset = filepath.Join(p.ControlDir, "chain-preset.json")
 		if err = files.Write(ctx, preset, p.Preset.Content, 0o600); err != nil {
 			return "new", err
 		}
-		args = append(args, "--chain-preset", preset)
-	} else {
-		args = append(args, "--bp", strconv.Itoa(p.Arguments.Validators))
 	}
+	args := chainUpArgs(p, steps[len(steps)-1], keysDir, setPath, configPath, chain, preset)
 	// The job's logins live only as long as the command: a private directory
 	// removed when it ends, so no secret outlives the job.
 	logins, cleanup, err := e.jobLogins(ctx, a, p)
@@ -180,6 +170,26 @@ func (e *WebChainEngine) composeChain(ctx context.Context, a DeploymentActor, p 
 		return report(phase)
 	}, composePoll)
 	return failed, errors.Join(err, cleanup())
+}
+
+// chainUpArgs is the `chain up` a reviewed composition runs: the files the Web
+// wrote (keys, server set, workspace config, the pinned preset), the chain
+// flags chosen for the manifest, and the plan arguments the jobs contract
+// passes on.
+func chainUpArgs(p webChainPayload, stage, keysDir, setPath, configPath string, chain []string, preset string) []string {
+	args := []string{"chain", "up", "--workspace-dir", p.ControlDir, "--stage", stage, "--keys", keysDir,
+		"--binary", p.ExecutionBinary, "--server-set", setPath, "--workspace-config", configPath}
+	switch {
+	case p.Arguments.AllServers:
+		args = append(args, "--all-servers")
+	case p.Arguments.ServerRef != "":
+		args = append(args, "--server", p.Arguments.ServerRef)
+	}
+	args = append(args, chain...)
+	if preset != "" {
+		return append(args, "--chain-preset", preset)
+	}
+	return append(args, "--bp", strconv.Itoa(p.Arguments.Validators))
 }
 
 // composePoll is how often a running composition's record is read for the

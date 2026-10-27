@@ -3373,7 +3373,7 @@ components:
           additionalProperties: *id002
         arguments:
           type: object
-          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may set allServers instead of serverRef to spread the nodes over every server of the pinned server set; every server must be a distinct machine of one kind, each remote one needs the caller's own binding, each machine is claimed with its own nodes' ports, and node controls, test.attach and network.monitor jobs on such a network also set allServers (with a binding per remote server) so each node is verified, controlled and read on its own server; a test.run composes on one server. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap accepts configOverrides from the chain-preset contract, or configAssetId naming a registered configuration file (JSON or YAML of the engine-rendered syncMode, httpHost and metricsHost; hosts may be any IP address) that is validated, checksum-pinned and rechecked before execution, and/or replacementAssetId, for one owned node with generated config. The replacement must be a verified registered binary for the same protocol and target platform, with a different SHA-256 and every recorded launch option. assetRefs includes both the base asset and replacement, deduplicated. Source bytes, deployed bytes, physical target paths and the private per-node binding are verified again at acceptance and execution. Binding history is retained across failures and rollback. Empty replacements, unknown config choices, pinned config files, unbound named executables and conflicting explicit launch options are rejected. Arbitrary file paths remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected. A network.monitor job takes only serverRef, no assets or nodes, retention retain and the caller's own binding for that SSH server; it reads recorded node logs until cancelled, changes nothing, claims only its own control path and is cancelled with no further SSH use when the account or credential is revoked. Local networks are collected without a job. A test.attach job takes caseRefs whose cases all declare attach, no nodeIds or validators, and retention retain. It targets only the network this workspace recorded; the recorded node endpoints, accepted key set and capabilities replace the case's declared rpc, keysDir and provides. The selected asset must be the recorded binary. It claims the recorded placement exclusively, starts, stops and removes nothing, and replaces each account keyFile with the caller's account-key credential bound in accountBindings.
+          description: Each operation reads only the arguments GET /api/v1/contracts/jobs lists for it, and a plan naming any other argument is refused with "<operation> does not read argument <name>". The contract also says which chainbench flag each argument becomes (docs/dev/web-job-arguments.md). The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may set allServers instead of serverRef to spread the nodes over every server of the pinned server set; every server must be a distinct machine of one kind, each remote one needs the caller's own binding, each machine is claimed with its own nodes' ports, and node controls, test.attach and network.monitor jobs on such a network also set allServers (with a binding per remote server) so each node is verified, controlled and read on its own server; a test.run composes on one server. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap accepts configOverrides from the chain-preset contract, or configAssetId naming a registered configuration file (JSON or YAML of the engine-rendered syncMode, httpHost and metricsHost; hosts may be any IP address) that is validated, checksum-pinned and rechecked before execution, and/or replacementAssetId, for one owned node with generated config. The replacement must be a verified registered binary for the same protocol and target platform, with a different SHA-256 and every recorded launch option. assetRefs includes both the base asset and replacement, deduplicated. Source bytes, deployed bytes, physical target paths and the private per-node binding are verified again at acceptance and execution. Binding history is retained across failures and rollback. Empty replacements, unknown config choices, pinned config files, unbound named executables and conflicting explicit launch options are rejected. Arbitrary file paths remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected. A network.monitor job takes only serverRef, no assets or nodes, retention retain and the caller's own binding for that SSH server; it reads recorded node logs until cancelled, changes nothing, claims only its own control path and is cancelled with no further SSH use when the account or credential is revoked. Local networks are collected without a job. A test.attach job takes caseRefs whose cases all declare attach, no nodeIds or validators, and retention retain. It targets only the network this workspace recorded; the recorded node endpoints, accepted key set and capabilities replace the case's declared rpc, keysDir and provides. The selected asset must be the recorded binary. It claims the recorded placement exclusively, starts, stops and removes nothing, and replaces each account keyFile with the caller's account-key credential bound in accountBindings.
           properties:
             chainPresetRef:
               $ref: '#/components/schemas/DocumentRef'
@@ -3392,7 +3392,44 @@ components:
                 refused; the declared path itself never runs.
               additionalProperties:
                 type: string
-          additionalProperties: true
+            manifestId:
+              type: string
+            assetId:
+              type: string
+            serverRef:
+              type: string
+            allServers:
+              type: boolean
+            validators:
+              type: integer
+              minimum: 0
+              maximum: 128
+            configOverrides:
+              type: object
+              additionalProperties:
+                type: string
+            configAssetId:
+              type: string
+            caseRefs:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocumentRef'
+            runDefinitionRef:
+              $ref: '#/components/schemas/DocumentRef'
+            noSkips:
+              type: boolean
+              description: test.run only. Fails the job when any selected case was skipped, and passes --no-skips to chainbench run.
+            waitBlocks:
+              type: integer
+              minimum: 0
+              maximum: 1000000
+              description: test.run only. Passed as --wait-blocks; the cases start once the head reaches this height. Zero leaves it out.
+            nodeMonitorTimeoutSeconds:
+              type: integer
+              minimum: 0
+              maximum: 3600
+              description: test.run only. Passed as --node-monitor-timeout in seconds. Zero keeps the engine default.
+          additionalProperties: false
         retention:
           type: string
           enum:
@@ -3450,6 +3487,77 @@ components:
       - resources
       - changes
       - requiredAccess
+    JobsContract:
+      type: object
+      description: GET /api/v1/contracts/jobs. The operations a plan may name, each with the chainbench command it runs and exactly the arguments it reads.
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+      additionalProperties: false
+      required:
+      - operations
+    Operation:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        scope:
+          type: string
+          enum:
+          - chain
+          - test
+        command:
+          type: string
+        arguments:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationArgument'
+      additionalProperties: false
+      required:
+      - id
+      - label
+      - scope
+      - command
+      - arguments
+    OperationArgument:
+      type: object
+      description: One plan argument an operation reads. flag is the chainbench flag the value becomes, absent when the engine uses the value without passing it on; cli says how it reaches the command line.
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - string
+          - boolean
+          - integer
+          - documentRef
+          - documentRefs
+          - stringMap
+        title:
+          type: string
+        description:
+          type: string
+        minimum:
+          type: integer
+        maximum:
+          type: integer
+        flag:
+          type: string
+        cli:
+          type: string
+      additionalProperties: false
+      required:
+      - name
+      - type
+      - title
+      - cli
     JobInput:
       type: object
       properties:

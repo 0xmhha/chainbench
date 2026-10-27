@@ -608,6 +608,7 @@ chainstate 한 줄:
 | `operations[].description` | string | omitempty | 한국어 설명 | 같은 곳 | 예 (`JobPanel.svelte:153`, title 속성) |
 | `operations[].scope` | string | 아니오 | `chain` 또는 `test` | 같은 곳 | 예 (`JobPanel.svelte:23`) |
 
+- **3-6단계에서 더한 것**: `operations[].command`(실행하는 명령)와 `operations[].arguments[]`(`name`, `type`, `title`, `description`, `minimum`, `maximum`, `flag`, `cli`). 계획은 이 목록에 없는 인자를 거절한다. 작업별 표는 [web-job-arguments.md](web-job-arguments.md)에 있다.
 - **문제**: 작업 단계 이름(`new`, `place`, `keys`, ...)과 그 뜻은 이 계약에 없다. 단계 목록은 계획 응답에만 오고(`web_chain_engine.go:522-531`) 한국어 이름이 없다. OpenAPI는 작업 ID를 열거형으로 다시 적었다(`web-ui.openapi.yaml:3191-3203`). 목록이 바뀌면 두 곳을 같이 고쳐야 한다.
 
 ### `GET /api/v1/history`
