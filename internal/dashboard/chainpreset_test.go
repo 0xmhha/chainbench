@@ -61,3 +61,27 @@ func TestChainPresetHTTPValidation(t *testing.T) {
 		t.Fatalf("trailing body: %d", r.Code)
 	}
 }
+
+// The preset files the catalogue leaves out are listed with the reason, beside
+// the unchanged catalogue.
+func TestChainPresetSkippedFilesOverHTTP(t *testing.T) {
+	bus := collector.NewBus()
+	defer bus.Close()
+	server := NewServer(bus, nil, WithChainPresets("../../presets/chain"))
+	r := httptest.NewRecorder()
+	server.ServeHTTP(r, httptest.NewRequest("GET", "/api/v1/chain-presets/skipped", nil))
+	var out struct {
+		Items []struct {
+			File   string `json:"file"`
+			Reason string `json:"reason"`
+		} `json:"items"`
+	}
+	if r.Code != 200 || json.Unmarshal(r.Body.Bytes(), &out) != nil || out.Items == nil {
+		t.Fatalf("skipped: %d %s", r.Code, r.Body.String())
+	}
+	for _, s := range out.Items {
+		if s.File == "" || s.Reason == "" {
+			t.Errorf("skipped %+v", s)
+		}
+	}
+}

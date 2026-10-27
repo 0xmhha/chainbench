@@ -21,40 +21,70 @@ type ChainPresetInfo struct {
 	Content     json.RawMessage `json:"content"`
 }
 
+// ChainPresetSkip is a preset file the catalogue left out, and why.
+type ChainPresetSkip struct {
+	File   string `json:"file"`
+	Reason string `json:"reason"`
+}
+
+// ChainPresetCatalogueOut is the preset directory as the Web reads it: the
+// presets a composition may start from, and the files it could not use.
+type ChainPresetCatalogueOut struct {
+	Items   []ChainPresetInfo `json:"items"`
+	Skipped []ChainPresetSkip `json:"skipped"`
+}
+
 // ChainPresets reads the existing preset directory. Invalid and unattached
 // composition choices are excluded; I/O errors are returned, never hidden.
 func ChainPresets(root string) ([]ChainPresetInfo, error) {
+	out, err := ChainPresetCatalogue(root)
+	return out.Items, err
+}
+
+// ChainPresetCatalogue reads the preset directory and names each JSON file it
+// leaves out with the reason, so a preset never disappears silently.
+func ChainPresetCatalogue(root string) (ChainPresetCatalogueOut, error) {
+	out := ChainPresetCatalogueOut{Items: []ChainPresetInfo{}, Skipped: []ChainPresetSkip{}}
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
-	out := []ChainPresetInfo{}
 	seen := map[string]bool{}
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
 			continue
 		}
+		skip := func(reason string) {
+			out.Skipped = append(out.Skipped, ChainPresetSkip{File: entry.Name(), Reason: reason})
+		}
 		raw, err := os.ReadFile(filepath.Join(root, entry.Name()))
 		if err != nil {
-			return nil, err
+			return out, err
 		}
 		env, err := dsl.ParseChainPreset(raw)
 		if err != nil {
+			skip(err.Error())
 			continue
 		}
 		if _, err := registry.Get(env.Chain); err != nil {
+			skip(err.Error())
 			continue
 		}
-		if env.Attach != nil || testengine.ValidateChainPreset(raw) != nil {
+		if env.Attach != nil {
+			skip("attaches to a running network; the Web composes its own")
+			continue
+		}
+		if err := testengine.ValidateChainPreset(raw); err != nil {
+			skip(err.Error())
 			continue
 		}
 		if seen[env.ID] {
-			return nil, fmt.Errorf("preset: duplicate id %s", env.ID)
+			return out, fmt.Errorf("preset: duplicate id %s", env.ID)
 		}
 		seen[env.ID] = true
-		out = append(out, ChainPresetInfo{ID: env.ID, Chain: env.Chain, Description: env.Description, Content: raw})
+		out.Items = append(out.Items, ChainPresetInfo{ID: env.ID, Chain: env.Chain, Description: env.Description, Content: raw})
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	sort.Slice(out.Items, func(i, j int) bool { return out.Items[i].ID < out.Items[j].ID })
 	return out, nil
 }
 

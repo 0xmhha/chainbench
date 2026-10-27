@@ -22,6 +22,17 @@ func WithChainPresets(root string) Option {
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(presets)
 		})
+		// The catalogue stays a bare array for its readers; the files it left
+		// out are listed here with the reason.
+		s.mux.HandleFunc("GET /api/v1/chain-presets/skipped", func(w http.ResponseWriter, r *http.Request) {
+			catalogue, err := app.ChainPresetCatalogue(root)
+			if err != nil {
+				http.Error(w, "cannot load chain presets", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"items": catalogue.Skipped})
+		})
 		s.contracts = append(s.contracts, "chain-preset")
 		s.mux.HandleFunc("GET /api/v1/contracts/chain-preset", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")

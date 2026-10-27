@@ -130,6 +130,10 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			d, err := deploymentReadDocument(store, r)
 			deploymentResponse(w, d, err, 200)
 		})
+		route("GET /api/v1/documents/{id}/revisions", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			revisions, err := store.DocumentRevisions(r.PathValue("id"))
+			deploymentResponse(w, map[string]any{"items": revisions}, err, 200)
+		})
 		route("PATCH /api/v1/documents/{id}", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			rev, ok := deploymentRevision(w, r)
 			if !ok {

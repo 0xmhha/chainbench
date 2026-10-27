@@ -53,6 +53,8 @@ var webContractSchemas = map[string]any{
 	"JobsContract":      WebJobsContract{},
 	"Operation":         WebOperation{},
 	"OperationArgument": WebArgument{},
+	"DocumentRevision":  DeploymentDocumentRevision{},
+	"ChainPresetSkip":   ChainPresetSkip{},
 }
 
 // webInputOnly names fields a response struct inherits from its input struct

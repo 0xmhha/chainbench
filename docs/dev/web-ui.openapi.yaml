@@ -1154,6 +1154,60 @@ paths:
         required: true
         schema:
           type: string
+  /api/v1/documents/{documentId}/revisions:
+    get:
+      operationId: listDocumentRevisions
+      summary: List every saved revision of a shared document, newest first
+      description: Who saved each revision and when, without its content. Read one revision's content with GET /api/v1/documents/{documentId}?revision=N.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Document revisions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentRevision'
+                additionalProperties: false
+                required:
+                - items
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/chain-presets/skipped:
+    get:
+      operationId: skippedChainPresets
+      summary: List the preset files the catalogue left out, with the reason
+      description: GET /api/v1/chain-presets stays a bare array of usable presets. A JSON file in the preset directory that does not parse, names an unregistered chain, attaches to a running network or fails validation is listed here instead of disappearing.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Skipped preset files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChainPresetSkip'
+                additionalProperties: false
+                required:
+                - items
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/workspaces/{workspaceId}/export:
     get:
       operationId: exportWorkspace
@@ -3136,6 +3190,10 @@ components:
           type: array
           items: *id001
         sourcePreserved: *id011
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the encrypted source is discarded; after it the preview can no longer be committed.
       additionalProperties: false
       required:
       - previewId
@@ -3144,6 +3202,36 @@ components:
       - changes
       - privateBindingsRequired
       - sourcePreserved
+      - expiresAt
+    DocumentRevision:
+      type: object
+      properties:
+        revision:
+          type: integer
+        name:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+      additionalProperties: false
+      required:
+      - revision
+      - name
+      - updatedAt
+      - updatedBy
+    ChainPresetSkip:
+      type: object
+      properties:
+        file:
+          type: string
+        reason:
+          type: string
+      additionalProperties: false
+      required:
+      - file
+      - reason
     ImportCommit:
       type: object
       properties:
