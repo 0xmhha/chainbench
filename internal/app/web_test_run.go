@@ -205,14 +205,26 @@ func writeWebTestInputs(ctx context.Context, p *webChainPayload) error {
 }
 
 func writeWebDeploymentInputs(ctx context.Context, dir string, set, config DeploymentDocument) error {
-	for _, entry := range []struct {
+	setData, localmap, err := webServerSetFiles(set.DeploymentDocumentInput)
+	if err != nil {
+		return err
+	}
+	configData, err := ExportDeploymentDocument(config.DeploymentDocumentInput, "yaml")
+	if err != nil {
+		return err
+	}
+	entries := []struct {
 		name string
-		doc  DeploymentDocument
-	}{{"server-set.yaml", set}, {"workspace-config.yaml", config}} {
-		data, err := ExportDeploymentDocument(entry.doc.DeploymentDocumentInput, "yaml")
-		if err != nil {
-			return err
-		}
+		data []byte
+	}{{"server-set.yaml", setData}, {"workspace-config.yaml", configData}}
+	if localmap != nil {
+		entries = append(entries, struct {
+			name string
+			data []byte
+		}{resource.LocalMapFile, localmap})
+	}
+	for _, entry := range entries {
+		data := entry.data
 		name := filepath.Join(dir, entry.name)
 		existing, err := os.ReadFile(name)
 		if err == nil {
@@ -240,7 +252,7 @@ func (e *WebChainEngine) webSuiteInput(p webChainPayload) RunSuiteIn {
 	for _, named := range p.NamedBinaries {
 		overrides[named.Name] = named.ExecutionBinary
 	}
-	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: overrides, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true}
+	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: overrides, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true, Docker: webDocker(p.Set.DeploymentDocumentInput)}
 }
 
 func normalizedWebTestPlan(plan ComposePlan, control string) ComposePlan {
@@ -393,11 +405,15 @@ func (e *WebChainEngine) uploadTestBinaries(ctx context.Context, p webChainPaylo
 		if err != nil {
 			return err
 		}
-		_, err = e.cli.Run(ctx, "file", "upload", asset.Path, "--remote", destination, "--force-upload",
+		args := []string{"file", "upload", asset.Path, "--remote", destination, "--force-upload",
 			"--sha256", sha256, "--mode", "0755", "--server", p.Arguments.ServerRef,
 			"--server-set", filepath.Join(p.TestRun.InputDir, "server-set.yaml"),
 			"--workspace-config", filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"),
-			"--server-logins", logins)
+			"--server-logins", logins}
+		if webDocker(p.Set.DeploymentDocumentInput) {
+			args = append(args, "--docker")
+		}
+		_, err = e.cli.Run(ctx, args...)
 		return err
 	}
 	if err := upload(p.Arguments.AssetID, p.Binary.SHA256, p.ExecutionBinary); err != nil {

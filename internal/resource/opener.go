@@ -127,6 +127,17 @@ func (o Opener) AddrMap() (remote.AddrMap, error) {
 	return lm.AddrMap(func(from, to string) { o.report("docker: dialing %s as %s", from, to) }), nil
 }
 
+// DialCredentials returns creds as a one-off dial outside a target should use
+// them: unchanged without docker mode, and through the localmap beside the
+// server set with it, as a resolved target's own dials are.
+func (o Opener) DialCredentials(creds remote.Credentials) (remote.Credentials, error) {
+	m, err := o.AddrMap()
+	if err != nil {
+		return creds, err
+	}
+	return mapCredentials(creds, m), nil
+}
+
 // OpenPath parses a target path (plain path, srv://<server>/path,
 // [user@]host:/path, ssh://…) and opens it.
 func (o Opener) OpenPath(path string) (*Access, error) {

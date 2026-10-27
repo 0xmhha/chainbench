@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -95,5 +96,24 @@ func TestLocalMapNear(t *testing.T) {
 	}
 	if resource.LocalMapNear("") != resource.LocalMapFile {
 		t.Fatalf("default location should be the working directory")
+	}
+}
+
+// A check that dials a server once, outside a target, reaches a docker
+// container the way every other dial does: through the localmap beside the
+// server set, and only in docker mode.
+func TestOpenerDialCredentialsFollowTheLocalMap(t *testing.T) {
+	dir := t.TempDir()
+	set := filepath.Join(dir, "server-set.yaml")
+	if err := os.WriteFile(resource.LocalMapNear(set), []byte("hosts:\n  172.30.0.11: {host: 127.0.0.1, ports: {22: 2201}}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	creds := remote.Credentials{User: "dev", Host: "172.30.0.11"}
+	got, err := resource.Opener{ServerSet: set, Docker: true}.DialCredentials(creds)
+	if err != nil || got.Host != "127.0.0.1" || got.Port != 2201 {
+		t.Fatalf("docker dial %s:%d %v", got.Host, got.Port, err)
+	}
+	if got, err = (resource.Opener{ServerSet: set}).DialCredentials(creds); err != nil || got.Host != "172.30.0.11" || got.Port != 0 {
+		t.Fatalf("plain dial %s:%d %v", got.Host, got.Port, err)
 	}
 }

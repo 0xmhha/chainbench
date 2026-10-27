@@ -122,6 +122,8 @@ func (e *WebChainEngine) targetReader(ctx context.Context, a DeploymentActor, p 
 			return out, err
 		}
 		in.ServerSet = logins
+		// A docker pool is reached through the localmap written beside logins.
+		in.Docker = webDocker(p.Set.DeploymentDocumentInput)
 		raw, err := json.Marshal(in)
 		if err != nil {
 			return out, err

@@ -48,6 +48,9 @@ func DeploymentContract() map[string]DeploymentField {
 	}
 	pool.Properties["hosts"] = hosts
 	set.Properties["pool"] = pool
+	// A docker pool's localmap travels in the server-set document; the engine
+	// reads it as localmap.yaml beside the server set (webLocalMapField).
+	set.Properties[webLocalMapField] = deploymentField(reflect.TypeFor[resource.LocalMap]())
 	version := set.Properties["version"]
 	version.Enum = []any{resource.SupportedVersion}
 	set.Properties["version"] = version

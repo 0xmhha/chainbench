@@ -152,9 +152,12 @@ Web에서 작업을 계획할 때 보내는 인자(`POST /api/v1/plans`의 `argu
 
 ## 아직 Web에서 표현할 수 없는 CLI 인자
 
-`chain up`의 `--docker`는 2026-10-27에 Web에서 열기로 정했다. 이 플래그는 하네스의 접속 주소를 서버 세트 옆
-`localmap.yaml`로 바꾸므로 배포 뒤의 모든 작업에 함께 필요하다. 그래서 작업 인자가 아니라 서버 풀 문서의 속성으로
-다음 변경에서 연다. 체인 프리셋으로 표현할 수 있는 인자(`--en`, `--pn`, `--topology` 등)는 프리셋으로 고른다.
+`chain up`의 `--docker`는 작업 인자가 아니라 서버 풀 문서의 `localmap`으로 연다(2026-10-27 사용자 결정). 이 플래그는
+하네스의 접속 주소를 서버 세트 옆 `localmap.yaml`로 바꾸므로 배포 뒤의 모든 작업에 함께 필요하다. 서버 풀 문서에
+`localmap`이 있으면 Web은 서버 세트 파일을 쓸 때마다 그 옆에 `localmap.yaml`을 쓰고, `chain up`, `run`, 프리셋 계획,
+`file upload`, `resource access`에 `--docker`를, `resource inspect` 요청에 `docker`를 싣는다. 노드 제어와 상태 관측은
+`chain new`가 기록한 docker 모드를 따르고, 대시보드가 노드 RPC와 지표를 직접 읽을 때도 기록된 localmap으로 접속한다.
+체인 프리셋으로 표현할 수 있는 인자(`--en`, `--pn`, `--topology` 등)는 프리셋으로 고른다.
 `run --chain-presets`처럼 여러 실행을 묶는 인자와 서버 세트 없이 대상을 정하는 인자(`--target` 등)는 이번에 열지
 않았고, 열지 말자고 정한 것도 아니다. 판단 근거는 인벤토리의 "`chain up` 플래그 가운데 Web이 표현하지 못하는 것"과
 "`run`(suite) 플래그 가운데 Web이 표현하지 못하는 것"에 있다.

@@ -142,7 +142,11 @@ func (s *DeploymentStore) CheckCredential(ctx context.Context, a DeploymentActor
 		}
 		return nil
 	}
-	raw, err := runCLIWithAccessGuard(ctx, cli, guard, []string{"resource", "access", "--json", "--server-set", logins, "--server-logins", logins, "--server", server, "--data-root", config.DataRoot})
+	args := []string{"resource", "access", "--json", "--server-set", logins, "--server-logins", logins, "--server", server, "--data-root", config.DataRoot}
+	if webDocker(setdoc.DeploymentDocumentInput) {
+		args = append(args, "--docker")
+	}
+	raw, err := runCLIWithAccessGuard(ctx, cli, guard, args)
 	if err != nil {
 		return out, err
 	}

@@ -45,8 +45,9 @@ func resourceAccessTool() Tool {
 	return Tool{Name: "chainbench_resource_access", ReadOnly: true, Description: "Check a server's SSH authentication and data-root permission without changing files or returning credentials.", InputSchema: map[string]any{
 		"type": "object", "required": []string{"serverSet", "server", "dataRoot"}, "properties": map[string]any{
 			"serverSet": map[string]any{"type": "string"}, "server": map[string]any{"type": "string"}, "dataRoot": map[string]any{"type": "string"}, "serverLogins": map[string]any{"type": "string"},
+			"docker": map[string]any{"type": "boolean", "description": "Servers are local docker containers reached through the localmap next to the server set."},
 		}}, Handler: func(ctx context.Context, args map[string]any) (string, error) {
-		out, err := invokeFeature[app.ResourceAccessIn, app.ResourceAccessOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "resource.access", app.ResourceAccessIn{ServerSet: argString(args, "serverSet", ""), Server: argString(args, "server", ""), DataRoot: argString(args, "dataRoot", "")})
+		out, err := invokeFeature[app.ResourceAccessIn, app.ResourceAccessOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "resource.access", app.ResourceAccessIn{ServerSet: argString(args, "serverSet", ""), Server: argString(args, "server", ""), DataRoot: argString(args, "dataRoot", ""), Docker: args["docker"] == true})
 		if err != nil {
 			return "", err
 		}

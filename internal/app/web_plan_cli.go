@@ -60,6 +60,9 @@ func planPresetThroughCLI(ctx context.Context, cli ChainCLI, raw []byte, in RunS
 			args = append(args, f.flag, f.value)
 		}
 	}
+	if in.Docker {
+		args = append(args, "--docker")
+	}
 	stdout, err := cli.Run(ctx, args...)
 	if err != nil {
 		return out, err
