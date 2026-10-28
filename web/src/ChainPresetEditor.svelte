@@ -1,5 +1,6 @@
 <script>
   import { apiClient } from './api-client.mjs'
+  import { formatTime } from './labels.mjs'
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
@@ -11,6 +12,8 @@
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
   let contract = $state(null)
   let presets = $state([])
+  // Preset files the server could not offer, with the reason, so none vanishes silently.
+  let skipped = $state([])
   let selected = $state('')
   let document = $state(null)
   let inherited = $state(null)
@@ -95,6 +98,7 @@
 
   $effect(() => {
     client.request('chain-presets').then(items => { presets = items }).catch(e => { error = `체인 프리셋을 불러오지 못했습니다. ${e.message}` })
+    client.request('chain-presets/skipped').then(page => { skipped = page.items }).catch(() => { skipped = [] })
   })
 
   async function choose(event) {
@@ -164,7 +168,7 @@
       <label for="saved-chain-document">공유 체인 구성</label>
       <select id="saved-chain-document" value={savedId} onchange={e => { if(e.target.value) loadSaved(e.target.value) }}><option value="">새 구성</option>{#each saved as entry}<option value={entry.id}>{entry.name} · revision {entry.revision}</option>{/each}</select>
       {#if writable}<label>구성 import <input name="chain-preset-editor-input-1" aria-label="체인 구성 import" type="file" accept=".json,.yaml,.yml" onchange={importFile} /></label>{/if}
-      {#if preview}<p>Import 원문은 서버에 암호화되어 보존됩니다. {preview.changes.join('; ')}</p>{/if}
+      {#if preview}<p>Import 원문은 서버에 암호화되어 {formatTime(preview.expiresAt)}까지 보존되고, 그 전에 확정해야 합니다. {preview.changes.join('; ')}</p>{/if}
     {/if}
     <label for="chain-preset">체인 프리셋</label>
     <select id="chain-preset" bind:value={selected} onchange={choose}>
@@ -173,6 +177,14 @@
         <option value={preset.id}>{preset.chain} · {preset.id}</option>
       {/each}
     </select>
+    {#if skipped.length}
+      <details class="skipped" data-testid="skipped-presets">
+        <summary>읽지 못한 프리셋 파일 {skipped.length}개</summary>
+        <table><thead><tr><th scope="col">파일</th><th scope="col">이유</th></tr></thead><tbody>
+          {#each skipped as s (s.file)}<tr><td class="mono">{s.file}</td><td>{s.reason}</td></tr>{/each}
+        </tbody></table>
+      </details>
+    {/if}
     {#if document}
       <p class="description">{presets.find(p => p.id === selected)?.description}</p>
       {#if webSession}
@@ -228,6 +240,7 @@
 {/if}
 
 <style>
+  .skipped { margin: var(--space-2) 0; } .skipped summary { cursor: pointer; padding: var(--space-1) 0; color: var(--warn); font: 600 var(--text-sm) var(--font-cond); } .skipped td { overflow-wrap: anywhere; }
   .intro, .description { color: var(--text-muted); }
   label { margin: var(--space-3) 0 0; }
   input, select { width: 100%; }

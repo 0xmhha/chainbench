@@ -7,7 +7,7 @@ export function schemaProblems(schema, value, path = 'content') {
  if (!schema) return out
  if (schema.type === 'object') {
   const missing = (schema.required ?? []).filter(key => value?.[key] === undefined || value[key] === '')
-  for (const key of missing) out.push({ path: `${path}.${key}`, message: `${key} 값이 필요합니다.` })
+  for (const key of missing) out.push({ path: `${path}.${key}`, message: `${schema.properties?.[key]?.title ?? key} 값이 필요합니다.` })
   for (const [key, spec] of Object.entries(schema.properties ?? {})) if (value?.[key] !== undefined && !missing.includes(key)) out.push(...schemaProblems(spec, value[key], `${path}.${key}`))
   return out
  }

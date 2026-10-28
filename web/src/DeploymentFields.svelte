@@ -1,66 +1,69 @@
 <script>
   import DeploymentFields from "./DeploymentFields.svelte"
+  import ContractField from "./ContractField.svelte"
   import { schemaDefault } from "./schema-problems.mjs"
-  // problems maps a field path to what is wrong with it; that field is marked
-  // invalid and described by the message.
-  let { schema, value, path = 'content', change, problems = {} } = $props()
-  const problem = $derived(problems[path] ?? '')
-  const invalid = $derived(problem ? { 'aria-invalid': 'true', 'aria-describedby': `${path}-problem` } : {})
-  let propertyName = $state('')
+  // The general form for contract fields a laid-out form does not place
+  // itself: objects become titled groups, optional fields are added and left
+  // out by their titles, and maps and lists grow entry by entry. problems maps
+  // a field path to the engine's refusal; changed is the set of paths a past
+  // revision differs at.
+  let { schema, value, path = 'content', change, problems = {}, readonly = false, changed = new Set(), title = undefined } = $props()
+  let entryName = $state('')
+  const key = $derived(path.split(/[.[\]]/).filter(Boolean).at(-1))
   function field(k, v) { change({ ...value, [k]: v }) }
   function omit(k) { const next = { ...value }; delete next[k]; change(next) }
 </script>
 
 {#if schema.type === 'object'}
-  <fieldset>
-    <legend>{path}</legend>
-    {#each Object.entries(schema.properties ?? {}) as [key, spec] (key)}
-      {@const required = schema.required?.includes(key)}
-      {#if required || value?.[key] !== undefined}
-        <div class="field">
-          <DeploymentFields schema={spec} value={value?.[key]} path={`${path}.${key}`} {problems} change={v => field(key, v)} />
-          {#if !required}<button type="button" onclick={() => omit(key)}>{key} 빼기</button>{/if}
+  <fieldset data-field-group={path}>
+    {#if title ?? schema.title}<legend>{title ?? schema.title} <code>{key}</code></legend>{/if}
+    {#if schema.description}<p class="hint">{schema.description}</p>{/if}
+    {#each Object.entries(schema.properties ?? {}) as [k, spec] (k)}
+      {@const required = schema.required?.includes(k)}
+      {#if required || value?.[k] !== undefined}
+        <div class="entry">
+          <DeploymentFields schema={spec} value={value?.[k]} path={`${path}.${k}`} {problems} {readonly} {changed} change={v => field(k, v)} />
+          {#if !required && !readonly}<button type="button" class="quiet" data-omit-path={`${path}.${k}`} onclick={() => omit(k)}>{spec.title ?? k} 빼기</button>{/if}
         </div>
-      {:else}
-        <button type="button" onclick={() => field(key, schemaDefault(spec))}>{key} 추가</button>
+      {:else if !readonly}
+        <button type="button" class="quiet" data-add-path={`${path}.${k}`} onclick={() => field(k, schemaDefault(spec))}>{spec.title ?? k} 추가</button>
       {/if}
     {/each}
     {#if schema.additionalProperties}
-      {#each Object.entries(value ?? {}) as [key, entry] (key)}
-        <DeploymentFields schema={schema.additionalProperties} value={entry} path={`${path}.${key}`} {problems} change={v => field(key, v)} />
-        <button type="button" onclick={() => omit(key)}>{key} 삭제</button>
+      {#each Object.entries(value ?? {}) as [k, entry] (k)}
+        <div class="entry">
+          <DeploymentFields schema={schema.additionalProperties} value={entry} path={`${path}.${k}`} title={k} {problems} {readonly} {changed} change={v => field(k, v)} />
+          {#if !readonly}<button type="button" class="quiet" data-omit-path={`${path}.${k}`} onclick={() => omit(k)}>{k} 삭제</button>{/if}
+        </div>
       {/each}
-      <label>항목 이름 <input name="property-name" aria-label={`${path}.entry-name`} bind:value={propertyName} /></label>
-      <button type="button" disabled={!propertyName || Object.hasOwn(value ?? {}, propertyName)} onclick={() => { field(propertyName, schemaDefault(schema.additionalProperties)); propertyName = '' }}>항목 추가</button>
+      {#if !readonly}
+        <div class="add-entry">
+          <label>새 항목 이름 <input name="property-name" aria-label={`${schema.title ?? key} 새 항목 이름`} bind:value={entryName} /></label>
+          <button type="button" data-add-path={`${path}.*`} disabled={!entryName || Object.hasOwn(value ?? {}, entryName)} onclick={() => { field(entryName, schemaDefault(schema.additionalProperties)); entryName = '' }}>항목 추가</button>
+        </div>
+      {/if}
     {/if}
   </fieldset>
 {:else if schema.type === 'array'}
-  <fieldset>
-    <legend>{path}</legend>
+  <fieldset data-field-group={path}>
+    <legend>{title ?? schema.title ?? key} <code>{key}</code></legend>
     {#each value ?? [] as entry, i (i)}
-      <DeploymentFields schema={schema.items} value={entry} path={`${path}[${i}]`} {problems} change={v => change(value.map((old, j) => j === i ? v : old))} />
-      <button type="button" onclick={() => change(value.filter((_, j) => j !== i))}>{i + 1}번 항목 삭제</button>
+      <div class="entry">
+        <DeploymentFields schema={schema.items} value={entry} path={`${path}[${i}]`} title={`${schema.items.title ?? schema.title ?? key} ${i + 1}`} {problems} {readonly} {changed} change={v => change(value.map((old, j) => j === i ? v : old))} />
+        {#if !readonly}<button type="button" class="quiet" data-omit-path={`${path}[${i}]`} onclick={() => change(value.filter((_, j) => j !== i))}>{i + 1}번 삭제</button>{/if}
+      </div>
     {/each}
-    <button type="button" onclick={() => change([...(value ?? []), schemaDefault(schema.items)])}>항목 추가</button>
+    {#if !readonly}<button type="button" data-add-path={path} onclick={() => change([...(value ?? []), schemaDefault(schema.items)])}>항목 추가</button>{/if}
   </fieldset>
-{:else if schema.enum}
-  <label data-field-path={path}>{path}<select name={path} aria-label={path} {...invalid} value={value} onchange={e => change(schema.type === 'integer' ? Number(e.target.value) : e.target.value)}>
-    {#each schema.enum as option}<option value={option}>{option}</option>{/each}
-  </select></label>
-{:else if schema.type === 'boolean'}
-  <label data-field-path={path}><input name={path} type="checkbox" aria-label={path} {...invalid} checked={value ?? false} onchange={e => change(e.target.checked)} /> {path}</label>
-{:else if schema.type === 'integer'}
-  <label data-field-path={path}>{path}<input name={path} aria-label={path} {...invalid} type="number" step="1" min={schema.minimum} max={schema.maximum} value={value ?? 0} oninput={e => change(e.target.valueAsNumber)} /></label>
 {:else}
-  <label data-field-path={path}>{path}<input name={path} aria-label={path} {...invalid} value={value ?? ''} oninput={e => change(e.target.value)} /></label>
+  <ContractField {schema} {path} {value} {change} {problems} {readonly} changed={changed.has(path)} label={title} />
 {/if}
-{#if problem}<p id={`${path}-problem`} class="problem">{problem}</p>{/if}
 
 <style>
-  fieldset { padding: var(--space-2) 0 var(--space-2) var(--space-3); margin: var(--space-2) 0; border-top: 0; border-left: 1px solid var(--border-subtle); }
-  legend { font-size: var(--text-xs); }
-  label { margin: var(--space-2) 0; overflow-wrap: anywhere; }
-  .problem { color: var(--danger); margin: 0 0 var(--space-2); }
-  button { margin: var(--space-1); }
-  .field { margin: var(--space-1) 0; }
+  fieldset { padding: var(--space-2) 0 var(--space-3); }
+  legend code, .add-entry code { color: var(--text-faint); font-size: var(--text-xs); font-weight: 400; margin-left: var(--space-1); }
+  .hint { margin: 0 0 var(--space-2); color: var(--text-muted); font-size: var(--text-xs); max-width: 70ch; }
+  .entry { border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-1); }
+  .quiet { padding: 2px var(--space-2); margin: var(--space-1) var(--space-2) var(--space-1) 0; font-size: var(--text-sm); }
+  .add-entry { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-2); margin-top: var(--space-2); }
 </style>
