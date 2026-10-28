@@ -7,10 +7,28 @@
   import { allItems } from './pages.mjs'
   import { untrack } from 'svelte'
   import { parseHistoryJSON } from './history-json.js'
-  let { webSession } = $props()
+  import { readFocus, focusSearch } from './job-view.mjs'
+  // active is true while History is the shown page; the panel stays mounted
+  // (hidden) on the others, so it reads and writes the URL only while shown.
+  let { webSession, active = false } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
   let selected = $state([]), busy = $state(false), error = $state('')
   let detailBox = $state()
+  // The open run and what is chosen in it live in the URL, so a link from the
+  // dashboard or a copied address opens the same record at the same moment.
+  const focus = $state(readFocus(''))
+  $effect(() => {
+    if (!active || !webSession) return
+    untrack(() => {
+      const wanted = readFocus(location.search)
+      if (wanted.run && wanted.run !== detail?.id) { Object.assign(focus, wanted); open(wanted.run, true) }
+    })
+  })
+  $effect(() => {
+    if (!active) return
+    const search = focusSearch(focus, location.search)
+    if (search !== location.search) history.replaceState(history.state, '', location.pathname + search)
+  })
   let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
@@ -46,9 +64,11 @@
     selected = checked ? [...selected, id] : selected.filter(value => value !== id)
     comparison = null
   }
-  async function open(id) {
+  // kept is true when the URL named the run, so its test, node and moment hold.
+  async function open(id, kept = false) {
     busy = true; error = ''
-    try { detail = await client.request('history/' + encodeURIComponent(id), runRead(decodeRun)) } catch (e) { error = e.message } finally { busy = false }
+    if (!kept) Object.assign(focus, { run: id, test: '', node: '', at: '' })
+    try { detail = await client.request('history/' + encodeURIComponent(id), runRead(decodeRun)) } catch (e) { error = `실행 기록 ${id}을(를) 열지 못했습니다. ${e.message}`; focus.run = '' } finally { busy = false }
     // The detail opens below the list; bring it into view so the failure is what the reader sees.
     requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
@@ -73,6 +93,7 @@
       await client.request('history/' + encodeURIComponent(run.id), { method: 'DELETE' })
       selected = selected.filter(id => id !== run.id)
       detail = null; comparison = null
+      Object.assign(focus, { run: '', test: '', node: '', at: '' })
       await load()
     } finally { busy = false }
   }
@@ -112,7 +133,7 @@
     {#if comparison.metrics?.length}<div class="table-wrap"><table data-testid="comparison-metrics"><thead><tr><th>노드 지표 (출처 · 단위)</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>{#each comparison.metrics as metric}<tr><td>{metric.name}<small>{metric.source}{metric.unit ? ' · ' + metric.unit : ''}</small></td>{#each comparison.runIds as id}<td>{metricValue(metric.values[id])}</td>{/each}</tr>{/each}</tbody></table></div>{/if}
   </section>{/if}
   {#if detail}<section class="detail" aria-label="실행 상세 결과" bind:this={detailBox}>
-    {#key detail.id}<HistoryDetail run={detail} {client} {administrator} {busy} ondownload={download} onremove={remove} />{/key}
+    {#key detail.id}<HistoryDetail run={detail} {client} {administrator} {busy} ondownload={download} onremove={remove} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} />{/key}
   </section>{/if}
 </section>
 

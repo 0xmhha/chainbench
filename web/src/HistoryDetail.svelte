@@ -10,7 +10,9 @@
  import {testRows} from './run-timeline.mjs'
  import {formatTime} from './labels.mjs'
 
- let {run,client,administrator=false,busy=false,ondownload,onremove}=$props()
+ // test, node and at are the chosen test, log node and cursor moment; the
+ // history page keeps them in the URL beside the run.
+ let {run,client,administrator=false,busy=false,ondownload,onremove,test=$bindable(''),node=$bindable(''),at=$bindable('')}=$props()
 
  const TERMINAL=['succeeded','failed','cancelled','interrupted']
  const terminal=$derived(TERMINAL.includes(run.state))
@@ -18,14 +20,12 @@
  const head=$derived(runHeadline(run))
  const headRow=$derived(testRows(run).find(r=>r.id===head.test)??null)
  const evidence=$derived(headRow?.failedAsserts[0]??null)
- const at=$derived(headRow?.finishedAt??run.finishedAt??null)
+ const endedAt=$derived(headRow?.finishedAt??run.finishedAt??null)
  const duration=$derived(run.startedAt&&run.finishedAt?Date.parse(run.finishedAt)-Date.parse(run.startedAt):null)
  const operation=$derived(run.summary.operation??run.summary.command??run.id)
  const phases=$derived(phaseRows(run.summary.phases))
  const format=time=>time?formatTime(time):'자료 없음'
 
- // The chosen test and log node; the failure trail sets them.
- let test=$state(''),node=$state('')
  const ANCHOR='history-cause'
  const PHASES='history-phases'
  function reveal(id=ANCHOR){document.getElementById(id)?.scrollIntoView({block:'start',behavior:'smooth'})}
@@ -51,7 +51,7 @@
 </script>
 
 <div class="folio"><span>실행 기록 · <strong>{operation}</strong> · <code>{run.id}</code></span><span>{run.startedAt?formatTime(run.startedAt).slice(0,10):'시각 없음'}{#if observations} · 네트워크 <code>{observations.networkId.slice(0,8)}</code>{#if nodes.length} · 노드 {nodes.length}{/if}{/if}</span></div>
-<CasualtyEntry scope="run" job={{state:run.state,operation,createdAt:run.startedAt}} {head} summary={{active:!terminal}} network={observations?{id:observations.networkId}:null} nodeCount={nodes.length} {at} {evidence} {duration} trailNode={head.node} onphase={()=>reveal(PHASES)} ontest={()=>{test=head.test;node='';reveal()}} onnode={()=>{test=head.test;node=head.node;reveal()}} />
+<CasualtyEntry scope="run" job={{state:run.state,operation,createdAt:run.startedAt}} {head} summary={{active:!terminal}} network={observations?{id:observations.networkId}:null} nodeCount={nodes.length} at={endedAt} {evidence} {duration} trailNode={head.node} onphase={()=>reveal(PHASES)} ontest={()=>{test=head.test;node='';at='';reveal()}} onnode={()=>{test=head.test;node=head.node;reveal()}} />
 <div class="actions">
  <button disabled={busy} onclick={()=>ondownload(run.id)}>결과 내보내기</button>
  {#if administrator}<button class="danger" disabled={busy||!terminal} title={terminal?undefined:'끝나지 않은 실행은 삭제할 수 없습니다'} onclick={()=>{pendingDelete=true}}>보관 결과 삭제</button>{/if}
@@ -59,7 +59,7 @@
 {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제는 되돌릴 수 없고, 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={()=>{pendingDelete=false}}>돌아가기</button></div>{/if}
 {#if error}<p class="error" role="alert">{error}</p>{/if}
 
-<RunBench {run} {nodes} bind:test bind:node anchor={ANCHOR} logTestid="run-logs" />
+<RunBench {run} {nodes} bind:test bind:node bind:at anchor={ANCHOR} logTestid="run-logs" />
 {#if phases.length}<PhaseWatches rows={phases} anchor={PHASES} />{/if}
 
 <section class="record" aria-label="기록 정보">

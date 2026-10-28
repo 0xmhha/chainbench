@@ -6,7 +6,7 @@
   import { jobSummary, jobDuration } from './job-view.mjs'
   import PhaseSteps from './PhaseSteps.svelte'
   import { follow } from './nav.mjs'
-  import { nodeTally, attentionJobs, shortId } from './dashboard-view.mjs'
+  import { nodeTally, attentionJobs, shortId, runLabel } from './dashboard-view.mjs'
   import { statusIcon } from './status-icon.mjs'
   import StatusMark from './StatusMark.svelte'
   import { liveStale, shownState, feedPhase } from './node-view.mjs'
@@ -83,11 +83,12 @@
 </section>
 
 <section class="panel" aria-label="최근 결과"><div class="panel-heading"><h2>최근 결과</h2><button onclick={() => feed.refresh()}>새로고침</button></div>
-  {#if recent.length}<div class="table-wrap"><table class="stack"><thead><tr><th>작업</th><th>결과</th><th>걸린 시간</th><th>노드 처리</th><th>생성</th></tr></thead><tbody>
+  {#if recent.length}<div class="table-wrap"><table class="stack"><thead><tr><th>작업</th><th>결과</th><th>걸린 시간</th><th>실행 기록</th><th>노드 처리</th><th>생성</th></tr></thead><tbody>
     {#each recent as j (j.id)}<tr data-job-id={j.id}>
       <td data-label="작업"><a href={'/jobs/' + j.id} onclick={e => follow(e, '/jobs/' + j.id)}>{j.operation}</a><small class="mono" title={j.id}>{shortId(j.id)}</small></td>
       <td data-label="결과"><StatusBadge state={j.state} /></td>
       <td class="num" data-label="걸린 시간">{took(jobDuration(j))}</td>
+      <td class="runs" data-label="실행 기록">{#each j.runIds ?? [] as id (id)}<a class="mono" href={'/history?run=' + encodeURIComponent(id)} title={id} onclick={e => follow(e, '/history?run=' + encodeURIComponent(id))}>{runLabel(id)}</a>{:else}<span class="muted">없음</span>{/each}</td>
       <td data-label="노드 처리">{j.nodeDisposition}</td>
       <td class="num" data-label="생성">{fmt(j.createdAt)}</td>
     </tr>{/each}
@@ -109,6 +110,9 @@
   h2 small { margin-left: var(--space-2); font: 400 var(--text-xs) var(--font-sans); color: var(--text-muted); }
   .why { overflow-wrap: anywhere; }
   .open { white-space: nowrap; }
+  /* A job's run records, each opening in History at its own address. */
+  .runs a { display: inline-block; padding: var(--space-1) 0; margin-right: var(--space-2); }
+  @media (pointer: coarse) { .runs a { display: inline-flex; align-items: center; min-height: 44px; } }
   td small { display: block; }
   .num { font: var(--text-sm) var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .lead { margin: 0 0 var(--space-2); font-size: var(--text-sm); }

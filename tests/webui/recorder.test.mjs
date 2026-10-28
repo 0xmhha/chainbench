@@ -27,6 +27,13 @@ const metrics = {
  ]
 }
 
+test('a cursor moment from the URL puts B there while it falls inside the window', () => {
+ const events = [{ time: t(15), level: 'WARN' }, { time: t(22), level: 'ERROR' }]
+ assert.deepEqual(cursorDefaults({ events, start: t(6), end: t(24), at: t(18), from: t(1), to: t(29) }), { a: t(15), b: t(18) })
+ // Outside the window (another test was chosen since) the defaults hold.
+ assert.deepEqual(cursorDefaults({ events, start: t(6), end: t(24), at: t(40), from: t(1), to: t(29) }), { a: t(15), b: t(22) })
+})
+
 test('the measure reads each gauge at both cursors, and a gap reads as no value', () => {
  const m = measureBetween(metrics, 'node2', t(10), t(25))
  assert.deepEqual(m.gauges.map(g => [g.label, g.a, g.b, g.changed]), [['블록 높이', 45, 46, true], ['피어 수', 3, 1, true], ['대기 트랜잭션', 2, 20, true]])

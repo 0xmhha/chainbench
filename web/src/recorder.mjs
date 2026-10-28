@@ -6,14 +6,17 @@ import { failureMetrics } from './metric-chart.mjs'
 const at = value => Date.parse(value ?? '')
 
 // cursorDefaults puts A on the first warning before the first error and B on
-// that error; without them the test's own start and end stand in.
-export function cursorDefaults({ events, start, end }) {
+// that error; without them the test's own start and end stand in. A moment
+// from the URL (at) places B instead while it falls inside the window.
+export function cursorDefaults({ events, start, end, at: moment = '', from = start, to = end }) {
  const sorted = [...(events ?? [])].sort((x, y) => at(x.time) - at(y.time))
  const firstError = sorted.find(e => e.level === 'ERROR' || e.level === 'CRIT')
  const first = sorted[0]
  // When the first event is the first error, A opens the window instead, so
  // the measure still spans the lead-up to it.
- return { a: first && first !== firstError ? first.time : start, b: firstError?.time ?? end }
+ const a = first && first !== firstError ? first.time : start
+ const kept = at(moment) >= at(from) && at(moment) <= at(to)
+ return { a, b: kept ? moment : firstError?.time ?? end }
 }
 
 const tolerance = metrics => 2 * (metrics?.coverage?.bucketSeconds || metrics?.coverage?.sampleIntervalSeconds || 5) * 1000
