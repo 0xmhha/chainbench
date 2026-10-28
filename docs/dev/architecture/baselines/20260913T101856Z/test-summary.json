@@ -1,0 +1,120 @@
+{
+  "test_events": {
+    "pass": 1944,
+    "skip": 27
+  },
+  "package_events": {
+    "skip": 12,
+    "pass": 58
+  },
+  "skipped_tests": [
+    {
+      "package": "github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd",
+      "test": "TestLive_KeyringImportsARawKeyFromAServer"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd",
+      "test": "TestLive_KeyringImportsAKeystoreFromAServer"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd",
+      "test": "TestLive_KeyringCreatesARingOnAServer"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd",
+      "test": "TestLive_KeyringClonesARingFromAServer"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/app",
+      "test": "TestLive_RunSuiteSetsUpRunsAndReports"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/chainsetup",
+      "test": "TestLive_LogsReadsANodeLogFromItsServer"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/chainsetup",
+      "test": "TestLive_MaterializeKeyringDownloadsAServerKeyring"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/genesis",
+      "test": "TestPresetGenesisSource_Live_GstableInit"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/genesis",
+      "test": "TestPresetGenesisSource_ProducersFromPlacement"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/consensus/poa",
+      "test": "TestWemixGenesisSource_Live_GeneratesAndInits"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteInspectorAnswersOnTheMachine"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteCommanderReturnsOutput"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteLogReaderTailsIncrementallyWithoutLossOrDuplication"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteLogReaderSurvivesABinarySafeOffset"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteLogReaderTreatsAMissingFileAsEmpty"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteLogReaderSatisfiesTheCollectorBoundary"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/core/process",
+      "test": "TestLive_RemoteRestartKeepsThePreviousAttemptsLog"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/resource",
+      "test": "TestLive_ElevatedDownloadReadsARootOwnedFile"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/resource",
+      "test": "TestLive_DownloadDirRecoversARootOwnedTree"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/resource",
+      "test": "TestGenEnv_ProducesFilesThisParserAccepts"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/resource",
+      "test": "TestLive_SudoElevatesWithThePassword"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/testengine",
+      "test": "TestSuite_Live_AccountLabels"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/testengine",
+      "test": "TestSuite_Live_DeclaredAccounts"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/testengine",
+      "test": "TestRunSpec_Live_Stablenet"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/testengine",
+      "test": "TestSuite_Live_FullRun"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/testengine",
+      "test": "TestSuite_Live_NewVocabulary"
+    },
+    {
+      "package": "github.com/0xmhha/chainbench/internal/testengine",
+      "test": "TestWemix_Live_BringUp"
+    }
+  ]
+}

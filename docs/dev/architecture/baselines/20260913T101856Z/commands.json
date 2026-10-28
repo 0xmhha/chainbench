@@ -1,0 +1,418 @@
+[
+  {
+    "name": "go-wemix-version",
+    "argv": [
+      "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix",
+      "version"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.786572+00:00",
+    "elapsed_seconds": 0.04,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-wemix-version.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "go-wemix-build-info",
+    "argv": [
+      "go",
+      "version",
+      "-m",
+      "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.826658+00:00",
+    "elapsed_seconds": 0.07,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-wemix-build-info.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "go-wbft-version",
+    "argv": [
+      "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix",
+      "version"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.896383+00:00",
+    "elapsed_seconds": 0.04,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-wbft-version.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "go-wbft-build-info",
+    "argv": [
+      "go",
+      "version",
+      "-m",
+      "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.934321+00:00",
+    "elapsed_seconds": 0.01,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-wbft-build-info.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "go-stablenet-version",
+    "argv": [
+      "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable",
+      "version"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.944947+00:00",
+    "elapsed_seconds": 0.04,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-stablenet-version.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "go-stablenet-build-info",
+    "argv": [
+      "go",
+      "version",
+      "-m",
+      "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.985636+00:00",
+    "elapsed_seconds": 0.01,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-stablenet-build-info.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "go-environment",
+    "argv": [
+      "go",
+      "env",
+      "GOVERSION",
+      "GOOS",
+      "GOARCH",
+      "CGO_ENABLED",
+      "GOMOD"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:18:57.996136+00:00",
+    "elapsed_seconds": 0.01,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "go-environment.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "unit",
+    "argv": [
+      "go",
+      "test",
+      "-count=1",
+      "-json",
+      "-timeout=8m",
+      "./..."
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 900,
+    "started_at": "2026-09-13T10:18:58.006563+00:00",
+    "elapsed_seconds": 65.07,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "unit.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "build-cli",
+    "argv": [
+      "go",
+      "build",
+      "-o",
+      "/tmp/cbb-20260913T101856Z/chainbench",
+      "./cmd/chainbench"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 300,
+    "started_at": "2026-09-13T10:20:03.089708+00:00",
+    "elapsed_seconds": 2.09,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "build-cli.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "cli-help",
+    "argv": [
+      "/tmp/cbb-20260913T101856Z/chainbench",
+      "--help"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:20:05.179863+00:00",
+    "elapsed_seconds": 0.46,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "cli-help.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "cli-chains",
+    "argv": [
+      "/tmp/cbb-20260913T101856Z/chainbench",
+      "chains"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:20:05.638045+00:00",
+    "elapsed_seconds": 0.02,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "cli-chains.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "cli-capabilities",
+    "argv": [
+      "/tmp/cbb-20260913T101856Z/chainbench",
+      "capabilities"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {},
+    "timeout_seconds": 30,
+    "started_at": "2026-09-13T10:20:05.658576+00:00",
+    "elapsed_seconds": 0.02,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "cli-capabilities.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "e2e-wbft",
+    "argv": [
+      "go",
+      "test",
+      "-count=1",
+      "-json",
+      "-tags",
+      "e2e",
+      "-timeout=6m",
+      "-run",
+      "^TestE2E_WbftChain$",
+      "./tests/e2e/"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {
+      "WBFT_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix",
+      "GSTABLE_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable",
+      "WEMIX_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix",
+      "CHAINBENCH": "/tmp/cbb-20260913T101856Z/chainbench"
+    },
+    "timeout_seconds": 420,
+    "started_at": "2026-09-13T10:20:05.680474+00:00",
+    "elapsed_seconds": 15.32,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "e2e-wbft.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "e2e-stablenet",
+    "argv": [
+      "go",
+      "test",
+      "-count=1",
+      "-json",
+      "-tags",
+      "e2e",
+      "-timeout=6m",
+      "-run",
+      "^TestE2E_StablenetChain$",
+      "./tests/e2e/"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {
+      "WBFT_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix",
+      "GSTABLE_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable",
+      "WEMIX_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix",
+      "CHAINBENCH": "/tmp/cbb-20260913T101856Z/chainbench"
+    },
+    "timeout_seconds": 420,
+    "started_at": "2026-09-13T10:20:21.013237+00:00",
+    "elapsed_seconds": 69.82,
+    "exit_code": 1,
+    "status": "FAIL",
+    "log": "e2e-stablenet.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  },
+  {
+    "name": "e2e-wemix-handoff",
+    "argv": [
+      "go",
+      "test",
+      "-count=1",
+      "-json",
+      "-tags",
+      "e2e",
+      "-timeout=6m",
+      "-run",
+      "^TestUpgradeRunE2E$",
+      "./cmd/chainbench/"
+    ],
+    "cwd": "/Users/0xtopaz/work/github/0xmhha/chainbench",
+    "environment_overrides": {
+      "GOCACHE": "/tmp/chainbench-baseline-gocache",
+      "GOTOOLCHAIN": "local",
+      "GOPROXY": "off",
+      "GOSUMDB": "off",
+      "TMPDIR": "/tmp/cbb-20260913T101856Z",
+      "GOROOT": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64"
+    },
+    "extra_environment": {
+      "CHAINBENCH_E2E_FROM_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix",
+      "CHAINBENCH_E2E_TO_BIN": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix",
+      "CHAINBENCH_E2E_TEMPLATE": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/wemix/scripts/genesis-template.json"
+    },
+    "timeout_seconds": 420,
+    "started_at": "2026-09-13T10:21:30.936112+00:00",
+    "elapsed_seconds": 50.59,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "e2e-wemix-handoff.log",
+    "go_executable": "/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.13.darwin-arm64/bin/go"
+  }
+]
