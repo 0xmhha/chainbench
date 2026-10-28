@@ -91,6 +91,13 @@ export function jobDuration(job) {
  return start !== null && ends.length ? Math.max(...ends) - start : null
 }
 
+// jobElapsed is how long a running job has run by now (ms); a browser clock
+// behind the server reads as zero, never as negative time.
+export function jobElapsed(job, now) {
+ const start = set(job?.createdAt)
+ return start === null ? null : Math.max(0, now - start)
+}
+
 // phaseRows is one row per phase with unset times cleared and its length;
 // only the failed phase starts open.
 export function phaseRows(phases) {

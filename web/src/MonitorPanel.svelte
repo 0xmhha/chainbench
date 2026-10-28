@@ -1,6 +1,7 @@
 <script>
  import { formatTime } from './labels.mjs'
  import StatusBadge from './StatusBadge.svelte'
+ import ConfirmAction from './ConfirmAction.svelte'
  import {onMount} from 'svelte'
  import {sharedJobStream} from './job-stream.svelte.js'
  import {liveStale,shownState} from './node-view.mjs'
@@ -14,7 +15,7 @@
  import {shortId} from './dashboard-view.mjs'
  let {webSession=undefined}=$props()
  const feed=sharedJobStream(),live=feed.state
- let now=$state(Date.now()),cancelling=$state(''),cancelError=$state(''),names=$state({})
+ let now=$state(Date.now()),cancelling=$state(''),cancelError=$state(''),pendingCancel=$state(''),names=$state({})
  const api=$derived(webApi(webSession))
  $effect(()=>{if(webSession)allItems(api,'workspaces').then(items=>{names=Object.fromEntries(items.map(w=>[w.id,w.name]))}).catch(e=>{cancelError=e.message})})
  const snapshot=$derived(live.snapshot)
@@ -28,8 +29,7 @@
  const activeJob=job=>!job.terminal
  const mayCancel=job=>activeJob(job)&&webSession&&webSession.user.role!=='viewer'&&(job.actorId===webSession.user.id||webSession.user.role==='administrator')
  async function cancel(job){
-  if(!window.confirm(`${job.operation} 작업(${job.id})을 취소합니다. 노드는 작업의 보존 설정에 따라 처리됩니다.`))return
-  cancelling=job.id;cancelError=''
+  pendingCancel='';cancelling=job.id;cancelError=''
   try{await api(`jobs/${job.id}/cancel`,'POST',{})}catch(e){cancelError=e.message}finally{cancelling=''}
  }
  onMount(()=>{
@@ -62,8 +62,9 @@
      <td data-label="상태"><StatusBadge state={job.state} /></td>
      <td data-label="진행 단계"><PhaseSteps phases={job.phases??[]} /></td>
      <td data-label="노드 처리">{job.nodeDisposition??'확인되지 않음'}{#if job.runIds?.length}<small>실행 기록 {job.runIds.length}건</small>{/if}{#if job.unresolvedResources?.length}<small class="warn-text">미해결 자원 {job.unresolvedResources.length}건</small>{/if}</td>
-     <td>{#if mayCancel(job)}<button disabled={cancelling===job.id||job.state==='cancelling'} onclick={()=>cancel(job)}>작업 취소</button>{/if}</td>
+     <td>{#if mayCancel(job)}<button disabled={cancelling===job.id||job.state==='cancelling'} onclick={()=>{pendingCancel=job.id}}>작업 취소</button>{/if}</td>
     </tr>
+    {#if pendingCancel===job.id&&mayCancel(job)}<tr class="asking" data-confirm-job={job.id}><td colspan="5"><ConfirmAction label="작업 취소 확인" message={`${job.operation} 작업(${shortId(job.id)})을 취소합니다. 이미 반영된 변경은 되돌리지 않고, 노드는 작업의 보존 설정(${job.retention})에 따라 처리됩니다.`} confirmLabel="작업 취소 확정" busy={cancelling===job.id} onconfirm={()=>cancel(job)} oncancel={()=>{pendingCancel=''}} /></td></tr>{/if}
    {/each}</tbody></table></div>
   {/if}
   <h3>보관된 네트워크 기록</h3><p class="muted">스냅샷 시점: {time(snapshot.observedAt)}. 노드 상태는 서버 수집기가 5초마다 본 마지막 모습이고, 기록된 PID는 실제 가동 증거가 아닙니다. 노드를 제어하기 전에는 노드 상세에서 상태를 다시 확인합니다.</p>

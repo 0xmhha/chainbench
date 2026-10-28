@@ -240,5 +240,5 @@
   li > .level.info, li > .level.faint, li > .level.none { border-left-color: var(--border-subtle); }
   li > time { display: none; }
  }
- @media (pointer: coarse) { .keys { display: none; } }
+ @media (pointer: coarse) { .keys { display: none; } .chip { min-height: 44px; padding: 2px 14px; } }
 </style>

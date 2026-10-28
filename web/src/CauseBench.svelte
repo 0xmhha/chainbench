@@ -13,7 +13,7 @@
  import {cursorDefaults} from './recorder.mjs'
  import {LOG_PAGE_MAX,logQuery} from './log-view.mjs'
 
- let {networkId,nodes=[],node=$bindable(),from,to,start=null,end=null,tests=[],chosen=null,onchoose=()=>{},logTitle='',logTestid='cause-logs',focus=null,at=$bindable('')}=$props()
+ let {networkId,nodes=[],node=$bindable(),from,to,start=null,end=null,tests=[],phases=[],chosen=null,onchoose=()=>{},logTitle='',logTestid='cause-logs',focus=null,at=$bindable('')}=$props()
 
  const ALL='*'
  let metrics=$state(null),events=$state([]),otherEvents=$state([]),error=$state('')
@@ -47,7 +47,7 @@
 
 {#if error}<p class="error" role="alert">원인 영역의 지표나 로그를 불러오지 못했습니다. {error}</p>{/if}
 {#if node&&node!==ALL}
- <RecorderStrip {from} {to} {node} {metrics} {events} {otherEvents} {tests} {chosen} {onchoose} bind:a bind:b={()=>b,moveB} onreset={reset} />
+ <RecorderStrip {from} {to} {node} {metrics} {events} {otherEvents} {tests} {phases} {chosen} {onchoose} bind:a bind:b={()=>b,moveB} onreset={reset} />
 {:else}
  <p class="muted pick-node">노드 하나를 고르면 그 노드의 기록계 띠와 계기 기록을 봅니다.</p>
 {/if}

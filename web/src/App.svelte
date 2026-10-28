@@ -82,7 +82,9 @@
       </span>
     </header>
     <main id="content">
-      <header class="page-heading"><h1>{current[1]}</h1><p>{current[2]}</p></header>
+      <!-- The job detail opens with its own folio and casualty entry, so the shared
+           title stays for screen readers only rather than saying it twice. -->
+      <header class="page-heading" class:sr-only={route === '/jobs'}><h1>{current[1]}</h1><p>{current[2]}</p></header>
       <LoginPanel bind:session={webSession} bind:ready />
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       {#if ready && webSession !== null}
@@ -136,6 +138,7 @@
   .page-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
   .page-heading h1 { font: 700 var(--text-xl) var(--font-cond); letter-spacing: .01em; }
   .page-heading p { margin: 0; color: var(--text-muted); font-size: var(--text-sm); }
+  .page-heading.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .events { list-style: none; padding: 0; margin: 0; }
   .events li { display: grid; grid-template-columns: 170px 110px 110px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); align-items: start; }
   time, .kind { color: var(--text-muted); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }

@@ -38,17 +38,6 @@ export function testLogSpan(row, padSeconds) {
  return { from: new Date(s - padSeconds * 1000).toISOString(), to: new Date(e + padSeconds * 1000).toISOString(), exact: true }
 }
 
-// phaseSegments turns job phases into shares of the timed total; a phase that
-// has not run (or has no times) gets share 0 and timed false.
-export function phaseSegments(phases) {
- const timed = (phases ?? []).map(p => {
-  const d = at(p.finishedAt) - at(p.startedAt)
-  return { ...p, durationMs: Number.isFinite(d) && d >= 0 ? d : null }
- })
- const total = timed.reduce((sum, p) => sum + (p.durationMs ?? 0), 0)
- return timed.map(p => ({ ...p, timed: p.durationMs !== null, share: total && p.durationMs !== null ? Math.round((p.durationMs / total) * 1000) / 10 : 0 }))
-}
-
 const INTEGER = /^-?\d+$/
 
 // assertDiff is actual minus expected when both are integers, signed, exact

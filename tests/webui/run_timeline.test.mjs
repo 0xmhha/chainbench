@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { testRows, testLogSpan, phaseSegments } from '../../web/src/run-timeline.mjs'
+import { testRows, testLogSpan } from '../../web/src/run-timeline.mjs'
 
 // A run detail as the server sends it: each test with its result files read.
 const test_ = (seq, id, state, over = {}) => ({ seq, id, state, assertions: [], steps: [], postActions: [], artifacts: [], ...over })
@@ -45,12 +45,3 @@ test('a failed test opens the logs of its own span, or the whole run when it has
  assert.deepEqual(testLogSpan(rows[1], 5), { from: null, to: null, exact: false })
 })
 
-test('job phases become shares of the time they took, untimed phases flagged', () => {
- const segments = phaseSegments([
-  { name: 'place', state: 'succeeded', startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:10Z' },
-  { name: 'start', state: 'failed', startedAt: '2026-10-23T07:00:10Z', finishedAt: '2026-10-23T07:00:40Z', message: 'node3 exited' },
-  { name: 'verify', state: 'pending' }
- ])
- assert.deepEqual(segments.map(s => [s.name, s.share, s.timed]), [['place', 25, true], ['start', 75, true], ['verify', 0, false]])
- assert.equal(segments[1].message, 'node3 exited')
-})

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { jobSummary, failureHeadline, jobDuration, phaseRows, readFocus, focusSearch } from '../../web/src/job-view.mjs'
+import { jobSummary, failureHeadline, jobDuration, jobElapsed, phaseRows, readFocus, focusSearch } from '../../web/src/job-view.mjs'
 import { failureMetrics } from '../../web/src/metric-chart.mjs'
 
 const ZERO = '0001-01-01T00:00:00Z'
@@ -56,6 +56,14 @@ test('duration runs from creation to the last phase end and ignores unset times'
  assert.equal(jobDuration(job({ phases: [{ finishedAt: '2026-10-23T07:00:00Z' }, { finishedAt: ZERO }] })), 10000)
  assert.equal(jobDuration(job({ phases: [{ finishedAt: ZERO }] })), null)
  assert.equal(jobDuration(job({ createdAt: ZERO, phases: [{ finishedAt: '2026-10-23T07:00:00Z' }] })), null)
+})
+
+test('a running job counts its time from creation up to now', () => {
+ const now = Date.parse('2026-10-23T07:01:15Z')
+ assert.equal(jobElapsed(job({ createdAt: '2026-10-23T07:00:00Z' }), now), 75000)
+ assert.equal(jobElapsed(job({ createdAt: ZERO }), now), null)
+ // A clock behind the server never shows time running backwards.
+ assert.equal(jobElapsed(job({ createdAt: '2026-10-23T07:02:00Z' }), now), 0)
 })
 
 test('phase rows treat the zero time as missing and open only the failed phase', () => {

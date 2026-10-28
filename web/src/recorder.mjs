@@ -19,6 +19,15 @@ export function cursorDefaults({ events, start, end, at: moment = '', from = sta
  return { a, b: kept ? moment : firstError?.time ?? end }
 }
 
+// nextEvent is the time of the first event after time (dir 1) or the last one
+// before it (dir -1), or null when there is none that way.
+export function nextEvent(events, time, dir) {
+ const t = at(time)
+ const times = (events ?? []).map(e => at(e.time)).filter(Number.isFinite).sort((x, y) => x - y)
+ const found = dir > 0 ? times.find(x => x > t) : times.reverse().find(x => x < t)
+ return found === undefined ? null : new Date(found).toISOString()
+}
+
 const tolerance = metrics => 2 * (metrics?.coverage?.bucketSeconds || metrics?.coverage?.sampleIntervalSeconds || 5) * 1000
 
 // valueAt is node's sample nearest to time. A null sample (a recorded gap) or

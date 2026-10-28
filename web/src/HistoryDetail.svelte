@@ -5,6 +5,7 @@
  import CasualtyEntry from './CasualtyEntry.svelte'
  import RunBench from './RunBench.svelte'
  import PhaseWatches from './PhaseWatches.svelte'
+ import ConfirmAction from './ConfirmAction.svelte'
  import {decodeMetrics} from './api-decode.mjs'
  import {runHeadline,phaseRows} from './job-view.mjs'
  import {testRows} from './run-timeline.mjs'
@@ -56,7 +57,7 @@
  <button disabled={busy} onclick={()=>ondownload(run.id)}>결과 내보내기</button>
  {#if administrator}<button class="danger" disabled={busy||!terminal} title={terminal?undefined:'끝나지 않은 실행은 삭제할 수 없습니다'} onclick={()=>{pendingDelete=true}}>보관 결과 삭제</button>{/if}
 </div>
-{#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제는 되돌릴 수 없고, 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={()=>{pendingDelete=false}}>돌아가기</button></div>{/if}
+{#if pendingDelete}<ConfirmAction label="보관 결과 삭제 확인" message="이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제는 되돌릴 수 없고, 삭제 기록은 감사 이력에 남습니다." confirmLabel="결과 사본 삭제 확정" {busy} onconfirm={remove} oncancel={()=>{pendingDelete=false}} />{/if}
 {#if error}<p class="error" role="alert">{error}</p>{/if}
 
 <RunBench {run} {nodes} bind:test bind:node bind:at anchor={ANCHOR} logTestid="run-logs" />
@@ -90,9 +91,6 @@
 
 <style>
  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: var(--rule); }
- .confirm { margin-top: var(--space-3); padding: var(--space-3) 0; border-top: 2px solid var(--danger); border-bottom: 2px solid var(--danger); }
- .confirm p { margin: 0 0 var(--space-2); max-width: 80ch; }
- .confirm button { margin-right: var(--space-2); }
  .record { margin-top: var(--space-5); padding-top: var(--space-3); border-top: var(--rule-strong); }
  dl { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 0; margin: var(--space-2) 0 0; font-size: var(--text-sm); }
  dt, dd { padding: var(--space-2) 0; border-bottom: var(--rule); }
