@@ -48,8 +48,8 @@ try{
  await page.getByLabel('모니터링 네트워크',{exact:true}).selectOption(w.id)
  const row=page.locator(`tr[data-job-id="${jobId}"]`)
  await row.waitFor({timeout:20000})
- page.once('dialog',d=>d.accept())
  await row.getByRole('button',{name:'작업 취소',exact:true}).click()
+ await page.locator(`tr[data-confirm-job="${jobId}"]`).getByRole('button',{name:'작업 취소 확정',exact:true}).click()
  const cancelled=await settle(api,jobId)
  assert.equal(cancelled.state,'cancelled');assert.equal(cancelled.nodeDisposition,'retained',JSON.stringify(cancelled))
  observed.cancelFromMonitoring={jobId,disposition:cancelled.nodeDisposition}

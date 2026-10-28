@@ -1,9 +1,10 @@
 <script>
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
+  import ConfirmAction from './ConfirmAction.svelte'
   let { webSession, kinds = [] } = $props()
   const api = $derived(webApi(webSession))
-  let items = $state([]), workspaces = $state([]), status = $state(''), busy = $state(false), checks = $state({})
+  let items = $state([]), workspaces = $state([]), status = $state(''), busy = $state(false), checks = $state({}), pendingRevoke = $state('')
   let label = $state('SSH 로그인'), kind = $state('private-key'), sshUser = $state(''), privateKey = $state(''), sshPassword = $state(''), passphrase = $state(''), accountKey = $state('')
   const kindName = id => kinds.find(k => k.id === id)?.label ?? id
   const workspaceName = id => workspaces.find(w => w.id === id)?.name ?? id
@@ -21,9 +22,9 @@
     const access = await api(`credentials/${c.id}/check`, 'POST', binding)
     checks = { ...checks, [`${c.id}/${binding.workspaceId}/${binding.serverRef}`]: access }
   }
+  const revokeMessage = c => `${c.label} 자격증명을 폐기합니다.${c.activeJobs.length ? ` 이 자격증명을 쓰는 진행 중 작업 ${c.activeJobs.length}개가 취소되고 노드는 보존됩니다.` : ''} 폐기한 자격증명으로는 다시 접속하지 않으며, 폐기는 되돌릴 수 없습니다.`
   async function revoke(c) {
-    const jobs = c.activeJobs.length ? ` 이 자격증명을 쓰는 진행 중 작업 ${c.activeJobs.length}개가 취소되고 노드는 보존됩니다.` : ''
-    if (!window.confirm(`${c.label} 자격증명을 폐기합니다.${jobs} 폐기한 자격증명으로는 다시 접속하지 않습니다.`)) return
+    pendingRevoke = ''
     await api(`credentials/${c.id}`, 'DELETE'); await refresh(); status = `${c.label} 자격증명을 폐기했습니다`
   }
 </script>
@@ -37,8 +38,9 @@
         <div class="row-head"><strong>{c.label}</strong><span>{kindName(c.kind)}</span>
           <span class="state" class:revoked={c.revoked}><span aria-hidden="true">{c.revoked ? '⊘' : '●'}</span> {c.revoked ? '폐기됨' : '사용 가능'}</span>
           <span>진행 중 작업 {c.activeJobs.length}개</span>
-          {#if !c.revoked}<button disabled={busy} onclick={() => work(() => revoke(c))}>{c.label} 폐기</button>{/if}
+          {#if !c.revoked}<button disabled={busy} onclick={() => { pendingRevoke = c.id }}>{c.label} 폐기</button>{/if}
         </div>
+        {#if pendingRevoke === c.id && !c.revoked}<ConfirmAction label="자격증명 폐기 확인" message={revokeMessage(c)} confirmLabel={`${c.label} 폐기 확정`} {busy} onconfirm={() => work(() => revoke(c))} oncancel={() => { pendingRevoke = '' }} />{/if}
         {#if c.bindings.length === 0}<p class="muted">연결한 서버가 없습니다.</p>{:else}
           <ul>{#each c.bindings as b}{@const access = checks[`${c.id}/${b.workspaceId}/${b.serverRef}`]}
             <li>{workspaceName(b.workspaceId)} · {b.serverRef}

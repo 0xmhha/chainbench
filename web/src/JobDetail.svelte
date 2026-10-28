@@ -4,7 +4,7 @@
   import { apiClient } from './api-client.mjs'
   import { decodeJob, decodeNetworkPage, decodeRun } from './api-decode.mjs'
   import { sharedJobStream } from './job-stream.svelte.js'
-  import { jobSummary, failureHeadline, jobDuration, phaseRows, readFocus, focusSearch, nodeInMessage } from './job-view.mjs'
+  import { jobSummary, failureHeadline, jobDuration, jobElapsed, phaseRows, readFocus, focusSearch, nodeInMessage } from './job-view.mjs'
   import { formatTime } from './labels.mjs'
   import { follow } from './nav.mjs'
   import JobCard from './JobCard.svelte'
@@ -42,6 +42,10 @@
   const passingRuns = $derived(runs.filter(r => !failed(r)))
   const head = $derived(job ? failureHeadline(job, summary, failingRuns) : null)
   const duration = $derived(job ? jobDuration(job) : null)
+  // A running job's elapsed time ticks once a second, and only while it runs.
+  let now = $state(Date.now())
+  $effect(() => { if (!summary?.active) return; const clock = setInterval(() => { now = Date.now() }, 1000); return () => clearInterval(clock) })
+  const elapsed = $derived(summary?.active ? jobElapsed(job, now) : null)
   const stale = $derived(summary?.active && live.connection !== '연결됨')
 
   // The chosen test, log node and cursor moment live in the URL, so a copied
@@ -101,7 +105,7 @@
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   {#if job}
     <div class="folio"><span>작업 일지 · <strong>{job.operation}</strong> · <code>{job.id.slice(0, 8)}</code></span><span>{formatTime(job.createdAt).slice(0, 10)}{#if network} · 네트워크 <code>{network.id.slice(0, 8)}</code> · 노드 {networkNodes.length}{/if}</span></div>
-    <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {stale} connection={live.connection} {trailNode} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
+    <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {elapsed} {stale} connection={live.connection} {trailNode} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
 
     <!-- A failing test run is the cause a reader came for, so it comes first. -->
     {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} />{/if}
@@ -114,7 +118,7 @@
         {:else if !networkNodes.length}<p class="muted">네트워크에 기록된 노드가 없어 로그를 열 수 없습니다.</p>
         {:else}
           {#if !phaseSpan}<p class="notice">실패한 단계에 시각이 없어 최근 2시간의 로그를 엽니다.</p>{/if}
-          <CauseBench networkId={network.id} nodes={networkNodes} bind:node={() => phaseNode, v => { focus.node = v }} bind:at={focus.at} from={phaseWindow.from} to={phaseWindow.to} start={failedRow?.startedAt} end={failedRow?.finishedAt} logTitle={`${phaseNode === ALL ? '모든 노드' : phaseNode} 로그 · ${summary.failedPhase.name} 단계 구간 · 오류·경고 먼저`} logTestid="phase-logs" />
+          <CauseBench networkId={network.id} nodes={networkNodes} bind:node={() => phaseNode, v => { focus.node = v }} bind:at={focus.at} phases={rows} from={phaseWindow.from} to={phaseWindow.to} start={failedRow?.startedAt} end={failedRow?.finishedAt} logTitle={`${phaseNode === ALL ? '모든 노드' : phaseNode} 로그 · ${summary.failedPhase.name} 단계 구간 · 오류·경고 먼저`} logTestid="phase-logs" />
         {/if}
       </section>
     {/if}

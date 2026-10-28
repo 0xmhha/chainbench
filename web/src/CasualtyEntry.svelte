@@ -7,8 +7,10 @@
  import StatusBadge from './StatusBadge.svelte'
  import {formatTime} from './labels.mjs'
  import {assertDiff} from './run-timeline.mjs'
- let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,stale=false,connection='',trailNode='',scope='job',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
+ let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,elapsed=null,stale=false,connection='',trailNode='',scope='job',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
  const shown=value=>typeof value==='string'?value:JSON.stringify(value)
+ // A running job's time ticks in whole seconds; a finished one keeps a tenth.
+ const clock=ms=>ms<60000?`${Math.floor(ms/1000)}초`:`${Math.floor(ms/60000)}분 ${Math.floor((ms%60000)/1000)}초`
  const seconds=ms=>ms===null?'—':ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
  const diff=$derived(evidence?assertDiff(evidence.expected,evidence.actual):'')
  const time=$derived(at?formatTime(at).slice(11):summary.active?'진행 중':'—')
@@ -32,7 +34,7 @@
  </div>
  <dl class="facts">
   <dt>상태</dt><dd data-testid="{scope}-state" class="stamp"><StatusBadge state={job.state} /></dd>
-  <dt>걸린 시간</dt><dd class="num">{summary.active?'실행 중':seconds(duration)}</dd>
+  <dt>걸린 시간</dt><dd class="num" data-testid="{scope}-elapsed">{summary.active?elapsed===null?'실행 중':`실행 중 · ${clock(elapsed)} 지남`:seconds(duration)}</dd>
   <dt>{scope==='job'?'작업':'명령'}</dt><dd><code>{job.operation}</code></dd>
   <dt>네트워크</dt><dd>{#if network}<code title={network.id}>{network.id.slice(0,8)}</code> · 노드 {nodeCount}{:else}<span class="muted">기록 없음</span>{/if}</dd>
   {#if head.runId}<dt>실행</dt><dd><code title={head.runId}>{head.runId}</code></dd>{/if}

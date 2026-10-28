@@ -3,7 +3,7 @@
   import StatusBadge from './StatusBadge.svelte'
   import { onMount } from 'svelte'
   import { sharedJobStream } from './job-stream.svelte.js'
-  import { jobSummary, jobDuration } from './job-view.mjs'
+  import { jobSummary, jobDuration, jobElapsed } from './job-view.mjs'
   import PhaseSteps from './PhaseSteps.svelte'
   import { follow } from './nav.mjs'
   import { nodeTally, attentionJobs, shortId, runLabel } from './dashboard-view.mjs'
@@ -60,12 +60,13 @@
 
 <section class="panel" aria-label="실행 중 작업"><h2>실행 중 작업</h2>
   {#if phase !== 'ready'}{@render notReady()}{:else if running.length === 0}<p class="muted">진행 중인 작업이 없습니다.</p>{:else}
-    <div class="table-wrap"><table class="stack"><thead><tr><th>작업</th><th>상태</th><th>진행 단계</th><th>시작</th></tr></thead><tbody>
+    <div class="table-wrap"><table class="stack"><thead><tr><th>작업</th><th>상태</th><th>진행 단계</th><th>시작</th><th>지난 시간</th></tr></thead><tbody>
       {#each running as j (j.id)}<tr data-job-id={j.id}>
         <td data-label="작업"><a href={'/jobs/' + j.id} onclick={e => follow(e, '/jobs/' + j.id)}>{j.operation}</a><small class="mono" title={j.id}>{shortId(j.id)}</small></td>
         <td data-label="상태"><StatusBadge state={j.state} /></td>
         <td data-label="진행 단계"><PhaseSteps phases={j.phases} /></td>
         <td class="num" data-label="시작">{fmt(j.createdAt)}</td>
+        <td class="num" data-label="지난 시간">{took(jobElapsed(j, now))}</td>
       </tr>{/each}
     </tbody></table></div>
   {/if}

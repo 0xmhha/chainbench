@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { cursorDefaults, measureBetween, readingRows, stripX, stripTime } from '../../web/src/recorder.mjs'
+import { cursorDefaults, nextEvent, measureBetween, readingRows, stripX, stripTime } from '../../web/src/recorder.mjs'
 
 const t = s => new Date(Date.parse('2026-10-23T07:00:00Z') + s * 1000).toISOString()
 
@@ -71,4 +71,15 @@ test('a trace sits on the strip window, breaks at a recorded gap and spans its o
  assert.deepEqual(tracePath([], t(0), t(40), 10).segments, [])
  const flat = tracePath([{ time: t(0), value: 3 }, { time: t(40), value: 3 }], t(0), t(40), 40)
  assert.deepEqual(flat.segments, ['M0,50 L100,50'])
+})
+
+test('the next-error key moves to the error after the cursor, and back before it', () => {
+ const errors = [{ time: t(10) }, { time: t(20) }, { time: t(30) }]
+ assert.equal(nextEvent(errors, t(20), 1), t(30))
+ assert.equal(nextEvent(errors, t(20), -1), t(10))
+ assert.equal(nextEvent(errors, t(15), 1), t(20))
+ // Past the last (or before the first) error the cursor stays.
+ assert.equal(nextEvent(errors, t(30), 1), null)
+ assert.equal(nextEvent(errors, t(10), -1), null)
+ assert.equal(nextEvent([], t(10), 1), null)
 })

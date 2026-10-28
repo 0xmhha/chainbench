@@ -2,12 +2,14 @@
  // The recorder strip: the chosen test, the node's warnings and errors, its
  // gauges and the other nodes' errors on one time axis, read between two
  // cursors. A click moves B, a Shift+click moves A; with the strip focused the
- // arrow keys move B by a second and Shift+arrows move A.
+ // arrow keys move B by a second and Shift+arrows move A; ] and [ jump the
+ // chosen cursor to the node's next and previous error. A failed phase's
+ // bench also draws the job's phases as their own channel.
  import {formatTime,gapText} from './labels.mjs'
  import {failureMetrics} from './metric-chart.mjs'
- import {stripX,stripTime,tracePath,measureBetween} from './recorder.mjs'
+ import {stripX,stripTime,tracePath,measureBetween,nextEvent} from './recorder.mjs'
 
- let {from,to,node,metrics=null,events=[],otherEvents=[],tests=[],chosen=null,onchoose=()=>{},a=$bindable(),b=$bindable(),onreset=()=>{}}=$props()
+ let {from,to,node,metrics=null,events=[],otherEvents=[],tests=[],phases=[],chosen=null,onchoose=()=>{},a=$bindable(),b=$bindable(),onreset=()=>{}}=$props()
 
  const ERRORS=['ERROR','CRIT']
  const step=$derived(metrics?.coverage?.bucketSeconds||metrics?.coverage?.sampleIntervalSeconds||5)
@@ -38,7 +40,15 @@
   const time=stripTime((x/(box.width-lab))*100,from,to)
   if(target(event)==='a')a=time;else b=time
  }
+ // jump moves the chosen cursor to the node's next (1) or previous (-1) error.
+ function jump(dir,which=moving){
+  const time=nextEvent(errors,which==='a'?a:b,dir)
+  if(time===null)return
+  if(which==='a')a=time;else b=time
+ }
+ const nextError=$derived(nextEvent(errors,moving==='a'?a:b,1)),prevError=$derived(nextEvent(errors,moving==='a'?a:b,-1))
  function key(event){
+  if(event.key===']'||event.key==='['){event.preventDefault();jump(event.key===']'?1:-1,target(event));return}
   if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return
   event.preventDefault()
   const by=event.key==='ArrowRight'?1000:-1000
@@ -48,6 +58,7 @@
  const offset=v=>Math.round((Date.parse(v)-Date.parse(from))/1000)
  const bIsError=$derived(errors.some(e=>Math.abs(Date.parse(e.time)-Date.parse(b))<500))
  const chosenRow=$derived(tests.find(r=>r.id===chosen))
+ const failedPhase=$derived(phases.find(p=>p.state==='failed')??null)
  const ticks=$derived(Array.from({length:7},(_,i)=>stripTime((i/6)*100,from,to)))
  const bar=row=>{const x=stripX(row.startedAt,from,to)??(Date.parse(row.startedAt)<Date.parse(from)?0:null),x2=stripX(row.finishedAt,from,to)??(Date.parse(row.finishedAt)>Date.parse(to)?100:null);return x===null||x2===null?null:{x,w:Math.max(.6,x2-x)}}
  const fmt=v=>v===null||v===undefined?'—':v
@@ -57,11 +68,16 @@
  <div class="chart">
   <div class="axis" aria-hidden="true"><span class="lab">{clock(from)} – {clock(to)}</span><span class="ticks">{#each ticks as t}<span>{clock(t)}</span>{/each}</span></div>
   <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <div class="plot" bind:this={plot} role="slider" tabindex="0" aria-label="커서 {moving==='a'?'A':'B'} 시각. 화살표로 1초씩 옮깁니다. Shift를 누르면 다른 커서를 옮깁니다." aria-valuemin={0} aria-valuemax={offset(to)} aria-valuenow={offset(moving==='a'?a:b)} aria-valuetext="커서 A {clock(a)}, 커서 B {clock(b)}" onclick={place} onkeydown={key}>
+  <div class="plot" bind:this={plot} role="slider" tabindex="0" aria-label="커서 {moving==='a'?'A':'B'} 시각. 화살표로 1초씩, ]와 [로 다음과 이전 오류로 옮깁니다. Shift를 누르면 다른 커서를 옮깁니다." aria-valuemin={0} aria-valuemax={offset(to)} aria-valuenow={offset(moving==='a'?a:b)} aria-valuetext="커서 A {clock(a)}, 커서 B {clock(b)}" onclick={place} onkeydown={key}>
    {#if tests.length}
     <div class="chan"><span class="lab">테스트<small>{tests.length}건</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
      {#each tests as row (row.seq)}{@const p=bar(row)}{#if p}<rect class="t {row.status}" class:chosen={chosen===row.id} x={p.x} y="4" width={p.w} height="12"><title>{row.id} · {row.status}</title></rect>{/if}{/each}
     </svg>{#if chosenRow&&bar(chosenRow)}{@const p=bar(chosenRow)}<span class="barname" class:failed={['failed','blocked'].includes(chosenRow.status)} style:left="calc(var(--lab) + (100% - var(--lab)) * {p.x / 100} + 4px)">{chosenRow.id}</span>{/if}</div>
+   {/if}
+   {#if phases.length}
+    <div class="chan" data-testid="strip-phases"><span class="lab">단계<small>{phases.length}개</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
+     {#each phases as row (row.name)}{@const p=bar(row)}{#if p}<rect class="ph {row.state}" x={p.x} y="4" width={p.w} height="12"><title>{row.name} · {row.state}</title></rect>{/if}{/each}
+    </svg>{#if failedPhase&&bar(failedPhase)}{@const p=bar(failedPhase)}<span class="barname failed" style:left="calc(var(--lab) + (100% - var(--lab)) * {p.x / 100} + 4px)">{failedPhase.name}</span>{/if}</div>
    {/if}
    <div class="chan" class:bad={errors.length}><span class="lab">{node} 로그<small>경고 {warns.length} · 오류 {errors.length}</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
     <line class="base" x1="0" y1="17" x2="100" y2="17"/>
@@ -86,11 +102,11 @@
    {#if ax!==null}<span class="cur a" style:left="calc(var(--lab) + (100% - var(--lab)) * {ax / 100})"><b>A {clock(a)}</b></span>{/if}
    {#if bx!==null}<span class="cur b" class:flip={bx > 70} style:left="calc(var(--lab) + (100% - var(--lab)) * {bx / 100})"><b>B {clock(b)}{bIsError?' 오류':''}</b></span>{/if}
   </div>
-  {#if tests.length}<p class="pick">{#each tests as row (row.seq)}<button type="button" class="link" class:chosen={chosen===row.id} onclick={()=>onchoose(row)}>{row.id}</button>{/each}</p>{/if}
+  {#if tests.length}<p class="pick">{#each tests as row (row.seq)}<button type="button" class="link" class:chosen={chosen===row.id} aria-pressed={chosen===row.id} onclick={()=>onchoose(row)}>{row.id}</button>{/each}</p>{/if}
  </div>
  <div class="measure" data-testid="recorder-measure">
   <h3>측정 · A에서 B까지</h3>
-  <div class="mode" role="group" aria-label="옮길 커서"><button type="button" aria-pressed={moving==='a'} onclick={()=>{moving='a'}}>A 옮기기</button><button type="button" aria-pressed={moving==='b'} onclick={()=>{moving='b'}}>B 옮기기</button><button type="button" onclick={onreset}>기본 위치로</button></div>
+  <div class="mode" role="group" aria-label="옮길 커서"><button type="button" aria-pressed={moving==='a'} onclick={()=>{moving='a'}}>A 옮기기</button><button type="button" aria-pressed={moving==='b'} onclick={()=>{moving='b'}}>B 옮기기</button><button type="button" onclick={onreset}>기본 위치로</button><button type="button" disabled={prevError===null} onclick={()=>jump(-1)}>← 이전 오류</button><button type="button" disabled={nextError===null} onclick={()=>jump(1)}>다음 오류 →</button></div>
   {#if measure}
    <dl>
     <dt>간격</dt><dd>{measure.seconds}초</dd>
@@ -98,7 +114,7 @@
     <dt>다른 노드 블록</dt><dd>{fmt(measure.others.a)} → {fmt(measure.others.b)}</dd>
    </dl>
   {:else if !metrics}<p class="muted">지표를 불러오는 중이거나 이 구간에 지표가 없습니다.</p>{/if}
-  <p class="keys">띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p>
+  <p class="keys">띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 띠에 초점이 있을 때 ]와 [는 고른 커서를 이 노드의 다음 오류와 이전 오류로 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p>
  </div>
 </section>
 
@@ -129,6 +145,8 @@
  .t.failed { fill: var(--danger); stroke: var(--danger); } .t.blocked { stroke: var(--danger); stroke-dasharray: 3 2; }
  .t.skipped { stroke: var(--text-faint); stroke-dasharray: 1 2; }
  .t.chosen { stroke-width: 2.5; stroke: var(--text); }
+ .ph { fill: none; stroke: var(--text-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+ .ph.running { stroke: var(--accent); stroke-width: 2; } .ph.failed { fill: var(--danger); stroke: var(--danger); }
  .cur { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--text-muted); pointer-events: none; }
  .cur b { position: absolute; bottom: 2px; left: 4px; padding: 0 4px; border: 1px solid currentColor; background: var(--bg); font: 700 var(--text-xs) var(--font-mono); white-space: nowrap; }
  .cur.flip b { left: auto; right: 4px; }
