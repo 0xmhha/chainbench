@@ -265,7 +265,7 @@ python3 tests/webui/run_snapshot_restore.py
 ```
 
 SPA는 `web/`에서 `npm run build` 또는 repo root에서 `npm --prefix web run build`.
-설치된 `web/node_modules`, `tests/webui/node_modules`가 있다. 필요 시 각 lockfile로 `npm ci`.
+`web/`과 `tests/webui/`에는 npm 의존성이 설치되어 있다. 없으면 각 디렉터리의 lockfile로 `npm ci`.
 브라우저는 전용 profile의 installed Chrome, `WEBUI_BROWSER_CHANNEL=chromium`이면
 별도로 설치된 Playwright Chromium. `owned-browser.mjs`와 `browser_process.py`를 사용한다.
 단순 브라우저 종료가 멈춘 실행은 통과로 계산하지 않는다.
