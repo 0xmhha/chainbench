@@ -14,7 +14,7 @@
  const seconds=ms=>ms===null?'—':ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
  const diff=$derived(evidence?assertDiff(evidence.expected,evidence.actual):'')
  const time=$derived(at?formatTime(at).slice(11):summary.active?'진행 중':'—')
- const kind=$derived({fail:'사고 기록',warn:'중단 기록',ok:'완료 기록',active:'진행 기록'}[head.tone])
+ const kind=$derived({fail:'사고 기록',warn:'중단 기록',ok:'완료 기록',active:'진행 기록',pending:'판정 확인 중'}[head.tone])
 </script>
 <header class="casualty {head.tone}" data-testid="{scope}-headline">
  <div class="when"><span class="t">{time}</span><small>{kind}</small></div>
@@ -37,7 +37,7 @@
   <dt>걸린 시간</dt><dd class="num" data-testid="{scope}-elapsed">{summary.active?elapsed===null?'실행 중':`실행 중 · ${clock(elapsed)} 지남`:seconds(duration)}</dd>
   <dt>{scope==='job'?'작업':'명령'}</dt><dd><code>{job.operation}</code></dd>
   <dt>네트워크</dt><dd>{#if network}<code title={network.id}>{network.id.slice(0,8)}</code> · 노드 {nodeCount}{:else}<span class="muted">기록 없음</span>{/if}</dd>
-  {#if head.runId}<dt>실행</dt><dd><code title={head.runId}>{head.runId}</code></dd>{/if}
+  {#if head.runId}<dt>보관 기록</dt><dd><code title={head.runId}>{head.runId}</code></dd>{/if}
   <dt>시작</dt><dd class="num">{formatTime(job.createdAt)}</dd>
  </dl>
 </header>
@@ -56,6 +56,7 @@
  .ev del { color: var(--text-muted); } .ev ins { text-decoration: none; color: var(--danger); font-weight: 700; }
  .trail { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
  .trail .link { font: 600 var(--text-sm) var(--font-cond); letter-spacing: .02em; min-height: 24px; }
+ @media (pointer: coarse) { .trail .link { min-height: 44px; } }
  .facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px var(--space-3); margin: 0; align-content: start; border-left: 1px solid var(--border); font-size: var(--text-sm); }
  .facts dt { font: 600 var(--text-xs) var(--font-cond); letter-spacing: .04em; color: var(--text-muted); padding-top: 2px; }
  .facts dd { margin: 0; overflow-wrap: anywhere; } .facts code { font-size: var(--text-xs); }

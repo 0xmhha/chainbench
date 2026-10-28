@@ -28,9 +28,12 @@ const shown = value => (typeof value === 'string' ? value : JSON.stringify(value
 // failureHeadline is the one sentence the job detail opens with: the failing
 // test, the node it broke on and the evidence, or else the failed phase, or
 // what the job is doing or how it ended. Each test failure carries the place
-// (phase, test, node, run) a reader jumps to next.
-export function failureHeadline(job, summary, failingRuns) {
+// (phase, test, node, run) a reader jumps to next. While the job's test runs
+// are still being read (pending) a failed job claims nothing yet, so the first
+// line never names a phase only to be replaced by the test a moment later.
+export function failureHeadline(job, summary, failingRuns, pending = false) {
  const base = { tone: 'fail', title: '', reason: '', phase: summary?.failedPhase?.name ?? '', test: '', node: '', runId: '' }
+ if (pending && !failingRuns?.length && job?.terminal) return { ...base, tone: 'pending', title: '테스트 판정을 읽는 중입니다', phase: '' }
  for (const run of failingRuns ?? []) {
   const failure = testFailure(run)
   if (failure) return { ...base, ...failure }

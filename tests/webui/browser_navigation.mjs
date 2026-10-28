@@ -81,8 +81,8 @@ try{
  observed.dashboardOpensDetail=true
  // 5. Cancelling on the detail page shows the outcome there, live.
  const pids=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/chain-record.json','utf8')).nodes.map(n=>n.pid)
- page.once('dialog',d=>d.accept())
  await page.getByRole('button',{name:'작업 취소',exact:true}).click()
+ await page.getByRole('button',{name:'작업 취소 확정',exact:true}).click()
  await page.waitForFunction(()=>/cancelled/.test(document.querySelector('[data-testid=job-state]')?.textContent??''),null,{timeout:120000})
  const disposition=await page.getByTestId('job-disposition').textContent()
  assert.match(disposition,/cleaned/,disposition)

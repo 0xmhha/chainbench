@@ -53,7 +53,7 @@
 {/if}
 <div class="bench" class:single={!node||node===ALL}>
  <div class="logs">
-  <LogViewer {networkId} {nodes} bind:node={()=>node,v=>{node=v}} {from} {to} initialLevels={['ERROR','WARN']} focus={b??focus} title={logTitle} testid={logTestid} height={360} />
+  <LogViewer {networkId} {nodes} bind:node={()=>node,v=>{node=v}} {from} {to} initialLevels={['CRIT','ERROR','WARN']} focus={b??focus} title={logTitle} testid={logTestid} height={360} />
  </div>
  {#if node&&node!==ALL&&metrics}<Readings {metrics} {node} />{/if}
 </div>

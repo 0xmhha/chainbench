@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { cursorDefaults, nextEvent, measureBetween, readingRows, stripX, stripTime } from '../../web/src/recorder.mjs'
+import { cursorDefaults, nextEvent, measureBetween, measureVerdict, readingRows, stripX, stripTime } from '../../web/src/recorder.mjs'
 
 const t = s => new Date(Date.parse('2026-10-23T07:00:00Z') + s * 1000).toISOString()
 
@@ -82,4 +82,17 @@ test('the next-error key moves to the error after the cursor, and back before it
  assert.equal(nextEvent(errors, t(30), 1), null)
  assert.equal(nextEvent(errors, t(10), -1), null)
  assert.equal(nextEvent([], t(10), 1), null)
+})
+
+test('the measure states what it found at B, from values alone and never a guessed cause', () => {
+ const late = measureVerdict(measureBetween(metrics, 'node2', t(10), t(25)), 'node2', 2)
+ assert.equal(late.abnormal, true)
+ assert.equal(late.text, 'B 시점 node2의 블록 높이, 피어 수, 대기 트랜잭션이 다른 모든 노드와 어긋납니다 · 블록 46, 다른 노드 최고 51 · 이 구간 오류 2건')
+ const early = measureVerdict(measureBetween(metrics, 'node2', t(0), t(10)), 'node2', 0)
+ assert.equal(early.abnormal, false)
+ assert.equal(early.text, 'B 시점 node2의 계기 값은 다른 노드 범위 안에 있습니다 · 블록 45, 다른 노드 최고 45 · 이 구간 오류 0건')
+ // In a gap there is nothing to compare, and the sentence says so.
+ const gap = measureVerdict(measureBetween(metrics, 'node2', t(0), t(20)), 'node2', 0)
+ assert.equal(gap.abnormal, false)
+ assert.match(gap.text, /^B 시점 node2의 표본이 없어 다른 노드와 비교할 수 없습니다/)
 })

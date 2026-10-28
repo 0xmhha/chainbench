@@ -61,6 +61,19 @@ export function measureBetween(metrics, node, a, b) {
  return { seconds: Math.round((at(b) - at(a)) / 100) / 10, gauges, others: { a: top(a), b: top(b) } }
 }
 
+// measureVerdict is the measure's one sentence: which gauges of node go wrong
+// against every other node at B, or that none do, then the block against the
+// highest other block and the node's errors in the window. It states only
+// what the values show; it never names a cause.
+export function measureVerdict(measure, node, errors) {
+ const wrong = measure.gauges.filter(g => g.abnormal).map(g => g.label)
+ const read = measure.gauges.some(g => g.b !== null)
+ const head = wrong.length ? `B 시점 ${node}의 ${wrong.join(', ')}이 다른 모든 노드와 어긋납니다`
+  : read ? `B 시점 ${node}의 계기 값은 다른 노드 범위 안에 있습니다` : `B 시점 ${node}의 표본이 없어 다른 노드와 비교할 수 없습니다`
+ const block = measure.gauges[0]?.b ?? '—', top = measure.others.b ?? '—'
+ return { abnormal: wrong.length > 0, text: `${head} · 블록 ${block}, 다른 노드 최고 ${top} · 이 구간 오류 ${errors}건` }
+}
+
 // readingRows is one row per sample time of node, with each failure gauge's
 // value (null in a gap) and whether it stands out against the other nodes.
 export function readingRows(metrics, node) {
