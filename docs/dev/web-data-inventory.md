@@ -144,7 +144,7 @@
   - `?runId=`: history 실행의 job 창을 쓴다(`internal/app/web_monitor_archive.go:32-54`). `from`/`to`와 함께 주면 400이다(`:36-38`). 창은 job 생성 시각부터 마지막 phase 종료까지이고, 진행 중이면 끝을 지금으로 한다(`internal/app/web_history_observations.go:21-62`). 실행 창은 31일 제한을 받지 않는다(`web_monitor_archive.go:52`). 다른 네트워크의 실행이면 404다(`:49-51`).
   - 그 밖에 `nodeId`(label), `metric`으로 서버가 거를 수 있다(`web_monitor_read.go:149`). `limit`은 1~100만 받는데 지표에는 쓰이지 않는다(`monitor.go:68-74`).
 - **갱신 방식**: 서버는 요청 때 보관 파일을 처음부터 훑어 계산한다. 화면 쪽은 다음과 같다. `NodeMetrics.svelte`는 범위가 바뀔 때와, 최근 N분 프리셋이면 5초마다 다시 부른다(`NodeMetrics.svelte:57`, `:59`). `NodeDetail.svelte:34`는 열 때 최근 10분을 한 번 부른다. `FailureMetrics.svelte:24`, `CauseBench.svelte:30`은 구간이 바뀔 때 부른다. `HistoryPanel.svelte:66`, `:72`는 `runId` 형태로 상세를 열거나 버튼을 누를 때 부른다.
-- **쓰는 화면**: `web/src/NodeMetrics.svelte`(MonitorPanel 안), `web/src/NodeDetail.svelte`, `web/src/FailureMetrics.svelte`(RunTimeline 안), `web/src/CauseBench.svelte`(JobDetail 안), `web/src/RecorderStrip.svelte`, `web/src/Readings.svelte`, `web/src/HistoryPanel.svelte`.
+- **쓰는 화면**: `web/src/NodeMetrics.svelte`(MonitorPanel 안), `web/src/NodeDetail.svelte`, `FailureMetrics.svelte`(RunTimeline 안, 2026-10-28에 지웠고 `web/src/RunBench.svelte`의 띠가 대신한다), `web/src/CauseBench.svelte`(JobDetail 안), `web/src/RecorderStrip.svelte`, `web/src/Readings.svelte`, `web/src/HistoryPanel.svelte`.
 
 | 필드(JSON 경로) | JSON 타입 | 비어 있을 수 있나 | 단위·형식 | 원본 | 화면이 읽나 |
 |---|---|---|---|---|---|
@@ -435,7 +435,7 @@ chainstate 한 줄:
 | `nodeControls` (`node-view.mjs:13-20`) | 서버가 준 제어 목록과 제한 사유, 실행 중 작업을 합친다 | 실행 중 작업 판정(`NodeDetail.svelte:31`, `MonitorPanel.svelte:25`)이 화면마다 따로 있어 서버 쪽 판정 후보다 |
 | `applyJobChange`, `snapshotState` (`web/src/job-observation.mjs:8-31`) | 스트림 버전 순서를 검사하고 작업 목록을 갱신한다 | 프로토콜 처리라 화면에 둔다 |
 | `rangedEvents` (`web/src/App.svelte:83`) | 옛 이벤트를 모니터링 시간 범위로 거른다 | 이 연결에서 받은 200건만 대상이라 서버 보관이 없으면 옮길 것이 없다 |
-| `valueAt` (`web/src/FailureMetrics.svelte:35-38`), `nearestPoints` (`metric-chart.mjs:67-75`) | 실패 시각에 가장 가까운 표본을 2주기 안에서 고른다 | 후보다. 원인 영역 세 화면이 같은 규칙을 따로 쓴다 |
+| `valueAt` (`FailureMetrics.svelte:35-38`, 지금은 없음), `nearestPoints` (`metric-chart.mjs:67-75`) | 실패 시각에 가장 가까운 표본을 2주기 안에서 고른다 | 후보다. 원인 영역 세 화면이 같은 규칙을 따로 쓴다 |
 
 ## 작업과 실행 기록
 
@@ -643,7 +643,7 @@ chainstate 한 줄:
 - **응답 Go 타입**: `app.WebRun` (`internal/app/web_history_contract.go:11-26`). `coverage`는 `*app.WebCoverage`(모니터링 영역 소관).
 - **원본 데이터**: 캡처 사본(`web_history.go:204-212`)에 `Detail`이 작업 기간의 끝 시각과 지표 보관 범위를 더한다(`web_history.go:216-233`). 기간은 연결된 작업의 `createdAt`부터 마지막 단계 `finishedAt`까지다(`web_history_observations.go:40-62`).
 - **갱신 방식**: 히스토리 화면에서 행을 누를 때(`HistoryPanel.svelte:51-58`). 작업 상세 화면은 열 때 `job.runIds`의 각 항목으로 이 엔드포인트를 부른다(`JobDetail.svelte:97-104`). 둘 다 본문을 텍스트로 받아 `parseHistoryJSON`으로 파싱한다.
-- **쓰는 화면**: `web/src/HistoryPanel.svelte`, `web/src/JobDetail.svelte`, `web/src/RunTimeline.svelte`, `web/src/TestLedger.svelte`, `web/src/CasualtyEntry.svelte`, `web/src/CauseBench.svelte`(테스트 행의 시각만), `web/src/run-timeline.mjs`, `web/src/job-view.mjs`.
+- **쓰는 화면**: `web/src/HistoryPanel.svelte`, `web/src/JobDetail.svelte`, `RunTimeline.svelte`(2026-10-28에 지웠고 `web/src/RunBench.svelte`가 대신한다), `web/src/TestLedger.svelte`, `web/src/CasualtyEntry.svelte`, `web/src/CauseBench.svelte`(테스트 행의 시각만), `web/src/run-timeline.mjs`, `web/src/job-view.mjs`.
 
 목록 표의 필드에 더해 다음이 있다. `summary`는 `map[string]any`이라 Go 타입이 없고 기록 종류에 따라 키가 다르다.
 

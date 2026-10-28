@@ -3,10 +3,11 @@
  // failed watch starts open; it is closed with a double red rule.
  import StatusBadge from './StatusBadge.svelte'
  import {formatTime} from './labels.mjs'
- let {rows=[]}=$props()
+ // anchor is the id the page's failure trail scrolls to.
+ let {rows=[],anchor='phases'}=$props()
  const seconds=ms=>ms===null?'—':ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
 </script>
-<section class="watches" id="phases" aria-label="단계">
+<section class="watches" id={anchor} aria-label="단계">
  <h3>단계 <small>{rows.length}개 · 당직 순서</small></h3>
  <ol>
   {#each rows as p, i (i)}

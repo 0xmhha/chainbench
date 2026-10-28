@@ -8,12 +8,11 @@
   import { formatTime } from './labels.mjs'
   import { follow } from './nav.mjs'
   import JobCard from './JobCard.svelte'
-  import RunTimeline from './RunTimeline.svelte'
   import CasualtyEntry from './CasualtyEntry.svelte'
   import CauseBench from './CauseBench.svelte'
-  import TestLedger from './TestLedger.svelte'
+  import RunBench from './RunBench.svelte'
   import PhaseWatches from './PhaseWatches.svelte'
-  import { testRows, testLogSpan } from './run-timeline.mjs'
+  import { testRows } from './run-timeline.mjs'
   import { parseHistoryJSON } from './history-json.js'
   let { jobId, webSession } = $props()
   const client = $derived(apiClient(webSession))
@@ -56,32 +55,21 @@
   // A failed phase whose message names one node opens on that node.
   const messageNode = $derived(failingRuns.length ? '' : nodeInMessage(summary?.failedPhase?.message, networkNodes))
   const trailNode = $derived(head?.node || messageNode)
-  // The first failing run is read on the cause bench: its chosen test (the
-  // first failure unless the URL names another) sets the window and the node.
-  const PAD_SECONDS = 5
+  // The first failing run is read on the cause bench (RunBench): its chosen
+  // test, the first failure unless the URL names another, sets the window.
   const firstRun = $derived(failingRuns[0] ?? null)
   const testList = $derived(testRows(firstRun))
-  const chosenTest = $derived(testList.find(r => r.id === focus.test) ?? testList.find(r => ['failed', 'blocked'].includes(r.status)) ?? null)
-  const testSpan = $derived.by(() => {
-    if (!chosenTest) return null
-    const span = testLogSpan(chosenTest, PAD_SECONDS)
-    const o = firstRun?.summary?.observations
-    return span.exact ? span : o?.from && o?.to ? { from: o.from, to: o.to, exact: false } : null
-  })
-  const causeNetwork = $derived(firstRun?.summary?.observations?.networkId ?? network?.id ?? null)
-  const benchNodes = $derived(networkNodes.length ? networkNodes : chosenTest?.nodes ?? [])
-  const evidenceNode = $derived([...(chosenTest?.failedAsserts ?? []).map(a => a.on), ...(chosenTest?.stepErrors ?? []).map(s => s.on)].find(n => n && benchNodes.includes(n)) ?? benchNodes[0] ?? '')
-  const testNode = $derived(focus.node && (benchNodes.includes(focus.node) || focus.node === ALL) ? focus.node : evidenceNode)
   const headRow = $derived(testList.find(r => r.id === head?.test) ?? null)
   const evidence = $derived(headRow?.failedAsserts[0] ?? null)
   // The time gutter holds the failure moment, or for a finished job its end.
   const endedAt = $derived(summary?.active ? null : rows.map(r => r.finishedAt).filter(Boolean).sort().at(-1) ?? null)
   const failureAt = $derived(headRow?.finishedAt ?? (summary?.failedPhase ? failedRow?.finishedAt : null) ?? endedAt)
-  function chooseTest(row) { focus.test = row.id; focus.node = '' }
   const phaseNode = $derived(focus.node && (networkNodes.includes(focus.node) || focus.node === ALL) ? focus.node : messageNode || (networkNodes.length > 1 ? ALL : networkNodes[0] ?? ''))
 
   // Each step of the failure trail scrolls to its evidence; the node also
   // switches the logs to it.
+  let opened = $state({})
+  const verdicts = run => { const c = run.summary?.counts; return c ? `통과 ${c.pass ?? 0} · 실패 ${c.fail ?? 0} · 막힘 ${c.blocked ?? 0} · 건너뜀 ${c.skip ?? 0}` : '' }
   function reveal(id) { document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }
   function showTest() { focus.test = head.test; focus.node = ''; reveal('cause') }
   function showNode() {
@@ -116,14 +104,7 @@
     <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {stale} connection={live.connection} {trailNode} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
 
     <!-- A failing test run is the cause a reader came for, so it comes first. -->
-    {#if firstRun && chosenTest && testSpan && causeNetwork}
-      <section class="cause" id="cause" aria-label="원인 영역">
-        <CauseBench networkId={causeNetwork} nodes={benchNodes} bind:node={() => testNode, v => { focus.node = v }} from={testSpan.from} to={testSpan.to} start={chosenTest.startedAt} end={chosenTest.finishedAt} tests={testList} chosen={chosenTest.id} onchoose={chooseTest} logTitle={`${testNode === ALL ? '모든 노드' : testNode} 로그 · ${chosenTest.id} 구간${testSpan.exact ? `(앞뒤 ${PAD_SECONDS}초)` : '(실행 전체)'} · 오류·경고 먼저`} />
-      </section>
-      <TestLedger rows={testList} chosen={chosenTest.id} onchoose={chooseTest} onnode={n => { focus.node = n; reveal('cause') }} nodes={benchNodes} />
-    {:else if firstRun}
-      <section class="run" aria-label="실패한 테스트 실행"><RunTimeline run={firstRun} nodes={networkNodes} /></section>
-    {/if}
+    {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} />{/if}
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}
     {#if runsError}<p class="error" role="alert">테스트 실행 기록을 읽지 못했습니다. {runsError}</p>{/if}
 
@@ -140,11 +121,12 @@
 
     {#if rows.length}<PhaseWatches {rows} />{/if}
 
-    {#each failingRuns.slice(1) as run (run.id)}
-      <section class="run" aria-label="실패한 테스트 실행"><h3>테스트 실행 <code>{run.id}</code></h3><RunTimeline {run} nodes={networkNodes} /></section>
-    {/each}
-    {#each passingRuns as run (run.id)}
-      <section class="run" aria-label="테스트 실행 결과"><h3>테스트 실행 <code>{run.id}</code></h3><RunTimeline {run} nodes={networkNodes} /></section>
+    <!-- The job's other runs wait folded; each reads its logs and metrics only once opened. -->
+    {#each [...failingRuns.slice(1), ...passingRuns] as run (run.id)}
+      <details class="run" ontoggle={e => { if (e.currentTarget.open) opened = { ...opened, [run.id]: true } }}>
+        <summary>테스트 실행 <code>{run.id}</code> <span class="muted">{verdicts(run)}</span></summary>
+        {#if opened[run.id]}<RunBench {run} nodes={networkNodes} networkId={network?.id} anchor={'run-' + run.id} logTestid="run-logs" />{/if}
+      </details>
     {/each}
     <details class="meta" open={!summary.failedPhase && !summary.failure && !failingRuns.length}>
       <summary>작업 정보</summary>
@@ -167,9 +149,9 @@
 <style>
   .page { min-width: 0; }
   .back { margin: 0 0 var(--space-2); font-size: var(--text-sm); }
-  .folio { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-4); padding-bottom: var(--space-1); border-bottom: var(--rule-strong); font: 600 var(--text-xs) var(--font-cond); letter-spacing: .04em; color: var(--text-muted); }
-  .folio strong { color: var(--text); } .folio code { font-size: var(--text-xs); }
-  .run { margin-top: var(--space-5); padding-top: var(--space-4); border-top: var(--rule-strong); }
+  .run { margin-top: var(--space-4); padding-top: var(--space-2); border-top: var(--rule-strong); }
+  .run > summary { cursor: pointer; padding: var(--space-2) 0; font: 600 var(--text-sm) var(--font-cond); }
+  .run > summary .muted { margin-left: var(--space-2); font: var(--text-xs) var(--font-mono); }
   .summary { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); } dt { color: var(--text-muted); } dd { margin: 0; }
   .error-text { color: var(--danger); }
   .meta { margin-top: var(--space-5); padding-top: var(--space-3); border-top: var(--rule); } .meta summary { cursor: pointer; color: var(--text-muted); font: 600 var(--text-sm) var(--font-cond); }

@@ -2,18 +2,19 @@
  // The first line of the job's page: the failure written in red ink with the
  // moment it was recorded, the node ringed, the expected value struck through
  // beside the actual one, and the trail to each piece of evidence. Jobs that
- // did not fail get the same line in their own ink.
+ // did not fail get the same line in their own ink. The history detail opens a
+ // recorded run with the same line; scope keeps its test ids apart from the job's.
  import StatusBadge from './StatusBadge.svelte'
  import {formatTime} from './labels.mjs'
  import {assertDiff} from './run-timeline.mjs'
- let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,stale=false,connection='',trailNode='',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
+ let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,stale=false,connection='',trailNode='',scope='job',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
  const shown=value=>typeof value==='string'?value:JSON.stringify(value)
  const seconds=ms=>ms===null?'—':ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
  const diff=$derived(evidence?assertDiff(evidence.expected,evidence.actual):'')
  const time=$derived(at?formatTime(at).slice(11):summary.active?'진행 중':'—')
  const kind=$derived({fail:'사고 기록',warn:'중단 기록',ok:'완료 기록',active:'진행 기록'}[head.tone])
 </script>
-<header class="casualty {head.tone}" data-testid="job-headline">
+<header class="casualty {head.tone}" data-testid="{scope}-headline">
  <div class="when"><span class="t">{time}</span><small>{kind}</small></div>
  <div class="what">
   <h2>{#if head.test&&head.node}{head.test} 테스트가 <span class="ring">{head.node}</span>에서 실패했습니다{:else}{head.title}{/if}</h2>
@@ -30,9 +31,9 @@
   {#if stale}<p class="notice">실시간 연결이 {connection} 상태입니다. 보이는 상태가 최신이 아닐 수 있습니다.</p>{/if}
  </div>
  <dl class="facts">
-  <dt>상태</dt><dd data-testid="job-state" class="stamp"><StatusBadge state={job.state} /></dd>
+  <dt>상태</dt><dd data-testid="{scope}-state" class="stamp"><StatusBadge state={job.state} /></dd>
   <dt>걸린 시간</dt><dd class="num">{summary.active?'실행 중':seconds(duration)}</dd>
-  <dt>작업</dt><dd><code>{job.operation}</code></dd>
+  <dt>{scope==='job'?'작업':'명령'}</dt><dd><code>{job.operation}</code></dd>
   <dt>네트워크</dt><dd>{#if network}<code title={network.id}>{network.id.slice(0,8)}</code> · 노드 {nodeCount}{:else}<span class="muted">기록 없음</span>{/if}</dd>
   {#if head.runId}<dt>실행</dt><dd><code title={head.runId}>{head.runId}</code></dd>{/if}
   <dt>시작</dt><dd class="num">{formatTime(job.createdAt)}</dd>
