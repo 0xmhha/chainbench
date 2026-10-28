@@ -127,6 +127,6 @@
  figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-1) var(--space-3)}.name{color:var(--accent-strong)}.latest{color:var(--text-muted);font-size:var(--text-xs);font-variant-numeric:tabular-nums}.lag{color:var(--warn)}
  svg{cursor:crosshair;overflow:visible}svg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
  .gap{fill:var(--warn-bg);opacity:.8}.base{stroke:var(--border-subtle)}.tick{fill:var(--text-faint);font:11px var(--font-mono)}.tick.y{text-anchor:end}
- .cursor{stroke:var(--text-muted);stroke-dasharray:3 3}.cursor-dot{fill:var(--bg);stroke-width:2;pointer-events:none}circle:not(.cursor-dot){fill-opacity:0}circle:not(.cursor-dot):hover,circle:not(.cursor-dot):focus-visible{fill-opacity:1}
+ .cursor{stroke:var(--text-muted);stroke-dasharray:3 3;pointer-events:none}.cursor-dot{fill:var(--bg);stroke-width:2;pointer-events:none}circle:not(.cursor-dot){fill-opacity:0}circle:not(.cursor-dot):hover,circle:not(.cursor-dot):focus-visible{fill-opacity:1}
  .readout{margin:var(--space-1) 0 0;font:var(--text-xs) var(--font-mono);color:var(--text-muted)}
 </style>
