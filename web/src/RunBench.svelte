@@ -11,7 +11,7 @@
  // nodes are the network's node names; test and node name the chosen test and
  // log node, and a parent binds them to keep the choice (the job detail keeps
  // it in the URL, with at, the moment of cursor B). anchor is the id the page's failure trail scrolls to.
- let {run,nodes=[],networkId=null,test=$bindable(''),node=$bindable(''),at=$bindable(''),anchor='cause',logTestid='cause-logs'}=$props()
+ let {run,nodes=[],networkId=null,test=$bindable(''),node=$bindable(''),at=$bindable(''),anchor='cause',logTestid='cause-logs',finding=$bindable(null)}=$props()
 
  const ALL='*',PAD_SECONDS=5
  const observations=$derived(run?.summary?.observations??null)
@@ -31,11 +31,15 @@
  const shownNode=$derived(node&&(benchNodes.includes(node)||node===ALL)?node:evidenceNode)
  const nodeName=$derived(shownNode===ALL?'모든 노드':shownNode)
  function choose(row){test=row.id;node='';at=''}
+ // The finding is kept for the node the failure was asserted on, read on the
+ // failing test, so the page headline can say whether that node is at fault.
+ const failing=$derived(benchTest(rows,''))
+ function found(f){if(chosen?.id===failing?.id&&f.node===evidenceNode)finding=f}
 </script>
 
 {#if chosen&&span&&network}
  <section class="cause" id={anchor} aria-label="원인 영역">
-  <CauseBench networkId={network} nodes={benchNodes} bind:node={()=>shownNode,v=>{node=v}} bind:at from={span.from} to={span.to} start={chosen.startedAt} end={chosen.finishedAt} tests={rows} chosen={chosen.id} onchoose={choose} logTitle={`${nodeName} 로그 · ${chosen.id} 구간${span.exact?`(앞뒤 ${PAD_SECONDS}초)`:'(실행 전체)'} · 오류·경고 먼저`} {logTestid} />
+  <CauseBench networkId={network} nodes={benchNodes} bind:node={()=>shownNode,v=>{node=v}} bind:at from={span.from} to={span.to} start={chosen.startedAt} end={chosen.finishedAt} tests={rows} chosen={chosen.id} onchoose={choose} onfinding={found} logTitle={`${nodeName} 로그 · ${chosen.id} 구간${span.exact?`(앞뒤 ${PAD_SECONDS}초)`:'(실행 전체)'} · 오류·경고 먼저`} {logTestid} />
  </section>
  <TestLedger {rows} chosen={chosen.id} onchoose={choose} onnode={n=>{node=n;document.getElementById(anchor)?.scrollIntoView({block:'start',behavior:'smooth'})}} nodes={benchNodes} />
 {:else if !rows.length&&runSpan&&network&&benchNodes.length}

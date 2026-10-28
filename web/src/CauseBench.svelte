@@ -10,10 +10,10 @@
  import LogViewer from './LogViewer.svelte'
  import RecorderStrip from './RecorderStrip.svelte'
  import Readings from './Readings.svelte'
- import {cursorDefaults} from './recorder.mjs'
+ import {cursorDefaults,nodeFinding} from './recorder.mjs'
  import {LOG_PAGE_MAX,logQuery} from './log-view.mjs'
 
- let {networkId,nodes=[],node=$bindable(),from,to,start=null,end=null,tests=[],phases=[],chosen=null,onchoose=()=>{},logTitle='',logTestid='cause-logs',focus=null,at=$bindable('')}=$props()
+ let {networkId,nodes=[],node=$bindable(),from,to,start=null,end=null,tests=[],phases=[],chosen=null,onchoose=()=>{},logTitle='',logTestid='cause-logs',focus=null,at=$bindable(''),onfinding=()=>{}}=$props()
 
  const ALL='*'
  let metrics=$state(null),events=$state([]),otherEvents=$state([]),error=$state('')
@@ -37,6 +37,7 @@
    if(mine!==generation)return
    metrics=m;events=mineEvents;otherEvents=others
    resetCursors()
+   if(node&&node!==ALL)onfinding(nodeFinding({metrics:m,events:mineEvents,node,start:start??from,end:end??to,from,to}))
   }catch(failure){if(mine===generation)error=failure.message}
  }
  function resetCursors(){const c=cursorDefaults({events,start:start??from,end:end??to,at,from,to});a=c.a;b=c.b}

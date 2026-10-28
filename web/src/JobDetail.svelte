@@ -61,6 +61,8 @@
   // A failed phase whose message names one node opens on that node.
   const messageNode = $derived(failingRuns.length ? '' : nodeInMessage(summary?.failedPhase?.message, networkNodes))
   const trailNode = $derived(head?.node || messageNode)
+  // Whether the bench found the asserted node at fault; null until it reads.
+  let finding = $state(null)
   // The first failing run is read on the cause bench (RunBench): its chosen
   // test, the first failure unless the URL names another, sets the window.
   const firstRun = $derived(failingRuns[0] ?? null)
@@ -112,10 +114,10 @@
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   {#if job}
     <div class="folio"><span>작업 일지 · <strong>{job.operation}</strong> · <code>{job.id.slice(0, 8)}</code></span><span>{formatTime(job.createdAt).slice(0, 10)}{#if network} · 네트워크 <code>{network.id.slice(0, 8)}</code> · 노드 {networkNodes.length}{/if}</span></div>
-    <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {elapsed} {stale} connection={live.connection} {trailNode} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
+    <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {elapsed} {stale} connection={live.connection} {trailNode} {finding} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
 
     <!-- A failing test run is the cause a reader came for, so it comes first. -->
-    {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} />{/if}
+    {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} bind:finding />{/if}
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}
     {#if runsError}<p class="error" role="alert">테스트 실행 기록을 읽지 못했습니다. {runsError}</p>{/if}
 
