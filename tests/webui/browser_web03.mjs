@@ -2,6 +2,7 @@ import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import assert from 'node:assert/strict'
+const field=(page,path)=>page.locator(`[data-field-path="${path}"]`).locator('input,select')
 
 const [url, out, fixturePath] = process.argv.slice(2)
 const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'))
@@ -32,7 +33,7 @@ async function login(actor) {
   const errors=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto(url+'/chains')
   await page.getByTestId('deployment-actor').filter({hasText:actor.username}).waitFor()
-  await page.getByLabel('content.pool.hosts[0].addr',{exact:true}).waitFor()
+  await field(page,'content.pool.hosts[0].addr').waitFor()
   return {context,page,errors}
 }
 function observed(id, assertions, artifact) { observations.push({id,observedAt:new Date().toISOString(),mode:'team',transport:'SSH',ownership:'owned',actors:actors.map(a=>({id:a.id,username:a.username,role:a.role})),assertions:assertions.map(description=>({description,passed:true})),artifacts:[artifact]}) }
@@ -46,13 +47,14 @@ try {
   await adminContext.close()
   const first = await login(actors[0]), second = await login(actors[1])
   const a=first.page,b=second.page
-  await a.getByLabel('content.pool.hosts[0].name',{exact:true}).fill('ssh')
-  await a.getByLabel('content.pool.hosts[0].addr',{exact:true}).fill('localhost.')
-  await a.getByRole('button',{name:'ssh 추가',exact:true}).click()
-  await a.getByRole('button',{name:'port 추가',exact:true}).click()
-  await a.getByLabel('content.ssh.port',{exact:true}).fill(String(fixture.ssh.port))
-  await a.getByRole('button',{name:'known_hosts_file 추가',exact:true}).click()
-  await a.getByLabel('content.ssh.known_hosts_file',{exact:true}).fill(fixture.ssh.knownHosts)
+  await field(a,'content.pool.hosts[0].name').fill('ssh')
+  await field(a,'content.pool.hosts[0].addr').fill('localhost.')
+  await a.locator('details.more > summary').click()
+  await a.locator('[data-add-path="content.ssh"]').click()
+  await a.locator('[data-add-path="content.ssh.port"]').click()
+  await field(a,'content.ssh.port').fill(String(fixture.ssh.port))
+  await a.locator('[data-add-path="content.ssh.known_hosts_file"]').click()
+  await field(a,'content.ssh.known_hosts_file').fill(fixture.ssh.knownHosts)
   await a.getByRole('button',{name:'배포 문서 검증',exact:true}).click()
   await status(a,'엔진 검증 통과')
   await a.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
@@ -61,7 +63,7 @@ try {
   let set=docs.find(d=>d.kind==='server-set')
   assert.ok(set)
   await a.getByRole('button',{name:'새 대상 경로',exact:true}).click()
-  await a.getByLabel('content.dataRoot',{exact:true}).fill(fixture.ssh.runtime+'/allowed')
+  await field(a,'content.dataRoot').fill(fixture.ssh.runtime+'/allowed')
   await a.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
   await status(a,'공유 문서 revision 1 저장됨')
   docs=(await api(actors[0],'documents')).items
@@ -74,7 +76,7 @@ try {
   // Reload the second operator's view to observe current shared state.
   await b.reload();await b.getByLabel('저장된 배포 문서',{exact:true}).locator(`option[value="${set.id}"]`).waitFor({state:'attached'})
   await b.getByLabel('저장된 배포 문서',{exact:true}).selectOption(set.id)
-  await b.getByLabel('content.pool.slots',{exact:true}).fill('2')
+  await field(b,'content.pool.slots').fill('2')
   await b.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
   await status(b,'공유 문서 revision 2 저장됨')
   await b.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(workspace.id)

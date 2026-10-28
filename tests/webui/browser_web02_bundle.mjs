@@ -48,7 +48,7 @@ try{
 
  // Structured edit through the form: a new server-set revision with another P2P base.
  await page.reload();await page.getByLabel('저장된 배포 문서',{exact:true}).selectOption(savedSet.id)
- const p2p=page.getByLabel('content.pool.ports.p2p.base',{exact:true});await p2p.waitFor({timeout:15000})
+ const p2p=page.locator('[data-field-path="content.pool.ports.p2p.base"]').locator('input,select');await p2p.waitFor({timeout:15000})
  await p2p.fill('39200')
  await page.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
  await page.getByText('공유 문서 revision 2 저장됨').waitFor({timeout:15000})

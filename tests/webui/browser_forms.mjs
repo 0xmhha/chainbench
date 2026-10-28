@@ -14,7 +14,8 @@ async function request(ctx,token,path,method='GET',data,expected=200){
  return raw?JSON.parse(raw):undefined
 }
 async function tabTo(page,name){for(let i=0;i<400;i++){await page.keyboard.press('Tab');if(await page.evaluate(n=>document.activeElement?.textContent?.trim()===n,name))return}throw new Error('keyboard never reached '+name)}
-const focused=page=>page.evaluate(()=>({label:document.activeElement?.getAttribute('aria-label'),invalid:document.activeElement?.getAttribute('aria-invalid')}))
+const focused=page=>page.evaluate(()=>({label:document.activeElement?.closest('[data-field-path]')?.getAttribute('data-field-path'),invalid:document.activeElement?.getAttribute('aria-invalid')}))
+const field=(page,path)=>page.locator(`[data-field-path="${path}"]`).locator('input,select')
 const observed={}
 let page
 try{
@@ -27,10 +28,10 @@ try{
  await page.goto(f.url+'/chains')
 
  // 1. The contract rejects an empty host address and a port above 65535.
- const addr=page.getByLabel('content.pool.hosts[0].addr',{exact:true})
+ const addr=field(page,'content.pool.hosts[0].addr')
  await addr.waitFor({timeout:20000})
  await addr.fill('')
- const p2p=page.getByLabel('content.pool.ports.p2p.base',{exact:true})
+ const p2p=field(page,'content.pool.ports.p2p.base')
  await p2p.fill('70000')
  await page.getByRole('button',{name:'배포 문서 검증',exact:true}).click()
  const problems=page.getByTestId('deployment-problems')
@@ -38,7 +39,7 @@ try{
  assert.equal(await addr.getAttribute('aria-invalid'),'true')
  assert.equal(await p2p.getAttribute('aria-invalid'),'true')
  assert.ok(await addr.getAttribute('aria-describedby'),'the invalid field names no description')
- await problems.getByRole('button',{name:'content.pool.ports.p2p.base'}).click()
+ await problems.locator('[data-problem-path="content.pool.ports.p2p.base"]').click()
  assert.deepEqual(await focused(page),{label:'content.pool.ports.p2p.base',invalid:'true'})
  observed.deploymentFieldErrors=await problems.locator('li').allTextContents()
  await page.screenshot({path:out+'/deployment-errors.png',fullPage:false})

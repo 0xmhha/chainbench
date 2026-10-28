@@ -4,7 +4,9 @@
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import { selection, selectWorkspace } from './selection.svelte.js'
-  import DeploymentFields from './DeploymentFields.svelte'
+  import DeploymentForm from './DeploymentForm.svelte'
+  import { fieldTitle, changedPaths } from './contract-form.mjs'
+  import { formatTime } from './labels.mjs'
   import { schemaProblems, fieldPath } from './schema-problems.mjs'
   import { tick } from 'svelte'
   import BundleImport from './BundleImport.svelte'
@@ -17,6 +19,23 @@
   const canEdit = $derived(role === 'administrator' || role === 'operator')
   // problems are what the form or the server found wrong in the open document.
   let problems = $state([])
+  // revisions are the open document's saved revisions, newest first; viewing
+  // is a past one opened read-only, compared field by field with the latest.
+  let revisions = $state([]), viewing = $state(null)
+  const latest = $derived(docs.find(d => d.id === docId && d.revision === revision)?.content ?? content)
+  const differs = $derived(viewing ? changedPaths(viewing.content, latest) : new Set())
+  // who names the account that saved a revision: "나" for the signed-in one,
+  // otherwise a short form of its id (the full id is in the title).
+  const who = id => id === webSession?.user.id ? '나' : id.length > 12 ? id.slice(0, 8) + '…' : id
+  async function loadRevisions(id) { revisions = id ? (await api(`documents/${id}/revisions`)).items : [] }
+  async function view(rev) { viewing = rev === revision ? null : await api(`documents/${docId}?revision=${rev}`) }
+  // Restoring saves the past content as a new revision; nothing is rewritten.
+  async function restore() {
+    const from = viewing.revision
+    content = structuredClone($state.snapshot(viewing.content)); viewing = null
+    await check(); await saveDocument()
+    status = `revision ${from}의 내용을 revision ${revision}로 저장했습니다`
+  }
   const problemMap = $derived(Object.fromEntries(problems.filter(p => p.path).map(p => [p.path, p.message])))
   async function focusProblem(path) { await tick(); globalThis.document.querySelector(`[data-field-path="${CSS.escape(path)}"] input, [data-field-path="${CSS.escape(path)}"] select`)?.focus() }
   // The contract's own rules are checked first; the engine then judges the rest.
@@ -40,10 +59,14 @@
     for (const workspace of workspaces) { for (const ref of workspace.documents) { if (!docs.some(d => d.id === ref.id && d.revision === ref.revision)) { docs = [...docs, await api(`documents/${ref.id}?revision=${ref.revision}`)] } } }
   }
   function newDocument(nextKind) {
-    kind = nextKind; docId = ''; revision = 0; name = kindNames[kind]
+    kind = nextKind; docId = ''; revision = 0; name = kindNames[kind]; revisions = []; viewing = null; problems = []
     content = kind === 'server-set' ? { version: 2, pool: { hosts: [{ name: 'local', addr: '127.0.0.1' }], slots: 1, ports: { p2p: { base: 31000, step: 10 }, rpc: { base: 8600, step: 10 } } } } : { version: 1, dataRoot: '/data/chainbench', paths: Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k => [k,k])), control: { artifactRoot: 'chainbench-out' }, inputs: { mode: 'generated' }, execution: { chain: 'fresh' } }
   }
-  function loadDocument(id) { const d = docs.find(d => d.id === id); if (!d) return; kind = d.kind; name = d.name; content = structuredClone($state.snapshot(d.content)); docId = d.id; revision = d.revision }
+  function loadDocument(id) {
+    const d = docs.filter(d => d.id === id).sort((a, b) => b.revision - a.revision)[0]; if (!d) return
+    kind = d.kind; name = d.name; content = structuredClone($state.snapshot(d.content)); docId = d.id; revision = d.revision; viewing = null; problems = []
+    action(() => loadRevisions(d.id))
+  }
   async function loadWorkspace(id) {
     workspaceId = id; selectWorkspace(id)
     const w = workspaces.find(w => w.id === id); if (!w) return
@@ -55,7 +78,7 @@
   }
   function documentInput() { return { kind, name, content, ...draftMeta(contract), assetRefs: [] } }
   async function saveDocument() {
-    try { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); status = `공유 문서 revision ${revision} 저장됨` }
+    try { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); await loadRevisions(docId); status = `공유 문서 revision ${revision} 저장됨` }
     catch (e) {
       if (!contractChanged(e)) { if (e.errors?.length) problems = serverProblems(e.errors); throw e }
       const before = contract; contract = await api('contracts/deployment')
@@ -80,11 +103,28 @@
     <div>
       <h3>공유 문서</h3>
       <label>저장된 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision}</option>{/each}</select></label>
-      {#if canEdit}
-        <button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>
-        <label data-field-path="name">이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>
-        {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button onclick={() => focusProblem(p.path)}>{p.path}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
-        {#if contract}<DeploymentFields schema={contract[kind]} value={content} problems={problemMap} change={v => { content = v; problems = [] }} />{/if}
+      {#if canEdit}<button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>{/if}
+      {#if revisions.length}
+        <details class="revisions" open={revisions.length > 1 || undefined}>
+          <summary>revision 기록 {revisions.length}개</summary>
+          <table data-testid="document-revisions"><thead><tr><th scope="col">revision</th><th scope="col">이름</th><th scope="col">저장한 사람</th><th scope="col">시각</th></tr></thead><tbody>
+            {#each revisions as r (r.revision)}
+              <tr class:current={r.revision === (viewing?.revision ?? revision)}><td><button type="button" class="link" aria-pressed={r.revision === (viewing?.revision ?? revision)} onclick={() => action(() => view(r.revision))}>{r.revision}{r.revision === revision ? ' · 최신' : ''}</button></td><td>{r.name}</td><td class="mono" title={r.updatedBy}>{who(r.updatedBy)}</td><td class="mono">{formatTime(r.updatedAt)}</td></tr>
+            {/each}
+          </tbody></table>
+        </details>
+      {/if}
+      {#if viewing}
+        <div class="viewing" role="status" data-testid="revision-viewing">
+          <p><b>revision {viewing.revision}</b> 보는 중 · 지금은 revision {revision} · <span title={viewing.updatedBy}>{who(viewing.updatedBy)}</span> · {formatTime(viewing.updatedAt)} · 지금과 다른 칸 {differs.size}개</p>
+          {#if canEdit}<button type="button" onclick={() => action(restore)}>이 내용으로 되돌리기</button><small>이 내용을 새 revision으로 저장합니다. 지난 revision과 workspace가 고정한 revision은 바뀌지 않습니다.</small>{/if}
+          <button type="button" onclick={() => { viewing = null }}>revision {revision}로 돌아가기</button>
+        </div>
+      {/if}
+      {#if canEdit && !viewing}<label data-field-path="name">이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>{/if}
+      {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button data-problem-path={p.path} onclick={() => focusProblem(p.path)}>{fieldTitle(contract?.[kind], p.path)}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
+      {#if contract}<DeploymentForm {kind} schema={contract[kind]} value={viewing?.content ?? content} readonly={!canEdit || !!viewing} changed={differs} problems={viewing ? {} : problemMap} change={v => { content = v; problems = [] }} />{/if}
+      {#if canEdit && !viewing}
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>
         <button disabled={busy} onclick={() => action(async () => { await check(); await saveDocument() })}>공유 문서 저장</button>
       {/if}
@@ -123,7 +163,9 @@
   .columns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
   label { margin: var(--space-3) 0; }
   button { margin: var(--space-1); }
+  .revisions { margin: var(--space-3) 0; } .revisions summary { cursor: pointer; padding: var(--space-2) 0; color: var(--text); font: 600 var(--text-sm) var(--font-cond); } .revisions .current { background: var(--surface-raised); } .link { min-height: 0; padding: 0; border: 0; background: none; color: var(--accent); text-decoration: underline; font-family: var(--font-mono); }
+  .viewing { margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--warn-border); background: var(--warn-bg); } .viewing p { margin: 0 0 var(--space-2); color: var(--text); } .viewing small { display: block; margin: var(--space-1) 0; }
   .problems { padding: var(--space-3); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-bg); color: var(--danger); } .problems button { min-height: 0; padding: 0; margin: 0; border: 0; background: none; color: var(--danger); text-decoration: underline; font-family: var(--font-mono); } h4 { margin: 0 0 var(--space-2); }
   [role=status] { color: var(--text-muted); overflow-wrap: anywhere; }
-  @media (max-width: 700px) { .columns { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { [data-testid=document-revisions] :is(th, td):nth-child(2) { display: none; } .columns { grid-template-columns: 1fr; } }
 </style>
