@@ -215,9 +215,9 @@
  .count { color: var(--text); font-weight: 600; }
  .viewport { position: relative; overflow: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg); }
  ol { position: relative; margin: 0; padding: 0; list-style: none; min-width: max-content; }
- li { position: absolute; left: 0; right: 0; height: 22px; display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-3) 0 0; white-space: pre; cursor: default; font: var(--text-xs)/22px var(--font-mono); }
- li:hover { background: var(--surface); }
- li.selected { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--accent-border); }
+ ol > li { position: absolute; left: 0; right: 0; height: 22px; display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-3) 0 0; white-space: pre; cursor: default; font: var(--text-xs)/22px var(--font-mono); }
+ ol > li:hover { background: var(--surface); }
+ ol > li.selected { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--accent-border); }
  .level { flex: 0 0 52px; align-self: stretch; padding-left: var(--space-2); border-left: 2px solid transparent; color: var(--text-faint); font-weight: 600; }
  .level.danger { color: var(--danger); border-left-color: var(--danger); } .level.warn { color: var(--warn); border-left-color: var(--warn); }
  .level.info { color: var(--text-muted); }

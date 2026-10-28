@@ -41,7 +41,10 @@ try{
  for(const node of nodes){const command=execFileSync('ps',['-p',String(node.pid),'-o','command='],{encoding:'utf8'});assert.ok(command.includes(f.runtime)&&command.includes(node.dataDir),'record is not a live owned native process')}
  const rpc=await context.request.post('http://127.0.0.1:11700/',{data:{jsonrpc:'2.0',id:1,method:'eth_getBlockByNumber',params:['0x0',false]}})
  assert.equal(rpc.status(),200);assert.ok((await rpc.json()).result?.hash,'native database genesis unavailable')
- assert.ok(before.networks.every(n=>n.nodes.every(node=>node.state==='unknown'&&node.supportedControls.length===0)),'cached snapshot grants controls or claims liveness')
+ // A snapshot opens no control. A state other than unknown must be the
+ // collector's own process reading, never the recorded PID read as liveness.
+ const fromReading=node=>node.state==='unknown'||(node.observationReason!=='not_observed'&&(node.state!=='running'||node.observedPid>0))
+ assert.ok(before.networks.every(n=>n.nodes.every(node=>node.supportedControls.length===0&&fromReading(node))),'cached snapshot grants controls or claims liveness: '+JSON.stringify(before.networks.flatMap(n=>n.nodes.map(node=>({id:node.id,state:node.state,reason:node.observationReason,pid:node.pid,observedPid:node.observedPid,controls:node.supportedControls})))))
  await page.screenshot({path:out+'/snapshot-desktop.png',fullPage:true})
  assertRunning(await observeNodes(w.id,nodes,'before-restart'),'before restart')
  fs.writeFileSync(f.runtime+'/restart.request','explicit fixture dashboard restart')

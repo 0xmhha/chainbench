@@ -59,8 +59,14 @@
  const bIsError=$derived(errors.some(e=>Math.abs(Date.parse(e.time)-Date.parse(b))<500))
  const chosenRow=$derived(tests.find(r=>r.id===chosen))
  const verdict=$derived(measure?measureVerdict(measure,node,errors.length):null)
- // A label sits after its bar in ink, or before it when the bar ends late.
- const label=p=>p.x+p.w>70?`right:calc((100% - var(--lab)) * ${(100-p.x)/100} + 4px)`:`left:calc(var(--lab) + (100% - var(--lab)) * ${(p.x+p.w)/100} + 4px)`
+ // A label sits after its bar in ink, or before it when the bar ends late,
+ // and stops at the strip's edge: a long test id ends in an ellipsis here and
+ // reads in full in the test ledger.
+ const label=p=>{
+  const side=p.x+p.w>70?'right':'left'
+  const at=side==='right'?`calc((100% - var(--lab)) * ${(100-p.x)/100} + 4px)`:`calc(var(--lab) + (100% - var(--lab)) * ${(p.x+p.w)/100} + 4px)`
+  return `${side}:${at};max-width:calc(100% - ${at})`
+ }
  const failedPhase=$derived(phases.find(p=>p.state==='failed')??null)
  const ticks=$derived(Array.from({length:7},(_,i)=>stripTime((i/6)*100,from,to)))
  const bar=row=>{const x=stripX(row.startedAt,from,to)??(Date.parse(row.startedAt)<Date.parse(from)?0:null),x2=stripX(row.finishedAt,from,to)??(Date.parse(row.finishedAt)>Date.parse(to)?100:null);return x===null||x2===null?null:{x,w:Math.max(.6,x2-x)}}
@@ -164,7 +170,7 @@
  .pick { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) 0; font-size: var(--text-sm); }
  .pick .chosen { color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--text); }
  .chan { position: relative; }
- .barname { position: absolute; top: 12px; font: 600 var(--text-xs) var(--font-mono); color: var(--text); pointer-events: none; white-space: nowrap; }
+ .barname { position: absolute; top: 12px; font: 600 var(--text-xs) var(--font-mono); color: var(--text); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
  .barname.failed { color: var(--danger); }
  .mode { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
  .mode button { min-height: 30px; padding: 2px 8px; font-size: var(--text-xs); }
@@ -184,7 +190,7 @@
   .chart { padding-right: 0; border-right: 0; }
   .measure { padding-left: 0; border-top: var(--rule); }
   .chart { --lab: 84px; }
-  .ticks span:nth-child(even) { display: none; }
+  .ticks span:not(:nth-child(3n+1)) { display: none; }
   .ticks { min-width: 0; overflow: hidden; }
   .cur b { max-width: 40vw; overflow: hidden; }
  }
