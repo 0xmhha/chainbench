@@ -18,6 +18,20 @@ import { responseError } from './api-error.mjs'
  * @property {(value: unknown) => any} [decode] checks the parsed body
  */
 
+/** @type {Set<() => void>} */
+const unauthorized = new Set()
+
+/**
+ * onUnauthorized hears every 401 the client receives: the session expired or
+ * was revoked elsewhere, so the page should sign in again. It returns the
+ * function that stops listening.
+ * @param {() => void} listener
+ */
+export function onUnauthorized(listener) {
+ unauthorized.add(listener)
+ return () => { unauthorized.delete(listener) }
+}
+
 /**
  * @param {{csrfToken?: string}|null|undefined} session
  * @param {typeof fetch} [fetcher]
@@ -50,10 +64,19 @@ export function apiClient(session, fetcher = (...args) => fetch(...args)) {
   if (session?.csrfToken) headers['X-CSRF-Token'] = session.csrfToken
   if (revision) headers['If-Match'] = `"${revision}"`
   if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
-  const response = await fetcher(`/api/v1/${path}`, {
-   method, headers, signal, cache,
-   body: body === undefined ? undefined : form ? /** @type {FormData} */ (body) : JSON.stringify(body),
-  })
+  let response
+  try {
+   response = await fetcher(`/api/v1/${path}`, {
+    method, headers, signal, cache,
+    body: body === undefined ? undefined : form ? /** @type {FormData} */ (body) : JSON.stringify(body),
+   })
+  } catch (failure) {
+   // A request that never reached the server rejects with a TypeError whose
+   // text depends on the browser; screens show their own words instead.
+   if (failure instanceof TypeError) throw Object.assign(new Error('서버에 연결할 수 없습니다.'), { unreachable: true })
+   throw failure
+  }
+  if (response.status === 401) for (const listener of unauthorized) listener()
   if (!response.ok) throw await responseError(response)
   return response
  }

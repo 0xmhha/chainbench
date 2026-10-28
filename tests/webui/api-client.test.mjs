@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { apiClient } from '../../web/src/api-client.mjs'
+import { apiClient, onUnauthorized } from '../../web/src/api-client.mjs'
 import { FormatError, decodeEvidencePage, decodeJob, decodeMetrics, decodeNetwork, decodeRun, decodeRunEvidence } from '../../web/src/api-decode.mjs'
 
 const reply = (status, text) => new Response(status === 204 ? null : text, { status })
@@ -89,4 +89,22 @@ test('evidence listings and pages are checked like every other read', () => {
  assert.ok(decodeRunEvidence({ runId: 'r', tests: [{ seq: 1, id: 'fails', files: [{ name: 'node1.log', kind: 'log', bytes: 12 }] }] }))
  assert.ok(decodeEvidencePage({ name: 'node1.log', kind: 'log', offset: 0, totalLines: 1, lines: ['INFO'], nextOffset: null }))
  assert.throws(() => decodeEvidencePage({ name: 'node1.log', kind: 'log', offset: 0, totalLines: 1, lines: ['INFO'] }), err => err.path === 'nextOffset')
+})
+
+test('a refused session is announced once per response, so the page can sign in again', async () => {
+ const heard = []
+ const stop = onUnauthorized(() => heard.push('401'))
+ await assert.rejects(apiClient(null, recorder(401, '{"code":"unauthorized","message":"Unauthorized"}').fetcher).request('jobs'))
+ await assert.rejects(apiClient(null, recorder(403, '{"code":"forbidden","message":"Forbidden"}').fetcher).request('jobs'))
+ assert.deepEqual(heard, ['401'])
+ stop()
+ await assert.rejects(apiClient(null, recorder(401, '{}').fetcher).request('jobs'))
+ assert.deepEqual(heard, ['401'], 'a listener that stopped hears nothing')
+})
+
+test('a request that never reaches the server fails in the screen’s words, not the browser’s', async () => {
+ const offline = async () => { throw new TypeError('Failed to fetch') }
+ await assert.rejects(apiClient(null, offline).request('networks'), err => err.unreachable === true && err.message === '서버에 연결할 수 없습니다.')
+ const aborted = async () => { throw new DOMException('aborted', 'AbortError') }
+ await assert.rejects(apiClient(null, aborted).request('networks'), err => err.name === 'AbortError')
 })

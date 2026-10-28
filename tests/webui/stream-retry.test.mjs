@@ -11,3 +11,6 @@ test('a dropped connection says the server is unreachable and when it is tried a
 test('a server answer keeps its own reason', () => {
  assert.equal(unreachableMessage(new Error('503: draining'), 2000), '503: draining')
 })
+test('an unreachable failure from the shared client also says when it is tried again', () => {
+ assert.equal(unreachableMessage(Object.assign(new Error('서버에 연결할 수 없습니다.'), { unreachable: true }), 4000), '서버에 연결할 수 없습니다. 4초 뒤 다시 시도합니다.')
+})

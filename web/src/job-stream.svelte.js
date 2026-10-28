@@ -2,6 +2,7 @@ import { snapshotState, applyJobChange, applyNodeReading, appendEngineEvent } fr
 import { readApi } from './api-client.mjs'
 import { decodeSnapshot } from './api-decode.mjs'
 import { retryDelay, unreachableMessage } from './stream-retry.mjs'
+import { shareFeed } from './shared-feed.mjs'
 
 // jobStream follows the server's committed job state: it restores a snapshot,
 // then applies ordered changes from /api/v1/events, and restores again on a
@@ -59,3 +60,8 @@ export function jobStream() {
   start() { active = true; restore(); return () => { active = false; epoch++; disconnect(); request?.abort() } },
  }
 }
+
+// sharedJobStream is the page's one job stream: every screen that shows live
+// job state reads it, so the app frame and the screen inside it share a
+// connection.
+export const sharedJobStream = shareFeed(jobStream)

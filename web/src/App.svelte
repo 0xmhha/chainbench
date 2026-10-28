@@ -17,7 +17,8 @@
   import { selection, monitorRange } from './selection.svelte.js'
   import { timeRange } from './metric-chart.mjs'
   import { webApi } from './web-api.mjs'
-  import { jobStream } from './job-stream.svelte.js'
+  import { sharedJobStream } from './job-stream.svelte.js'
+  import { liveStale } from './node-view.mjs'
 
   const pages = [
     ['/', '대시보드', '전체 실행과 최근 결과를 확인합니다.'],
@@ -37,11 +38,11 @@
   let catalogRevision = $state(0)
   let error = $state(''), now = $state(Date.now())
   // Engine events (what CLI runs publish) arrive on the one events stream.
-  const feed = jobStream(), live = feed.state
+  const feed = sharedJobStream(), live = feed.state
   const events = $derived(live.engine)
   const connected = $derived(live.connection === '연결됨')
   const drops = $derived(live.busDrops), observedAt = $derived(live.lastObserved)
-  const stale = $derived(observedAt !== null && now - Date.parse(observedAt) > 5000)
+  const stale = $derived(liveStale(live, now))
   const details = { '/jobs': ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'], '/nodes': ['/nodes', '노드 상세', '노드 하나의 상태, 구성, 로그와 쓸 수 있는 제어를 확인합니다.'] }
   const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
   // The top bar names the selected workspace; names are read once per session.

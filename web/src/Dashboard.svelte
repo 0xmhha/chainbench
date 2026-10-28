@@ -2,13 +2,15 @@
   import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
   import { onMount } from 'svelte'
-  import { jobStream } from './job-stream.svelte.js'
+  import { sharedJobStream } from './job-stream.svelte.js'
   import { jobSummary } from './job-view.mjs'
   import { follow } from './nav.mjs'
   import { nodeTally, attentionJobs, shortId } from './dashboard-view.mjs'
   import { statusIcon } from './status-icon.mjs'
   import StatusMark from './StatusMark.svelte'
-  const feed = jobStream(), live = feed.state
+  import { liveStale, shownState, feedPhase } from './node-view.mjs'
+  import { stateLabel } from './labels.mjs'
+  const feed = sharedJobStream(), live = feed.state
   const jobs = $derived(live.snapshot?.jobs ?? [])
   const running = $derived(jobs.filter(j => jobSummary(j).active))
   const recent = $derived(jobs.filter(j => !jobSummary(j).active).slice(0, 10))
@@ -18,13 +20,22 @@
   const tally = $derived(nodeTally(networks.flatMap(n => n.nodes)))
   const drops = $derived((live.drops ?? 0) + (live.busDrops ?? 0))
   const fmt = formatTime
-  onMount(() => feed.start())
+  // A node cell shows its last state as stale once live state may be out of date.
+  let now = $state(Date.now())
+  // Until the first snapshot arrives nothing is known, which is not the same as empty.
+  const phase = $derived(feedPhase(live))
+  const count = n => phase === 'ready' ? n : '–'
+  const stale = $derived(liveStale(live, now))
+  onMount(() => { const stop = feed.start(); const clock = setInterval(() => { now = Date.now() }, 1000); return () => { stop(); clearInterval(clock) } })
 </script>
 
+{#snippet notReady()}<p class="muted">{phase === 'unreachable' ? '서버에 연결되면 표시합니다.' : '불러오는 중…'}</p>{/snippet}
+
+{#if phase === 'unreachable'}<p class="error" role="alert">{live.error}</p>{:else if phase === 'loading'}<p class="muted" role="status">작업 상태를 불러오는 중…</p>{/if}
 <p class="strip" aria-label="전체 상태">
-  <span>실행 중 작업 <b data-testid="running-count">{running.length}</b></span>
-  <span>네트워크 <b>{networks.length}</b></span>
-  <span>노드 <b>{tally.total}</b>{#if tally.total}<span class="tally"> · 실행 {tally.running} · 정지 {tally.stopped}{tally.other ? ` · 기타 ${tally.other}` : ''}</span>{/if}</span>
+  <span>실행 중 작업 <b data-testid="running-count">{count(running.length)}</b></span>
+  <span>네트워크 <b>{count(networks.length)}</b></span>
+  <span>노드 <b>{count(tally.total)}</b>{#if tally.total}<span class="tally"> · 실행 {tally.running} · 정지 {tally.stopped}{tally.other ? ` · 기타 ${tally.other}` : ''}</span>{/if}</span>
   <span class:warn={drops > 0} title="작업 {live.drops ?? '확인 중'} · 이벤트 버스 {live.busDrops ?? '확인 중'} · 연결 {live.connection}">관측 누락 <b data-testid="observation-drops">{drops}</b></span>
 </p>
 
@@ -41,7 +52,7 @@
 {/if}
 
 <section class="panel" aria-label="실행 중 작업"><h2>실행 중 작업</h2>
-  {#if running.length === 0}<p class="muted">진행 중인 작업이 없습니다.</p>{:else}
+  {#if phase !== 'ready'}{@render notReady()}{:else if running.length === 0}<p class="muted">진행 중인 작업이 없습니다.</p>{:else}
     <div class="table-wrap"><table><thead><tr><th>작업</th><th>상태</th><th>진행 단계</th><th>시작</th></tr></thead><tbody>
       {#each running as j (j.id)}<tr data-job-id={j.id}><td><a href={'/jobs/' + j.id} onclick={e => follow(e, '/jobs/' + j.id)}>{j.operation}</a><small class="mono" title={j.id}>{shortId(j.id)}</small></td><td><StatusBadge state={j.state} /></td>
         <td><span class="steps" role="img" aria-label="단계 {j.phases.filter(p => p.state === 'succeeded').length}/{j.phases.length}">{#each j.phases as p}<i class={p.state} title="{p.name} · {p.state}"></i>{/each}</span><small>{j.phases.filter(p => p.state === 'succeeded').length}/{j.phases.length} · {j.phases.find(p => p.state === 'running')?.name ?? '대기'}</small></td>
@@ -56,16 +67,16 @@
     {@const t = nodeTally(n.nodes)}
     <div class="network">
       <p class="net-head"><b class="mono" title={n.id}>{shortId(n.id)}</b> <span class="muted">{n.ownership} · 실행 {t.running} · 정지 {t.stopped}{t.other ? ` · 기타 ${t.other}` : ''}</span></p>
-      <ul class="grid">{#each n.nodes as node (node.id)}{@const s = statusIcon(node.state)}<li><a class="cell {s.tone}" href={`/nodes/${n.id}/${node.id}`} onclick={e => follow(e, `/nodes/${n.id}/${node.id}`)}><span class="node">{node.id}</span><span class="role">{node.role}</span><span class="state"><StatusMark state={node.state} /> {node.state}</span></a></li>{/each}</ul>
+      <ul class="grid">{#each n.nodes as node (node.id)}{@const shown = shownState(node.state, stale)}{@const s = statusIcon(shown.state)}<li><a class="cell {s.tone}" href={`/nodes/${n.id}/${node.id}`} onclick={e => follow(e, `/nodes/${n.id}/${node.id}`)}><span class="node">{node.id}</span><span class="role">{node.role}</span><span class="state"><StatusMark state={shown.state} /> {shown.state}{#if shown.last}<small title="{stateLabel(shown.last)}"> · 마지막 {shown.last}</small>{/if}</span></a></li>{/each}</ul>
     </div>
-  {:else}<p class="muted">기록된 네트워크가 없습니다.</p>{/each}
+  {:else}{#if phase === 'ready'}<p class="muted">기록된 네트워크가 없습니다.</p>{:else}{@render notReady()}{/if}{/each}
 </section>
 
 <section class="panel" aria-label="최근 결과"><div class="panel-heading"><h2>최근 결과</h2><button onclick={() => feed.refresh()}>새로고침</button></div>
   {#if recent.length}<div class="table-wrap"><table><thead><tr><th>작업</th><th>결과</th><th>노드 처리</th><th>생성</th></tr></thead><tbody>
     {#each recent as j (j.id)}<tr data-job-id={j.id}><td><a href={'/jobs/' + j.id} onclick={e => follow(e, '/jobs/' + j.id)}>{j.operation}</a></td><td><StatusBadge state={j.state} /></td><td>{j.nodeDisposition}</td><td>{fmt(j.createdAt)}</td></tr>{/each}
   </tbody></table></div>{/if}
-  {#if recent.length === 0}<div class="empty"><h3>관측된 실행이 없습니다</h3><p>체인 구성과 테스트 정의를 준비하세요.</p><a href="/chains" onclick={e => follow(e, '/chains')}>체인 구성 열기 →</a></div>{/if}
+  {#if phase !== 'ready'}{@render notReady()}{:else if recent.length === 0}<div class="empty"><h3>관측된 실행이 없습니다</h3><p>체인 구성과 테스트 정의를 준비하세요.</p><a href="/chains" onclick={e => follow(e, '/chains')}>체인 구성 열기 →</a></div>{/if}
 </section>
 
 <style>

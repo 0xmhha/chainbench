@@ -2,7 +2,8 @@
  import { formatTime } from './labels.mjs'
  import StatusBadge from './StatusBadge.svelte'
  import {onMount} from 'svelte'
- import {jobStream} from './job-stream.svelte.js'
+ import {sharedJobStream} from './job-stream.svelte.js'
+ import {liveStale,shownState} from './node-view.mjs'
  import {selection,selectWorkspace,selectNetwork,monitorRange} from './selection.svelte.js'
  import {timeRange} from './metric-chart.mjs'
  import {follow} from './nav.mjs'
@@ -10,12 +11,12 @@
  import {allItems} from './pages.mjs'
  import NodeMetrics from './NodeMetrics.svelte'
  let {webSession=undefined}=$props()
- const feed=jobStream(),live=feed.state
+ const feed=sharedJobStream(),live=feed.state
  let now=$state(Date.now()),cancelling=$state(''),cancelError=$state(''),names=$state({})
  const api=$derived(webApi(webSession))
  $effect(()=>{if(webSession)allItems(api,'workspaces').then(items=>{names=Object.fromEntries(items.map(w=>[w.id,w.name]))}).catch(e=>{cancelError=e.message})})
  const snapshot=$derived(live.snapshot)
- const stale=$derived(live.lastObserved!==null&&now-Date.parse(live.lastObserved)>5000)
+ const stale=$derived(liveStale(live,now))
  const time=formatTime
  // Every workspace the user can read, plus any a job or network still names.
  const workspaceIds=$derived([...new Set([...Object.keys(names),...(snapshot?.networks??[]).map(n=>n.workspaceId),...(snapshot?.jobs??[]).map(j=>j.workspaceId)].filter(Boolean))].sort())
@@ -58,9 +59,10 @@
    {/each}</tbody></table></div>
   {/if}
   <h3>보관된 네트워크 기록</h3><p class="muted">스냅샷 시점: {time(snapshot.observedAt)}. 노드 상태는 서버 수집기가 5초마다 본 마지막 모습이고, 기록된 PID는 실제 가동 증거가 아닙니다. 노드를 제어하기 전에는 노드 상세에서 상태를 다시 확인합니다.</p>
-  {#each shown as network (network.id)}<div class="network"><strong>{network.id}</strong><span>{network.ownership} · {network.nodes.length}개 노드</span>{#each network.nodes as node (node.id)}<small><a href={`/nodes/${network.id}/${node.id}`} onclick={e=>follow(e,`/nodes/${network.id}/${node.id}`)}>{node.id}</a> · {node.role} · <StatusBadge state={node.state} />{node.observationReason!=='not_observed'&&node.state!=='unknown'?` · ${time(node.observedAt).slice(11)} 관측`:''} · 기록 PID {node.pid||'없음'}</small>{/each}</div>{/each}
+  {#each shown as network (network.id)}<div class="network"><strong>{network.id}</strong><span>{network.ownership} · {network.nodes.length}개 노드</span>{#each network.nodes as node (node.id)}{@const shown=shownState(node.state,stale)}<small><a href={`/nodes/${network.id}/${node.id}`} onclick={e=>follow(e,`/nodes/${network.id}/${node.id}`)}>{node.id}</a> · {node.role} · <StatusBadge state={shown.state} last={shown.last} />{node.observationReason!=='not_observed'&&node.state!=='unknown'?` · ${time(node.observedAt).slice(11)} 관측`:''} · 기록 PID {node.pid||'없음'}</small>{/each}</div>{/each}
   <h3>노드 지표</h3><p class="muted">서버가 5초마다 각 노드의 RPC와 metrics endpoint에서 수집해 만료 없이 보관한 값입니다. 점을 선택하면 그 시점 전후의 노드 로그를 보여 줍니다.</p>
   {#each shown as network (network.id)}<div class="network"><strong>{network.id}</strong><NodeMetrics networkId={network.id}/></div>{:else}<p class="empty">지표를 수집할 네트워크가 없습니다.</p>{/each}
+ {:else if !live.error}<p class="muted" role="status">작업 상태를 불러오는 중…</p>
  {/if}
 </section>
 <style>
