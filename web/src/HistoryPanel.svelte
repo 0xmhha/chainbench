@@ -1,21 +1,19 @@
 <script>
   import { formatTime } from './labels.mjs'
   import StatusBadge from './StatusBadge.svelte'
-  import LogViewer from './LogViewer.svelte'
-  import RunTimeline from './RunTimeline.svelte'
+  import HistoryDetail from './HistoryDetail.svelte'
   import { apiClient } from './api-client.mjs'
-  import { decodeMetrics, decodeRun, decodeRunPage } from './api-decode.mjs'
+  import { decodeRun, decodeRunPage } from './api-decode.mjs'
   import { allItems } from './pages.mjs'
   import { untrack } from 'svelte'
   import { parseHistoryJSON } from './history-json.js'
   let { webSession } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
-  let selected = $state([]), pendingDelete = $state(null), busy = $state(false), error = $state('')
-  let observed = $state(null), runNodeIds = $state([]), detailBox = $state()
+  let selected = $state([]), busy = $state(false), error = $state('')
+  let detailBox = $state()
   let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
-  const terminal = run => ['succeeded', 'failed', 'cancelled', 'interrupted'].includes(run.state)
   const format = time => time ? formatTime(time) : '자료 없음'
   const client = $derived(apiClient(webSession))
   // History keeps large integers exact: the text is read by parseHistoryJSON.
@@ -49,26 +47,10 @@
     comparison = null
   }
   async function open(id) {
-    busy = true; error = ''; pendingDelete = null; observed = null
+    busy = true; error = ''
     try { detail = await client.request('history/' + encodeURIComponent(id), runRead(decodeRun)) } catch (e) { error = e.message } finally { busy = false }
-    loadRunNodes(detail)
     // The detail opens below the list; bring it into view so the failure is what the reader sees.
     requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-  // The timeline needs the run's node names for its logs; the metric series of
-  // the run's own window name them. A failure here only leaves the list empty.
-  async function loadRunNodes(run) {
-    runNodeIds = []
-    const network = run?.summary?.observations?.networkId
-    if (!network) return
-    try {
-      const metrics = await client.request(`networks/${encodeURIComponent(network)}/metrics?runId=${encodeURIComponent(run.id)}`, { decode: decodeMetrics })
-      if (detail?.id === run.id) runNodeIds = [...new Set(metrics.series.map(s => s.nodeId))].sort()
-    } catch { runNodeIds = [] }
-  }
-  async function loadObserved(run) {
-    busy = true; error = ''
-    try { observed = { id: run.id, metrics: await client.request(`networks/${encodeURIComponent(run.summary.observations.networkId)}/metrics?runId=${encodeURIComponent(run.id)}`, { decode: decodeMetrics }) } } catch (e) { error = e.message } finally { busy = false }
   }
   const seconds = value => value == null ? '자료 없음' : `${Math.round(value * 10) / 10}초`
   const metricValue = value => value ? `${value.samples}개 · 최소 ${value.min ?? '—'} · 최대 ${value.max ?? '—'} · 마지막 ${value.last ?? '—'}` : '표본 없음'
@@ -84,14 +66,15 @@
       link.href = url; link.download = id + '.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (e) { error = e.message } finally { busy = false }
   }
-  async function remove() {
-    busy = true; error = ''
+  // A refusal is thrown back to the detail, which says it beside the button.
+  async function remove(run) {
+    busy = true
     try {
-      await client.request('history/' + encodeURIComponent(pendingDelete.id), { method: 'DELETE' })
-      selected = selected.filter(id => id !== pendingDelete.id)
-      pendingDelete = null; detail = null; comparison = null
+      await client.request('history/' + encodeURIComponent(run.id), { method: 'DELETE' })
+      selected = selected.filter(id => id !== run.id)
+      detail = null; comparison = null
       await load()
-    } catch (e) { error = e.message + '. 결과 목록을 다시 확인한 뒤 필요하면 삭제를 다시 시도하세요.' } finally { busy = false }
+    } finally { busy = false }
   }
 </script>
 
@@ -128,27 +111,15 @@
       {/each}</tbody></table></div>
     {#if comparison.metrics?.length}<div class="table-wrap"><table data-testid="comparison-metrics"><thead><tr><th>노드 지표 (출처 · 단위)</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>{#each comparison.metrics as metric}<tr><td>{metric.name}<small>{metric.source}{metric.unit ? ' · ' + metric.unit : ''}</small></td>{#each comparison.runIds as id}<td>{metricValue(metric.values[id])}</td>{/each}</tr>{/each}</tbody></table></div>{/if}
   </section>{/if}
-  {#if detail}<section class="detail" aria-label="실행 상세 결과" bind:this={detailBox}><header><h3>상세 결과</h3><div class="actions"><button disabled={busy} onclick={() => download(detail.id)}>결과 내보내기</button>{#if administrator}<button class="danger" disabled={busy || !terminal(detail)} onclick={() => { pendingDelete = detail }}>보관 결과 삭제</button>{/if}</div></header>
-    <RunTimeline run={detail} nodes={runNodeIds} />
-    <p class="mono">{detail.id}</p><p>원본 세션: {detail.sessionRefs.join(', ') || '연결된 엔진 세션 없음'}</p>
-    <p>큰 정수는 정확한 숫자 문자열로 표시합니다. 다운로드 파일은 원래 JSON 수치 형식을 유지합니다.</p>
-    <p>종료 시각: {detail.finishedAt ? format(detail.finishedAt) : '기록 없음'}{#if detail.coverage} · 수집 주기 {detail.coverage.sampleIntervalSeconds}초 · {detail.coverage.complete ? '누락 없음' : `누락 구간 ${detail.coverage.gaps.length}개`}{detail.coverage.downsampled ? ' · 다운샘플됨' : ''}{/if}</p>
-    {#if detail.summary.missingDimensions?.length}<p class="notice">자료 없음: {detail.summary.missingDimensions.join(', ')}</p>{/if}
-    {#if detail.summary.observations}<div class="observed" data-testid="run-observations"><p>보관된 노드 지표·로그 구간: {format(detail.summary.observations.from)} – {detail.summary.observations.to ? format(detail.summary.observations.to) : '진행 중'} · 네트워크 {detail.summary.observations.networkId}</p><button disabled={busy} onclick={() => loadObserved(detail)}>이 실행의 지표 확인</button>{#if observed?.id === detail.id}<p data-testid="run-observation-series" data-series={observed.metrics.series.length}>지표 {observed.metrics.series.length}개 · 표본 {observed.metrics.series.reduce((n, s) => n + s.samples.length, 0)}개 · {observed.metrics.coverage.complete ? '누락 없음' : '누락 구간 있음'}</p>{#if observed.metrics.coverage.gaps.length}<ul>{#each observed.metrics.coverage.gaps as gap}<li>{gap.reason} ({format(gap.from)} – {format(gap.to)})</li>{/each}</ul>{/if}
-      {@const runNodes = [...new Set(observed.metrics.series.map(s => s.nodeId))].sort()}
-      {#if runNodes.length && !detail.summary.tests?.length}<LogViewer networkId={detail.summary.observations.networkId} nodes={runNodes} node={runNodes[0]} runId={detail.id} title="이 실행 구간의 보관 로그" testid="run-logs" />{/if}{/if}</div>{/if}
-    {#if detail.summary.captureGaps?.length}<ul>{#each detail.summary.captureGaps as gap}<li>{gap}</li>{/each}</ul>{/if}
-    {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={() => { pendingDelete = null }}>돌아가기</button></div>{/if}
-    <details><summary>원본 JSON (테스트 판정 · 어세션 · 단계 · 사용 자료)</summary><pre>{JSON.stringify(detail.summary, null, 2)}</pre></details>
-    <details><summary>환경 fingerprint</summary><pre>{JSON.stringify(detail.fingerprints, null, 2)}</pre></details>
+  {#if detail}<section class="detail" aria-label="실행 상세 결과" bind:this={detailBox}>
+    {#key detail.id}<HistoryDetail run={detail} {client} {administrator} {busy} ondownload={download} onremove={remove} />{/key}
   </section>{/if}
 </section>
 
 <style>
   header, .toolbar { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap; } h3 { margin: 0 0 var(--space-2); } p, li, .toolbar { color: var(--text-muted); } header p { margin: 0; max-width: 700px; }
   form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin: var(--space-4) 0; align-items: end; } .search { grid-column: span 2; } input, select { width: 100%; }
-  .confirm { padding: var(--space-4); border: 1px solid var(--danger-border); border-radius: var(--radius); } .confirm button { margin-right: var(--space-2); }
   table { font-size: var(--text-sm); } small { display: block; margin-top: var(--space-1); } td input { width: 16px; } .record { text-align: left; max-width: 320px; white-space: normal; overflow-wrap: anywhere; } .record small { font-family: var(--font-mono); }
-  .detail { margin-top: var(--space-5); border-top: 1px solid var(--border-subtle); padding-top: var(--space-4); min-width: 0; } pre { font-size: var(--text-xs); overflow: auto; padding: var(--space-4); background: var(--bg); border-radius: var(--radius); max-height: 560px; } summary { cursor: pointer; padding: var(--space-3) 0; color: var(--accent-strong); } .assertion td { color: var(--text-muted); }
+  .detail { margin-top: var(--space-5); min-width: 0; scroll-margin-top: var(--space-4); } .assertion td { color: var(--text-muted); }
   @media (max-width: 760px) { form { grid-template-columns: minmax(0, 1fr); } .search { grid-column: auto; } }
 </style>

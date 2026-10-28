@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { testRows, verdictSegments, placeOnAxis, testLogSpan, phaseSegments } from '../../web/src/run-timeline.mjs'
+import { testRows, testLogSpan, phaseSegments } from '../../web/src/run-timeline.mjs'
 
 // A run detail as the server sends it: each test with its result files read.
 const test_ = (seq, id, state, over = {}) => ({ seq, id, state, assertions: [], steps: [], postActions: [], artifacts: [], ...over })
@@ -37,26 +37,6 @@ test('a run with no tests or results gives no rows instead of throwing', () => {
  assert.deepEqual(testRows({}), [])
  assert.deepEqual(testRows(null), [])
  assert.deepEqual(testRows({ tests: [test_(1, 'x', 'succeeded')] }).map(r => [r.status, r.failedAsserts]), [['succeeded', []]])
-})
-
-test('the verdict bar shows only verdicts that occurred, in a fixed order', () => {
- // session.json still counts pass/fail/blocked/skip; segments speak the run states.
- assert.deepEqual(verdictSegments({ pass: 6, fail: 2, blocked: 0, skip: 2 }), [
-  { status: 'failed', count: 2, percent: 20 },
-  { status: 'succeeded', count: 6, percent: 60 },
-  { status: 'skipped', count: 2, percent: 20 }
- ])
- assert.deepEqual(verdictSegments({}), [])
-})
-
-test('timed tests sit on the run axis; untimed ones are left off it', () => {
- const placed = placeOnAxis(testRows(run), '2026-10-23T07:00:00Z', '2026-10-23T07:01:40Z')
- const transfer = placed.find(r => r.id === 'transfer')
- assert.deepEqual([transfer.left, transfer.width], [10, 30])
- assert.equal(placed.find(r => r.id === 'governance').left, null)
- // A zero-length test still gets a visible sliver.
- const instant = placeOnAxis([{ id: 'i', startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:00Z' }], '2026-10-23T07:00:00Z', '2026-10-23T07:01:40Z')
- assert.ok(instant[0].width >= 0.5)
 })
 
 test('a failed test opens the logs of its own span, or the whole run when it has no times', () => {

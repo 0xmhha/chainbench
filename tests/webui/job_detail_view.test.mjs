@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { jobSummary, failureHeadline, jobDuration, phaseRows, readJobFocus, jobFocusSearch } from '../../web/src/job-view.mjs'
-import { failureMetrics, timeX } from '../../web/src/metric-chart.mjs'
+import { failureMetrics } from '../../web/src/metric-chart.mjs'
 
 const ZERO = '0001-01-01T00:00:00Z'
 const failingRun = {
@@ -84,13 +84,6 @@ test('failure metrics use the canonical series of each concept and fall back to 
  assert.equal(failureMetrics(renamed, 'node2')[0].name, 'eth_head')
 })
 
-test('timeX places a moment on the chart and leaves one outside it unplaced', () => {
- const model = { tMin: 0, tMax: 1000, width: 200 }
- assert.equal(timeX(model, new Date(500).toISOString()), 100)
- assert.equal(timeX(model, new Date(2000).toISOString()), null)
- assert.equal(timeX(model, null), null)
-})
-
 test('a phase message that names exactly one network node points at it', async () => {
  const { nodeInMessage } = await import('../../web/src/job-view.mjs')
  const nodes = ['node1', 'node2', 'node3', 'node10']
@@ -109,4 +102,36 @@ test('an assertion between two integers shows their exact difference', async () 
  assert.equal(assertDiff('>10', '5'), '')
  assert.equal(assertDiff('5', '5'), '')
  assert.equal(assertDiff(null, '5'), '')
+})
+
+test('a recorded run opens with its own headline: the failing test first, then how it ended', async () => {
+ const { runHeadline } = await import('../../web/src/job-view.mjs')
+ const failed = runHeadline({ ...failingRun, state: 'failed' })
+ // The run is the page itself, so its headline does not name it again.
+ assert.deepEqual([failed.tone, failed.title, failed.reason, failed.test, failed.node, failed.runId], ['fail', 'transfer 테스트가 node2에서 실패했습니다', 'balance == 10 · 기대 10 · 실제 9', 'transfer', 'node2', ''])
+ assert.deepEqual(Object.values((({ tone, title }) => ({ tone, title }))(runHeadline({ id: 'r', state: 'succeeded', tests: [] }))), ['ok', '실행이 성공했습니다'])
+ assert.deepEqual([runHeadline({ id: 'r', state: 'running' }).tone, runHeadline({ id: 'r', state: 'running' }).title], ['active', '실행 중입니다'])
+ assert.equal(runHeadline({ id: 'r', state: 'cancelled' }).tone, 'warn')
+ assert.equal(runHeadline({ id: 'r', state: 'interrupted' }).title, '실행이 중단되었습니다')
+ assert.equal(runHeadline({ id: 'r', state: 'failed', tests: [] }).title, '실행이 실패했습니다')
+})
+
+test('a run is read on its first failing test, or on its first test when none failed', async () => {
+ const { benchTest } = await import('../../web/src/job-view.mjs')
+ const { testRows } = await import('../../web/src/run-timeline.mjs')
+ const rows = testRows(failingRun)
+ assert.equal(benchTest(rows, '').id, 'transfer')
+ assert.equal(benchTest(rows, 'deploy').id, 'deploy')
+ assert.equal(benchTest(rows, 'missing').id, 'transfer')
+ const passing = testRows({ tests: [failingRun.tests[0]] })
+ assert.equal(benchTest(passing, '').id, 'deploy')
+ assert.equal(benchTest([], ''), null)
+})
+
+test('a recorded job run without test verdicts names its failed phase and the reason', async () => {
+ const { runHeadline } = await import('../../web/src/job-view.mjs')
+ const run = { id: 'job-1', state: 'failed', tests: [], summary: { phases: [{ name: 'test.inputs', state: 'succeeded' }, { name: 'test.run', state: 'failed', message: 'one or more selected test cases failed or were blocked' }], error: { message: 'engine refused' } } }
+ const h = runHeadline(run)
+ assert.deepEqual([h.tone, h.title, h.reason, h.phase], ['fail', 'test.run 단계에서 실패했습니다', 'one or more selected test cases failed or were blocked', 'test.run'])
+ assert.equal(runHeadline({ id: 'r', state: 'failed', summary: { error: { message: 'plan expired' } } }).reason, 'plan expired')
 })

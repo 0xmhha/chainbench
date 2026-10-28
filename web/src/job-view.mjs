@@ -32,12 +32,8 @@ const shown = value => (typeof value === 'string' ? value : JSON.stringify(value
 export function failureHeadline(job, summary, failingRuns) {
  const base = { tone: 'fail', title: '', reason: '', phase: summary?.failedPhase?.name ?? '', test: '', node: '', runId: '' }
  for (const run of failingRuns ?? []) {
-  const row = testRows(run).find(r => FAILED_TESTS.includes(r.status))
-  if (!row) continue
-  const a = row.failedAsserts[0], s = row.stepErrors[0]
-  const node = a?.on || s?.on || ''
-  const reason = a ? `${a.assert} · 기대 ${shown(a.expected)} · 실제 ${shown(a.actual)}` : s ? `#${s.index} ${s.type} · ${s.error}` : row.reason
-  return { ...base, title: `${row.id} 테스트가 ${node ? node + '에서 ' : ''}실패했습니다`, reason, test: row.id, node, runId: run.id }
+  const failure = testFailure(run)
+  if (failure) return { ...base, ...failure }
  }
  if (summary?.failedPhase) return { ...base, title: `${summary.failedPhase.name} 단계에서 실패했습니다`, reason: summary.failedPhase.message || summary.failure }
  switch (job?.state) {
@@ -48,6 +44,43 @@ export function failureHeadline(job, summary, failingRuns) {
  }
  const current = (job?.phases ?? []).find(p => p.state === 'running')
  return { ...base, tone: 'active', title: current ? `${current.name} 단계를 실행하고 있습니다` : '작업을 기다리고 있습니다' }
+}
+
+// testFailure is the headline of a run's first failing test: the test, the
+// node it broke on and the evidence, or null when no test failed.
+function testFailure(run) {
+ const row = testRows(run).find(r => FAILED_TESTS.includes(r.status))
+ if (!row) return null
+ const a = row.failedAsserts[0], s = row.stepErrors[0]
+ const node = a?.on || s?.on || ''
+ const reason = a ? `${a.assert} · 기대 ${shown(a.expected)} · 실제 ${shown(a.actual)}` : s ? `#${s.index} ${s.type} · ${s.error}` : row.reason
+ return { title: `${row.id} 테스트가 ${node ? node + '에서 ' : ''}실패했습니다`, reason, test: row.id, node, runId: run.id }
+}
+
+// runHeadline is the same first sentence for a recorded run read on its own
+// (the history detail): the failing test, or how the run ended. The run is the
+// page itself, so the headline does not name it again.
+export function runHeadline(run) {
+ const base = { tone: 'fail', title: '', reason: '', phase: '', test: '', node: '', runId: '' }
+ const failure = testFailure(run)
+ if (failure) return { ...base, ...failure, runId: '' }
+ // A job's run records its phases and the engine's refusal instead of verdicts.
+ const error = run?.summary?.error?.message ?? ''
+ const failedPhase = (run?.summary?.phases ?? []).find(p => p.state === 'failed')
+ if (failedPhase) return { ...base, title: `${failedPhase.name} 단계에서 실패했습니다`, reason: failedPhase.message || error, phase: failedPhase.name }
+ switch (run?.state) {
+  case 'succeeded': return { ...base, tone: 'ok', title: '실행이 성공했습니다' }
+  case 'cancelled': return { ...base, tone: 'warn', title: '실행이 취소되었습니다', reason: error }
+  case 'interrupted': return { ...base, tone: 'warn', title: '실행이 중단되었습니다', reason: error || '서버가 실행을 끝까지 지켜보지 못했습니다.' }
+  case 'failed': return { ...base, title: '실행이 실패했습니다', reason: error }
+ }
+ return { ...base, tone: 'active', title: '실행 중입니다' }
+}
+
+// benchTest is the test a run is read on: the one asked for, else the first
+// failing test, else the first test, so a passing run can be read too.
+export function benchTest(rows, wanted) {
+ return rows.find(r => r.id === wanted) ?? rows.find(r => FAILED_TESTS.includes(r.status)) ?? rows[0] ?? null
 }
 
 // jobDuration runs from the job's creation to the latest phase end, or null

@@ -130,10 +130,3 @@ export function failureMetrics(metrics, node) {
   return {label, short, name, series: mine.filter(s => s.name === name)}
  })
 }
-
-// timeX is a moment's x on the chart, or null when it falls outside it.
-export function timeX(model, time) {
- const t = Date.parse(time ?? '')
- if (!Number.isFinite(t) || t < model.tMin || t > model.tMax) return null
- return toX(model, t)
-}

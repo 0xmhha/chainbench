@@ -162,6 +162,11 @@ small { color: var(--text-muted); font-size: var(--text-xs); }
   margin-bottom: var(--space-3);
 }
 .panel-heading p, .panel > header p { margin: var(--space-1) 0 0; color: var(--text-muted); }
+/* The folio: a page's running head, its kind and id on the left and its date
+   and place on the right, over a strong rule. */
+.folio { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-4); padding-bottom: var(--space-1); border-bottom: var(--rule-strong); font: 600 var(--text-xs) var(--font-cond); letter-spacing: .04em; color: var(--text-muted); }
+.folio strong { color: var(--text); }
+.folio code { font-size: var(--text-xs); }
 
 fieldset, section { min-width: 0; }
 fieldset {
@@ -235,6 +240,18 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 th, td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-subtle); }
 th { color: var(--text-muted); font: 600 var(--text-xs) var(--font-cond); letter-spacing: .04em; white-space: nowrap; border-bottom: 1px solid var(--border); }
 td + td, th + th { border-left: var(--rule); }
+/* A stacking table: on a narrow screen each row becomes a stack of named
+   values, the name read from the cell's data-label. */
+table.stack > tbody > tr > td { vertical-align: baseline; }
+@media (max-width: 760px) {
+  table.stack > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.stack, table.stack > tbody, table.stack > tbody > tr, table.stack > tbody > tr > td { display: block; }
+  table.stack > tbody > tr { padding: var(--space-2) 0; border-bottom: var(--rule); }
+  table.stack > tbody > tr > td { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: var(--space-2); padding: 2px 0; border: 0; }
+  table.stack > tbody > tr > td[data-label]::before { content: attr(data-label); color: var(--text-muted); font: 600 var(--text-xs) var(--font-cond); }
+  table.stack > tbody > tr > td[data-label] > * { grid-column: 2; }
+  table.stack > tbody > tr > td:not([data-label]) { display: block; }
+}
 tbody tr:hover { background: var(--surface); }
 
 /* Alerts: a tinted box with a thin full border, never a thick side bar. */

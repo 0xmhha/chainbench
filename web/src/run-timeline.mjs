@@ -1,10 +1,7 @@
-// Pure helpers behind the run timeline: which tests failed and how, where each
-// one sits in time, and which log span answers "what happened then".
+// Pure helpers for reading a recorded run: which tests failed and how, and
+// which log span answers "what happened then".
 
 const FAILED = ['failed', 'blocked']
-// session.json counts verdicts as pass/fail/blocked/skip; the bar speaks the
-// run states the tests themselves carry.
-const VERDICTS = [['fail', 'failed'], ['blocked', 'blocked'], ['pass', 'succeeded'], ['skip', 'skipped']]
 
 const at = value => (value ? Date.parse(value) : NaN)
 
@@ -31,25 +28,6 @@ export function testRows(run) {
  })
  const rank = row => (FAILED.includes(row.status) ? 0 : 1)
  return rows.sort((a, b) => rank(a) - rank(b) || a.seq - b.seq)
-}
-
-export function verdictSegments(counts) {
- const total = VERDICTS.reduce((sum, [key]) => sum + (counts?.[key] ?? 0), 0)
- if (!total) return []
- return VERDICTS.filter(([key]) => (counts?.[key] ?? 0) > 0).map(([key, status]) => ({ status, count: counts[key], percent: Math.round((counts[key] / total) * 1000) / 10 }))
-}
-
-// placeOnAxis gives each timed row its left offset and width as percentages of
-// the from–to axis. Untimed rows keep left and width null.
-export function placeOnAxis(rows, from, to) {
- const start = at(from), span = at(to) - start
- return rows.map(row => {
-  const s = at(row.startedAt), e = at(row.finishedAt)
-  if (!Number.isFinite(s) || !Number.isFinite(e) || !(span > 0)) return { ...row, left: null, width: null }
-  const left = Math.max(0, Math.min(100, ((s - start) / span) * 100))
-  const width = Math.max(0.5, Math.min(100 - left, ((e - s) / span) * 100))
-  return { ...row, left: Math.round(left * 10) / 10, width: Math.round(width * 10) / 10 }
- })
 }
 
 // testLogSpan is the log window for one test: its own span widened by pad
