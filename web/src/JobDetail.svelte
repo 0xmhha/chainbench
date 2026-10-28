@@ -40,7 +40,9 @@
   const failed = run => (run?.summary?.counts?.fail ?? 0) + (run?.summary?.counts?.blocked ?? 0) > 0
   const failingRuns = $derived(runs.filter(failed))
   const passingRuns = $derived(runs.filter(r => !failed(r)))
-  const head = $derived(job ? failureHeadline(job, summary, failingRuns) : null)
+  // Until the job's runs are read, a failed job's first line waits for them.
+  const runsPending = $derived(Boolean(job?.runIds?.length) && !runsLoaded)
+  const head = $derived(job ? failureHeadline(job, summary, failingRuns, runsPending) : null)
   const duration = $derived(job ? jobDuration(job) : null)
   // A running job's elapsed time ticks once a second, and only while it runs.
   let now = $state(Date.now())
@@ -87,14 +89,19 @@
     if (!workspace || !webSession) return
     client.request('networks', { decode: decodeNetworkPage }).then(page => { network = page.items.find(n => n.workspaceId === workspace) ?? null }).catch(() => { network = null })
   })
+  // Runs are read again only when the job's list of run ids changes, not on
+  // every live update of the job.
+  const runKey = $derived((job?.runIds ?? []).join('\n'))
   $effect(() => {
-    const ids = job?.runIds ?? []
-    if (!ids.length || !webSession) { runs = []; runsLoaded = true; runsError = ''; return }
+    const ids = runKey ? runKey.split('\n') : []
+    if (!ids.length || !webSession) { runs = []; runsLoaded = !!job; runsError = ''; return }
+    runsLoaded = false
+    const key = runKey
     // Raw text keeps large integers exact (parseHistoryJSON), as History does.
     // A run that cannot be read is named, not dropped without a word.
     const read = id => client.request('history/' + encodeURIComponent(id), { cache: 'no-store', parse: parseHistoryJSON, decode: decodeRun })
     Promise.all(ids.map(id => read(id).then(run => ({ run }), e => ({ failure: `${id}: ${e.message}` }))))
-      .then(found => { runs = found.map(f => f.run).filter(Boolean); runsError = found.map(f => f.failure).filter(Boolean).join(' · '); runsLoaded = true })
+      .then(found => { if (key !== runKey) return; runs = found.map(f => f.run).filter(Boolean); runsError = found.map(f => f.failure).filter(Boolean).join(' · '); runsLoaded = true })
   })
   $effect(() => { void jobId; if (webSession) load() })
   onMount(() => feed.start())
@@ -112,7 +119,7 @@
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}
     {#if runsError}<p class="error" role="alert">테스트 실행 기록을 읽지 못했습니다. {runsError}</p>{/if}
 
-    {#if summary.failedPhase && !failingRuns.length}
+    {#if summary.failedPhase && !failingRuns.length && !runsPending}
       <section class="cause" id="cause" aria-label="실패한 단계 시점 로그">
         {#if !network}<p class="muted">이 작업의 네트워크 기록이 없어 노드 로그를 열 수 없습니다.</p>
         {:else if !networkNodes.length}<p class="muted">네트워크에 기록된 노드가 없어 로그를 열 수 없습니다.</p>

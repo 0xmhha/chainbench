@@ -52,6 +52,14 @@ test('success, running, cancelled and interrupted jobs each read differently', (
  assert.deepEqual([failed.title, failed.reason], ['작업이 실패했습니다', 'plan expired'])
 })
 
+test('a job whose test runs are still being read says so instead of naming its failed phase', () => {
+ const failed = job({ runIds: ['r1'], phases: [{ name: 'test.run', state: 'failed', message: 'one or more selected test cases failed' }] })
+ const pending = failureHeadline(failed, jobSummary(failed), [], true)
+ assert.deepEqual([pending.tone, pending.title, pending.phase, pending.test], ['pending', '테스트 판정을 읽는 중입니다', '', ''])
+ // Once read (and nothing failed in them), the phase is the headline again.
+ assert.equal(failureHeadline(failed, jobSummary(failed), [], false).title, 'test.run 단계에서 실패했습니다')
+})
+
 test('duration runs from creation to the last phase end and ignores unset times', () => {
  assert.equal(jobDuration(job({ phases: [{ finishedAt: '2026-10-23T07:00:00Z' }, { finishedAt: ZERO }] })), 10000)
  assert.equal(jobDuration(job({ phases: [{ finishedAt: ZERO }] })), null)

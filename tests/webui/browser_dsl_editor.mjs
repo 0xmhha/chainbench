@@ -481,8 +481,8 @@ try{
  for(let i=0;i<900;i++){const job=await api('jobs/'+jobId);let up=false;try{up=record().nodes.length===4&&record().nodes.every(n=>n.pid>0&&live(n.pid))}catch{}if(job.state==='running'&&job.phases.some(p=>p.name==='test.run'&&p.state==='running')&&up)break;if(terminal.includes(job.state))throw new Error('job ended early: '+JSON.stringify(job));await sleep(200)}
  await page.goto(f.url+'/jobs/'+jobId)
  await page.getByTestId('job-state').waitFor({timeout:15000})
- page.once('dialog',d=>d.accept())
  await tabTo(page,'작업 취소');await page.keyboard.press('Enter')
+ await tabTo(page,'작업 취소 확정');await page.keyboard.press('Enter')
  const cancelled=await settle(api,jobId)
  assert.equal(cancelled.state,'cancelled');assert.equal(cancelled.nodeDisposition,'cleaned',JSON.stringify(cancelled))
  observed.keyboardCancel={jobId,disposition:cancelled.nodeDisposition}

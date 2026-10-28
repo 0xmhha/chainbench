@@ -64,7 +64,7 @@ try{
       await clickRun(page)
       const started=await response;assert.equal(started.status(),202)
       await waitJob((await started.json()).id,'succeeded')
-      await page.getByText('세션 결과 보기',{exact:true}).first().waitFor()
+      await page.locator('a.session-link[href^="/history?run="]').first().waitFor()
       const owned=(await api('networks')).items.find(n=>n.workspaceId===w.id)
       assert.ok(owned.nodes.find(n=>n.id==='node1').pid>0,'test did not retain the actual node process')
       const control=await api('plans','POST',{workspaceId:w.id,operation:'node.stop',documentRefs:w.documents,assetRefs:[chain],nodeIds:['node1'],retention:'retain',arguments:{manifestId:chain,assetId:chain,serverRef:'local',validators:4}},undefined,201)

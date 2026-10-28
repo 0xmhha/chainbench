@@ -7,7 +7,7 @@
  // bench also draws the job's phases as their own channel.
  import {formatTime,gapText} from './labels.mjs'
  import {failureMetrics} from './metric-chart.mjs'
- import {stripX,stripTime,tracePath,measureBetween,nextEvent} from './recorder.mjs'
+ import {stripX,stripTime,tracePath,measureBetween,measureVerdict,nextEvent} from './recorder.mjs'
 
  let {from,to,node,metrics=null,events=[],otherEvents=[],tests=[],phases=[],chosen=null,onchoose=()=>{},a=$bindable(),b=$bindable(),onreset=()=>{}}=$props()
 
@@ -58,6 +58,9 @@
  const offset=v=>Math.round((Date.parse(v)-Date.parse(from))/1000)
  const bIsError=$derived(errors.some(e=>Math.abs(Date.parse(e.time)-Date.parse(b))<500))
  const chosenRow=$derived(tests.find(r=>r.id===chosen))
+ const verdict=$derived(measure?measureVerdict(measure,node,errors.length):null)
+ // A label sits after its bar in ink, or before it when the bar ends late.
+ const label=p=>p.x+p.w>70?`right:calc((100% - var(--lab)) * ${(100-p.x)/100} + 4px)`:`left:calc(var(--lab) + (100% - var(--lab)) * ${(p.x+p.w)/100} + 4px)`
  const failedPhase=$derived(phases.find(p=>p.state==='failed')??null)
  const ticks=$derived(Array.from({length:7},(_,i)=>stripTime((i/6)*100,from,to)))
  const bar=row=>{const x=stripX(row.startedAt,from,to)??(Date.parse(row.startedAt)<Date.parse(from)?0:null),x2=stripX(row.finishedAt,from,to)??(Date.parse(row.finishedAt)>Date.parse(to)?100:null);return x===null||x2===null?null:{x,w:Math.max(.6,x2-x)}}
@@ -72,12 +75,12 @@
    {#if tests.length}
     <div class="chan"><span class="lab">테스트<small>{tests.length}건</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
      {#each tests as row (row.seq)}{@const p=bar(row)}{#if p}<rect class="t {row.status}" class:chosen={chosen===row.id} x={p.x} y="4" width={p.w} height="12"><title>{row.id} · {row.status}</title></rect>{/if}{/each}
-    </svg>{#if chosenRow&&bar(chosenRow)}{@const p=bar(chosenRow)}<span class="barname" class:failed={['failed','blocked'].includes(chosenRow.status)} style:left="calc(var(--lab) + (100% - var(--lab)) * {p.x / 100} + 4px)">{chosenRow.id}</span>{/if}</div>
+    </svg>{#if chosenRow&&bar(chosenRow)}<span class="barname" class:failed={['failed','blocked'].includes(chosenRow.status)} style={label(bar(chosenRow))}>{chosenRow.id}</span>{/if}</div>
    {/if}
    {#if phases.length}
     <div class="chan" data-testid="strip-phases"><span class="lab">단계<small>{phases.length}개</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
      {#each phases as row (row.name)}{@const p=bar(row)}{#if p}<rect class="ph {row.state}" x={p.x} y="4" width={p.w} height="12"><title>{row.name} · {row.state}</title></rect>{/if}{/each}
-    </svg>{#if failedPhase&&bar(failedPhase)}{@const p=bar(failedPhase)}<span class="barname failed" style:left="calc(var(--lab) + (100% - var(--lab)) * {p.x / 100} + 4px)">{failedPhase.name}</span>{/if}</div>
+    </svg>{#if failedPhase&&bar(failedPhase)}<span class="barname failed" style={label(bar(failedPhase))}>{failedPhase.name}</span>{/if}</div>
    {/if}
    <div class="chan" class:bad={errors.length}><span class="lab">{node} 로그<small>경고 {warns.length} · 오류 {errors.length}</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
     <line class="base" x1="0" y1="17" x2="100" y2="17"/>
@@ -100,13 +103,15 @@
     </svg></div>
    {/if}
    {#if ax!==null}<span class="cur a" style:left="calc(var(--lab) + (100% - var(--lab)) * {ax / 100})"><b>A {clock(a)}</b></span>{/if}
-   {#if bx!==null}<span class="cur b" class:flip={bx > 70} style:left="calc(var(--lab) + (100% - var(--lab)) * {bx / 100})"><b>B {clock(b)}{bIsError?' 오류':''}</b></span>{/if}
+   {#if bx!==null}<span class="cur b" class:flip={bx > 70} class:err={bIsError} style:left="calc(var(--lab) + (100% - var(--lab)) * {bx / 100})"><b>B {clock(b)}{bIsError?' 오류':''}</b></span>{/if}
   </div>
   {#if tests.length}<p class="pick">{#each tests as row (row.seq)}<button type="button" class="link" class:chosen={chosen===row.id} aria-pressed={chosen===row.id} onclick={()=>onchoose(row)}>{row.id}</button>{/each}</p>{/if}
  </div>
  <div class="measure" data-testid="recorder-measure">
   <h3>측정 · A에서 B까지</h3>
   <div class="mode" role="group" aria-label="옮길 커서"><button type="button" aria-pressed={moving==='a'} onclick={()=>{moving='a'}}>A 옮기기</button><button type="button" aria-pressed={moving==='b'} onclick={()=>{moving='b'}}>B 옮기기</button><button type="button" onclick={onreset}>기본 위치로</button><button type="button" disabled={prevError===null} onclick={()=>jump(-1)}>← 이전 오류</button><button type="button" disabled={nextError===null} onclick={()=>jump(1)}>다음 오류 →</button></div>
+  {#if verdict}<p class="verdict" class:bad={verdict.abnormal} data-testid="recorder-verdict">{verdict.text}</p>{/if}
+  {#if chosenRow?.failedAsserts?.length}<p class="note">띠의 값은 {step}초마다 모은 표본이라 단언이 읽은 실제값과 다를 수 있습니다.</p>{/if}
   {#if measure}
    <dl>
     <dt>간격</dt><dd>{measure.seconds}초</dd>
@@ -114,6 +119,7 @@
     <dt>다른 노드 블록</dt><dd>{fmt(measure.others.a)} → {fmt(measure.others.b)}</dd>
    </dl>
   {:else if !metrics}<p class="muted">지표를 불러오는 중이거나 이 구간에 지표가 없습니다.</p>{/if}
+  <p class="keys-touch">띠를 누르면 고른 커서가 그 시각으로 옮겨집니다. 옮길 커서는 A 옮기기와 B 옮기기로 고르고, 오류 사이는 이전 오류와 다음 오류로 오갑니다.</p>
   <p class="keys">띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 띠에 초점이 있을 때 ]와 [는 고른 커서를 이 노드의 다음 오류와 이전 오류로 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p>
  </div>
 </section>
@@ -126,7 +132,8 @@
  .axis { border-bottom: 1px solid var(--border); font: var(--text-xs) var(--font-mono); color: var(--text-muted); min-height: 24px; }
  .axis .lab { padding: 6px 0; font: 600 var(--text-xs) var(--font-cond); }
  .ticks { display: flex; justify-content: space-between; gap: var(--space-2); min-width: 0; padding: 6px 0; font-variant-numeric: tabular-nums; }
- .plot { position: relative; cursor: crosshair; }
+ /* The top band of the plot holds the cursor labels, clear of the axis ticks. */
+ .plot { position: relative; cursor: crosshair; padding-top: 24px; }
  .plot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
  .chan { height: 40px; border-bottom: var(--rule); }
  .chan .lab { padding: 4px var(--space-2) 0 0; border-right: var(--rule); font: 600 var(--text-sm)/1.15 var(--font-sans); color: var(--text); }
@@ -150,23 +157,28 @@
  .cur { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--text-muted); pointer-events: none; }
  .cur b { position: absolute; bottom: 2px; left: 4px; padding: 0 4px; border: 1px solid currentColor; background: var(--bg); font: 700 var(--text-xs) var(--font-mono); white-space: nowrap; }
  .cur.flip b { left: auto; right: 4px; }
- .cur b { top: -22px; bottom: auto; }
- .cur.a b { top: -22px; }
- .cur.a { color: var(--text-muted); } .cur.b { color: var(--danger); border-left: 1.5px solid var(--danger); }
+ .cur b { top: 2px; bottom: auto; }
+ /* B is ink like A; it turns red only when it sits on an error. */
+ .cur.a { color: var(--text-muted); } .cur.b { color: var(--text); border-left: 1.5px solid var(--text); }
+ .cur.b.err { color: var(--danger); border-left-color: var(--danger); }
  .pick { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) 0; font-size: var(--text-sm); }
  .pick .chosen { color: var(--text); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--text); }
  .chan { position: relative; }
  .barname { position: absolute; top: 12px; font: 600 var(--text-xs) var(--font-mono); color: var(--text); pointer-events: none; white-space: nowrap; }
- .barname.failed { color: var(--on-accent); }
+ .barname.failed { color: var(--danger); }
  .mode { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
  .mode button { min-height: 30px; padding: 2px 8px; font-size: var(--text-xs); }
  .mode button[aria-pressed=true] { border-color: var(--text); border-bottom-width: 3px; }
- @media (pointer: coarse) { .mode button, .pick .link { min-height: 44px; } }
+ .keys-touch { display: none; }
+ .verdict { margin: var(--space-2) 0 0; font-size: var(--text-sm); font-weight: 600; }
+ .verdict.bad { color: var(--danger); }
+ .note { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--text-muted); }
+ @media (pointer: coarse) { .mode button, .pick .link { min-height: 44px; } .keys { display: none; } .keys-touch { display: block; } }
  .measure { padding: var(--space-3) 0 var(--space-3) var(--space-4); }
  .measure dl { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--space-3); margin: var(--space-2) 0 0; font: var(--text-sm) var(--font-mono); font-variant-numeric: tabular-nums; }
  .measure dt { font: 600 var(--text-xs) var(--font-cond); color: var(--text-muted); padding-top: 2px; } .measure dd { margin: 0; }
  .measure .bad { color: var(--danger); font-weight: 700; }
- .keys { margin: var(--space-3) 0 0; color: var(--text-faint); font-size: var(--text-xs); }
+ .keys, .keys-touch { margin: var(--space-3) 0 0; color: var(--text-faint); font-size: var(--text-xs); }
  @media (max-width: 900px) {
   .strip { grid-template-columns: minmax(0, 1fr); }
   .chart { padding-right: 0; border-right: 0; }
