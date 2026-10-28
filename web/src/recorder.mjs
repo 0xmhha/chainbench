@@ -74,6 +74,18 @@ export function measureVerdict(measure, node, errors) {
  return { abnormal: wrong.length > 0, text: `${head} · 블록 ${block}, 다른 노드 최고 ${top} · 이 구간 오류 ${errors}건` }
 }
 
+// nodeFinding judges the node a failure was asserted on, at the strip's
+// default cursors: it is at fault when a gauge goes wrong against every other
+// node at B or it logged an error or crash in the window. compared is false
+// when no gauge had a sample at B, so a clear finding then claims nothing.
+export function nodeFinding({ metrics, events, node, start, end, from = start, to = end }) {
+ const { a, b } = cursorDefaults({ events, start, end, from, to })
+ const errors = (events ?? []).filter(e => e.level === 'ERROR' || e.level === 'CRIT').length
+ const measure = measureBetween(metrics, node, a, b)
+ const verdict = measureVerdict(measure, node, errors)
+ return { node, abnormal: verdict.abnormal || errors > 0, compared: measure.gauges.some(g => g.b !== null), text: verdict.text }
+}
+
 // readingRows is one row per sample time of node, with each failure gauge's
 // value (null in a gap) and whether it stands out against the other nodes.
 export function readingRows(metrics, node) {

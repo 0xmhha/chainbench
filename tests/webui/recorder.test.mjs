@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { cursorDefaults, nextEvent, measureBetween, measureVerdict, readingRows, stripX, stripTime } from '../../web/src/recorder.mjs'
+import { cursorDefaults, nextEvent, measureBetween, measureVerdict, nodeFinding, readingRows, stripX, stripTime } from '../../web/src/recorder.mjs'
 
 const t = s => new Date(Date.parse('2026-10-23T07:00:00Z') + s * 1000).toISOString()
 
@@ -95,4 +95,20 @@ test('the measure states what it found at B, from values alone and never a guess
  const gap = measureVerdict(measureBetween(metrics, 'node2', t(0), t(20)), 'node2', 0)
  assert.equal(gap.abnormal, false)
  assert.match(gap.text, /^B 시점 node2의 표본이 없어 다른 노드와 비교할 수 없습니다/)
+})
+
+test('the finding faults the asserted node only when its gauges or logs do', () => {
+ // node2 lags every other node at its first error; that is a fault.
+ const lag = nodeFinding({ metrics, events: [{ time: t(25), level: 'ERROR' }], node: 'node2', start: t(10), end: t(25) })
+ assert.deepEqual([lag.node, lag.abnormal, lag.compared], ['node2', true, true])
+ assert.match(lag.text, /^B 시점 node2의 블록 높이, 피어 수, 대기 트랜잭션이 다른 모든 노드와 어긋납니다/)
+ // node1 kept pace and logged nothing, so the assertion is not its fault.
+ const clear = nodeFinding({ metrics, events: [], node: 'node1', start: t(0), end: t(25) })
+ assert.deepEqual([clear.abnormal, clear.compared], [false, true])
+ // An error alone faults the node even where its gauges agree.
+ const logged = nodeFinding({ metrics, events: [{ time: t(5), level: 'CRIT' }], node: 'node1', start: t(0), end: t(25) })
+ assert.equal(logged.abnormal, true)
+ // With no sample at the moment there is nothing to compare and no fault to claim.
+ const gap = nodeFinding({ metrics, events: [], node: 'node2', start: t(0), end: t(20) })
+ assert.deepEqual([gap.abnormal, gap.compared], [false, false])
 })

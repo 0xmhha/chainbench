@@ -1,13 +1,17 @@
 <script>
  // The first line of the job's page: the failure written in red ink with the
- // moment it was recorded, the node ringed, the expected value struck through
+ // moment it was recorded, the node ringed only when the bench finds it at
+ // fault (its gauges or logs), the expected value struck through
  // beside the actual one, and the trail to each piece of evidence. Jobs that
  // did not fail get the same line in their own ink. The history detail opens a
  // recorded run with the same line; scope keeps its test ids apart from the job's.
  import StatusBadge from './StatusBadge.svelte'
  import {formatTime} from './labels.mjs'
  import {assertDiff} from './run-timeline.mjs'
- let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,elapsed=null,stale=false,connection='',trailNode='',scope='job',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
+ let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,elapsed=null,stale=false,connection='',trailNode='',finding=null,scope='job',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
+ // The bench's reading of the asserted node: null until it reads, so the
+ // headline never blames a node on the assertion's target alone.
+ const judged=$derived(finding&&finding.node===head.node?finding:null)
  const shown=value=>typeof value==='string'?value:JSON.stringify(value)
  // A running job's time ticks in whole seconds; a finished one keeps a tenth.
  const clock=ms=>ms<60000?`${Math.floor(ms/1000)}초`:`${Math.floor(ms/60000)}분 ${Math.floor((ms%60000)/1000)}초`
@@ -19,10 +23,11 @@
 <header class="casualty {head.tone}" data-testid="{scope}-headline">
  <div class="when"><span class="t">{time}</span><small>{kind}</small></div>
  <div class="what">
-  <h2>{#if head.test&&head.node}{head.test} 테스트가 <span class="ring">{head.node}</span>에서 실패했습니다{:else}{head.title}{/if}</h2>
+  <h2>{#if head.test&&head.node}{head.test} 테스트가 {#if judged?.abnormal}<span class="ring">{head.node}</span>{:else}{head.node}{/if}에서 실패했습니다{:else}{head.title}{/if}</h2>
   {#if evidence}
    <p class="ev"><code>{evidence.assert}</code> · 기대 <del>{shown(evidence.expected)}</del> · 실제 <ins>{shown(evidence.actual)}</ins>{#if diff} · 차이 <ins>{diff}</ins>{/if}</p>
   {:else if head.reason}<p class="ev">{head.reason}</p>{/if}
+  {#if judged}<p class="finding" class:bad={judged.abnormal} data-testid="{scope}-finding">{judged.text}{#if !judged.abnormal&&judged.compared}. 노드보다 기대값이나 시나리오를 먼저 확인하세요.{/if}</p>{/if}
   {#if head.tone==='fail'&&(head.phase||head.test)}
    <ol class="trail" aria-label="실패 경로">
     {#if head.phase}<li><button type="button" class="link" onclick={onphase}>단계 {head.phase}</button></li>{/if}
@@ -54,6 +59,8 @@
  .ring { border: 2px solid currentColor; border-radius: 50%; padding: 0 .3em; }
  .ev { margin: var(--space-2) 0 0; font: var(--text-sm) var(--font-mono); max-width: 90ch; }
  .ev del { color: var(--text-muted); } .ev ins { text-decoration: none; color: var(--danger); font-weight: 700; }
+ .finding { margin: var(--space-2) 0 0; font-size: var(--text-sm); font-weight: 600; max-width: 90ch; }
+ .finding.bad { color: var(--danger); }
  .trail { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
  .trail .link { font: 600 var(--text-sm) var(--font-cond); letter-spacing: .02em; min-height: 24px; }
  @media (pointer: coarse) { .trail .link { min-height: 44px; } }
