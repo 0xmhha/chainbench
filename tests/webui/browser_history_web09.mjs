@@ -107,6 +107,7 @@ try{
  assert.ok(kept.summary.observations,'archived window lost across restart')
  await page.setViewportSize({width:390,height:844});await page.reload();await page.getByLabel('히스토리 검색',{exact:true}).waitFor()
  await page.screenshot({path:out+'/history-web09-mobile.png',fullPage:true})
- assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'history mobile overflow')
+ const wide=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth?[]:[...document.querySelectorAll('body *')].filter(e=>{if(e.getBoundingClientRect().right<=innerWidth+1)return false;for(let a=e.parentElement;a&&a!==document.body;a=a.parentElement)if(getComputedStyle(a).overflowX!=='visible')return false;return true}).slice(0,6).map(e=>e.tagName+'.'+e.className+' '+Math.round(e.getBoundingClientRect().right)+' '+(e.textContent||'').slice(0,60)))
+ assert.deepEqual(wide,[],'history mobile overflow')
  fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:owned.browser.version(),...record,runningDeletionRefused:true,nonAdminDeletionRefused:true,sharedDeclarationKept:true,restartRetention:true,exportSecretFree:true,runs:{first:firstJob.id,second:secondJob.id,third:thirdJob.id,live},seedAcceptanceAwarded:false},null,2))
 }finally{await owned.stop()}

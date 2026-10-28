@@ -140,7 +140,7 @@
 <style>
   header, .toolbar { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap; } h3 { margin: 0 0 var(--space-2); } p, li, .toolbar { color: var(--text-muted); } header p { margin: 0; max-width: 700px; }
   form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin: var(--space-4) 0; align-items: end; } .search { grid-column: span 2; } input, select { width: 100%; }
-  table { font-size: var(--text-sm); } small { display: block; margin-top: var(--space-1); } td input { width: 16px; } .record { text-align: left; max-width: 320px; white-space: normal; overflow-wrap: anywhere; } .record small { font-family: var(--font-mono); }
+  table { font-size: var(--text-sm); } small { display: block; margin-top: var(--space-1); } td input { width: 16px; } .record { text-align: left; min-width: 12rem; max-width: 320px; white-space: normal; overflow-wrap: anywhere; } .record small { font-family: var(--font-mono); }
   .detail { margin-top: var(--space-5); min-width: 0; scroll-margin-top: var(--space-4); } .assertion td { color: var(--text-muted); }
   @media (max-width: 760px) { form { grid-template-columns: minmax(0, 1fr); } .search { grid-column: auto; } }
 </style>
