@@ -1,6 +1,8 @@
 <script>
   import { webApi } from './web-api.mjs'
   import { openWebAccess } from './web-access.mjs'
+  import { onUnauthorized } from './api-client.mjs'
+  import { expiryDelay } from './session-watch.mjs'
   import { onMount } from 'svelte'
   let { session = $bindable(undefined), ready = $bindable(false) } = $props()
   let username = $state(''), password = $state(''), setupToken = $state(''), bootstrap = $state(false), status = $state(''), busy = $state(false)
@@ -18,7 +20,23 @@
       await loadAccess()
     } catch (e) { session = null; status = e.message } finally { ready = true }
   })
-  $effect(() => { if (!session) return; const timer = setInterval(async () => { try { const r = await fetch('/api/v1/auth/me'); if (r.status === 401) await loadAccess() } catch {} }, 2000); return () => clearInterval(timer) })
+  // The session ends at the time the server stated, or earlier when a request
+  // is refused (signed out or revoked elsewhere); returning to the tab asks once.
+  let checking = false
+  async function recheck() {
+    if (checking) return
+    checking = true
+    try { await loadAccess() } catch (e) { status = e.message } finally { checking = false }
+  }
+  $effect(() => {
+    if (!session) return
+    const delay = expiryDelay(session)
+    const timer = delay === null ? undefined : setTimeout(recheck, delay + 1000)
+    const stop = onUnauthorized(recheck)
+    const returned = () => { if (document.visibilityState === 'visible') api('auth/me').catch(() => {}) }
+    document.addEventListener('visibilitychange', returned)
+    return () => { clearTimeout(timer); stop(); document.removeEventListener('visibilitychange', returned) }
+  })
   async function login() { await work(async () => { try { session = await api(bootstrap ? 'bootstrap' : 'auth/login', 'POST', { username, password, ...(bootstrap ? { setupToken } : {}) }) } finally { password = ''; setupToken = '' } bootstrap = false }) }
 </script>
 <section aria-label="계정 접속">

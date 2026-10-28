@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { apiClient } from './api-client.mjs'
   import { decodeJob, decodeNetworkPage, decodeRun } from './api-decode.mjs'
-  import { jobStream } from './job-stream.svelte.js'
+  import { sharedJobStream } from './job-stream.svelte.js'
   import { jobSummary, failureHeadline, jobDuration, phaseRows, readJobFocus, jobFocusSearch, nodeInMessage } from './job-view.mjs'
   import { formatTime } from './labels.mjs'
   import { follow } from './nav.mjs'
@@ -17,7 +17,7 @@
   import { parseHistoryJSON } from './history-json.js'
   let { jobId, webSession } = $props()
   const client = $derived(apiClient(webSession))
-  const feed = jobStream(), live = feed.state
+  const feed = sharedJobStream(), live = feed.state
   let fetched = $state(null), error = $state('')
   // The live feed carries every committed change; the first read covers the
   // moment before it connects and names a job that does not exist.

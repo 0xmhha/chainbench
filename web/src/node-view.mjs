@@ -32,3 +32,27 @@ export function stateSource(node, fresh) {
  if (node?.observationReason === 'not_observed' || (node?.state === 'unknown' && !node?.observationReason)) return { note: '아직 관측하지 않음 · 기록된 PID는 실제 가동 증거가 아닙니다', pid: '확인 안 함' }
  return { note: `수집기 관측 ${formatTime(node.observedAt)} · 제어하려면 노드 상태를 확인하세요`, pid: `${pid} (수집기)` }
 }
+
+// Live state is stale once the job stream drops or has heard nothing for this
+// long; the server sends an observation every second while it is connected.
+const staleAfterMs = 5000
+
+// liveStale reports whether what the page shows may no longer be true.
+export function liveStale(live, now = Date.now()) {
+ if (live.connection !== '연결됨' || !live.lastObserved) return true
+ return now - Date.parse(live.lastObserved) > staleAfterMs
+}
+
+// shownState is the state a node row shows: its own while live state is
+// fresh, and stale while it is not, keeping what the node last was.
+export function shownState(state, stale) {
+ return stale ? { state: 'stale', last: state } : { state, last: null }
+}
+
+// feedPhase says what a screen built on the job stream can show: nothing yet
+// (loading), nothing because the server cannot be reached, or the snapshot.
+// An empty list is only "empty" once the phase is ready.
+export function feedPhase(live) {
+ if (live.snapshot) return 'ready'
+ return live.error ? 'unreachable' : 'loading'
+}
