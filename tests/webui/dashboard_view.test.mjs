@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { nodeTally, attentionJobs, shortId } from '../../web/src/dashboard-view.mjs'
+import { nodeTally, attentionJobs, shortId, runLabel } from '../../web/src/dashboard-view.mjs'
 
 test('nodes are tallied as running, stopped and everything else', () => {
  assert.deepEqual(nodeTally([{ state: 'running' }, { state: 'running' }, { state: 'stopped' }, { state: 'unknown' }, {}]), { running: 2, stopped: 1, other: 2, total: 5 })
@@ -24,4 +24,9 @@ test('jobs that need attention are the failed and interrupted ones, newest first
 test('long ids are shortened for display only', () => {
  assert.equal(shortId('0123456789abcdef0123456789abcdef'), '01234567…')
  assert.equal(shortId('net-1'), 'net-1')
+})
+
+test('a run record is named by its session moment, not by the prefix every run shares', () => {
+ assert.equal(runLabel('web:20261028-014151-85041/UTC-20261028-014151'), '20261028-014151-85041')
+ assert.equal(runLabel('run-1'), 'run-1')
 })

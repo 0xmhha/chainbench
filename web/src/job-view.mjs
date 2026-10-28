@@ -100,17 +100,20 @@ export function phaseRows(phases) {
  })
 }
 
-// The job detail URL keeps the chosen test and log node so a link opens the
-// same evidence.
-export function readJobFocus(search) {
+// A job or history detail URL keeps the chosen run, test, log node and
+// cursor moment, so a copied link opens the same evidence.
+const FOCUS = ['run', 'test', 'node', 'at']
+export function readFocus(search) {
  const q = new URLSearchParams(search ?? '')
- return { test: q.get('test') ?? '', node: q.get('node') ?? '' }
+ const out = Object.fromEntries(FOCUS.map(k => [k, q.get(k) ?? '']))
+ return { ...out, at: Number.isFinite(Date.parse(out.at)) ? out.at : '' }
 }
 
-export function jobFocusSearch({ test, node }) {
- const q = new URLSearchParams()
- if (test) q.set('test', test)
- if (node) q.set('node', node)
+// focusSearch writes the focus over search, keeping the page's other
+// parameters (the history search) as they were.
+export function focusSearch(focus, search = '') {
+ const q = new URLSearchParams(search)
+ for (const k of FOCUS) if (focus[k]) q.set(k, focus[k]); else q.delete(k)
  const text = q.toString()
  return text ? '?' + text : ''
 }

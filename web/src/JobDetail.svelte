@@ -4,7 +4,7 @@
   import { apiClient } from './api-client.mjs'
   import { decodeJob, decodeNetworkPage, decodeRun } from './api-decode.mjs'
   import { sharedJobStream } from './job-stream.svelte.js'
-  import { jobSummary, failureHeadline, jobDuration, phaseRows, readJobFocus, jobFocusSearch, nodeInMessage } from './job-view.mjs'
+  import { jobSummary, failureHeadline, jobDuration, phaseRows, readFocus, focusSearch, nodeInMessage } from './job-view.mjs'
   import { formatTime } from './labels.mjs'
   import { follow } from './nav.mjs'
   import JobCard from './JobCard.svelte'
@@ -44,11 +44,11 @@
   const duration = $derived(job ? jobDuration(job) : null)
   const stale = $derived(summary?.active && live.connection !== '연결됨')
 
-  // The chosen test and log node live in the URL, so a copied link opens the
-  // same evidence. Without a choice the likeliest cause is shown.
-  const focus = $state(readJobFocus(location.search))
+  // The chosen test, log node and cursor moment live in the URL, so a copied
+  // link opens the same evidence. Without a choice the likeliest cause is shown.
+  const focus = $state(readFocus(location.search))
   $effect(() => {
-    const search = jobFocusSearch(focus)
+    const search = focusSearch(focus, location.search)
     if (search !== location.search) history.replaceState(history.state, '', location.pathname + search)
   })
   const ALL = '*'
@@ -71,7 +71,7 @@
   let opened = $state({})
   const verdicts = run => { const c = run.summary?.counts; return c ? `통과 ${c.pass ?? 0} · 실패 ${c.fail ?? 0} · 막힘 ${c.blocked ?? 0} · 건너뜀 ${c.skip ?? 0}` : '' }
   function reveal(id) { document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }
-  function showTest() { focus.test = head.test; focus.node = ''; reveal('cause') }
+  function showTest() { focus.test = head.test; focus.node = ''; focus.at = ''; reveal('cause') }
   function showNode() {
     if (head.test) focus.test = head.test
     focus.node = trailNode
@@ -104,7 +104,7 @@
     <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {stale} connection={live.connection} {trailNode} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
 
     <!-- A failing test run is the cause a reader came for, so it comes first. -->
-    {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} />{/if}
+    {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} />{/if}
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}
     {#if runsError}<p class="error" role="alert">테스트 실행 기록을 읽지 못했습니다. {runsError}</p>{/if}
 
@@ -114,7 +114,7 @@
         {:else if !networkNodes.length}<p class="muted">네트워크에 기록된 노드가 없어 로그를 열 수 없습니다.</p>
         {:else}
           {#if !phaseSpan}<p class="notice">실패한 단계에 시각이 없어 최근 2시간의 로그를 엽니다.</p>{/if}
-          <CauseBench networkId={network.id} nodes={networkNodes} bind:node={() => phaseNode, v => { focus.node = v }} from={phaseWindow.from} to={phaseWindow.to} start={failedRow?.startedAt} end={failedRow?.finishedAt} logTitle={`${phaseNode === ALL ? '모든 노드' : phaseNode} 로그 · ${summary.failedPhase.name} 단계 구간 · 오류·경고 먼저`} logTestid="phase-logs" />
+          <CauseBench networkId={network.id} nodes={networkNodes} bind:node={() => phaseNode, v => { focus.node = v }} bind:at={focus.at} from={phaseWindow.from} to={phaseWindow.to} start={failedRow?.startedAt} end={failedRow?.finishedAt} logTitle={`${phaseNode === ALL ? '모든 노드' : phaseNode} 로그 · ${summary.failedPhase.name} 단계 구간 · 오류·경고 먼저`} logTestid="phase-logs" />
         {/if}
       </section>
     {/if}

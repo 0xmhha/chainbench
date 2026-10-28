@@ -91,7 +91,7 @@
           <div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /></div>
           {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} catalogRevision={catalogRevision+assetRevision} testOnly={route==='/tests'} />{/key}{/if}
           <div hidden={route !== '/settings'}><SettingsPanel {webSession} {assetRevision} onuploaded={()=>assetRevision++} /></div>
-          <div hidden={route !== '/history'}><HistoryPanel {webSession} /></div>
+          <div hidden={route !== '/history'}><HistoryPanel {webSession} active={route === '/history'} /></div>
         {/key}
         {#if route === '/'}
           <Dashboard />

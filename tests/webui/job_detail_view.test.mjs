@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { jobSummary, failureHeadline, jobDuration, phaseRows, readJobFocus, jobFocusSearch } from '../../web/src/job-view.mjs'
+import { jobSummary, failureHeadline, jobDuration, phaseRows, readFocus, focusSearch } from '../../web/src/job-view.mjs'
 import { failureMetrics } from '../../web/src/metric-chart.mjs'
 
 const ZERO = '0001-01-01T00:00:00Z'
@@ -69,10 +69,17 @@ test('phase rows treat the zero time as missing and open only the failed phase',
 })
 
 test('the URL keeps the chosen test and node, and only those', () => {
- assert.deepEqual(readJobFocus('?test=transfer&node=node2&x=1'), { test: 'transfer', node: 'node2' })
- assert.deepEqual(readJobFocus(''), { test: '', node: '' })
- assert.equal(jobFocusSearch({ test: 'a b', node: 'node2' }), '?test=a+b&node=node2')
- assert.equal(jobFocusSearch({ test: '', node: '' }), '')
+ assert.deepEqual(readFocus('?test=transfer&node=node2&x=1'), { run: '', test: 'transfer', node: 'node2', at: '' })
+ assert.deepEqual(readFocus(''), { run: '', test: '', node: '', at: '' })
+ assert.equal(focusSearch({ test: 'a b', node: 'node2' }), '?test=a+b&node=node2')
+ assert.equal(focusSearch({ test: '', node: '' }), '')
+ // A history link also names the run, and a moved cursor keeps its moment.
+ assert.deepEqual(readFocus('?run=r1&test=t&node=n&at=2026-10-23T07%3A00%3A20.000Z'), { run: 'r1', test: 't', node: 'n', at: '2026-10-23T07:00:20.000Z' })
+ assert.equal(focusSearch({ run: 'r1', test: 't', node: '', at: '2026-10-23T07:00:20.000Z' }), '?run=r1&test=t&at=2026-10-23T07%3A00%3A20.000Z')
+ // A moment that is not a time is dropped rather than carried along.
+ assert.equal(readFocus('?at=yesterday').at, '')
+ // Other parameters of the page (the history search) stay as they were.
+ assert.equal(focusSearch({ run: 'r2' }, '?search=job1&run=r1&test=t'), '?search=job1&run=r2')
 })
 
 test('failure metrics use the canonical series of each concept and fall back to the second source', () => {

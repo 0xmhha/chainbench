@@ -24,3 +24,9 @@ export function attentionJobs(jobs, limit) {
 export function shortId(id) {
  return id && id.length > SHORT_ID + 4 ? id.slice(0, SHORT_ID) + '…' : id
 }
+
+// runLabel names a run record by its session moment: the engine prefix
+// (web:) and the zone suffix after the slash are the same on every run.
+export function runLabel(id) {
+ return String(id ?? '').split('/')[0].replace(/^[a-z]+:/, '')
+}
