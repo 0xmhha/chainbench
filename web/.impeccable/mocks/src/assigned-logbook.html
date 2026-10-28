@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>작업 상세 · 기관 일지 시안</title>
+<style>
+:root{
+ --stock:#e6ece4; --stock-2:#dde5db; --rule:#7f9c88; --rule-faint:#b9cbbd; --ink:#18201b; --ink-2:#47544b;
+ --red:#b0241b; --blue:#23356e; --pencil:#5d6660;
+ --sans:"Avenir Next","Apple SD Gothic Neo",sans-serif; --cond:"Avenir Next Condensed","Apple SD Gothic Neo",sans-serif; --mono:"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}body{margin:0;background:var(--stock);color:var(--ink);font:14px/1.45 var(--sans)}
+::selection{background:#f2d2cf}
+.book{display:grid;grid-template-columns:200px 1fr;min-height:100vh}
+nav{border-right:2px solid var(--rule);padding:20px 16px;background:var(--stock-2)}
+nav b{display:block;font:700 13px var(--cond);letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+nav a{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule-faint);color:var(--ink-2);text-decoration:none;font:500 13px var(--sans)}
+nav a span{font:12px var(--mono);color:var(--pencil)} nav a.on{color:var(--ink);font-weight:700}
+main{padding:18px 28px 28px}
+.folio{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--rule);padding-bottom:6px;font:600 12px var(--cond);letter-spacing:.06em;color:var(--ink-2)}
+.folio strong{color:var(--ink)}
+/* the casualty entry: the failure written in red ink, ringed, as the first line of the page */
+.casualty{display:grid;grid-template-columns:96px 1fr 300px;border-bottom:1px solid var(--rule);}
+.casualty>*{padding:14px 14px 16px}
+.casualty .t{border-right:1px solid var(--rule);font:600 15px var(--mono);color:var(--red)}
+.casualty .t small{display:block;font:11px var(--cond);letter-spacing:.08em;color:var(--ink-2);text-transform:uppercase;margin-top:4px}
+.casualty h1{margin:0;font:700 28px/1.2 var(--sans);color:var(--red);letter-spacing:-.01em}
+.casualty h1 .ring{border:2px solid var(--red);border-radius:50%;padding:0 10px;margin:0 2px}
+.casualty .ev{margin:8px 0 0;font:13px var(--mono);color:var(--ink)}
+.casualty .ev del{color:var(--ink-2)} .casualty .ev ins{text-decoration:none;color:var(--red);font-weight:700}
+.trail{margin-top:10px;display:flex;gap:18px;font:600 13px var(--cond);letter-spacing:.02em}
+.trail a{color:var(--blue);text-decoration:none;border-bottom:1px solid var(--blue)}
+.facts{border-left:1px solid var(--rule);display:grid;grid-template-columns:auto 1fr;gap:3px 12px;align-content:start;font-size:13px}
+.facts dt{font:600 11px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding-top:2px}.facts dd{margin:0;font-family:var(--mono);font-size:12.5px}
+.stamp{display:inline-block;border:2px solid var(--red);color:var(--red);font:700 12px var(--cond);letter-spacing:.14em;padding:1px 8px;transform:rotate(-2deg)}
+.sign{font:italic 13px var(--sans);color:var(--blue)}
+.cols{display:grid;grid-template-columns:1fr 380px;gap:0;border-bottom:2px solid var(--rule)}
+.colhead{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 6px;border-bottom:2px solid var(--rule);font:700 13px var(--cond);letter-spacing:.04em}
+.colhead span{font:500 12px var(--sans);letter-spacing:0;text-transform:none;color:var(--ink-2)}
+.left{padding-right:20px;border-right:1px solid var(--rule)} .right{padding-left:20px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font:600 11px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);text-align:left;padding:5px 8px;border-bottom:1px solid var(--rule)}
+td{padding:4px 8px;border-bottom:1px solid var(--rule-faint);font:12.5px var(--mono);vertical-align:top;white-space:nowrap}
+td+td,th+th{border-left:1px solid var(--rule-faint)}
+.lv{font:700 11px var(--cond);letter-spacing:.06em}
+tr.w .lv{color:#8a5a00} tr.e td{color:var(--red)} tr.e .lv{border:1.5px solid var(--red);border-radius:50%;padding:0 5px}
+tr.mark td:first-child{color:var(--red);font-weight:700}
+td.txt{white-space:normal}
+.chips{display:flex;gap:16px;font:600 13px var(--cond);letter-spacing:.02em;padding:8px 0}
+.chips b{color:var(--red)} .chips a{color:var(--ink-2);text-decoration:none} .chips a.on{color:var(--ink);border-bottom:2px solid var(--ink)}
+.fold{font:italic 12px var(--sans);color:var(--pencil);padding:6px 8px;border-bottom:1px solid var(--rule-faint)}
+/* readings: what the watch recorded, plotted in pencil above its own column of figures */
+.plot{height:70px;border-bottom:1px solid var(--rule);position:relative;margin-top:8px}
+.plot svg{width:100%;height:100%}
+.readings td{text-align:right} .readings td:first-child{text-align:left;color:var(--ink-2)}
+.readings .ab{color:var(--red);font-weight:700;outline:1.5px solid var(--red);outline-offset:-1px;border-radius:40%}
+.readings .gap{color:var(--pencil);font-style:italic}
+.note{font:italic 12px var(--sans);color:var(--blue);margin:8px 0 0}
+.watches{margin-top:4px}
+.watch{display:grid;grid-template-columns:96px 150px 1fr 90px;border-bottom:1px solid var(--rule);padding:8px 0;font-size:13px;align-items:baseline}
+.watch .n{font:700 13px var(--mono)} .watch .s{font:600 11px var(--cond);letter-spacing:.08em;text-transform:uppercase}
+.watch.fail{border-bottom:2px double var(--red)} .watch.fail .n,.watch.fail .s,.watch.fail .m{color:var(--red)}
+.watch .d{text-align:right;font-family:var(--mono);color:var(--ink-2)}
+</style></head><body>
+<div class="book">
+<nav><b>chainbench 일지</b>
+<a href="#">대시보드<span>01</span></a><a href="#">체인 · Workspace<span>02</span></a><a href="#">테스트<span>03</span></a><a href="#">모니터링<span>04</span></a><a class="on" href="#">작업 기록<span>05</span></a><a href="#">히스토리<span>06</span></a><a href="#">설정<span>07</span></a></nav>
+<main>
+<div class="folio"><span>작업 일지 · <strong>test.run</strong> · aaaa…aaaa</span><span>2026-10-23 · 네트워크 eeeeeeee · 노드 4 · 쪽 5</span></div>
+<section class="casualty">
+ <div class="t">16:00:24<small>사고 기록</small></div>
+ <div>
+  <h1>transfer-native 테스트가 <span class="ring">node2</span>에서 실패했습니다</h1>
+  <p class="ev">balance(0xA1) == 1000000000000000000000 · 기대 <del>1000000000000000000000</del> · 실제 <ins>999999999999999979000</ins> · 차이 <ins>−21000</ins></p>
+  <div class="trail"><a href="#">단계 run</a><a href="#">테스트 transfer-native</a><a href="#">노드 node2 로그</a></div>
+ </div>
+ <dl class="facts"><dt>상태</dt><dd><span class="stamp">실패 FAILED</span></dd><dt>걸린 시간</dt><dd>1분 2초</dd><dt>실행</dt><dd>20261023-070000-transfer</dd><dt>시작</dt><dd>15:59:40</dd><dt>기록</dt><dd class="sign">local · 서버 기록</dd></dl>
+</section>
+<div class="cols">
+ <div class="left">
+  <div class="colhead">node2 로그 · 16:00:01 – 16:00:29<span>테스트 구간 앞뒤 5초</span></div>
+  <div class="chips"><a class="on" href="#">오류·경고 <b>5</b></a><a href="#">전체 41</a><a href="#">node2 ▾</a><a href="#">검색 /</a></div>
+  <table><thead><tr><th>시각</th><th>수준</th><th>내용</th></tr></thead><tbody>
+   <tr class="fold-row"><td colspan="3" class="fold">16:00:01 – 16:00:14 · INFO 19줄 접음 · 블록 가져오기 정상</td></tr>
+   <tr class="w"><td>16:00:15.000</td><td class="lv">WARN</td><td class="txt">Synchronisation failed, dropping peer peer=enode://3f…a1 err="timeout"</td></tr>
+   <tr class="w"><td>16:00:17.800</td><td class="lv">WARN</td><td class="txt">Synchronisation failed, dropping peer peer=enode://3f…a1 err="timeout"</td></tr>
+   <tr class="w"><td>16:00:20.600</td><td class="lv">WARN</td><td class="txt">Synchronisation failed, dropping peer peer=enode://3f…a1 err="timeout"</td></tr>
+   <tr class="w"><td>16:00:21.300</td><td class="lv">WARN</td><td class="txt">Synchronisation failed, dropping peer peer=enode://3f…a1 err="timeout"</td></tr>
+   <tr class="e mark"><td>16:00:22.000</td><td class="lv">ERR</td><td class="txt">Failed to apply transaction err="replacement transaction underpriced" nonce=17</td></tr>
+   <tr><td colspan="3" class="fold">16:00:22 – 16:00:29 · INFO 12줄 접음</td></tr>
+  </tbody></table>
+ </div>
+ <div class="right">
+  <div class="colhead">node2 계기 기록<span>5초마다</span></div>
+  <div class="plot"><svg viewBox="0 0 360 70" preserveAspectRatio="none">
+   <rect x="168" y="0" width="54" height="70" fill="#d4d9cf"/><text x="171" y="12" font-size="9" fill="#5d6660" font-style="italic">수집 누락</text>
+   <polyline points="0,62 60,48 120,30 168,22" fill="none" stroke="#23356e" stroke-width="1.4"/><polyline points="222,22 360,22" fill="none" stroke="#23356e" stroke-width="1.4"/>
+   <polyline points="0,58 120,58 160,14 168,14" fill="none" stroke="#5d6660" stroke-width="1.2" stroke-dasharray="3 2"/><polyline points="222,14 360,14" fill="none" stroke="#5d6660" stroke-width="1.2" stroke-dasharray="3 2"/>
+   <line x1="250" y1="0" x2="250" y2="70" stroke="#b0241b" stroke-width="1.5"/><text x="254" y="66" font-size="9" fill="#b0241b">16:00:24</text>
+  </svg></div>
+  <table class="readings"><thead><tr><th>시각</th><th>블록 높이</th><th>피어</th><th>대기 tx</th></tr></thead><tbody>
+   <tr><td>16:00:01</td><td>40</td><td>3</td><td>2</td></tr>
+   <tr><td>16:00:06</td><td>43</td><td>3</td><td>2</td></tr>
+   <tr><td>16:00:11</td><td>45</td><td>3</td><td>2</td></tr>
+   <tr><td>16:00:16</td><td class="ab">46</td><td class="ab">1</td><td class="ab">18</td></tr>
+   <tr><td>16:00:21</td><td class="gap">—</td><td class="gap">—</td><td class="gap">—</td></tr>
+   <tr><td>16:00:26</td><td class="ab">46</td><td class="ab">1</td><td class="ab">20</td></tr>
+  </tbody></table>
+  <p class="note">16:00:16부터 블록이 46에서 멈추고 피어가 3→1로 줄었습니다. 다른 노드는 51까지 진행.</p>
+ </div>
+</div>
+<div class="watches">
+ <div class="colhead">단계<span>당직 순서</span></div>
+ <div class="watch"><span class="n">15:59:40</span><span class="s">성공 succeeded</span><span>prepare</span><span class="d">2.0초</span></div>
+ <div class="watch"><span class="n">15:59:42</span><span class="s">성공 succeeded</span><span>deploy</span><span class="d">18.0초</span></div>
+ <div class="watch fail"><span class="n">16:00:00</span><span class="s">실패 failed</span><span class="m">run · tests failed: 1 fail, 1 blocked</span><span class="d">42.0초</span></div>
+</div>
+</main></div>
+</body></html>

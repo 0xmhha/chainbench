@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>작업 상세 · 출발 안내판 시안</title>
+<style>
+:root{
+ --steel:#8b9196; --steel-2:#6f757a; --frame:#3b4044; --flap:#141618; --flap-hi:#1f2225; --paint:#f3f1ea; --amber:#ffb627; --red:#e5453a; --green:#4cc38a;
+ --cond:"Avenir Next Condensed","Apple SD Gothic Neo",sans-serif; --mono:"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#9aa0a5,#7e858a);color:var(--paint);font:14px/1.4 var(--cond);min-height:100vh;padding:20px}
+.board{background:var(--frame);border-radius:6px;padding:14px;box-shadow:0 10px 24px rgba(0,0,0,.35), inset 0 1px 0 #555b60}
+.board+.board{margin-top:14px}
+.title{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 12px;font:700 13px var(--cond);letter-spacing:.2em;text-transform:uppercase;color:#c9ced2}
+.title b{color:var(--amber)}
+.row{display:grid;gap:6px;align-items:center;padding:4px 0}
+.cells{display:flex;gap:2px}
+.f{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:34px;padding:0 3px;background:linear-gradient(180deg,var(--flap-hi) 0 49%,#0b0c0d 49% 51%,var(--flap) 51%);border-radius:2px;font:700 20px var(--cond);color:var(--paint);text-transform:uppercase}
+.big .f{height:58px;min-width:36px;font-size:36px}
+.lamp{width:12px;height:12px;border-radius:50%;background:#2a2d30;box-shadow:inset 0 1px 2px #000}
+.lamp.on{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.lamp.red{background:var(--red);box-shadow:0 0 8px var(--red)}
+.red .f{color:var(--red)} .amber .f{color:var(--amber)} .green .f{color:var(--green)}
+.head{display:grid;grid-template-columns:150px 330px 90px 110px 1fr 20px;gap:6px;padding:0 0 6px;font:600 11px var(--cond);letter-spacing:.18em;color:#b4babf;text-transform:uppercase;border-bottom:1px solid #50565a;margin-bottom:6px}
+.tests .row{grid-template-columns:150px 330px 90px 110px 1fr 20px}
+.remark{font:600 15px var(--cond);color:#d6dade;letter-spacing:.02em}
+.remark.red{color:var(--red)}
+.hero{display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+.hero .why{font:600 17px var(--cond);color:#e7e9eb;margin-top:10px;letter-spacing:.01em}
+.hero .why em{font-style:normal;color:var(--red)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font:600 13px var(--cond);letter-spacing:.06em;color:#b4babf;text-transform:uppercase}
+.facts dd{margin:0;color:var(--paint);font-family:var(--mono);text-transform:none;letter-spacing:0;font-size:12.5px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.log{font:12.5px/1.6 var(--mono);color:#d6dade}
+.log p{margin:0;padding:2px 0;border-bottom:1px solid #2c3033}
+.log .w{color:var(--amber)} .log .e{color:var(--red);font-weight:700}
+.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g{background:#2c3135;border-radius:3px;padding:8px}
+.g span{font:600 11px var(--cond);letter-spacing:.16em;color:#b4babf;text-transform:uppercase}
+.g svg{width:100%;height:46px;display:block;margin-top:4px}
+</style></head><body>
+<section class="board"><div class="title"><span>CHAINBENCH · 작업 test.run · aaaa…aaaa</span><span><b>실패</b> 16:00:24 · 1분 2초</span></div>
+ <div class="hero"><div>
+  <div class="row big red"><div class="cells"><span class="f">T</span><span class="f">R</span><span class="f">A</span><span class="f">N</span><span class="f">S</span><span class="f">F</span><span class="f">E</span><span class="f">R</span><span class="f">-</span><span class="f">N</span><span class="f">A</span><span class="f">T</span><span class="f">I</span><span class="f">V</span><span class="f">E</span><span class="f">&nbsp;</span><span class="f">실</span><span class="f">패</span></div></div>
+  <p class="why">node2에서 단언 a1 실패 · balance(0xA1) 실제 999999999999999979000, 기대 1000000000000000000000 · 차이 <em>−21000</em></p></div>
+  <dl class="facts"><dt>노드</dt><dd>node2</dd><dt>단계</dt><dd>run</dd><dt>실행</dt><dd>20261023-070000-transfer</dd><dt>네트워크</dt><dd>eeeeeeee · 노드 4</dd><dt>시작</dt><dd>15:59:40</dd></dl></div>
+</section>
+<section class="board tests"><div class="title"><span>테스트 출발 순서</span><span>통과 3 · 실패 1 · 막힘 1 · 건너뜀 1</span></div>
+ <div class="head"><span>시각</span><span>테스트</span><span>노드</span><span>상태</span><span>비고</span><span></span></div>
+ <div class="row"><div class="cells"><span class="f">1</span><span class="f">6</span><span class="f">:</span><span class="f">0</span><span class="f">0</span></div><div class="cells"><span class="f">D</span><span class="f">E</span><span class="f">P</span><span class="f">L</span><span class="f">O</span><span class="f">Y</span><span class="f">-</span><span class="f">C</span><span class="f">O</span><span class="f">N</span><span class="f">T</span><span class="f">R</span></div><div class="cells"><span class="f">—</span></div><div class="cells green"><span class="f">통</span><span class="f">과</span></div><span class="remark">6.0초</span><span class="lamp"></span></div>
+ <div class="row red"><div class="cells"><span class="f">1</span><span class="f">6</span><span class="f">:</span><span class="f">0</span><span class="f">6</span></div><div class="cells"><span class="f">T</span><span class="f">R</span><span class="f">A</span><span class="f">N</span><span class="f">S</span><span class="f">F</span><span class="f">E</span><span class="f">R</span><span class="f">-</span><span class="f">N</span><span class="f">A</span><span class="f">T</span></div><div class="cells"><span class="f">N</span><span class="f">2</span></div><div class="cells"><span class="f">실</span><span class="f">패</span></div><span class="remark red">단언 a1 · 차이 −21000 · tx underpriced</span><span class="lamp red"></span></div>
+ <div class="row amber"><div class="cells"><span class="f">1</span><span class="f">6</span><span class="f">:</span><span class="f">2</span><span class="f">4</span></div><div class="cells"><span class="f">G</span><span class="f">O</span><span class="f">V</span><span class="f">E</span><span class="f">R</span><span class="f">N</span><span class="f">A</span><span class="f">N</span><span class="f">C</span><span class="f">E</span><span class="f">-</span><span class="f">V</span></div><div class="cells"><span class="f">—</span></div><div class="cells"><span class="f">막</span><span class="f">힘</span></div><span class="remark">앞선 transfer-native 실패로 막힘</span><span class="lamp on"></span></div>
+ <div class="row"><div class="cells"><span class="f">1</span><span class="f">6</span><span class="f">:</span><span class="f">2</span><span class="f">6</span></div><div class="cells"><span class="f">B</span><span class="f">A</span><span class="f">L</span><span class="f">A</span><span class="f">N</span><span class="f">C</span><span class="f">E</span><span class="f">-</span><span class="f">C</span><span class="f">H</span><span class="f">E</span><span class="f">C</span></div><div class="cells"><span class="f">—</span></div><div class="cells green"><span class="f">통</span><span class="f">과</span></div><span class="remark">8.0초</span><span class="lamp"></span></div>
+</section>
+<section class="board"><div class="split">
+ <div><div class="title"><span>node2 로그 · 앞뒤 5초 · 오류·경고 5</span></div><div class="log"><p class="w">16:00:15.000 WARN Synchronisation failed, dropping peer err="timeout"</p><p class="w">16:00:17.800 WARN Synchronisation failed, dropping peer err="timeout"</p><p class="w">16:00:20.600 WARN Synchronisation failed, dropping peer err="timeout"</p><p class="e">16:00:22.000 ERROR Failed to apply transaction err="replacement transaction underpriced" nonce=17</p></div></div>
+ <div><div class="title"><span>node2 계기 · 같은 구간</span></div><div class="gauges">
+  <div class="g"><span>블록 46 정지</span><svg viewBox="0 0 100 46" preserveAspectRatio="none"><polyline points="0,40 30,26 45,12 100,12" fill="none" stroke="#f3f1ea" stroke-width="1.6"/><line x1="70" y1="0" x2="70" y2="46" stroke="#e5453a" stroke-dasharray="3 2"/></svg></div>
+  <div class="g"><span>피어 3→1</span><svg viewBox="0 0 100 46" preserveAspectRatio="none"><polyline points="0,8 40,8 46,38 100,38" fill="none" stroke="#f3f1ea" stroke-width="1.6"/><line x1="70" y1="0" x2="70" y2="46" stroke="#e5453a" stroke-dasharray="3 2"/></svg></div>
+  <div class="g"><span>대기 tx 2→20</span><svg viewBox="0 0 100 46" preserveAspectRatio="none"><polyline points="0,40 40,40 50,14 100,8" fill="none" stroke="#f3f1ea" stroke-width="1.6"/><line x1="70" y1="0" x2="70" y2="46" stroke="#e5453a" stroke-dasharray="3 2"/></svg></div>
+ </div></div>
+</div></section>
+</body></html>

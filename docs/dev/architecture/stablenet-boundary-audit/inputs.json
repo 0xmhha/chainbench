@@ -1,0 +1,16 @@
+{
+  "observed_at_utc": "2026-09-13T15:44:20Z",
+  "chainbench_commit": "7f39c5627e0bdaccaa8e207a67767d71579283f5",
+  "stablenet_binary": {
+    "path": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable",
+    "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e"
+  },
+  "evidence_sources": {
+    "tests/e2e/harness_test.go": "06ad4abfd1caef28702814d8676445effcfa890a191df2e29f3090e0dd8fae35",
+    "tests/e2e/stablenet_chain_test.go": "86be84b7245903bfc255eb9e4798bd5efa9610e77dc2c1471e31878cff2221e2",
+    "internal/core/rpc/client.go": "e5006bbd77915e9d0455e2c1df25b6bd704417aa30408d00fb9ee0c1d677c609",
+    "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/core/blockchain.go": "4d4a46bef3572d0057391c48fc1a28034c4bca2530a851a68217278c6af13d14",
+    "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/eth/api_backend.go": "daccf22dc4c683298a4ba456680e9485875c77e1a0d0910827887748191d7fd7",
+    "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/internal/ethapi/api.go": "9496d5e6cdc6616faf70ef3e1d753f0598199ed4b6aada5779c86d5f0c279f61"
+  }
+}
