@@ -2,7 +2,7 @@
 
 > **[제안] (2026-09-28).** 결정이 아니다. 아래 수치는 이날 `c08afbcd` 기준 실측이고,
 > 인용하기 전에 다시 잰다. 상위 제안은
-> [`chain-as-a-run-dimension.md`](chain-as-a-run-dimension.md) 이고 이 문서는 그 §4 의
+> `chain-as-a-run-dimension.md`(지운 문서) 이고 이 문서는 그 §4 의
 > 1번과 3번을 연다.
 
 ## 1. 무엇이 문제인가

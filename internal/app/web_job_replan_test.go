@@ -78,4 +78,9 @@ func TestWebJobReplanRefusesOthersUnknownAndRunningJobs(t *testing.T) {
 	if _, err := running.Replan(context.Background(), alice, live.ID); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatalf("a running job was replanned: %v", err)
 	}
+	// End the job before the test's directory is removed under it.
+	if _, err := running.Cancel(alice, live.ID); err != nil {
+		t.Fatal(err)
+	}
+	waitJob(t, running, live.ID)
 }

@@ -8,8 +8,8 @@
 > 그래서 genesis·config 를 "그때그때" 만들게 되고, preset 없이는 아무것도 구성할 수 없다.
 > 목표: **하나의 선언 문서**가 네트워크 전체를 기술하고, 거기서 모든 산출물이 파생된다.
 >
-> 실측: 2026-08-18. 관련: [[surface-unification-design]](surface-unification-design.md) ·
-> [[family-bringup-design]](family-bringup-design.md) · [[server-set]](server-set.md).
+> 실측: 2026-08-18. 관련: surface-unification-design(지운 문서) ·
+> family-bringup-design(지운 문서) · [[server-set]](server-set.md).
 > 작업 순서는 [[chainbench-worklist]](chainbench-worklist.md) §1g.
 
 > **경로 정정 (2026-09-11).** 실측은 2026-08-18 기준이다. 본문 §부록의 패키지 표에서

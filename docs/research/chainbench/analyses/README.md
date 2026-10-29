@@ -5,23 +5,12 @@
 
 읽는 순서를 정하는 색인이 아니라, **끊어진 인용을 만들지 않기 위한 목록**이다.
 
-| 파일 | 누가 인용하나 |
-|---|---|
-| `10-prepared-inputs-server-ref-handoff.md` | `docs/dev/chainbench-worklist.md:1781`, `docs/guide/config-files.md:141` |
-| `12-mainnet-profile-plan.md` | `docs/dev/architecture/mainnet-config-worklist.md:11` |
-| `18-hsm-state-diagrams-2026-09-22.md` | `graph/README.md` |
-| `19-state-machine-gaps-2026-09-24.md` | 상태 머신 빈 경로 수정안의 검토 근거(수정이 들어가면 그 커밋이 인용한다) |
-| `20-state-naming-review-2026-09-24.md` | 상태 이름을 02 규약으로 되돌리는 검토(결정 D1~D5 뒤 구현 커밋이 인용한다) |
-| [`web-account-flag-2026-10-13/`](web-account-flag-2026-10-13/README.md) | Web 계정 선택 플래그의 구현 전 검토. 전체 AST 그래프와 수정 범위, 모드 전환 정책. |
-
-`18-hsm-state-diagrams-2026-09-22.md` 는 두 machine(`composition`, `run`)의 **state diagram** 이다.
-state tree, Cmd 와 Event 목록, 전이와 그 조건, error 가 어디로 가는지를 코드에서 뽑아 mermaid 로
-그렸다. `graph/lifecycle-transitions.mmd` 는 제거된 옛 lifecycle 을 그린 것이라 이것과 다른 그림이며,
-18번이 그 자리를 대신한다. 코드가 바뀌면 같이 고친다.
-
-`graph/` 는 어느 파일이 어느 커밋을 잰 것인지 [`graph/README.md`](graph/README.md) 에 적는다.
+지금은 인용되는 분석이 없어 남은 파일도 없다.
 
 ## 지운 것
+
+2026-10-29 에 지운 것: 일이 끝난 분석 `10`·`19`·`20`, Web 계정 플래그 구현 전 검토 `web-account-flag-2026-10-13/`,
+대체된 `12`·`18`, 옛 측정 `graph/`. 본문은 `git show ec8a4d1c:docs/research/chainbench/analyses/<파일>` 로 본다.
 
 2026-09-24 에 지운 것: 상태 주도 리팩토링의 검토·작업 prompt 다섯(`13`~`17`) — 리팩토링이
 PR #425(`cde3a08f`)로 머지됐고 결론은 `docs/dev/architecture/design-v3/` 에 있다. 모니터링

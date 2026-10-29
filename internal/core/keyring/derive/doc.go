@@ -18,5 +18,5 @@
 // fail, not merely change.
 //
 // Deriving in process is what removed the external bootnode binary from the
-// preset generator (docs/dev/keyring-design.md).
+// preset generator (docs/guide/keyring.md).
 package derive
