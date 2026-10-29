@@ -162,6 +162,7 @@
 <style>
   .page { min-width: 0; }
   .back { margin: 0 0 var(--space-2); font-size: var(--text-sm); }
+  @media (pointer: coarse) { .back a { display: inline-flex; align-items: center; min-height: 44px; } }
   .run { margin-top: var(--space-4); padding-top: var(--space-2); border-top: var(--rule-strong); }
   .run > summary { cursor: pointer; padding: var(--space-2) 0; font: 600 var(--text-sm) var(--font-cond); }
   .run > summary .muted { margin-left: var(--space-2); font: var(--text-xs) var(--font-mono); }

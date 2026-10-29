@@ -50,7 +50,7 @@
  .num { font: var(--text-sm) var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
  .name { font: 600 var(--text-sm) var(--font-mono); text-decoration: none; color: var(--text); text-align: left; white-space: normal; }
  .name:hover { text-decoration: underline; }
- @media (pointer: coarse) { .name { min-height: 44px; } }
+ @media (pointer: coarse) { .name, td .link, .steps .link { min-height: 44px; } }
  tr.failed .name { color: var(--danger); }
  tr.chosen > td { background: var(--surface-raised); }
  tr.chosen .name { border-bottom: 2px solid currentColor; }

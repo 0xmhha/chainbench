@@ -116,7 +116,7 @@
   <div class="toolbar"><span>{items.length}개 표시 · 비교는 2–4개 선택</span><button disabled={busy || selected.length < 2} onclick={compare}>선택한 실행 비교</button></div>
   {#if items.length === 0}<p class="empty">조건에 맞는 실행 기록이 없습니다.</p>{:else}
     <div class="table-wrap"><table><thead><tr><th>비교</th><th>실행</th><th>체인 / Workspace</th><th>시작 시각</th><th>상태</th><th>결과</th></tr></thead><tbody>{#each items as run (run.id)}<tr>
-      <td><input name="compare" value={run.id} type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></td>
+      <td><label class="check-cell"><input name="compare" value={run.id} type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></label></td>
       <td><button class="record" onclick={() => open(run.id)}>{run.summary.operation ?? run.summary.command ?? run.id}<small>{run.id}</small></button></td>
       <td>{run.chain || '자료 없음'}<small>{run.workspaceId || '자료 없음'}</small></td><td>{format(run.startedAt)}</td><td><StatusBadge state={run.state} /></td>
       <td>{#if run.summary.counts}<span>통과 {run.summary.counts.pass} · 실패 {run.summary.counts.fail} · 막힘 {run.summary.counts.blocked} · 건너뜀 {run.summary.counts.skip}</span>{:else}<span>작업 단계 기록</span>{/if}</td>
