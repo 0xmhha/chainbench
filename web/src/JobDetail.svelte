@@ -8,6 +8,7 @@
   import { formatTime } from './labels.mjs'
   import { follow } from './nav.mjs'
   import JobCard from './JobCard.svelte'
+  import RerunPlan from './RerunPlan.svelte'
   import { recordName } from './dashboard-view.mjs'
   import CasualtyEntry from './CasualtyEntry.svelte'
   import CauseBench from './CauseBench.svelte'
@@ -118,6 +119,8 @@
     <div class="folio"><span>작업 일지 · <strong>{job.operation}</strong> · <code>{job.id.slice(0, 8)}</code></span><span>{formatTime(job.createdAt).slice(0, 10)}{#if network} · 네트워크 <code>{network.id.slice(0, 8)}</code> · 노드 {networkNodes.length}{/if}</span></div>
     <CasualtyEntry {job} {head} {summary} {network} nodeCount={networkNodes.length} at={failureAt} {evidence} {duration} {elapsed} {stale} connection={live.connection} {trailNode} {finding} onphase={() => reveal('phases')} ontest={showTest} onnode={showNode} />
 
+    <!-- The owner can run a finished job again from its recorded input, after review. -->
+    {#if job.terminal && webSession?.user && job.actorId === webSession.user.id && webSession.user.role !== 'viewer'}<RerunPlan {job} {webSession} />{/if}
     <!-- A failing test run is the cause a reader came for, so it comes first. -->
     {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} bind:finding />{/if}
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}

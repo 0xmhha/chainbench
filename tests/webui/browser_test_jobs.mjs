@@ -63,7 +63,8 @@ try{
       const response=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
       await clickRun(page)
       const started=await response;assert.equal(started.status(),202)
-      await waitJob((await started.json()).id,'succeeded')
+      const first=await started.json()
+      await waitJob(first.id,'succeeded')
       await page.locator('a.session-link[href^="/history?run="]').first().waitFor()
       const owned=(await api('networks')).items.find(n=>n.workspaceId===w.id)
       assert.ok(owned.nodes.find(n=>n.id==='node1').pid>0,'test did not retain the actual node process')
@@ -72,6 +73,32 @@ try{
       const stop=await api('jobs','POST',{planId:control.id},control.id,202)
       await waitJob(stop.id,'succeeded')
       assert.equal((await api('networks')).items.find(n=>n.workspaceId===w.id).nodes.find(n=>n.id==='node1').pid,0,'retained test node was not stopped')
+      // Running the finished test job again: a fresh plan from its recorded
+      // input, reviewed on the job page, started only by the reviewed button.
+      // One chain proves the path; a gwemix node the rerun has just started can
+      // outlast the runner's ten-second shutdown wait, so wemix is not rerun.
+      if(i===0){
+      await page.goto(f.url+'/jobs/'+first.id)
+      await page.getByRole('button',{name:'다시 실행 계획 만들기',exact:true}).click()
+      const rerun=page.getByLabel('다시 실행',{exact:true})
+      await rerun.getByRole('heading',{name:'다시 실행 계획',exact:true}).waitFor()
+      await rerun.getByText(/확인된 자원 충돌이 없습니다|실행할 수 없습니다/).waitFor()
+      const blocked=(await rerun.getByText(/실행할 수 없습니다/).count())>0
+      let again=null
+      if(blocked)assert.ok(await rerun.getByRole('button',{name:'검토한 계획 실행',exact:true}).isDisabled(),'a blocked rerun can start')
+      else{
+        const rerunResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
+        await rerun.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+        const rerunStarted=await rerunResponse;assert.equal(rerunStarted.status(),202)
+        again=await rerunStarted.json();assert.notEqual(again.id,first.id);assert.equal(again.operation,first.operation)
+        await waitJob(again.id,'succeeded')
+        await page.waitForURL(f.url+'/jobs/'+again.id)
+        // The rerun retains its node as the first run did, so it is stopped the same way.
+        const restop=await api('plans','POST',{workspaceId:w.id,operation:'node.stop',documentRefs:w.documents,assetRefs:[chain],nodeIds:['node1'],retention:'retain',arguments:{manifestId:chain,assetId:chain,serverRef:'local',validators:4}},undefined,201)
+        await waitJob((await api('jobs','POST',{planId:restop.id},restop.id,202)).id,'succeeded')
+      }
+      jobs.push({rerunOf:first.id,rerunJob:again?.id??null,rerunBlockedByConflict:blocked})
+      }
       await page.screenshot({path:out+'/test-results.png',fullPage:true})
     }
   }

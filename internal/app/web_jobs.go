@@ -209,6 +209,40 @@ func (s *WebJobs) Plan(ctx context.Context, a DeploymentActor, in WebPlanInput) 
 	return plan, err
 }
 
+// Replan prepares a fresh plan from a finished job's recorded input, so the
+// same operation can run again after the owner reviews it. The input keeps
+// its pinned revisions and the owner's own credential bindings, so only the
+// owner may replan, and a job still running is refused. It goes through Plan,
+// which checks the input, the targets and the engine exactly as a new plan.
+func (s *WebJobs) Replan(ctx context.Context, a DeploymentActor, jobID string) (WebPlan, error) {
+	s.mu.Lock()
+	job, ok := s.state.Jobs[jobID]
+	saved, recorded := s.state.Plans[job.PlanID]
+	s.mu.Unlock()
+	if !ok {
+		return WebPlan{}, ErrDeploymentNotFound
+	}
+	if job.ActorID != a.ID {
+		return WebPlan{}, ErrDeploymentForbidden
+	}
+	if !terminalWebJob(job.State) {
+		return WebPlan{}, ErrDeploymentConflict
+	}
+	if !recorded {
+		return WebPlan{}, errors.New("the job's recorded plan is missing")
+	}
+	// A copy, so preparing the new plan cannot reach into the stored one.
+	b, err := json.Marshal(saved.Input)
+	if err != nil {
+		return WebPlan{}, err
+	}
+	var in WebPlanInput
+	if err = json.Unmarshal(b, &in); err != nil {
+		return WebPlan{}, err
+	}
+	return s.Plan(ctx, a, in)
+}
+
 func jobBody(planID string) string {
 	b := sha256.Sum256([]byte(planID))
 	return hex.EncodeToString(b[:])

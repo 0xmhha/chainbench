@@ -1484,6 +1484,36 @@ paths:
         in: path
         required: true
         schema: *id002
+  /api/v1/jobs/{jobId}/plan:
+    post:
+      operationId: replanJob
+      summary: Owner prepares a fresh plan from a finished job's recorded input
+      x-minimum-role: operator
+      description: The new plan carries the job's recorded input unchanged, including its pinned document and case revisions and the owner's own credential bindings, and is validated exactly as POST /api/v1/plans. Nothing runs until the owner reviews it and starts it with POST /api/v1/jobs. Only the job's own actor may replan, and a job that is still running is refused with 409. The plan and job flow behind POST /api/v1/plans is unchanged.
+      responses:
+        '201':
+          description: A fresh plan of the same operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: *id002
   /api/v1/jobs/{jobId}/reconcile:
     post:
       operationId: reconcileJob

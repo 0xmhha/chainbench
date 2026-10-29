@@ -127,6 +127,12 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 			job, err := jobs.Get(r.PathValue("jobId"))
 			deploymentResponse(w, job, err, 200)
 		})
+		// A fresh plan from a finished job's recorded input; it runs only once
+		// the owner reviews it and starts it through POST /api/v1/jobs.
+		route("POST /api/v1/jobs/{jobId}/plan", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			plan, err := jobs.Replan(r.Context(), a, r.PathValue("jobId"))
+			deploymentResponse(w, plan, err, http.StatusCreated)
+		})
 		route("POST /api/v1/jobs/{jobId}/reconcile", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
 			defer cancel()
