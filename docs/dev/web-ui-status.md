@@ -1,6 +1,6 @@
 # Web UI 현황과 남은 작업 (2026-10-29)
 
-Web UI 리뉴얼은 화면보다 데이터 목록, 모델, 수집 구조를 먼저 정하는 순서로 진행했고, 화면 단계와 인수 확인까지 끝났다. 그 계획 문서(`web-data-model-plan.md`)는 일이 끝나 지웠고, 지금도 지키는 원칙은 아래 6절로 옮겼다. 이 문서는 무엇이 끝났는지, 무엇을 확인하지 못했는지, 다음에 무엇을 정해야 하는지를 한곳에 모은다. 화면 규칙은 [web/DESIGN.md](../../web/DESIGN.md), 사용자와 사용 장면은 [web/PRODUCT.md](../../web/PRODUCT.md), API 계약은 [web-ui.openapi.yaml](web-ui.openapi.yaml)이 정본이다.
+Web UI 리뉴얼은 화면보다 데이터 목록, 모델, 수집 구조를 먼저 정하는 순서로 진행했고, 화면 단계와 인수 확인까지 끝났다. 그 계획 문서(`web-data-model-plan.md`)는 일이 끝나 지웠고, 지금도 지키는 원칙은 아래 7절로 옮겼다. 이 문서는 무엇이 끝났는지, 무엇을 확인하지 못했는지, 다음에 무엇을 정해야 하는지를 한곳에 모은다. 화면 규칙은 [web/DESIGN.md](../../web/DESIGN.md), 사용자와 사용 장면은 [web/PRODUCT.md](../../web/PRODUCT.md), API 계약은 [web-ui.openapi.yaml](web-ui.openapi.yaml)이 정본이다.
 
 ## 1. 끝난 것
 
@@ -44,11 +44,20 @@ WEB-01~14 전체 capture를 `72a7b464`(#500 머지 뒤)에서 돌려 14개 모�
 - 첫 capture에서 WEB-13이 한 번 SSH 자격증명 교체 계획 요청 30초 시간 초과로 실패했다. 원인은 모르고, 그 뒤 두 번의 capture에서는 다시 나지 않았다.
 - WEB-14 로그의 `Unknown config environment variable envvar=GWEMIX_BIN` 경고는 geth의 환경변수 검사가 내는 것으로 보이지만 확인하지 않았다.
 
-## 5. 다음 순서 제안
+## 5. 문서 정리 중 발견한 것
+
+2026-10-29 문서를 코드와 대조해 정리하면서(#510, 이 문서의 뒤 PR) 고치지 않고 남긴 것이다.
+
+- `tests/repro/attach-external.sh`는 지금 없는 `chainbench test --rpc`를 불러 실패한다. `tests/repro/run-all.sh`의 전체 실행 예도 이 스크립트를 부른다. 지금 동작하는 방법은 `chainbench run --rpc <url> --chain <id> <spec>`이다.
+- `scripts/inventory/list-adapter-functions.sh`와 `scan-binary-hardcoding.sh`는 지금 없는 옛 셸 파일을 읽어 오류로 끝난다.
+- 루트 `CLAUDE.md`는 지운 Web UI 인수인계와 resume prompt를 먼저 읽으라고 하고, Web UI 작업이 draft PR #443에서 멈춰 있다고 적는다. 자동으로 읽히는 설정 파일이라 저장소 주인이 직접 고친다.
+- `docs/dev/web-ui-evidence/`의 게시 증거는 2026-10-13 capture의 것이다. 다음 전체 capture가 다시 만든다.
+
+## 6. 다음 순서 제안
 
 먼저 wemix 종료 문제를 짧게 조사한다. 실제 결함이면 capture 전에 고쳐야 하기 때문이다. 그다음 WEB-01~14 전체 capture를 한 번 돌리고, 결과를 이 문서에 덧붙인다.
 
-## 6. 지금도 지키는 원칙
+## 7. 지금도 지키는 원칙
 
 2026-10-25에 정한 것 가운데 계속 지키는 것이다.
 
