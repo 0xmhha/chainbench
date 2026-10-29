@@ -67,6 +67,12 @@
 
 ## C. 현재 코드 격차 — 우리의 문제점
 
+> **시점 안내 (2026-10-29).** 이 절과 §C-etcd, §E 의 "현재"는 2026-08 초 코드의 기록이다. 그 뒤 많은 것이 바뀌었다.
+> `testkit`·`pipeline/verify`·`procman`·`portplan`·`driver`·`consensus/upgrade` 패키지는 없어졌다. JSON 정의서 DSL과 해석기는
+> `internal/dsl` 과 `internal/dsl/interp` 에, 세션 기록은 `internal/core/session` 에 있다. 프로세스 관리는 `internal/core/process`,
+> 포트 배정은 `internal/resource` 가 맡는다. 지금 구조는 [architecture/layers.md](architecture/layers.md) 와
+> [architecture/package-tree.md](architecture/package-tree.md) 를 본다. §A·§B 의 요구와 판단은 그대로 유효하다.
+
 | 요구군 | 현재 상태 | 판정 | 핵심 문제 |
 |--------|-----------|------|-----------|
 | 1,2,3,18,24 멀티체인 플러그인 | `registry` + `chains/{stablenet,wbft,wemix}`, `Family()` | 🟢 구조 있음 | 체인별 **노드구성법(2)**·**테스트 적용성(3)** 을 선언·강제하는 매트릭스 없음 |

@@ -15,12 +15,18 @@ npm --prefix web run build
 
 `vite build` writes the static bundle to `internal/dashboard/spa/` (committed),
 which `internal/dashboard/spa.go` embeds with `go:embed`. The Go server serves it
-at `/`, with `/chains`, `/tests`, `/monitoring`, `/history` and `/settings` routes.
-Rebuild and commit `internal/dashboard/spa/` whenever the source
-changes.
+at `/`, with `/chains`, `/tests`, `/monitoring`, `/history` and `/settings` routes
+and the detail pages `/jobs/<id>` and `/nodes/<id>/<name>`. The server also has a
+no-JS page at `/legacy` and a health check at `/healthz`. Rebuild and commit
+`internal/dashboard/spa/` whenever the source changes, and build the SPA before
+the Go binary that embeds it.
 
-The normal daemon defaults to `-accounts=false`: on loopback, the browser opens
-automatically with a stable local operator, CSRF protection and audit records.
+`npm --prefix web run check` runs svelte-check, the gate CI runs on every change.
+The Node tests for the SPA live in `tests/webui/*.test.mjs`
+(`node --test tests/webui/*.test.mjs`).
+
+The normal daemon defaults to `-accounts=false`: on loopback, the Web opens
+without registration, with a stable local operator, CSRF protection and audit records.
 Use `-accounts=true` to enable registration, login and account roles. The first
 administrator then uses the private `setup.token` in the Web data directory.
 Account-free access is limited to localhost and loopback addresses, refuses to
@@ -36,12 +42,18 @@ The local operator retains its credential ownership across restart. Changing
 account modes preserves existing users and artifacts but does not adopt the
 other mode's personal credentials or job identities.
 
+The Web does not carry its own execution engine. A job runs the `chainbench` CLI,
+found beside the dashboard binary, then on PATH, or named with `-chainbench`
+(`internal/webcli`).
+
 Provision native binaries with `-manifest-assets` to enable local and SSH durable jobs.
 The browser reviews a short-lived plan before submitting it. Jobs survive browser
 disconnects and become interrupted on server restart. SSH uses the initiating user's
 encrypted credential binding and verifies the target identity, platform and paths.
-Test jobs, asset replacement, metric charts and complete test/metric/log archives remain under implementation; the
-approved Web specification retains all nine requirements.
+Test jobs, asset replacement, node metric charts and test/metric/log archives are
+implemented; the owner of a finished job can plan it again from its recorded input
+and start it after review. What remains open is listed in
+[`docs/dev/web-ui-status.md`](../docs/dev/web-ui-status.md).
 
 History supports server-side search and filters, verdict comparisons with explicit
 compatibility limits, redacted JSON downloads and administrator deletion of the
@@ -63,5 +75,9 @@ It does not replace the fourteen acceptance criteria.
 ## Dev
 
 ```sh
-npm --prefix web run dev   # Vite dev server; proxy /events + /api to a running dashboard
+npm --prefix web run dev   # Vite dev server for the SPA alone
 ```
+
+`web/vite.config.js` configures no dev proxy, so the dev server does not forward
+`/api` to a running dashboard. To see the SPA against real data, build it and run
+`chainbench-dashboard`.

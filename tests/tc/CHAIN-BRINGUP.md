@@ -11,9 +11,9 @@
 
 | 갈래 | 대표 preset | binary | 세우는 방식 |
 |---|---|---|---|
-| go-stablenet | `stablenet-bp4` 외 19개 | `gstable` | 워크스페이스 단계 |
-| go-wbft | `wbft-bp4` 외 6개 | `gwbft` | 워크스페이스 단계 |
-| go-wemix (poa) | `wemix-bp4` 외 5개 | `gwemix` | 워크스페이스 단계 — poa 가 governance → etcd → join 2단계 부트스트랩을 더 탄다 |
+| go-stablenet | `stablenet-bp4` 외 22개 | `gstable` | 워크스페이스 단계 |
+| go-wbft | `wbft-bp4` 외 7개 | `gwbft` | 워크스페이스 단계 |
+| go-wemix (poa) | `wemix-bp4` 외 6개 | `gwemix` | 워크스페이스 단계 — poa 가 governance → etcd → join 2단계 부트스트랩을 더 탄다 |
 | go-wemix → go-wbft | `wemix-to-wbft`, `wemix-to-wbft-bp2` | 둘 다 | 워크스페이스 단계 + 포크 지점에서 바이너리 교체 |
 
 케이스는 `chainPreset` 에 이름만 적는다.

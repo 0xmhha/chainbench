@@ -5,9 +5,10 @@
 
 | 경로 | 티어 | 무엇인가 | 어떻게 도는가 |
 |---|---|---|---|
-| [`tc/`](tc/README.md) | **DSL 케이스** | `schemaVersion: "2"` 문서 하나가 체인 구성과 검증을 함께 선언한다. | `chainbench run tests/tc/<경로>` 또는 `chainbench run --attach --rpc <url>` |
+| [`tc/`](tc/README.md) | **DSL 케이스** | `schemaVersion: "2"` 문서 하나가 체인 구성과 검증을 함께 선언한다. | `chainbench run --workspace-dir <ws> tests/tc/<경로>`(선언한 네트워크를 구성), `chainbench run --attach --workspace-dir <ws> <케이스>`(그 작업공간이 이미 띄운 네트워크), `chainbench run --rpc <url> --chain <id> <케이스>`(살아 있는 네트워크) |
 | [`e2e/`](e2e/README.md) | **라이브 Go e2e** | 실제 체인 바이너리로 네트워크를 띄워 끝까지 몬다. `//go:build e2e` 로 게이트돼 `go test ./...` 에서는 컴파일되지 않는다. | `go test -tags e2e ./tests/e2e/` + `GSTABLE_BIN`·`WBFT_BIN`·`WEMIX_BIN` |
 | [`repro/`](repro/README.md) | **재현 런북** | CI 에서 돌 수 없는 회귀 시나리오를 빌드된 CLI 로 재현하는 셸 스크립트. | 저장소 루트에서 직접 실행 (바이너리가 없으면 exit 2) |
+| [`webui/`](webui/README.md) | **Web UI 테스트** | 대시보드 SPA 와 `/api/v1` 을 검사하는 Node 테스트(`*.test.mjs`)와 Python 테스트(`test_*.py`), 그리고 실제 바이너리로 WEB-NN 수용 기준을 확인하는 라이브 러너다. | `node --test tests/webui/*.test.mjs`, `python3 -m unittest discover -s tests/webui -p 'test_*.py'`, 라이브 증명은 `tests/webui/verify.sh --criterion WEB-NN --require-live` |
 
 단위 테스트는 여기 없다. 각 패키지 옆의 `*_test.go` 에 있고 `go test ./...` 가
 돌린다. `internal/arch` 의 아키텍처 래칫도 그 축이다.

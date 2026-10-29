@@ -24,6 +24,7 @@
 | [07-glossary.md](07-glossary.md) | 용어집 |
 | [08-appendix-a-two-chain-tests.md](08-appendix-a-two-chain-tests.md) | 부록 A. 두 체인에서만 가능한 테스트 |
 | [09-appendix-b-excluded-tests.md](09-appendix-b-excluded-tests.md) | 부록 B. 공통에서 제외한 테스트와 이유 |
+| [10-ct-dsl-mapping.md](10-ct-dsl-mapping.md) | (Confluence 페이지 없음) CT 와 `tests/tc/common` DSL 파일의 대응. 이 저장소가 더한 문서 |
 
 ---
 
@@ -45,15 +46,15 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 ## 결과 요약
 
-같은 목적의 테스트를 하나로 합쳐 공통 테스트 70개를 만들었다. 각 테스트에 새 ID(CT-)를 붙였고, 합쳐진 기존 ID는 비고에 모두 적었다. 70개 모두 세 체인에서 도는 자동 테스트가 있다.
+같은 목적의 테스트를 하나로 합쳐 공통 테스트 70개를 만들었다. 각 테스트에 새 ID(CT-)를 붙였고, 합쳐진 기존 ID는 비고에 모두 적었다. 70개 모두 세 체인에서 도는 자동 테스트가 있다. 2026-10-20 에 이 저장소가 CT-CONTRACT-008 과 CT-RPC-016 을 더해 지금은 72개다. 아래 영역별 수는 72개 기준이고, 분리 방식별 수는 두 개를 아직 분류하지 않은 70개 기준이다.
 
 | 영역 | 뜻 | 수 |
 | --- | --- | --- |
 | NODE | 노드·동기화·네트워크 | 15 |
 | TX | 트랜잭션 전송·거부 | 20 |
 | FEE | 수수료·가스 정책 | 7 |
-| CONTRACT | 컨트랙트 실행 | 7 |
-| RPC | 조회·구독 API | 15 |
+| CONTRACT | 컨트랙트 실행 | 8 |
+| RPC | 조회·구독 API | 16 |
 | FAULT | 장애·복구 | 6 |
 
 분리 방식으로 나누면 다음과 같다.
@@ -80,7 +81,7 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 | 페이지 | 내용 |
 | --- | --- |
-| [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) | 70개 테스트의 ID, 목적, 기대 결과, 분리 방식, 기존 ID 대응, 자동 테스트 |
+| [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) | 72개 테스트의 ID, 목적, 기대 결과, 분리 방식, 기존 ID 대응, 자동 테스트 |
 | [메인넷별 의존 요소](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988376101) | 테스트 계정, RPC 주소, 컨트랙트 주소, 체인 ID, 그 밖의 설정 |
 | [별도 구현이 필요한 항목](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987884735) | 체인별 기대값 계산과 실행 도구에 추가할 기능 |
 | [공통 테스트 분리 변경 범위](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987720853) | 작업 순서와 완료 기준 |
@@ -156,5 +157,7 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 [03-separate-implementation-items.md](03-separate-implementation-items.md) §2 "실행 도구에
 추가해야 하는 것" 여덟 가지가 실제로 어디서 추적되는지는
 [`docs/dev/architecture/mainnet-config-worklist.md` §8](../../dev/architecture/mainnet-config-worklist.md)
-의 대응표에 있다. 여섯은 R2~R6 이 덮고, **동기화 경로 관찰과 준비물 공유 둘은 아직 어느
-항목도 아니다.**
+의 대응표에 있다. 여섯은 R2~R6 이 덮는다. 그 표가 어느 항목도 아니라고 적은 둘은 그 뒤에
+구현됐다. 동기화 경로 관찰은 2026-09-29 에 지표로 보게 됐고(03 §2), 준비물 공유는 2026-10-20 에
+`prepared.exports`·`prepared.imports` 로 들어왔다([DSL 작성 가이드](../../guide/dsl-authoring.md)).
+항목마다 지금 상태는 03 §2 의 "지금 상태" 칸에 적는다.

@@ -65,7 +65,8 @@ PID, 실제 command, running 상태, health, block, peer와 수집 자료는 변
   내부 Command Builder가 배포 경로, binary, key, ports와 peer를 반영해 argv·환경변수 생성
 - `process`: materialize, init, launch, PID·command, stop/restart, timeout, cleanup과 교체 후 재실행
 - `chainsetup`: 구성 단계, checkpoint와 resume. workspace 영속은 `session.Composition`에 위탁
-- `consensus/upgrade`: consensus 전환과 handoff. 외부 최상위 모듈로 분리하지 않음
+- `consensus/upgrade`: consensus 전환과 handoff. 외부 최상위 모듈로 분리하지 않음. (2026-10-29 확인: 이 이름의
+  패키지는 없고, 전환은 `internal/chainsetup/steps_crossfork.go`와 `internal/core/hardfork`가 맡는다.)
 - `nodemonitor`: inspector·preflight·health·collector의 사실을 조합해 테스트 실행 허가 판정
 - `testengine`: 환경 준비부터 테스트, verdict 생산과 teardown까지의 생명주기
 - `session`: 환경·테스트 증적과 실행 상태 영속
@@ -126,7 +127,7 @@ key, ports와 역할은 이 여섯 요소의 canonical 내용에 포함될 때�
 
 ## 10. Node Monitor
 
-목표 `nodemonitor` 모듈은 PID와 command, RPC, block 진행, consensus 참여, peer 연결, topology, chain ID와 genesis,
+목표 `nodemonitor` 모듈(지금 `internal/nodemonitor`에 있다)은 PID와 command, RPC, block 진행, consensus 참여, peer 연결, topology, chain ID와 genesis,
 sync, fork/divergence, metrics와 logs를 관측해 테스트 실행 허가를 결정한다.
 
 ```text

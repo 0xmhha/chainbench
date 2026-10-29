@@ -22,6 +22,12 @@
 > | `netcompose` / `engine` (네트워크 조립) | `internal/chainsetup` — 조립이 여기로 모였다 |
 > | `internal/dsl/bind` (L1, 제안) | **만들지 않았다.** 값 바인딩·`$ref` 해석은 `internal/dsl/interp/binding.go`(L3) 안에 있다 |
 > | `testspec` 4분할(dsl · assert · bind · interp) | **3분할로 구현** — `internal/dsl` · `dsl/assert` · `dsl/interp`. `testspec` 은 없다 |
+> | `core/driver` · `core/procman` (기동·정지·PID) | `internal/core/process` (2026-10-29 확인) |
+> | `core/provision` (파일 배치) | `internal/core/filestore` |
+> | `core/supervisor` (기동 소유·헬스 게이트) | **패키지로 만들지 않았다.** 기동은 `internal/chainsetup`, 헬스는 `internal/core/health`, 실행 허가는 `internal/nodemonitor` 가 맡는다 |
+> | `core/launchopt` | `internal/core/nodeconfig` |
+> | `serverset` → `place` → `portplan` (배치·포트) | `internal/resource` (서버 세트·풀·배정·포트 밴드) |
+> | `consensus/upgrade` (포크 전환) | `internal/chainsetup/steps_crossfork.go` + `internal/core/hardfork` |
 >
 > 현재 패키지 전수와 층 배치는 [`code-graph.md`](code-graph.md)(2026-09-11 재측정)와
 > [`layers.md`](layers.md) 가 말한다.

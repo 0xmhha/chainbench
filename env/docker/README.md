@@ -221,7 +221,7 @@ export TCSWEEP_FLAGS="--server-set $PWD/env/docker/build/server-set.yaml \
   --workspace-config $PWD/env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys-source generate"
 
-# 1차 — stablenet 177건 + wbft 8건. go-stablenet/testnet 만 뺀다(아래 참조).
+# 1차 — stablenet 191건 + wbft 8건. go-stablenet/testnet(아래 참조)과 패턴에 없는 go-stablenet/mixed 는 빠진다.
 scripts/tcsweep.sh ~/cbw/sweep-1.log \
   'tests/tc/basic\|tests/tc/common\|tests/tc/go-wbft\|go-stablenet/regression\|go-stablenet/post-v1.0.0-change\|go-stablenet/hardfork\|go-stablenet/vocabulary'
 
@@ -236,9 +236,9 @@ scripts/tcsweep.sh ~/cbw/sweep-2.log 'tests/tc/go-wemix'
 기본 세트는 1 이라 place 단계에서 거절당하고, 기동도 느려 `--node-monitor-timeout` 을
 올려야 한다.
 
-**3차는 도커가 아니다.** `tests/tc/go-stablenet/testnet/` 의 5건은 우리가 세우지 않은
+**3차는 도커가 아니다.** `tests/tc/go-stablenet/testnet/` 의 9건은 우리가 세우지 않은
 망에 붙는 케이스다. `tcsweep.sh` 의 `runAttach` 는 attach 케이스에 `GSTABLE_RPC` 만
-넣어 주는데 이 다섯은 `GSTABLE_TESTNET_RPC` 를 요구하므로, 1차에 섞으면 전부 BLOCKED
+넣어 주는데 이 아홉 건은 `GSTABLE_TESTNET_RPC` 를 요구하므로, 1차에 섞으면 전부 BLOCKED
 로 떨어진다. 실행 방법은
 [`tests/tc/go-stablenet/testnet/README.md`](../../tests/tc/go-stablenet/testnet/README.md)
 에 있다.
@@ -317,7 +317,7 @@ for i in $(seq 1 15); do docker exec chainbench-server$i sh -c \
 
 | 파일 | 내용 |
 |---|---|
-| `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 22→2201+, rpc 8600→18601+, metrics 6060→16061+ |
+| `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 10022→2201+, rpc 8601→18601+, ws 8701→21601+, metrics 6060→16061+ (slot s 의 rpc·ws 는 퍼블리시 포트에 100×s 를 더한다) |
 | `server-set.yaml` | **서버 세트 v2, 실주소 기재** — 운영 서버 세트와 같은 모양. slots 4, p2p step 1 |
 | `server-set-wemix.yaml` | 같은 서버·같은 자격증명에 poa 용 노브만 다름 — slots 1, p2p step 3 |
 | `workspace-config.yaml` | 대상 `dataRoot` 와 용도별 디렉터리. server-set 이 더는 `dataRoot` 를 갖지 않으므로 짝으로 넘겨야 한다 |

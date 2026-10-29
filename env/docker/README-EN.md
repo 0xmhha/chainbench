@@ -232,7 +232,7 @@ export TCSWEEP_FLAGS="--server-set $PWD/env/docker/build/server-set.yaml \
   --workspace-config $PWD/env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys-source generate"
 
-# Pass 1 — 177 stablenet + 8 wbft. Excludes go-stablenet/testnet (see below).
+# Pass 1 — 191 stablenet + 8 wbft. Excludes go-stablenet/testnet (see below) and go-stablenet/mixed, which the pattern does not name.
 scripts/tcsweep.sh ~/cbw/sweep-1.log \
   'tests/tc/basic\|tests/tc/common\|tests/tc/go-wbft\|go-stablenet/regression\|go-stablenet/post-v1.0.0-change\|go-stablenet/hardfork\|go-stablenet/vocabulary'
 
@@ -247,9 +247,9 @@ Pass 2 is separate for the reason given under "Which server set" above: poa need
 `p2p_step` 3 while the default set is 1, so it is refused at the place step, and
 it also boots slowly enough to need a raised `--node-monitor-timeout`.
 
-**Pass 3 is not docker.** The 5 cases under `tests/tc/go-stablenet/testnet/`
+**Pass 3 is not docker.** The 9 cases under `tests/tc/go-stablenet/testnet/`
 attach to a network we did not bring up. `tcsweep.sh`'s `runAttach` supplies only
-`GSTABLE_RPC` to an attach case, while these five need `GSTABLE_TESTNET_RPC`, so
+`GSTABLE_RPC` to an attach case, while these nine need `GSTABLE_TESTNET_RPC`, so
 mixing them into pass 1 turns them all BLOCKED. How to run them is in
 [`tests/tc/go-stablenet/testnet/README.md`](../../tests/tc/go-stablenet/testnet/README.md).
 
@@ -337,7 +337,7 @@ Generated files (`build/`, gitignored):
 
 | File | Contents |
 |---|---|
-| `docker-compose.yml` | server1..N. Fixed bridge addresses from 172.30.0.11, ssh 22→2201+, rpc 8600→18601+, metrics 6060→16061+ |
+| `docker-compose.yml` | server1..N. Fixed bridge addresses from 172.30.0.11, ssh 10022→2201+, rpc 8601→18601+, ws 8701→21601+, metrics 6060→16061+ (slot s adds 100×s to the published rpc and ws ports) |
 | `server-set.yaml` | **Server set v2 with real addresses** — the same shape as an operational server set. slots 4, p2p step 1 |
 | `server-set-wemix.yaml` | Same servers, same credentials, only the poa knobs differ — slots 1, p2p step 3 |
 | `workspace-config.yaml` | The target `dataRoot` and the per-purpose directories. The server set no longer carries `dataRoot`, so this must be passed alongside it |

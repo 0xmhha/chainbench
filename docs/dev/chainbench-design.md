@@ -6,6 +6,16 @@
 > 지위: 구현 전 확정 설계(HOW). 근거: `chainbench-requirements-review.md`(요구/결정), `chainbench-refactoring.md` (2026-09-24 삭제)(기존→목표 매핑).
 > 원칙: 인터페이스 우선 · 하위호환 병존 · 소유권 단일화 · 취소(ctx) 우선 · 테스트는 항상 직렬(§B-4).
 > 표기: Go 시그니처는 계약(contract)이며 필드/에러는 구현 시 미세조정 가능. 기존 타입(`config.Values`, `driver.Driver`, `node.NodeSet`, `registry.ChainPlugin`, `accounts.AccountProvider`, `genesis.MergeOverride`, `procman.Manager`, `obs.Bus`)은 그대로 참조·재사용.
+>
+> **구현과 다른 점 (2026-10-29 확인).** 이 문서는 구현 전에 쓴 설계이고, 패키지 이름과 몇 가지 결정은 다르게 구현됐다.
+> 계약의 요구는 그대로 읽되, 이름은 다음처럼 바꿔 읽는다. `config.Values` 는 `nodeconfig.Values`, `driver.Driver` 는
+> `process.Driver`, `obs.Bus` 는 `collector.Bus` 다. `procman` 은 없고 프로세스 관리는 `internal/core/process` 가 맡는다.
+> §3.2 `testspec` 은 `internal/dsl` 과 `internal/dsl/interp` 로 구현됐고, `interp.NewRegistry()` 는 인자를 받지 않는다.
+> §3.3 `supervisor` 패키지는 없고 기동과 헬스 게이트는 `internal/chainsetup`, `internal/core/health`, `internal/nodemonitor` 가
+> 나눠 맡는다. §3.5 `keyreg` 는 `internal/core/keyring` 이다. `place`·`portplan` 은 없고 배치와 포트는 `internal/resource` 가 정한다.
+> `LocalOSAssigned` 와 `--ports fixed` 는 없다. 노드 역할은 `bp`·`en`·`pn` 셋이고 코드도 같은 이름을 쓴다
+> (`internal/core/node/role.go`). §7 의 `server-set.yaml` 예시는 지금 형식이 아니다. 지금은 주소를 `pool.hosts` 아래에,
+> 접속 정보를 최상위 `ssh` 아래에 두는 v2 형식만 받는다([server-set.md](server-set.md)). 줄 번호가 붙은 인용(예 `registry.go:46`)은 작성 당시 기준이다.
 
 ---
 

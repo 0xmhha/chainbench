@@ -21,10 +21,12 @@
 
 - `collector.ScrapeMetrics` — 그 엔드포인트를 읽어 이름→값 맵으로 파싱한다. DSL 의
   metric 어세션이 이미 이걸로 돈다. 단 **라벨을 버리는 간이 파서**다(§5 참고).
-- `netmap` — 노드별 metric 포트를 안다. 스크레이프 대상 목록이 공짜로 나온다.
+- `netmap` — 노드별 metric 포트를 안다. 스크레이프 대상 목록이 공짜로 나온다. (`netmap`은 그 뒤 없어졌고,
+  노드 배치와 포트는 지금 `internal/core/node`와 `internal/resource`가 안다.)
 - `chainbench-dashboard` — 이벤트를 SSE 로 브라우저에 흘리는 배관(`/events`)과
   세션 조회 API(`/api/sessions`)가 있다.
-- SPA — 117줄짜리 이벤트 목록 화면. 차트는 없다.
+- SPA — 117줄짜리 이벤트 목록 화면. 차트는 없다. (2026-08 실측이다. 지금은 `web/src/NodeMetrics.svelte`와
+  `web/src/metric-chart.mjs`가 노드별 차트를 그린다.)
 
 ## 2. 결정 — Prometheus·Grafana 서버 없이 자체 동작한다 (2026-08-24)
 
@@ -50,6 +52,9 @@ chainbench-dashboard
    ↓
 SPA 차트: 블록 높이 · 피어 수 · txpool 을 노드별 비교
 ```
+
+구현된 경로는 `GET /api/v1/networks/{networkId}/metrics`(`internal/dashboard/monitor.go`)이고, 증분은
+`/api/v1/events` SSE의 `metrics` 이벤트로 보낸다. 위 그림의 `GET /api/metrics`는 착수 때의 제안 이름이다.
 
 새로 만드는 것은 세 조각뿐이다: 주기 스크레이프 루프, 메모리 시계열 버퍼, SPA 차트.
 만들지 않는 것: 파서(라이브러리로), 영속 저장소(테스트벤치에 불필요), 질의 언어.

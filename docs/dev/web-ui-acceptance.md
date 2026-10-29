@@ -1,11 +1,12 @@
 # Web UI 인수 검증 계약
 
 > **[현행 설계]** — 확정된 WEB-01–14의 성공 증거를 구체화한다. 이 문서는 검증 runner의
-> 구현 계약이며 현재 제품이나 runner가 완성됐다는 보고가 아니다.
+> 구현 계약이며 현재 제품의 인수 결과를 보고하지 않는다. runner(`tests/webui/verify.sh`와
+> `tests/webui/run_web01.py`~`run_web14.py`)는 이미 있고, 최근 결과는 [Web UI 현황](web-ui-status.md)에 있다.
 
 [동작 명세](web-ui-spec.md), [OpenAPI](web-ui.openapi.yaml),
 [Seed](architecture/chainbench-web-ui.seed.yaml)의 같은 WEB ID를 사용한다.
-구현은 먼저 `tests/webui/verify.sh`와 전용 fixture 준비·해제 도구를 만들어야 한다.
+검증 runner는 `tests/webui/verify.sh`와 전용 fixture 준비·해제 도구다.
 Seed의 `verify_command`는 프로젝트 루트에서 아래 인터페이스를 호출한다.
 
 ```sh
@@ -26,8 +27,8 @@ fixture/runtime 기본 루트는 `/private/tmp/chainbench-web-ui-e2e`이며, 격
 
 성공은 exit 0과 `WEB-NN PASS` 문자열, 검증된 두 결과 파일을 함께 요구한다. 필수 환경·
 바이너리·브라우저·assertion·coverage 항목이 없거나 skip이면 exit nonzero와 incomplete다.
-일부 유닛 테스트나 mock만 실행하고 live PASS를 출력해서는 안 된다. 현재 runner가 없는
-상태도 미완료다. 아티팩트가 존재한다는 사실만으로 완료 판정하지 않는다.
+일부 유닛 테스트나 mock만 실행하고 live PASS를 출력해서는 안 된다. runner가 없는
+기준도 미완료다. 아티팩트가 존재한다는 사실만으로 완료 판정하지 않는다.
 
 ## 결과와 증거 형식
 

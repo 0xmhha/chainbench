@@ -24,8 +24,8 @@ The multi-chain support matrix maps to these scripts:
 > **Migration in progress:** these bash scripts are being ported to Go gated e2e
 > tests under `tests/e2e/` (run with `go test -tags e2e`) — no bash/python/web3.
 > Ported so far: stablenet chain (4), binary-swap hardfork (5), consensus
-> lifecycle, block propagation, endpoint re-sync, proposal expiry, wbft chain (3), wemix→wbft handoff (2). See `tests/e2e/README.md`. The scripts below are
-> not yet ported.
+> lifecycle, block propagation, endpoint re-sync, proposal expiry, wbft chain (3), wemix→wbft handoff (2). See `tests/e2e/README.md`. The two scripts below
+> (`wemix-chain.sh`, `attach-external.sh`) are not ported.
 
 ## Run everything: `run-all.sh`
 
@@ -58,7 +58,18 @@ to reuse a prebuilt binary.
 | Script | Reproduces | Needs | Notes |
 |--------|-----------|-------|-------|
 | `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
-| `attach-external.sh` | external-chain generic ops (legacy z-layer2 "Layer 2 E2E" RT-Z-02/03/04/05 — an external chain attached over RPC, NOT an Ethereum L2) | `EXTERNAL_RPC` (an already-running chain's RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the external endpoint and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
+| `attach-external.sh` | external-chain generic ops (legacy z-layer2 "Layer 2 E2E" RT-Z-02/03/04/05 — an external chain attached over RPC, NOT an Ethereum L2) | `EXTERNAL_RPC` (an already-running chain's RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | **Broken today.** It calls `chainbench test --rpc … --name …`, but `test` now has only the `list` subcommand, so the run fails with `unknown flag: --rpc`. No Go code reads `CHAINBENCH_FUNDED_KEY` either. Use the DSL attach path below instead |
+
+To run cases against an external network today, attach with `run`:
+
+```sh
+chainbench run --rpc "$EXTERNAL_RPC" --chain stablenet <case.json ...>
+```
+
+`tests/tc/go-stablenet/testnet/` holds nine attach cases for a go-stablenet
+network we did not bring up. They read the endpoint from `GSTABLE_TESTNET_RPC`
+and, for the funded write case, the key file from `GSTABLE_TESTNET_KEY_FILE`;
+see [`../tc/go-stablenet/testnet/README.md`](../tc/go-stablenet/testnet/README.md).
 
 `LOCAL-*.sh` are ad-hoc local captures (gitignored pattern aside) and are not part
 of the runbook.
@@ -84,10 +95,9 @@ chainbench run --workspace-dir <ws> --no-skips <cases>
 ## Secrets
 
 No private key is committed. Scripts that need a funded sender read it from an env
-var (`FAUCET_PK`), never a literal. Chain-agnostic write cases read the funded
-account key from `CHAINBENCH_FUNDED_KEY` (env only — the `chainbench test` command
-never takes it as a flag). The SSH RemoteDriver E2E reads `CHAINBENCH_REMOTE_PASS`
-from the environment only.
+var (`FAUCET_PK`), never a literal. The external testnet cases read their funded
+key from the file `GSTABLE_TESTNET_KEY_FILE` names, outside the repository. The SSH
+RemoteDriver E2E reads `CHAINBENCH_REMOTE_PASS` from the environment only.
 
 ## Gated Go E2E
 
@@ -96,10 +106,15 @@ from the environment only.
 Docker stand-in from [`../../env/docker/`](../../env/docker/README.md), then:
 
 ```sh
-CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2222 \
-CHAINBENCH_REMOTE_USER=chainbench CHAINBENCH_REMOTE_PASS=chainbench \
+set -a; . env/docker/accounts.env; set +a
+CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2201 \
+CHAINBENCH_REMOTE_USER="${DEV_ACCOUNTS%%:*}" \
+CHAINBENCH_REMOTE_PASS="$DEV_ACCOUNTS_PASSWORD" \
 go test -tags e2e -run TestRemoteDriver_E2E -v ./internal/core/process/
 ```
+
+server1 of the docker fleet publishes its sshd on 2201, and the login is the
+first account in `env/docker/accounts.env`.
 
 ## Running scripts individually
 

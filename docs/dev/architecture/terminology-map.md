@@ -4,6 +4,12 @@
 > 대상 리비전: `fc94e443` (브랜치 `codex/refactoring-proposal-review`)
 > 세는 방법: `internal/`·`cmd/`·`scripts/` 의 `.go` 파일을 줄 단위로 훑고, 파일 경로와
 > 줄 내용으로 뜻을 갈랐다. 체인을 띄워 확인한 것이 아니다.
+>
+> **재확인 (2026-10-29).** 세는 숫자는 다시 뽑지 않았다. 그 사이 본문이 이름을 댄 식별자 가운데 몇은 코드에서 없어졌다.
+> `dsl.BinaryBefore`·`dsl.BinaryAfter`, `RoleBoot`, `ParseFamilyFlags`, `InputPreset` 은 지금 소스에 없다. 본문의 그 줄은
+> 바꾼 기록으로 읽는다. `dsl.EnvV2` 타입도 없고, 외부 BLS 바이너리 이름 `Bootnode` 는 지금 `dsl.KeySourceV2.Bootnode` 에
+> 남아 있다. 이 필드는 옛 정의서를 읽기 위해서만 받고 동작에는 쓰지 않는다(Deprecated, `internal/dsl/spec_v2.go`).
+> §4.8 과 §5 의 낱말 규칙은 그대로 유효하다.
 
 ## 이 문서가 있는 이유
 

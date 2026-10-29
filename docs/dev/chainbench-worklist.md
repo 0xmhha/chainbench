@@ -192,7 +192,10 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
    직접 확인했다([인계 10절](chain-handover-2026-09-12.md)).
 2. Web UI 리팩토링 → 코드 리팩토링 → 문서 정리 순서로 진행한다. Web 인수 실행 환경(실행 루트, 바이너리 선택 파일, 교체용 바이너리,
    live 변수, docker checkout 경로) 문서화는 이 마지막 문서 정리에서 한다.
+   (2026-10-29 현재) Web UI 리뉴얼은 #465~#509로 끝났다. 끝난 일과 남은 일은 [Web UI 현황과 남은 작업](web-ui-status.md)에 있다.
 3. 최종 소스로 Web 14개를 다시 capture하는 일은 가장 마지막에 한다.
+   (2026-10-29 현재) 리뉴얼 뒤 `72a7b464`(#500 머지 뒤)에서 WEB-01~14를 capture해 14개 모두 통과했다. 그 뒤 들어온
+   #503~#509에 맞춰 다시 capture할지는 [Web UI 현황](web-ui-status.md) 2절에서 정한다.
 4. 외부 결함의 체인팀 전달과 그 이슈 연결, 테스트넷 송금 2건(05·09)은 사용자가 직접 처리한다.
    L1의 간헐 실패(ethereum/08 정리 단계 정지 시간 초과)와 mixed 구현 5건은 다음 테스트 때 함께 본다.
 
@@ -202,7 +205,8 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 **2026-10-25 사용자 결정:** Web UI 리팩토링의 남은 부분은 데이터부터 한다. 쓸 수 있고 수집할 수 있는 데이터를
 조사해 구조체와 타입, 수집과 갱신 구조를 정한 뒤 화면을 만든다. 이 일과 WEB-01~14 재capture는 끝났고, 결과와
 남은 일은 [Web UI 현황과 남은 작업](web-ui-status.md)에 있다.
-위 3번의 Web 14개 재capture는 Web 리뉴얼을 마치고 주요 기능 몇 개를 실제로 확인한 뒤 한 번만 한다.
+위 3번의 Web 14개 재capture는 Web 리뉴얼을 마치고 주요 기능 몇 개를 실제로 확인한 뒤 한 번만 하기로 했고, 그대로
+`72a7b464`에서 한 번 돌려 14개 모두 통과했다.
 
 **2026-10-22 Web 최종 인수 완료 처리 (사용자 결정):**
 `f11116de`에서 WEB-01~13을 모두 새로 capture해 통과했다. WEB-14는 `make check`·docker 준비를 통과했고, live race 직렬 실행에서
@@ -3391,7 +3395,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☒ **닫는다 2026-09-08 — 줄 수 목표는 근거를 잃었고, 남은 게이트는 좁히기로 달성되지 않는다.**\n\n**실측**: `chainsetup` 4,652줄 · `testengine` 2,349줄, 합 7,001. 그중 **주석이 1,547줄(22%)** 이고 공백 451, 실제 코드는 5,003 이다. 함수·메서드가 213개라 평균 20줄 남짓 — 비대한 함수가 몰린 구조가 아니다. 가장 큰 것이 `netUpFrom` 133 · `RunSuite` 132 · `Run` 109 · `Allocate` 99 다.\n\n**목표 2,000 은 P5 시점의 6,593 에서 잡은 것인데, 그 뒤 이 두 패키지가 하는 일이 늘었다**(청사진 N1~N6, N9 순서 선언, NM6, 원격 경로). 줄이 는 것은 기능이 는 것이지 부풀어서가 아니다. 그리고 줄 수를 목표로 삼으면 **가장 먼저 지워지는 것이 그 22%의 주석**인데, 이 세션에서 판단을 바꾼 것이 바로 그 주석들이었다(`derive quorum` 이 노드 표를 안 읽는 이유, `genesis` 가 키셋을 요구하지 않는 이유).\n\n**게이트 둘 중 하나는 충족**이다 — `setup_bridge.go` 는 없다. 남은 `testengine→chainsetup` 엣지는 비테스트 4파일이고, **층 위반이 아니다**(둘 다 L4). 노드 수명(start/stop/restart/swap)을 인터페이스로 좁혀 보면 **4파일 중 1개**(`nodegate.go`)만 import 가 사라지고 `suite.go` 에는 `ChainUp`·`Open`·`WantOf`·`NetworkStatus`·`ChainStop`·`ChainEndpoints` 등 11개가 남는다 — **패키지 엣지는 그대로다.** 인터페이스가 12개 메서드라면 그것은 요구를 좁힌 것이 아니라 chainsetup 을 다른 이름으로 부르는 것이다.\n\n**엣지를 실제로 없애는 길은 하나뿐이다**: 조립을 testengine 밖으로 내보내 엔진이 망을 *받게* 하는 것. 그것은 좁히기가 아니라 재설계이고, 근거가 생기면 그때 별도 항목으로 세운다. 지금은 열어 둘 이유가 없다 |
 | **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☑ **완료 2026-08-28** — 당시 `tests/cases/env/` 선언 4개 + 케이스 4개(지금은 `tests/tc/`, env 는 정의서 인라인) · 문법 `env.upgrade`(schema·strict·lowering, `binaries` 는 producer/validator 역할) · 실행기 `app.RunSuite` 가 선언의 모양으로 조립기 선택(`upgrade` → `upgrade.Handoff`, 아니면 `ChainUp`) · 표면 `run --workspace-dir` · `validate` 가 env 를 풀고 env 파일을 선언으로 검증 · 러너 `if chain ==` 0건 · **라이브 4/4 완결 2026-08-31**(gstable·go-wbft·go-wemix 빌드; 핸드오프는 후계 검증자의 블록 21 봉인까지) — 그 과정에서 gwemix 0.10.x 의 `etcd.members` 모양 변화가 깨뜨린 verify 파싱을 `EtcdState` 필드 제거로 해소 |
 | **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☑ **완료 2026-09-07 (#357).** 남은 것은 문법 갭이 아니라 **낡은 기록**이었다 — 막혔다던 19건 중 15건에 이미 스펙이 있었고 122개 전부 `validate` 를 통과한다. 문서를 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다. 진짜 남은 8건은 이유가 유효하다(SDK 가드 2 · 조작자 공급 키 2 · 다른 빌드가 필요한 4) |
-| **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md` — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
+| **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md`(지운 문서) — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
 
 ### 1j. 사용자 주도 통폐합 (2026-08-31 ~ 2026-09-20 — **닫혔다**)
 
@@ -4343,7 +4347,7 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
 
 workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정의서 순차 실행·
 승인 기준·다이얼 주소 레이어 정리, PR #370)은 반영됐다. 인계 문서
-`docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 에서 나온
+`docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md`(지운 문서) 에서 나온
 항목 중 **둘은 아직 코드가 없고, 지금까지 이 작업 리스트에 적혀 있지 않았다.** 연구
 문서에만 남아 있으면 사라지므로 여기 옮긴다.
 

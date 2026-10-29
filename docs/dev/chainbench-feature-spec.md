@@ -6,6 +6,14 @@
 > 지위: 각 기능의 **동작 계약**. 형식: 입력 / 동작 / 출력 / 에러·엣지 / **수용기준(AC, 검증가능)**.
 > 근거: `chainbench-requirements-review.md`(요구/결정), `chainbench-design.md`(인터페이스). 각 F는 요구번호·design앵커를 명시.
 > AC는 향후 자기테스트로 검증 가능하도록 구체·측정가능하게 기술한다. design §9의 미결은 각 F에서 **확정**한다.
+>
+> **구현과 다른 점 (2026-10-29 확인).** AC 의 요구는 그대로 두되, 본문이 이름을 댄 구현 부품 몇은 다르게 만들어졌다.
+> 노드 역할은 `bp`·`en`·`pn` 셋이고 코드도 같은 이름을 쓴다. `node.NormalizeRole` 은 `validator`·`endpoint`·`boot` 를 거절한다.
+> 배치와 포트는 `place.Allocate` 가 아니라 `internal/resource` 의 풀(`resource.Builtin`, server set)이 정한다.
+> `LocalOSAssigned` 와 `--ports fixed` 는 없고, 포트는 풀의 대역에서 index 로 결정적으로 정해진다.
+> `supervisor`·`procman`·`driver` 패키지는 없다. 기동과 정지는 `internal/core/process` 와 `internal/chainsetup` 이 맡고,
+> `driver.FileProvisioner` 는 `process.FileProvisioner` 다. F6 의 `EqualHashAt` 은 DSL `compare` 열거값에 없다
+> (`internal/testhelper/editor_contract.go`).
 
 ---
 

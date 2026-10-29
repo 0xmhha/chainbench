@@ -86,3 +86,13 @@ review its actual inputs/assertions and remaining conditions before updating the
 snapshot; changing a digest alone is not a semantic reassessment.
 `confirmed_scope` means only the explicitly recorded proof scope. This inventory
 does not execute chains or award Linux/mainnet, legacy or final Web acceptance.
+
+## Other tools in this directory
+
+| Tool | What it does |
+|---|---|
+| `source-ast/` | Go program that parses Go sources, including tests and all build tags. `all_code_graph.py` and `tc_sufficiency.py` run it with `go run ./scripts/inventory/source-ast`. |
+| `code-graph/` | Go program that extracts the chainbench package import graph and the exported symbols each import uses: `go run ./scripts/inventory/code-graph [module-root] > graph.json`. Its output backs `docs/dev/architecture/code-graph.md`. |
+| `surface-graph/` | Go program that prints what each surface (CLI, MCP, DSL) registers and which registrations reach past the app layer: `go run ./scripts/inventory/surface-graph .`. |
+| `chain-flag-graph/` | Go program that extracts the command and flag graph of a go-ethereum-derived chain repository from its `cmd/` tree: `go run ./scripts/inventory/chain-flag-graph <repo-root> <binary-dir-name>`, where the second argument names the binary's directory under `cmd/`. |
+| `list-adapter-functions.sh`, `scan-binary-hardcoding.sh` | Scanners for the removed Bash implementation. They read `lib/adapters/*.sh` and `lib/cmd_*.sh`, which no longer exist in this repository, so both exit with an error today. |

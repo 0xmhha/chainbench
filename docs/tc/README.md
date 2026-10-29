@@ -43,7 +43,7 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 | [wemix3.0/hotfix-pr196/03-all-144-tests-priority-list.md](wemix3.0/hotfix-pr196/03-all-144-tests-priority-list.md) | [PR196] 기존 테스트 전체 144개 우선순위 목록 | 2978054308 | |
 | [wemix3.0/hotfix-pr196/04-regression-scope-and-result.md](wemix3.0/hotfix-pr196/04-regression-scope-and-result.md) | [PR196] 회귀 테스트 수행 범위 및 결과 기록 | 2977988792 | |
 | [common/README.md](common/README.md) | [Common] Test | 2987917348 | |
-| [common/01-common-test-list.md](common/01-common-test-list.md) | 공통 테스트 목록 | 2988965889 | CT- 76개 |
+| [common/01-common-test-list.md](common/01-common-test-list.md) | 공통 테스트 목록 | 2988965889 | CT- 72개(가져올 때는 76개) |
 | [common/02-mainnet-dependencies.md](common/02-mainnet-dependencies.md) | 메인넷별 의존 요소 | 2988376101 | |
 | [common/03-separate-implementation-items.md](common/03-separate-implementation-items.md) | 별도 구현이 필요한 항목 | 2987884735 | |
 | [common/04-separation-change-scope.md](common/04-separation-change-scope.md) | 공통 테스트 분리 변경 범위 | 2987720853 | |
@@ -58,6 +58,7 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 | [common/07-glossary.md](common/07-glossary.md) | 용어집 | 2986868908 | |
 | [common/08-appendix-a-two-chain-tests.md](common/08-appendix-a-two-chain-tests.md) | 부록 A. 두 체인에서만 가능한 테스트 | 2986901809 | |
 | [common/09-appendix-b-excluded-tests.md](common/09-appendix-b-excluded-tests.md) | 부록 B. 공통에서 제외한 테스트와 이유 | 2987524189 | |
+| [common/10-ct-dsl-mapping.md](common/10-ct-dsl-mapping.md) | (없음) | - | Confluence 페이지가 아니라 이 저장소가 더한 문서. CT 와 `tests/tc/common` DSL 파일의 대응 |
 
 ## 첨부 파일
 

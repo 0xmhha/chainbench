@@ -41,9 +41,9 @@
 | 2 | resolve-binary | `--binary <gstable>` |
 | 3 | load-preset | `presets/keys/metadata.json` → 검증자 4 주소 + BLS + `extraData` + alloc |
 | 4 | allocate | `place` 가 노드별 p2p/http/ws/auth 포트 산출 + 용량 검증 |
-| 5 | genesis | `PresetGenesisSource` → 템플릿 `internal/chains/stablenet/genesis.json` 에 프리셋 검증자셋 치환 |
+| 5 | genesis | `genesis.PresetSource` → 템플릿 `internal/chains/stablenet/genesis.json` 에 프리셋 검증자셋 치환 |
 | 6 | assemble-plan | `engine.AssemblePlan` → 노드별 datadir·config 경로·launch args |
-| 7 | provision | genesis + per-node `config.toml` 물질화(upload-if-absent) |
+| 7 | provision | genesis + per-node `config.toml` 물질화(같은 내용이면 건너뛰고, 내용이 다르면 덮어쓴다) |
 | 8 | init-datadir | 노드별 `gstable init` |
 | 9 | launch | `--nodekey`, 검증자는 `--unlock`/`--password`/`--miner.etherbase` |
 | 10 | health-gate | 블록 전진(head ≥ 1) |
@@ -51,6 +51,11 @@
 **중요(T4.4b 실측):** wbft 계열 검증자셋과 `extraData` 는 **프리셋에 baked** 되어 있다.
 코드가 RLP 로 계산하지 않으므로 랜덤 키만으로는 유효 genesis 를 만들 수 없다 —
 검증자셋의 출처는 항상 프리셋이고, `keyreg` 랜덤 키는 노드 신원/계정용이다.
+
+> **정정 (2026-10-29).** 위 제약은 T4.4b 시점의 기록이다. 지금은 `extraData` 가 비어 있으면
+> `wbft.ExtraData` 가 검증자 주소와 BLS 공개키로 RLP 를 계산한다(`internal/consensus/wbft/genesis.go`,
+> `extradata.go`). 그래서 BLS 키를 함께 만든 키 세트(`--keys-source generate`)로도 genesis 를 만들 수 있다.
+> `keyreg` 패키지는 지금 없고 키는 `internal/core/keyring` 이 다룬다.
 
 ---
 
@@ -140,4 +145,4 @@ chainbench stop   --workspace-dir /tmp/x
 |---|---|
 | IPC 경로 길이 | geth IPC 유닉스 소켓은 **104자 제한** → `--artifact-root`/`--workspace-dir` 를 짧게(`/tmp/x`) |
 | 블록 웜업 | wbft 블록 생성까지 최대 ~35s → 헬스게이트 타임아웃을 넉넉히 |
-| 검증자셋 출처 | 프리셋 baked(§2) — 랜덤 키만으로 genesis 생성 불가 |
+| 검증자셋 출처 | 프리셋 baked(§2). 지금은 `extraData` 를 코드가 계산하므로 생성한 키 세트로도 genesis 를 만든다(§2 정정) |

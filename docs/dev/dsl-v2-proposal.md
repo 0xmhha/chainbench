@@ -21,6 +21,14 @@
 > 제안한 4분할(`dsl` · `dsl/assert` · `dsl/bind` · `dsl/interp`)은 **3분할로 구현**됐다 —
 > `dsl/bind` 는 만들지 않고 값 바인딩을 `internal/dsl/interp/binding.go` 안에 뒀다.
 > 지금 등록된 어휘 전수는 [`../guide/dsl-authoring.md`](../guide/dsl-authoring.md) 가 코드에서 뽑아 싣는다.
+>
+> **구현과 다른 점 (2026-10-29 확인).** 본문은 제안이고, 구현된 문법의 정본은
+> `internal/dsl/schema/v2.schema.json` 과 `internal/dsl/spec_v2.go` 다. 확인한 차이는 다음과 같다.
+> 파일 종류는 env·case·suite 가 아니라 `chain-preset` 과 `case` 둘이고, case 는 `chainPreset` 으로 환경을 가리킨다.
+> genesis 모드는 `template` 과 `existing` 둘뿐이다. `ports.mode` 선언과 hook 의 `override` 문은 구현되지 않았다.
+> 노드 역할은 `bp`·`en`·`pn` 셋이고(`node.NormalizeRole`), `validator`·`endpoint`·`boot` 는 받지 않는다.
+> `keyreg` 패키지는 없고 키는 `internal/core/keyring` 이 다룬다. 코드 주석이 이 문서의 절 번호(예 §3.6)를
+> 가리키므로 절 구성은 그대로 둔다.
 
 ---
 

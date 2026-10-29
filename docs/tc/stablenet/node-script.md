@@ -27,7 +27,7 @@ chainbench 가 그대로 쓰는 설정 파일이며, 각 필드의 의미는 리
 | 파일 | node_ctrl.sh 가 읽는 값 | 참조 형식 |
 |---|---|---|
 | `server-set.yaml` | 호스트 목록(15대), SSH 포트 | `server-set.sample.yaml`, `docs/dev/server-set.md` |
-| `workspace-config.yaml` | 원격 대상의 `dataRoot`(원격 스크립트 위치·삭제 대상 경로 계산 기준) | `workspace-config.sample.yaml`, `docs/dev/config-files-guide.md` |
+| `workspace-config.yaml` | 원격 대상의 `dataRoot`(원격 스크립트 위치·삭제 대상 경로 계산 기준) | `workspace-config.sample.yaml`, `docs/guide/config-files.md` |
 
 ---
 

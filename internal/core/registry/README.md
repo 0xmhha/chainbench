@@ -31,7 +31,7 @@ flat tool it maps to.
 A "project" is a chain (or a shared set). To add capabilities:
 
 1. Create `internal/chains/<project>/`.
-2. Add the catalog — one `capability.Descriptor` per line. Chain packages name
+2. Add the catalog — one `registry.Descriptor` per line. Chain packages name
    it `caps.jsonl`; the chain-agnostic set is `common/common.jsonl`:
    ```json
    {"version":"v1","chain":"wemix","name":"bootstrap.plan","summary":"…","params":[{"name":"x","type":"string","required":true}]}
@@ -42,10 +42,13 @@ A "project" is a chain (or a shared set). To add capabilities:
    var catalog []byte
 
    func init() {
-       if err := capability.LoadCatalog(catalog); err != nil { panic(err) }
-       capability.RegisterHandler("v1", "wemix", "bootstrap.plan", bootstrapPlan)
+       if err := registry.LoadCatalog(catalog); err != nil { panic(err) }
+       registry.RegisterHandler("v1", "wemix", "bootstrap.plan", bootstrapPlan)
    }
    ```
+   To fold an existing flat `chainbench_*` tool into the catalog instead of
+   writing a handler, call `registry.RegisterFlat(version, chain, name, tool,
+   summary, params)`.
 4. Blank-import the package from `internal/chains/all/all.go`.
 
 That's it — the capability appears in discovery and (for handler-backed ones)

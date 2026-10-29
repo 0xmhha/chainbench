@@ -1,7 +1,7 @@
 # Per-node topology (`--topology`)
 
-> **[가이드]** 검증 기준 2026-09-30 · 모델 `internal/core/node/topology.go:24` ·
-> 플래그 `cmd/chainbench/chaincmd/steps.go:84`, `chaincmd/up.go:93`.
+> **[가이드]** 검증 기준 2026-10-29 · 모델 `internal/core/node/topology.go:24` ·
+> 플래그 `cmd/chainbench/chaincmd/steps.go:85`, `chaincmd/up.go:128`.
 > 명령·플래그는 `chainbench chain place --help` 가 이긴다.
 
 `chainbench chain place` normally builds a network from positional counts —
@@ -67,7 +67,7 @@ a running network's layout is inspectable with `chainbench chain show` and
 
 - `internal/core/node` — the model: `node.Topology`/`node.Entry`, `node.Load`,
   role validation (`node.NormalizeRole` accepts only `bp`/`en`/`pn`).
-- `chainsetup.PlaceNodes` (`internal/chainsetup/steps_place.go:450`, reached from
+- `chainsetup.PlaceNodes` (`internal/chainsetup/steps_place.go:452`, reached from
   `verb.ChainAllocate` at `internal/chainsetup/verb/verbs_steps.go:38`) — resolves the
   three layout sources and refuses two at once (`OneLayoutOnly`), then allocates
   the node table under the server-set lock.
