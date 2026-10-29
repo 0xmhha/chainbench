@@ -3,7 +3,8 @@
  // gauges and the other nodes' errors on one time axis, read between two
  // cursors. A click moves B, a Shift+click moves A; with the strip focused the
  // arrow keys move B by a second and Shift+arrows move A; ] and [ jump the
- // chosen cursor to the node's next and previous error. A failed phase's
+ // chosen cursor to the node's next and previous error, from anywhere on the
+ // page for its first strip. A failed phase's
  // bench also draws the job's phases as their own channel.
  import {formatTime,gapText} from './labels.mjs'
  import {failureMetrics} from './metric-chart.mjs'
@@ -57,6 +58,20 @@
  }
  const offset=v=>Math.round((Date.parse(v)-Date.parse(from))/1000)
  const bIsError=$derived(errors.some(e=>Math.abs(Date.parse(e.time)-Date.parse(b))<500))
+ // What sits at B, said in words: the ticks are drawn marks a keyboard or a
+ // screen reader cannot hover, so the slider reads them out instead.
+ const near=e=>Math.abs(Date.parse(e.time)-Date.parse(b))<500
+ const atB=$derived([...events.filter(near).map(e=>`${node} ${e.level}`),...otherEvents.filter(near).map(e=>`${e.node} ${e.level}`)])
+ // ] and [ step between errors from anywhere on the page, unless the reader
+ // is typing; only the page's first strip answers, so open runs do not all jump.
+ function pageKey(event){
+  if(event.key!==']'&&event.key!=='[')return
+  if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey)return
+  const t=event.target
+  if(t instanceof Element&&(t.closest('input,textarea,select,[contenteditable]')||t===plot))return
+  if(!plot||document.querySelector('[data-testid="recorder-strip"] .plot')!==plot)return
+  event.preventDefault();jump(event.key===']'?1:-1,target(event))
+ }
  const chosenRow=$derived(tests.find(r=>r.id===chosen))
  const verdict=$derived(measure?measureVerdict(measure,node,errors.length):null)
  // A label sits after its bar in ink, or before it when the bar ends late,
@@ -73,11 +88,12 @@
  const fmt=v=>v===null||v===undefined?'—':v
 </script>
 
+<svelte:window onkeydown={pageKey} />
 <section class="strip" data-testid="recorder-strip" data-node={node} aria-label="{node} 기록계 띠">
  <div class="chart">
   <div class="axis" aria-hidden="true"><span class="lab">{clock(from)} – {clock(to)}</span><span class="ticks">{#each ticks as t}<span>{clock(t)}</span>{/each}</span></div>
   <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <div class="plot" bind:this={plot} role="slider" tabindex="0" aria-label="커서 {moving==='a'?'A':'B'} 시각. 화살표로 1초씩, ]와 [로 다음과 이전 오류로 옮깁니다. Shift를 누르면 다른 커서를 옮깁니다." aria-valuemin={0} aria-valuemax={offset(to)} aria-valuenow={offset(moving==='a'?a:b)} aria-valuetext="커서 A {clock(a)}, 커서 B {clock(b)}" onclick={place} onkeydown={key}>
+  <div class="plot" bind:this={plot} role="slider" tabindex="0" aria-label="커서 {moving==='a'?'A':'B'} 시각. 화살표로 1초씩, ]와 [로 다음과 이전 오류로 옮깁니다. ]와 [는 페이지 어디서나 됩니다. Shift를 누르면 다른 커서를 옮깁니다." aria-valuemin={0} aria-valuemax={offset(to)} aria-valuenow={offset(moving==='a'?a:b)} aria-valuetext="커서 A {clock(a)}, 커서 B {clock(b)}{atB.length?` · B 시점 ${atB.join(', ')}`:''}" onclick={place} onkeydown={key}>
    {#if tests.length}
     <div class="chan"><span class="lab">테스트<small>{tests.length}건</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
      {#each tests as row (row.seq)}{@const p=bar(row)}{#if p}<rect class="t {row.status}" class:chosen={chosen===row.id} x={p.x} y="4" width={p.w} height="12"><title>{row.id} · {row.status}</title></rect>{/if}{/each}
@@ -90,8 +106,8 @@
    {/if}
    <div class="chan" class:bad={errors.length}><span class="lab">{node} 로그<small>경고 {warns.length} · 오류 {errors.length}</small></span><svg viewBox="0 0 100 20" preserveAspectRatio="none">
     <line class="base" x1="0" y1="17" x2="100" y2="17"/>
-    {#each warns as e}{@const x=stripX(e.time,from,to)}{#if x!==null}<line class="warn" x1={x} y1="6" x2={x} y2="17"/>{/if}{/each}
-    {#each errors as e}{@const x=stripX(e.time,from,to)}{#if x!==null}<line class="err" x1={x} y1="1" x2={x} y2="17"/>{/if}{/each}
+    {#each warns as e}{@const x=stripX(e.time,from,to)}{#if x!==null}<line class="warn" x1={x} y1="6" x2={x} y2="17"><title>{node} · {e.level} · {clock(e.time)}</title></line>{/if}{/each}
+    {#each errors as e}{@const x=stripX(e.time,from,to)}{#if x!==null}<line class="err" x1={x} y1="1" x2={x} y2="17"><title>{node} · {e.level} · {clock(e.time)}</title></line>{/if}{/each}
    </svg></div>
    {#each gauges as g, i (g.label)}
     {@const trace=tracePath(g.series[0]?.samples,from,to,step)}
@@ -131,7 +147,7 @@
   {:else if !metrics}<p class="muted">지표를 불러오는 중이거나 이 구간에 지표가 없습니다.</p>{/if}
   <!-- The how-to is read once, so it waits folded behind a one-line reminder. -->
   <details class="keys-touch"><summary>조작법 · 누르면 고른 커서</summary><p>띠를 누르면 고른 커서가 그 시각으로 옮겨집니다. 옮길 커서는 A와 B로 고르고, 오류 사이는 ←와 →로 오갑니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p></details>
-  <details class="keys"><summary>조작법 · 클릭 · Shift+클릭 · ] [ 오류</summary><p>띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 띠에 초점이 있을 때 ←와 →는 1초씩, ]와 [는 고른 커서를 이 노드의 다음 오류와 이전 오류로 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p></details>
+  <details class="keys"><summary>조작법 · 클릭 · Shift+클릭 · ] [ 오류</summary><p>띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 띠에 초점이 있을 때 ←와 →는 1초씩 옮깁니다. ]와 [는 페이지 어디서나 고른 커서를 이 노드의 다음 오류와 이전 오류로 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p></details>
  </div>
 </section>
 

@@ -32,7 +32,8 @@
   {#if judged}<p class="finding" class:bad={judged.abnormal} data-testid="{scope}-finding">{judged.text}{#if !judged.abnormal&&judged.compared}. 노드보다 기대값이나 시나리오를 먼저 확인하세요.{/if}</p>{/if}
   {#if head.tone==='fail'&&(head.phase||head.test)}
    <ol class="trail" aria-label="실패 경로">
-    {#if head.phase}<li><button type="button" class="link" onclick={onphase}>단계 {head.phase}</button></li>{/if}
+    <!-- A failed test fails its phase too, so the phase is a step only when no test is named. -->
+    {#if head.phase&&!head.test}<li><button type="button" class="link" onclick={onphase}>단계 {head.phase}</button></li>{/if}
     {#if head.test}<li><button type="button" class="link" onclick={ontest}>테스트 {head.test}</button></li>{/if}
     {#if trailNode}<li><button type="button" class="link" onclick={onnode}>노드 {trailNode} 로그</button></li>{/if}
    </ol>
