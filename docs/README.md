@@ -5,7 +5,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 구성하고, 테스트 중 노드를 개별 제어하며, 실행 증적을 모아 보고서를 낸다.
 그 목표의 정본은 [`dev/chainbench-system-direction.md`](dev/chainbench-system-direction.md) 다.
 
-> 인덱스 갱신: **2026-10-22** (`f9e46b2d`). 문서를 더하거나 옮기면 이 표도 같이 고친다 —
+> 인덱스 갱신: **2026-10-29** (`4e37b4c2`). 문서를 더하거나 옮기면 이 표도 같이 고친다 —
 > 등급 체계는 인덱스가 정직할 때만 작동한다.
 
 ## 0. 무엇을 알고 싶은가
@@ -18,7 +18,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | **지금 어떤 구조를 향하나** | [`dev/architecture/`](#4-devarchitecture--구조와-측정) · [현행 설계 문서들](#3-dev--현행-설계) |
 | **코드가 실제로 어떤 모양인가** | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) (AST 실측) · `dev/codegraph/`(지운 문서) (호출 그래프) |
 | **체인 바이너리의 플래그·RPC 가 궁금하다** | [`chain-analysis/`](chain-analysis/README.md) — **체인 소스를 읽기 전에 여기부터** |
-| **테스트는 어디에 있나** | [`../tests/README.md`](../tests/README.md) |
+| **테스트는 어디에 있나** | [`../tests/README.md`](../tests/README.md) · 테스트 명세(Confluence 사본)는 [`tc/`](tc/README.md) |
 | **왜 이렇게 결정했었나** | git 이력 — `dev/archive/` 는 2026-09-24 에 정리됐다. `git log --diff-filter=D -- docs/dev/archive/` 로 목록을, `git show cde3a08f:<경로>` 로 본문을 본다 |
 
 ## 문서 등급과 권위 순서
@@ -84,6 +84,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/web-ui-status.md`](dev/web-ui-status.md) | **Web UI 현황과 남은 작업 (2026-10-29)** — 리뉴얼과 WEB-01~14 capture가 끝난 상태, 그 뒤 화면 수정(#503~#509), 정해야 할 것, 확인하지 못한 것, 지금도 지키는 원칙. |
 | [`dev/web-data-inventory.md`](dev/web-data-inventory.md) | **[측정] Web 데이터 인벤토리** — 데이터 모델 계획 3-1단계 결과. API마다 필드의 타입, 비어 있을 수 있는지, 원본, 화면이 읽는지와, 확인한 문제와 #466에서 고친 결함. |
 | [`dev/web-domain-model.md`](dev/web-domain-model.md) | **[현행 설계] Web 도메인 모델** — 데이터 모델 계획 3-3단계 결과. 2026-10-26 사용자 승인. 화면이 받을 개념마다 필드, 타입, 필수 여부, 출처와 상태 어휘, 노출 결정. |
+| [`dev/web-job-arguments.md`](dev/web-job-arguments.md) | **Web 작업 인자와 CLI 명령줄**: `POST /api/v1/plans` 의 `arguments` 가 작업마다 어떤 `chainbench` 명령줄이 되는지. 작업 계약에서 만들며 `TestWebJobArgumentsDocumentMatchesTheContract` 가 계약과 대조한다. |
 | [`dev/web-ui-gap-review.md`](dev/web-ui-gap-review.md) | **Web UI 계획 대비 누락 검토** — 인수 기준 통과 뒤에도 Seed·명세·OpenAPI·디자인과 코드가 어긋난 곳을 찾은 근거. 상태 정본은 `web-ui-gaps.json`. |
 | [`dev/web-ui-manifests.md`](dev/web-ui-manifests.md) | **WEB-04 manifest 모듈** — 내장 플러그인 목록, manifest·템플릿 가져오기 검증, 내용 주소 번들 저장·내보내기. |
 | [`dev/endpoint-profiles.md`](dev/endpoint-profiles.md) | **외부 노드 엔드포인트 프로필** — `chain-preset.attach.endpoints` 로 이미 도는 노드의 RPC·WS·metrics 와 역할을 선언한다. 노드 제어는 하지 않는다. |
@@ -115,6 +116,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | 경로 | 내용 |
 |---|---|
 | [`chain-analysis/`](chain-analysis/README.md) | **체인 바이너리의 CLI 표면과 배선** — gstable · gwbft · gwemix 각각의 명령/플래그 그래프와 RPC/metrics 그래프. 실행 옵션 질문은 **체인 소스를 읽기 전에 여기부터.** 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. 대상이 외부 바이너리라 설계 4종과는 별개 축이다. |
+| [`tc/`](tc/README.md) | **테스트 명세**: Confluence Chainbench 폴더 페이지 44개의 사본(WEMIX3.0 · WEMIX4.0 · StableNet)과 세 체인 공통 테스트([`tc/common/`](tc/common/README.md), CT 72개). `tests/tc` 케이스의 기존 ID 와 CT ID 가 여기서 온다. `tc/wemix4.0/01-test-scenarios.md` 는 `make tc-review` 가 sha256 으로 고정하므로 한 바이트도 고치지 않는다. |
 | `research/` | 동결된 분석 기록. 살아 있는 문서가 인용하는 것만 남는다 — [`chainbench/analyses/`](research/chainbench/analyses/README.md)(그 README 가 누가 무엇을 인용하는지 적는다). 기록이라 오늘의 코드와 어긋나는 것이 정상이다. 메인넷 의존 분석 2종(2026-09-09 · 09-11)과 그 Confluence 초안은 결론이 `tc/common/` 으로 옮겨간 뒤 2026-09-29 에 지웠다 — 본문은 git 이력에 있다. |
 
 > `dev/session-data/`(원본 세션 transcript)는 검증용 로컬 자료로 **git 미추적**(`.gitignore`).

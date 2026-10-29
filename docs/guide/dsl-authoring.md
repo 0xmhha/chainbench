@@ -2,7 +2,7 @@
 
 이 문서는 사람이 정리한 요약이 아니라 **코드에서 뽑은 것**이다(e4feb738 기준). `internal/testhelper` 의 등록 지점(`RegisterAction`/`RegisterAssertion`/`RegisterReader`)을 모두 부른 결과에서 이름을 얻고, Go 소스를 파싱해 각 구현의 본문과 그 본문이 부르는 같은 패키지 함수가 읽는 인자 키를 모았다. 코드가 바뀌면 다시 뽑아야 한다.
 
-등록된 이름은 53개다. 동작 22(그중 `read` 는 §2·§6 의 읽기 source 를 부르는 틀이다), 판정 전용 13, 읽기 겸 판정 18.
+등록된 이름은 57개다. 동작 22(그중 `read` 는 §2·§6 의 읽기 source 를 부르는 틀이다), 판정 전용 17, 읽기 겸 판정 18. e4feb738 뒤에 판정 전용 `blockLag`·`chainInfo`·`remoteBalance`·`rpcHealth` 넷이 등록됐다(b9451864). 이 넷의 줄은 4e37b4c2 의 코드를 읽고 더했으며, 나머지 줄의 인자와 스펙 사용 수는 다시 뽑지 않았다.
 
 ---
 
@@ -383,7 +383,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 `resetNode` 는 생산하지 않는 노드 하나를 멈추고 datadir 를 다시 초기화해 genesis 에 둔 채로 남긴다. 뒤이은 `startNode` 가 높이 0 에서 띄우는데, snap sync 는 그 상태에서만 허락된다.
 
-### 판정 전용 (expect / assert) — 13개
+### 판정 전용 (expect / assert) — 17개
 
 `blockAdvance`·`blockHalt`·`sameBlockHash` 는 `onEach` 에 적힌 **모든** 노드를 본다. 실패하면
 어느 노드가 그랬는지 말한다.
@@ -393,16 +393,22 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `blockAdvance` | `on`, `pollInterval`, `timeout` | 29 | `internal/testhelper/blockassert.go` |
 | `blockHalt` | `maxAdvance`, `on`, `within` | 7 | `internal/testhelper/blockprobe.go` |
 | `blockInterval` | `blocks`, `maxMillis`, `maxSeconds`, `minMillis`, `minSeconds`, `on` | 1 | `internal/testhelper/blockprobe.go` |
+| `blockLag` | `maxLag`, `on`, `pollInterval`, `reference`, `timeout` | 3 | `internal/testhelper/blocklag.go` |
 | `blockStalled` | `on`, `pollInterval`, `timeout` | 3 | `internal/testhelper/blockassert.go` |
 | `callError` | `data`, `on`, `reason`, `to` | 1 | `internal/testhelper/txprobe.go` |
+| `chainInfo` | `on` | 2 | `internal/testhelper/remote_observation.go` |
 | `gasPriceIsBaseFeePlusTip` | `on` | 1 | `internal/testhelper/derived.go` |
 | `methodPresent` | `method`, `on`, `params` | 1 | `internal/testhelper/txprobe.go` |
 | `metric` | `alternatives`, `compare`, `expected`, `name`, `on`, `onEach` | 6 | `internal/testhelper/metric.go` |
+| `remoteBalance` | `address`, `on` | 2 | `internal/testhelper/remote_observation.go` |
 | `rpcError` | `method`, `on`, `params`, `reason` | 1 | `internal/testhelper/txprobe.go` |
+| `rpcHealth` | `on` | 2 | `internal/testhelper/remote_observation.go` |
 | `sameBlockHash` | `block`, `on` | 13 | `internal/testhelper/blockassert.go` |
 | `txMined` | `expected`, `hash`, `on` | 1 | `internal/testhelper/txprobe.go` |
 | `wsCollected` | `count`, `sub`, `timeout` | 1 | `internal/testhelper/websocket.go` |
 | `wsSubscribe` | `count`, `event`, `expected`, `on`, `params`, `timeout` | 1 | `internal/testhelper/websocket.go` |
+
+`blockLag` 는 고른 노드들(`on`·`onEach` 가 없으면 망의 모든 노드)의 head 를 함께 읽어 서로 벌어진 블록 수가 `maxLag`(기본 2) 이하가 될 때까지 기다린다. `reference` 를 주면 그 노드보다 뒤처진 정도만 재고, 앞선 노드는 허용한다. `chainInfo` 는 `eth_chainId`·`eth_syncing`·`eth_blockNumber` 를 읽고 5초 뒤 높이가 줄지 않았는지 본다. 높이가 그대로여도 통과한다. `rpcHealth` 는 `eth_blockNumber`·`net_peerCount`·`web3_clientVersion` 을 부르고, 뒤의 둘은 method-not-found(-32601) 응답일 때만 지원하지 않는다고 기록한다. `remoteBalance` 는 `address` 가 20바이트 hex 주소인지 먼저 확인한 뒤 `eth_getBalance` 를 읽는다.
 
 `txMined` 는 읽기 source 로도 등록돼 있다. `rpcError` 는 `method`·`reason` 이 둘 다 필수다 — "어떤 오류든 통과" 는 거절된 연결을 revert 로 센 적이 있다. `gasPriceIsBaseFeePlusTip` 은 `eth_gasPrice` 가 head 의 base fee 와 `eth_maxPriorityFeePerGas` 의 합인지를, head 가 움직이지 않은 한 번의 읽기에서 본다.
 
@@ -433,7 +439,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 `validators` 는 체인의 합의가 인정하는 현재 검증자 주소의 배열을 준다. 개수가 아니라 배열이라 `Len`("넷이다")과 `Contains`("이 노드가 그중 하나다")를 모두 쓸 수 있다.
 
-"스펙 사용" 은 `tests/tc` 아래 문서 중 그 이름을 `do`·`expect`·`source` 의 값으로 쓴 파일 수다(e4feb738 기준). `rpc` 별칭으로 쓴 21건은 `rpcCall` 에 넣지 않았다.
+"스펙 사용" 은 `tests/tc` 아래 문서 중 그 이름을 `do`·`expect`·`source` 의 값으로 쓴 파일 수다(e4feb738 기준, 뒤에 더한 판정 전용 넷은 4e37b4c2 기준). `rpc` 별칭으로 쓴 21건은 `rpcCall` 에 넣지 않았다.
 
 ---
 

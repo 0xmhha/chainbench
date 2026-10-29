@@ -252,7 +252,7 @@ flowchart TD
 `os.MkdirAll` 이 대부분 사라진 것은 부수효과가 아니다. `FileStore.Write` 가 부모 디렉토리를
 만들므로, 디렉토리를 미리 만드는 코드는 **경로를 아는 코드**였고 그게 층 위반의 실체였다.
 남은 읽기(`os.ReadDir`/`os.ReadFile`)는 조작자 머신의 키 preset 을 읽는 쪽이라 그대로다 —
-`copyFiles` 가 **로컬에서 읽어 boundary 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
+`copyFiles`(당시 함수 이름이고 지금 소스에는 없다)가 **로컬에서 읽어 boundary 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
 
 `app`(A3)·`chains/wemix/deploy`(A4, 그 뒤 폐기) 는 앞서 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
 
@@ -334,6 +334,13 @@ flowchart TD
 5. **패키지 이름이 역할을 말한다.** `core`·`testspec` 처럼 무엇인지 모르는 이름은 리팩토링 대상이다.
 
 ### 5b.3 리팩토링에서의 개명 (제안)
+
+> **현황 (2026-10-29 확인).** 아래 표와 §5b.1·§5b.2 는 제안 당시 패키지 이름으로 적었다. `place`·`netmap`·`topology`·
+> `driver`·`serverset`·`upgrade`·`core/capability`·`testspec` 패키지는 지금 없다. 실제로 남은 모양은 다음과 같다.
+> 노드 라벨은 `node.Label`(`internal/core/node/label.go`), 키 라벨은 `keyring.Label` 로 명명 타입이 됐고 `AcctLabel` 은
+> 만들지 않았다. 선언의 노드는 `blueprint.Node`, 기동 계획은 `process.Plan`, 포트 밴드는 `resource.Bands`, 인벤토리는
+> `resource.Inventory` 다. 포크 전환은 `hardfork.SwapPlan` 하나다. 표면 카탈로그는 `feature` 와 `core/registry` 로,
+> DSL 은 `dsl` 과 `dsl/interp` 로 나뉘었다. `poa.Config` 와 `poa.Step` 은 이름을 바꾸지 않았다.
 
 | 지금 | 제안 | 왜 |
 |---|---|---|

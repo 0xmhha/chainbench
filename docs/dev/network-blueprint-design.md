@@ -144,6 +144,9 @@ BLS PoP** 를 전부 뱉는다. 즉 wbft 계열에서 **nodekey 하나가 루트
    (`bootnode -writeaddress` 출력과 pubkey·PoP 모두 일치). 따라서 `--bootnode` 옵션은 사라지고
    `key new --with-bls` 가 그 자리를 대신한다.
 
+   > **정정 (2026-10-29).** 실제 구현은 `blst` 가 아니라 `github.com/kilic/bls12-381` 을 쓰고(`go.mod`),
+   > 명령은 `chainbench keyring new --with-bls` 다.
+
 **그래서 키 생성 전 과정이 외부 바이너리 없이 가능하다.**
 
 ```
@@ -437,6 +440,13 @@ Blueprint 관점에서 보면 **체인 특화는 두 곳뿐**이다.
 | 10 | 미지원 기능은 **문법 오류가 아니라 사유를 남기고 미수행** | `engine/capability`(게이팅) | 게이팅 있음 / **사유 미기록** |
 | 11 | 로컬/원격을 IP 기반 HTTP 로 동일 스택 처리 | `target` + `netcompose` | 있음 |
 | 12 | 신규 생성 일반화 + preset 지원. **내용이 같으면 deploy skip** | `provision`(Exists 있음) + **내용 비교 추가** | 존재 확인만 있음 |
+
+> **상태 정정 (2026-10-29).** 위 "상태" 열은 2026-08-19 기록이다. 그 뒤 달라진 것은 다음과 같다.
+> 라벨과 엔드포인트의 양방향 조회는 `netmap` 이라는 새 패키지가 아니라 `internal/core/node` 의 `node.Map`
+> (`Lookup`, `At`)이 맡는다(`placement.go`). 요구 10의 사유 기록은 `session.TestRecord.Reason` 으로 남긴다.
+> 요구 12의 내용 비교는 구현됐다. `filestore.Provisioner.Provision` 이 같은 경로의 checksum 이 같으면 건너뛰고,
+> 다르면 덮어쓴다(`internal/core/filestore/filestore.go`). 아래 §6.1 의 `core/netmap` 코드와 §6.8 의 해시 비교 "없음" 표기는
+> 당시 제안으로 읽는다.
 
 ### 6.1 신설이 필요한 것은 하나뿐 — `netmap`
 

@@ -71,20 +71,26 @@ scripts/chain-analysis/verify-docs.sh $CHAIN/go-wemix/build/bin/gwemix     docs/
 그 파일은 낡은 것이고, 거기서 파생된 판단도 낡은 것이다 — 신선도를 사람의 기억이 아니라
 파일이 말하게 하는 것이 요점이다.
 
-## 현재 기준 (2026-08-22 캡처)
+## 현재 기준 (2026-10-17 캡처)
 
 | 체인 | 바이너리 | 체인 커밋 | 명령 표면 | 플래그(help + 숨김) | **우리가 방출 가능** |
 |---|---|---|---|---:|---:|
-| stablenet | `gstable` | `0937ac5c9` | 80 | 179 + 2 = **181** | **78 (43%)** |
-| wbft | `gwemix`(go-wbft) | `7af50e45d` | 78 | 177 + 3 = **180** | **78 (43%)** |
-| wemix | `gwemix`(go-wemix) | `1350376a6` | 58 | 195 + 0 = **195** | **87 (44%)** |
+| stablenet | `gstable` | `4d17eea` | 80 | 179 + 2 = **181** | **79 (44%)** |
+| wbft | `gwemix`(go-wbft) | `d535dd3` | 78 | 177 + 3 = **180** | **79 (44%)** |
+| wemix | `gwemix`(go-wemix) | `4538a9f` | 58 | 195 + 0 = **195** | **88 (45%)** |
 
-> 검증 상태(2026-08-22): 3체인 모두 **ABSENT 0 · 잘못된 주석 0**. 숨겨진 플래그는 문서가
-> 이미 `*(hidden)*` 로 표시하고 있었다.
+> 검증 상태(2026-10-18): 세 체인의 help 캡처와 보이는 플래그 목록을 위 커밋의 네이티브 빌드에서
+> 다시 뽑았고, 문서가 숨김 또는 거절로 적은 플래그 이름을 모두 다시 물어 **ABSENT 0 · 잘못된 주석 0**
+> 을 확인했다. 명령 표면과 플래그 수는 2026-08-22 캡처와 같다. 숨김 플래그 수는 그때 센 값을 그대로 둔다.
+> 저장소에 넣은 help 문자열은 줄 끝 공백만 지웠고, 원본 그대로의 캡처는 증명 산출물에 남아 있다.
+> 이 정리는 명령, 옵션, 기본값, 출처 머리, 관측값을 바꾸지 않는다.
+>
+> `cli-graph.md` 와 `rpc-metrics-graph.md` 는 각 머리에 적은 이전 소스 스냅숏 기준이다. help 출처를
+> 갱신했다고 해서 그 배선 분석을 다시 감사했다는 뜻은 아니다.
 
-"방출 가능"은 `internal/core/nodeconfig/launchopt.go` 의 dialect 테이블에 있는 키다. **테이블에 없는 키는
+"방출 가능"은 `internal/core/nodeconfig/launchopt.go` 의 dialect 테이블에 있는 키다(4e37b4c2 기준, stablenet 과 wbft 는 `geth114`, wemix 는 `geth110-wemix`). **테이블에 없는 키는
 오류다** — `Args.Set` 이 `dialect %s does not support %q` 로 거절하므로 raw 통과 경로가 없다.
-즉 나머지 ~75% 는 지금 **표현 자체가 불가능**하고, 지원하려면 dialect 테이블을 늘려야 한다.
+즉 나머지 55% 남짓은 지금 **표현 자체가 불가능**하고, 지원하려면 dialect 테이블을 늘려야 한다.
 
 이 수치가 "DSL 로 체인 구성을 자유롭게 지원한다"의 현재 위치다. 무엇을 먼저 늘릴지는
 `cli-flags.txt` 와 launchopt 키를 차집합으로 놓고 고르면 된다.
@@ -113,14 +119,3 @@ discovery.dns[+port]) · history 2(geth114) · `miner.extradata` · wemix 전용
 원칙은 하나다: **한 번 뽑은 분석은 재생성 가능한 형태로 남기고, 신선도를 스스로 말하게 한다.**
 검사로 만들 수 있으면 검사로(가장 강함), 아니면 스크립트 산출물로, 그것도 아니면 기준 커밋을
 적은 문서로.
-
-2026-10-18: the three CLI/help captures and visible flag lists were regenerated
-from the pinned StableNet4d17eea0, WBFTd535dd3d and WEMIX4538a9f5 native builds.
-All documented hidden/not-accepted flag names were rechecked with zero absent
-flags or wrong notes. The separate code-line and RPC/metrics analyses retain
-their explicit earlier source snapshots; updating help provenance does not
-claim those semantic analyses were re-audited.
-
-The checked-in help text removes trailing whitespace only. Original verbatim
-captures are retained in the referenced proof artifacts; the normalization does
-not change commands, options, defaults, provenance headers or observed values.

@@ -1,4 +1,16 @@
-# WEB-01 verification
+# tests/webui — Web UI tests and live verification runbook
+
+This directory holds the Web UI's Node tests (`*.test.mjs`, run by
+`node --test tests/webui/*.test.mjs`), its Python tests (`test_*.py`, run by
+`python3 -m unittest discover -s tests/webui -p 'test_*.py'`), and the live
+runners behind the WEB-01 to WEB-14 acceptance criteria (`verify.sh`). All
+fourteen criteria passed their last full capture; the current status and the
+pending recapture are in [`docs/dev/web-ui-status.md`](../../docs/dev/web-ui-status.md),
+and the receipts are under `docs/dev/web-ui-evidence/WEB-*/`. Where a paragraph
+below calls a development runner "partial", it means that runner alone does not
+cover a whole criterion; `verify.sh --criterion WEB-NN` is what awards one.
+
+## Runners, WEB-01 and WEB-03
 
 For saved configuration refresh regressions, run
 `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_catalog_refresh.py`
@@ -35,16 +47,17 @@ and exercises the three chain forms in a real browser. The server process is
 terminated in a finally block. Screenshots, observations and build digests
 are retained in the workspace result directory.
 
-The present implementation edits count topology and sync mode. Other preset
-fields and node tables are preserved, but their complete structured editing,
-shared parameter schemas and binary-backed ChainSurface coverage are unfinished.
-Consequently this runner records **incomplete** and exits nonzero even when the
-implemented form checks pass. It never reports partial coverage as WEB-01 PASS.
-The independent `evidence.py` verifier also rejects incomplete observations,
-reduced scenario denominators, stale invocation IDs and digest mismatches.
+The WEB-01 scenarios are the preset fields of each of the three chains,
+inheritance defaults, unsupported UI/API input, preset option field coverage and
+binary-backed surface provenance. The runner records the result as incomplete and
+exits nonzero when any of them is missing; it never reports partial coverage as
+WEB-01 PASS. The independent `evidence.py` verifier also rejects incomplete
+observations, reduced scenario denominators, stale invocation IDs and digest
+mismatches.
 
-The editor is enabled explicitly with the dashboard's `-chain-presets
-presets/chain` flag. It validates without saving or executing declarations.
+The chain preset editor reads the dashboard's `-chain-presets` directory, which
+defaults to `presets/chain`. It validates without saving or executing
+declarations.
 
 WEB-03 uses the real embedded SPA, two provisioned operator accounts, and an
 invocation-specific OpenSSH daemon under `/private/tmp/chainbench-web-ui-e2e`:

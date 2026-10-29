@@ -10,6 +10,11 @@
 > 상위 맥락: PR [#419](https://github.com/0xmhha/chainbench/pull/419) `HANDOFF.md` (2026-09-24 삭제) 의 요구사항 9개
 > 배경 분석은 이 목록으로 옮겨 와 지웠다.
 
+> **식별자 안내 (2026-10-29).** 이 문서의 대부분은 끝난 작업의 기록이고, 기록에 나온 함수와 타입 가운데 많은 수가
+> 지금 소스에 없다(예 `applyPreset`, `PlanOrigin`, `PlanSource`, `preflightDecision`, `handoffUp`, `provisionKeys`,
+> `LoadPresetWithKeys`, `dsl.UseEnv`, `dsl.ReadFilesWithEnv`, `EnvV2`, `RoleBoot`). 그 이름은 그때의 코드로 읽는다.
+> 열린 항목은 [chainbench-worklist](../chainbench-worklist.md) §0a 9번(메인넷 설정 live)이 추적한다.
+
 ## 이 문서의 용도
 
 작업 목적은 "공통 테스트 코드에서 메인넷별 차이를 제거하고, 설정으로 관리하여
@@ -424,7 +429,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 | P2 | preset 에 `values` 블록을 둔다 | JSON 타입·이름 규칙·깊은 병합과 삭제/배열 교체를 검증하고 구조화 Web 작성·내보내기를 보존했다. [실제 증거](../preset-values-evidence.json) | D5, P1 | **완료 (2026-10-14)** |
 | P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 첫 hook부터 초기값을 바인딩하고 오프라인 검사·타입 보존·실행별 복사·save 덮어쓰기·의미 지문을 검증했다. 세 체인 CLI/MCP 두 케이스 실행과 Web 작성이 통과했다. R1 관문과 다른 후속 작업은 별도다. [증거](../preset-values-evidence.json) | P2 | **완료 (2026-10-14)** |
 | P4 | 케이스 사전 요구와 preset 제공 능력을 대조한다 | 현행 문법은 `requires`와 `attach.provides`/`genesis.provides`다. 부족한 능력·체인 불일치 사유와 선언 관측을 RED→GREEN·전체 검사·race·세 체인 CLI/MCP 18판정으로 보강했다. 실제 기능 확인은 R3이고 전체 사전 요구 충분성은 별도다. [증거](../capability-reason-evidence.json) | D4 | **진행 (2026-10-14), 선언 사유 보강 완료** |
-| P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
+| P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`, 일이 끝나 지운 문서)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
 | P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **완료 (2026-09-18): 66 → 0** — §P5-L1 참조 |
 | P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | **해소 (2026-09-15). 없다.** 실제 wbft 망을 띄워 `istanbul_getWbftExtraInfo` 를 블록 1·5·32 에서 읽었더니 필드는 `committedSeal · epochInfo · preparedSeal · prevCommittedSeal · prevPreparedSeal · prevRound · randaoReveal · round · vanityData` 뿐이고 **`gasTip` 이 없다**. 그리고 `08-legacy-transfer` 를 `--env wbft-bp4` 로 실제로 올려 보니 `step 3 (read) failed: no "gasTip" in the result` 로 **FAIL** 했다. 즉 `applicableChains: "stablenet,wbft"` 라고 적힌 3건은 **wbft 에서 돌지 않는다** — 선언이 틀렸고, `engine:anzeon` 으로 좁히는 것이 맞았다 | **해소 (2026-09-15)** |
 | P6 | 실행 시점에 체인 선언을 주입한다 | 완료 조건 3번. `suite run --env <id\|경로>` 가 케이스의 참조를 갈아끼우고, 케이스가 덮은 것은 남긴다. §P1 아래 참조 | ~~P1~~ | **완료 (2026-09-15)** |
@@ -940,7 +945,8 @@ system-contracts, extra-state, …)면 한 묶음이 5~15건이라 디프를 눈
 #### 7.0.3 케이스별 판정표 — 어느 층에서 따질지 정하는 법
 
 묶음 2 에서 "컨트랙트를 부른다고 그것이 이유의 전부는 아니다" 를 배운 뒤, 남은 107건을
-추측 없이 처리하려고 절차를 세웠다. **판정표는 `case-gate-table.md` 에 있다.**
+추측 없이 처리하려고 절차를 세웠다. **판정표는 `case-gate-table.md` 에 있었다.** 변환이 끝나(지금 `tests`·`presets` 에
+`applicableChains` 0건) 그 문서는 지웠고, git 이력에 남아 있다.
 
 ##### 절차
 
@@ -980,7 +986,7 @@ system-contracts, extra-state, …)면 한 묶음이 5~15건이라 디프를 눈
 `contract:`·`engine:`·`fork:` 로 판정된 41건을 옮겼다. 판정 변화 0. `applicableChains`
 를 든 케이스 107 → **66**.
 
-적용하면서 배운 셋은 `case-gate-table.md` §5 에 있다. 요약하면: 기존
+적용하면서 배운 셋은 지운 `case-gate-table.md` §5 에 있었다. 요약하면: 기존
 `applicableChains` 값도 증거이고(추론이 그것을 조용히 뒤집으면 안 된다), 주소에서
 이름을 되찾을 때는 그 케이스의 체인 표를 써야 하며(`0x…1003` 은 체인마다 다른
 컨트랙트다), 요구 목록은 손판정이 아니라 케이스가 실제로 쓰는 것에서 뽑아야 한다.

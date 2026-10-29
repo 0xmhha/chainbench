@@ -6,6 +6,15 @@
 > [[layers]](layers.md)·`target-architecture` (2026-09-24 삭제) 의 레이어 규칙을 승계하며,
 > 모듈 경계와 표면 경로를 재정의한다. 어긋나는 부분은 이 문서가 이긴다.
 
+> **구현 정정 (2026-10-29 확인).** §1 그림과 §3·§4 의 모듈 이름은 2026-08-25 결정 당시의 것이다. 지금 트리에서는
+> 다음처럼 읽는다. `netmap` 은 없다. 서버 세트, 자원 배분, 접근 wrapper(`Opener`)는 `internal/resource` 가,
+> 라벨과 엔드포인트의 양방향 조회(`node.Map`)는 `internal/core/node` 가 맡는다. 그래서 §4 의 "netmap wrapper 가
+> 유일 통로"는 지금 "`resource` 의 `Opener` 가 유일 통로"다. `machine`(옛 `core/target`)은 `internal/resource` 의
+> `Spec`·`Access` 로 합쳐졌다. `driver`·`provision`·`serverset` 패키지는 없고, 실행과 파일 배치는
+> `internal/core/process`·`internal/core/filestore`·`internal/core/remote` 가 맡는다. §1 그림의 "CLI ──직접 호출──▶ core"는
+> §2 의 2026-09-05 개정으로 뒤집혔다. 지금은 CLI·MCP·DSL 모두 app 을 지난다. 패키지별 현황의 정본은
+> [layers.md](layers.md) §3 과 [package-tree.md](package-tree.md) 다.
+
 ---
 
 ## 1. 전체 그림

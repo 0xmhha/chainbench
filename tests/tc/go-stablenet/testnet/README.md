@@ -64,6 +64,7 @@ What works instead has this shape.
 | `03-block-fields-well-formed` | The head block's number, hash, parentHash and transactions |
 | `04-block-by-hash-consistency` | A block four behind the head, read back by its hash, is the same block |
 | `05-value-transfer` | 1 Gwei from payer to a fresh address: the receipt, the recipient's balance, and the payer's before/after difference |
+| `06`–`09` | Four legacy remote predicates (balance query, chain info, RPC health, a node-signed transfer); see "Legacy remote predicates added on 2026-10-20" below |
 
 The head block is avoided because it can be reorganised.
 
@@ -89,7 +90,7 @@ call a faucet on somebody else's network.
 
 ## How far this is verified
 
-All five passed **against the real go-stablenet testnet** on 2026-10-01. That
+Cases 01–05 passed **against the real go-stablenet testnet** on 2026-10-01; 06–09 were added later and have not run against it. That
 network answered as `Gstable/v1.1.0-stable-71e3f820`, chain id 8283, at a height
 near 21.1M. 05 really did send 1 Gwei, and both the recipient's balance and the
 payer's difference came out exact.
@@ -105,7 +106,7 @@ cases passed in a row; nothing here says what happens when it is busy.
 
 ## Legacy remote predicates added on 2026-10-20
 
-Cases06–09 preserve the four recovered `remote/*.sh` purposes separately from the five existing testnet cases.
+Cases 06–09 preserve the four recovered `remote/*.sh` purposes separately from the five existing testnet cases.
 They still require an explicit `GSTABLE_TESTNET_RPC`; none starts or defaults to a local endpoint.
 
 | File | Contract |
@@ -115,23 +116,23 @@ They still require an explicit `GSTABLE_TESTNET_RPC`; none starts or defaults to
 | `08-remote-rpc-health` | Valid block quantity; available/unsupported classification for optional peer count and client version |
 | `09-remote-unlocked-transfer` | One wei through the node's `eth_sendTransaction`, its successful receipt and exact sender/recipient/value |
 
-Edit the values in the structured editor or import a custom case/preset. For09 both `remoteSender` and
+Edit the values in the structured editor or import a custom case/preset. For 09 both `remoteSender` and
 `remoteRecipient` start empty and must be set to approved addresses. The sender must be funded and unlocked
 on that node. This case does not read a local private key and does not silently skip an unprepared transfer.
 When the endpoint allows `personal_unlockAccount`, its optional preparation can be added explicitly as an
 RPC step before the case; the native fixture exercises import and unlock only inside its generated keystore.
-The existing05 continues to exercise a local signer and1Gwei, independently of this1wei node-signing path.
+The existing 05 continues to exercise a local signer and 1 Gwei, independently of this 1 wei node-signing path.
 
-`chainInfo` deliberately permits an unchanged head as the recovered original did. Existing02 still requires
+`chainInfo` deliberately permits an unchanged head as the recovered original did. Existing 02 still requires
 actual progress. An optional RPC method is unsupported only for a typed method-not-found response;
 transport failures, malformed responses, internal errors and permission failures remain failures.
 These new cases have unit contracts; fresh owned attach evidence and actual external testnet acceptance
-are tracked separately in the worklist. The historical2026-10-01 verification above covers only01–05.
+are tracked separately in the worklist. The historical 2026-10-01 verification above covers only 01–05.
 
 ### Owned attach verification on 2026-10-20
 
-Cases06–09 passed on a newly generated local BP4 fixture: four cases, 11 assertions,
-a 5.002-second 16→21 height observation and an actual 1wei node-signed transaction.
+Cases 06–09 passed on a newly generated local BP4 fixture: four cases, 11 assertions,
+a 5.002-second 16→21 height observation and an actual 1 wei node-signed transaction.
 Independent decoding matched the signed sender/hash and receipt/block; 259 files were preserved,
 eight closed databases reclaimed and none remained. This is not a run against an external testnet.
 Actual external endpoint/account inputs and final browser acceptance remain pending.

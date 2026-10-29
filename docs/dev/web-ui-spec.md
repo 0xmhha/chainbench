@@ -2,6 +2,8 @@
 
 > **등급: [현행 설계]** — 요구 범위와 운영 정책은 사용자 인터뷰와 최종 확인으로
 > 확정했다. 기준 코드는 `9923df85a8d11f2c20e47d2e215d4209500af28a`이다.
+> 구현은 그 뒤 #443, #448과 리뉴얼(#458~#509)로 들어왔다. 지금 무엇이 끝났고 무엇이 남았는지는
+> [Web UI 현황과 남은 작업](web-ui-status.md)에 있다.
 > 아래 화면·API·데이터 모델은 이 요구를 구현하는 계약이다. 작업 순서·진척의 정본은
 > [worklist](chainbench-worklist.md)이며 이 문서의 구현 단계는 의존 순서만 설명한다.
 
@@ -58,8 +60,8 @@
 
 ## UI 구성과 사용 흐름
 
-왼쪽 내비게이션은 대시보드, 체인·workspace, 테스트, 모니터링·디버깅, 히스토리,
-개인 자격증명, 관리로 구성한다. 현재 workspace와 개인·팀 모드, 사용자·역할을 항상
+왼쪽 내비게이션은 대시보드, 체인·workspace, 테스트, 모니터링, 히스토리, 설정의 여섯 쪽으로
+구성한다. 개인 자격증명과 관리(사용자·감사 기록)는 설정 쪽 안에 있다(`web/src/routes.mjs`). 현재 workspace와 개인·팀 모드, 사용자·역할을 항상
 확인할 수 있게 한다. 작업 목록의 상태를 누르면 같은 작업 상세로 이동한다.
 
 데스크톱에서는 목록과 상세 패널을 나란히 놓는다. 좁은 화면에서는 상세를 별도 페이지로
@@ -75,8 +77,8 @@
 | 노드 상세 | 역할, 소유 여부, PID/RPC 상태, 바이너리·설정 revision, 로그 | 시작, 정지, 교체, 초기화 | attach 제한, 생산 노드 초기화 제한, busy |
 | 모니터링 | 단계·케이스 진행, 노드별 차트, 이벤트 타임라인, 로그 | 시점 선택, 노드 비교, 작업 취소 | stale, 누락, 수집 불가, 중단·부분 실패 |
 | 히스토리 | 필터 목록, 요약·어세션 상세, 비교, 연결 자료 | export, 관리자 삭제 | 비교 불가 이유, 과거 형식의 자료 없음 |
-| 개인 자격증명 | 본인 자격증명 이름·서버 연결·사용 상태 | 등록, 접근 확인, 폐기 | 형식·호스트 키·접근 거절 |
-| 관리 | 사용자·역할·활성 상태, 감사 기록 | 사용자 등록·변경·비활성화 | 권한 오류, 중복 계정 |
+| 설정: 개인 자격증명 | 본인 자격증명 이름·서버 연결·사용 상태 | 등록, 접근 확인, 폐기 | 형식·호스트 키·접근 거절 |
+| 설정: 관리 | 사용자·역할·활성 상태, 감사 기록 | 사용자 등록·변경·비활성화 | 권한 오류, 중복 계정 |
 
 ### 체인 구성과 실행
 
@@ -268,11 +270,14 @@ binding을 표시한다. 실행 시 서버가 해당 사용자의 private overla
 | 선언 | `/documents`, `/documents/validate`, `/documents/import`, `/documents/{documentId}/export` | 운영자 저장·import, 조회자 읽기·안전 export |
 | workspace | `/workspaces`, `/workspaces/{workspaceId}`, `/workspaces/{workspaceId}/networks` | 조회/운영자 생성·수정 |
 | 실행 계획 | `/plans` | 운영자, 엔진 dry-plan와 실제 자원·접근 검증 |
-| 작업 | `/jobs`, `/jobs/{jobId}`, `/jobs/{jobId}/cancel` | 목록·상세 조회, 운영자 생성, 본인/관리자 취소 |
+| 작업 | `/jobs`, `/jobs/{jobId}`, `/jobs/{jobId}/cancel`, `/jobs/{jobId}/plan` | 목록·상세 조회, 운영자 생성, 본인/관리자 취소, 끝난 작업의 주인이 같은 입력으로 새 계획 만들기 |
 | 상태·SSE | `/snapshot`, `/events` | 인증된 읽기, 버전과 cursor로 상태 복원 |
 | 수집 자료 | `/networks/{networkId}/metrics`, `/nodes/{nodeId}/logs` | 인증된 읽기, 시간·노드 범위 명시 |
 | 히스토리 | `/history`, `/history/{runId}`, `/history/compare`, `/history/{runId}/export` | 읽기·안전 export, 삭제는 관리자 |
 | 감사 | `/audit` | 관리자 조회, 변경·권한 거절·취소·삭제 기록 |
+
+위 표는 주요 경로만 적는다. 서버가 여는 전체 경로는 [OpenAPI](web-ui.openapi.yaml)가 정본이며,
+`TestWebOpenAPIListsEveryServedRoute`가 서버 경로와 OpenAPI를 대조한다.
 
 성공한 job 생성은 `202 Accepted`와 `jobId`를 반환한다. 같은 actor의 같은
 `Idempotency-Key`·같은 요청은 같은 작업을 반환하며 다른 요청에 키를 재사용하면 409다.
@@ -426,8 +431,8 @@ fixture 소스는 `tests/webui`, 런타임 루트는 `/private/tmp/chainbench-we
 | 운영 정책 | 직접 API·서버 재시작·두 사용자·두 별칭 workspace | 비밀 격리·권한·충돌·취소 사유·보관·복구 확인 |
 
 각 WEB 기준에는 통과/실패, 테스트 명령, 관측된 결과, 아티팩트 경로를 연결한다.
-Seed의 `verify_command`는 구현할 `tests/webui/verify.sh` 인터페이스를 고정한다.
-현재 runner가 존재하거나 검증을 통과했다고 주장하지 않는다. [인수 기준](web-ui-acceptance.md)의
+Seed의 `verify_command`는 `tests/webui/verify.sh` 인터페이스를 고정한다. runner는 구현되어 있고,
+최근 인수 결과는 [Web UI 현황](web-ui-status.md)에 있다. 이 명세는 그 결과를 보고하지 않는다. [인수 기준](web-ui-acceptance.md)의
 결과·증거 형식과 required scenario 검증을 구현하고 필수 증거가 없는 PASS를 거절해야 한다.
 필수 검증이 환경 부족으로 skip되면 미완료다. mock은 오류·단위 검증에 사용하지만
 실제 배포·노드 제어의 완료 증거를 대신하지 않는다. 이 명세 작성의 YAML/schema 검증과

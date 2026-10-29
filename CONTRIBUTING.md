@@ -42,10 +42,11 @@ Open an issue with the `enhancement` label. Describe:
 4. **Make changes** following the conventions below
 5. **Test** your changes. `make check` is the main local gate:
    ```bash
-   make check        # gofmt check + go vet + golangci-lint (pinned) + go test
+   make check        # fmt-check vet lint test tc-review sweep-test case-docs fixture-test
    ```
    Individually: `make fmt-check`, `make vet`, `make lint`, `make test`,
-   `make test-race`.
+   `make test-race`, `make tc-review`, `make sweep-test`, `make case-docs`,
+   `make fixture-test`.
 
    CI (`.github/workflows/ci.yml`) runs more than that, so a green `make check`
    is not a green CI. What it adds:
@@ -54,7 +55,13 @@ Open an issue with the `enhancement` label. Describe:
    find scripts tests -name '*.sh' -exec bash -n {} \; # shell syntax
    go build ./...
    go test -race ./...                                 # make test is not -race
+   go vet -tags e2e ./...                              # the e2e build tag
+   npm ci --prefix web && npm run check --prefix web   # svelte-check
+   node --test tests/webui/*.test.mjs                  # Web UI node tests
    ```
+   After changing anything under `web/`, run `npm --prefix web run build`
+   (it writes the embedded `internal/dashboard/spa/`) before the Go build and
+   commit the built files.
    To exercise a real network end to end, compose one with
    `chainbench chain up --workspace-dir /tmp/cb --chain stablenet --binary <node>` and
    tear it down with `chainbench chain stop --workspace-dir /tmp/cb`.
@@ -75,7 +82,7 @@ Open an issue with the `enhancement` label. Describe:
 cmd/chainbench/          Go CLI (cobra; command groups in chaincmd/, suitecmd/,
                          keyringcmd/, lifecyclecmd/, networkcmd/, txcmd/, ...)
 cmd/chainbench-mcp/      Go MCP server for AI integration (single binary)
-cmd/chainbench-dashboard/ Dashboard daemon
+cmd/chainbench-dashboard/ Web dashboard daemon (serves the embedded SPA and /api/v1)
 internal/core/           chain-agnostic core (registry, filestore, process, keyring,
                          genesis, nodeconfig, inspector, rpc, session, ...)
 internal/consensus/      consensus families (wbft, poa) + upgrade orchestration
@@ -83,10 +90,16 @@ internal/chains/         chain plugins (stablenet, wbft, wemix, external) + mani
                          genesis templates, and capability catalogs
 internal/chainsetup/     composes a chain up to producing blocks
 internal/testengine/     runs tests on an already-composed chain
-internal/app/            workflow layer MCP reaches (DSL -> setup -> test -> report)
+internal/dsl/            DSL spec grammar, validation and interpretation
+internal/resource/       servers, port slots and placement a network is composed from
+internal/app/            workflow layer MCP and the dashboard reach (DSL -> setup -> test -> report)
 internal/mcp/            MCP tool handlers (through internal/app)
+internal/dashboard/      dashboard HTTP server, /api/v1 handlers and the embedded spa/
+internal/webcli/         runs the chainbench CLI for dashboard jobs
+web/                     Svelte 5 + Vite source of the dashboard SPA
 presets/chain/           chain-presets a case names (chain, nodes, binaries, upgrade)
-tests/                   DSL cases (tests/tc), e2e tests (tests/e2e), repros (tests/repro)
+tests/                   DSL cases (tests/tc), e2e tests (tests/e2e), repros (tests/repro),
+                         Web UI tests and live acceptance runners (tests/webui)
 ```
 
 ### Adding a CLI Command
@@ -107,8 +120,11 @@ tests/                   DSL cases (tests/tc), e2e tests (tests/e2e), repros (te
    [`tests/README.md`](tests/README.md) for when a case belongs in `tests/e2e/`
    instead.
 2. Check it offline with `chainbench validate <case.json>`, then run it with
-   `chainbench run <case.json>` (compose) or
-   `chainbench run --attach --rpc <url> --chain <id> <case.json>`.
+   `chainbench run --workspace-dir <ws> <case.json>` (compose the network the
+   case declares), `chainbench run --attach --workspace-dir <ws> <case.json>`
+   (the network that workspace already composed), or
+   `chainbench run --rpc <url> --chain <id> <case.json>` (a live network).
+   `--attach` does not combine with `--rpc`.
 
 ### Modifying the MCP Server
 

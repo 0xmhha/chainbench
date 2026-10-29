@@ -45,7 +45,7 @@
 | 4 | **genesis** | genesis 산출(§2.5 의 4모드) | `chainsetup.ChainGenesis` → `core/genesis` |
 | 5 | **config** | 노드별 TOML config 렌더 (`--set key=value` 로 knob 오버라이드) | `chainsetup.ChainConfig` → `core/nodeconfig` |
 | 6 | **build** | 노드별 실행 커맨드 조립(실행하지 않고 보여준다) | `chainsetup.ChainLaunchOpts` → `core/nodeconfig` |
-| 7 | **deploy** | 산출물을 대상에 배치하고 **있는지 확인**(skip-if-exists; 로컬 FS 또는 SSH) | `chainsetup.ChainProvision` → `core/filestore` · `core/remote` |
+| 7 | **deploy** | 산출물을 대상에 배치하고 **있는지 확인**(같은 내용이면 건너뛰고 다르면 덮어쓴다; 로컬 FS 또는 SSH) | `chainsetup.ChainProvision` → `core/filestore` · `core/remote` |
 | 8 | **init** | 노드별 datadir 초기화 (각자 자기 바이너리로) | `chainsetup.ChainInit` → `core/process` |
 | 9 | **start** | 노드 기동 + PID 기록 | `chainsetup.ChainStart` → `core/process` |
 | — | *(bootstrap)* | `bootstrap.type` 이 `governance-etcd` 인 체인만: 거버넌스 배포 + etcd 초기화 · verify-etcd | `consensus/poa` 패밀리 phase 액션 |
@@ -163,11 +163,11 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 
 | 변곡점 | 설정 위치 | 비고 |
 |---|---|---|
-| 프리셋 경로 | `--keys` (기본 `presets/keys`), `--keys-source keyPreset\|generate` | 5노드 커밋본 |
+| 프리셋 경로 | `--keys` (기본 `presets/keys`), `--keys-source keyPreset\|generate\|declared`(`declared` 는 `--blueprint` 와 함께) | 5노드 커밋본 |
 | 프리셋 생성 | `chainbench validator set --nodes N --validators V --out <dir>` | 5노드 초과 네트워크용 |
 | 계정 잔액 | `validator set --balance <0x-hex>` | genesis alloc |
 | 키스토어 암호 | `validator set --password` (기본 `1`) | |
-| **중요 제약** | wbft 계열 검증자셋·BLS 는 **프리셋에 baked** | 랜덤 keyreg 키만으로는 유효 genesis 불가(T4.4b) |
+| **중요 제약** | wbft 계열 검증자셋·BLS 는 **프리셋에 baked** | T4.4b 기록: 랜덤 keyreg 키만으로는 유효 genesis 불가. 지금은 `extraData` 가 비면 `wbft.ExtraData` 가 계산하므로 BLS 를 함께 만든 생성 키 세트로도 된다 |
 
 ### 2.5 genesis (단계 5) — 4모드
 
@@ -187,7 +187,7 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 | 변곡점 | 값 | 비고 |
 |---|---|---|
 | 모드 | 풀(`resource.Builtin` 또는 server set) → `resource.Assign` | 옛 `LocalStepped`·`LocalOSAssigned`·`RemotePerHost` 는 코드에 없음 |
-| 포트 기준 | server set / `workspace-config` 의 포트 대역 (없으면 내장 기본: p2p 31000, http 8600) | **step 제약**: etcd=p2p+1 예약(wemix 는 p2p+2 까지), ws=http+1, auth=http+2 |
+| 포트 기준 | server set / `workspace-config` 의 포트 대역 (없으면 내장 기본: p2p 31000, http 8600) | **step 제약**: etcd=p2p+1 예약은 poa(wemix) 만 한다(p2p+2 까지, `P2PSpan` 3). wbft·stablenet 은 `P2PSpan` 1 이다. ws=http+1, auth=http+2 |
 | 원격 | `--server <name>` / `--all-servers` + `--server-set` | 서버별 IP·포트 대역 |
 
 ### 2.7 실행 위치 (단계 7·9)
@@ -240,7 +240,8 @@ CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
 
 ## 4. CLI 로 직접 점검
 
-> **2026-08-28 (P6.4):** `chainbench chain cases|steps|up|status|down` 은 은퇴했다. 네 케이스는
+> **2026-08-28 (P6.4):** `chainbench chain cases|steps|up|status|down` 은 은퇴했다. (2026-10-29 확인: 그 뒤
+> `chain up` 과 `chain status` 는 단계별 구성 명령으로 다시 생겼다. `chainbench chain --help` 를 본다.) 네 케이스는
 > DSL 선언으로 세우고, 단계 보고는 `run --workspace-dir` 의 출력(`RunSuiteOut.SetupSteps`)이
 > 대신한다. 아래는 그 방법이다.
 >

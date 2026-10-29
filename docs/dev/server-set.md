@@ -200,11 +200,12 @@ chainbench run \
 genesis 는 올리지만 바이너리는 올리지 않는다.
 
 **패밀리 제약**: wbft 계열(stablenet·wbft)은 genesis 를 in-process(순수 Go 치환)로
-만들고 부트스트랩 단계가 없어서 원격/docker 에서 그대로 돈다. poa(wemix)는 아직
-안 된다 — genesis 를 바이너리 실행으로 만들고(`poa.GenesisSource`), 기동 뒤
-거버넌스·etcd 부트스트랩도 바이너리를 실행하는데, 둘 다 하네스 로컬에서
-`os/exec` 로 돈다(타깃 실행 아님). poa 를 원격에서 돌리려면 그 두 실행 지점을
-타깃에서 수행하도록 만들어야 한다.
+만들고 부트스트랩 단계가 없어서 원격/docker 에서 그대로 돈다. poa(wemix)는 genesis 를
+바이너리 실행으로 만들고(`poa.GenesisSource`), 기동 뒤 거버넌스·etcd 부트스트랩도 바이너리를
+실행한다. 처음에는 둘 다 하네스 로컬에서 `os/exec` 로 돌아 원격에서 안 됐지만, 지금은 두 실행
+지점이 타깃에서 돈다. `poa.GenesisSource` 는 `Run`·`Files` 로 입력을 타깃에 올리고 타깃에서
+바이너리를 실행하며, `poa.Bootstrap` 은 `Access` 로 노드마다 그 노드의 기계에서 실행한다
+(`internal/consensus/poa/genesis_source.go`, `executor.go`).
 
 ---
 
@@ -225,3 +226,7 @@ put every address under `pool.hosts`, move `slots` and `ports` up to `pool`, and
 여전히 자체 기본값을 쓴다. 이 스택은 netcompose 전환이 라이브 검증되면 삭제된다
 ([[chainbench-worklist]] §1f b-5·b-6). 그 전까지 `setup` 과 `net`/`run` 은 서로 다른
 포트 대역을 쓴다 — 같은 머신에서 둘을 동시에 띄우면 충돌하지 않는다는 뜻이기도 하다.
+
+> **정정 (2026-10-29).** 위 문단은 이력이다. `core/config`, `core/bringup`, `setup`·`net` 명령은 모두 없어졌다
+> (worklist §0a 12번). 지금 구성 경로는 `chain up` 과 `run` 이고, 둘 다 서버 세트나 내장 풀
+> (`resource.Builtin`)에서 포트를 받는다.

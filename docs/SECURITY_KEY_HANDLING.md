@@ -1,18 +1,19 @@
 # Chainbench Key Handling Security Policy
 
-> Last updated: 2026-04-27 (Sprint 4c — SignHash + EIP-7702 + Fee Delegation)
+> Last updated: 2026-10-29. 2026-04-27(Sprint 4c)에 쓴 절은 각 절 머리의 경로 정정을 따른다.
 
 ## Threat Model
 
-Chainbench-net signs transactions locally with private keys supplied by the
-operator's deployment environment. The threat model assumes:
+Chainbench signs transactions locally with private keys the operator
+supplies (a keyring set, or a DSL account's `keyFile`). The threat model
+assumes:
 
-- The host machine is trusted — operators don't run chainbench-net on
+- The host machine is trusted — operators don't run chainbench on
   adversarial hardware.
 - Other processes on the same host may observe stdout, stderr, or log files.
 - Remote RPCs MUST NEVER see plaintext key material — they receive only
   signed transactions.
-- Any code path inside chainbench-net that could serialize a signer to
+- Any code path inside chainbench that could serialize a signer to
   stdout / stderr / log / disk is a contract violation.
 
 ## Key Injection (2026-04 기록 — env-key OR keystore)
@@ -201,12 +202,16 @@ that accepts a signer alias.
 
 - HSM / hardware-wallet integration
 - Multi-party signing / threshold keys
-- Key derivation from seed phrases inside chainbench — assume operator
-  derives externally and exports keys as env
 - Audit logging of sign operations — would need redaction patterns for
   the alias/address pair and a separate audit stream
 
+니모닉에서 키를 만드는 일은 더는 범위 밖이 아니다. `keyring` 이 `MnemonicSource` 로
+니모닉에서 키를 만든다([`guide/keyring.md`](guide/keyring.md)).
+
 ## Resolved Latent Issues
+
+> **경로 정정 (2026-10-29).** 아래는 2026-04 기록이다. `chainbench-net` 바이너리와
+> `wire` 로거, `CHAINBENCH_NET_LOG`·`CHAINBENCH_NET_LOG_LEVEL` 환경변수는 지금 코드에 없다.
 
 - **CHAINBENCH_NET_LOG / CHAINBENCH_NET_LOG_LEVEL** (resolved 2026-04-27):
   the `run` subcommand previously hard-wired logs to stderr regardless of

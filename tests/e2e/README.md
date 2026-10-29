@@ -19,14 +19,17 @@ so a partial toolchain runs only what it can.
 GSTABLE_BIN=/path/to/gstable go test -tags e2e -run TestE2E_StablenetChain -v ./tests/e2e/
 
 # everything the environment can run (missing binaries -> SKIP, never FAIL)
-GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
+GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/go-wbft/build/bin/gwemix \
   go test -tags e2e -v ./tests/e2e/
 ```
 
 ## Binaries & keys
 
-- Chain binaries come from env: `GSTABLE_BIN`, `WBFT_BIN`, `WEMIX_BIN` (or the
-  binary on `PATH`). Absent → the test skips.
+- Chain binaries come from env: `GSTABLE_BIN` (or `gstable` on `PATH`) and
+  `WBFT_BIN` (or `gwbft` on `PATH`). Absent → the test skips. The hardfork swap
+  also reads `PRE_FORK_BIN` and `POST_FORK_BIN`.
+- The `chainbench` CLI the harness drives comes from `CHAINBENCH`; unset, the
+  harness builds `./cmd/chainbench` into a temp dir.
 - The funded sender is node 1's key from `presets/keys` — a committed **TEST
   fixture** (public, local-only). It is loaded at runtime, never a literal, and
   is only ever used to fund local ephemeral test networks.
@@ -42,19 +45,24 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 | — | near-head block propagation (a1-07) | `TestE2E_StablenetBlockPropagation` | `GSTABLE_BIN` |
 | — | endpoint re-sync (a1-02/03/06) | `TestE2E_StablenetSyncGap` | `GSTABLE_BIN` (`SYNCMODE=snap GAP=150` for snap) |
 | — | proposal expiry → Expired (f3-06) | `TestE2E_StablenetProposalExpiry` | `GSTABLE_BIN` (short-expiry overlay) |
+| — | fault under and over 1/3, quorum with 3 and 6 validators (WBFT-007/008/011) | `TestE2E_WbftFaultTolerance`, `TestE2E_WbftFaultHalt`, `TestE2E_WbftQuorumAllRequired`, `TestE2E_WbftQuorum6of6Tolerates1`, `TestE2E_WbftQuorum6of6Halts2` | `WBFT_BIN` |
+| — | round-robin proposer, view change (WBFT-003) | `TestE2E_WbftRoundRobinProposer`, `TestE2E_WbftViewChange` | `WBFT_BIN` |
+| — | snap sync over a large gap | `TestE2E_WbftSnapSync` | `WBFT_BIN` (`GAP=90`) |
+| — | `admin_peers`, `istanbul_isValidator` (RPC-019/023) | `TestE2E_WbftAdminPeers`, `TestE2E_WbftIsValidator` | `WBFT_BIN` |
+| — | genesis govNCP whitespace accepted, empty list refused (NODE-006/007) | `TestE2E_WbftGenesisNCPWhitespace`, `TestE2E_WbftGenesisEmptyNCP` | `WBFT_BIN` |
+| — | helper checks with no chain binary: the empty-NCP refusal matcher, and an `admin_peers` RPC failure not read as zero peers | `TestEmptyNCPRefusalRejectsUnrelatedFailures`, `TestAdminPeerCountDoesNotHideRPCFailure` | none |
+
+`ncp_init_runtime_test.go` holds the runtime-directory helpers the genesis NCP
+tests use; they reuse the storage policy in `tests/webui/runtime_storage.py`.
 
 > **Scenario 2 (wemix→wbft handoff)** lives in the DSL: `tests/tc/go-wemix/hardfork/`
 > asserts the croissant handoff and that state written before the fork survives it,
 > composed from the chain preset `presets/chain/wemix-to-wbft.json`. The Go e2e that used to hold
 > it drove `chainbench upgrade run`, a command the CLI no longer has, and was removed.
->
-> Migration in progress: the remaining scenarios (1 wemix pure, basefee, and the
-> account-extra / delayed-fork overlay cases — the last two need a gstable build
-> matching the fixtures) are being ported from `tests/repro/*.sh`.
 
 ## Harness
 
-`harness_test.go` provides the shared helpers: `boot` (`net up` into a workspace), the
+`harness_test.go` provides the shared helpers: `boot` (`chainbench chain up` into a workspace), the
 `network` type, `waitAdvancing`/`waitCross` (WBFT warmup-tolerant polling),
 `sendValue`, `deployReturns42`/`waitCallReturns42`, `balance`, and
 `presetFundedKey`.

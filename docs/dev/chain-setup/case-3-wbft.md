@@ -34,6 +34,9 @@
 
 케이스 4(stablenet)와 **동일한 static 파이프라인**이다. 다른 것은 플러그인·템플릿·chain id 뿐.
 
+> 아래 표의 단계 이름은 옛 이름이다. 지금 이름은 README §1 의 표로 읽는다(allocate → place,
+> assemble-plan → build, provision → deploy, init-datadir → init, launch → start).
+
 | # | 단계 | 이 케이스에서 벌어지는 일 |
 |---|---|---|
 | 1 | resolve-chain | `registry.Get("wbft")` → engine_field `croissant`, hardforks `istanbul…croissant` |
@@ -129,7 +132,7 @@ pass=1 fail=0 blocked=0 skip=0
 ```
 
 `chainId == 8284`, `blockNumber ≥ 1` 이 실 RPC 에서 통과 — 즉 **genesis 생성 → 기동 → 합의 성립 →
-RPC 응답**의 전 구간이 동작한다. 게이트된 회귀 테스트로는 아직 고정되지 않았다(§6).
+RPC 응답**의 전 구간이 동작한다. 기록 당시에는 게이트된 회귀 테스트가 없었고, 지금은 있다(§6).
 
 ---
 
@@ -137,6 +140,6 @@ RPC 응답**의 전 구간이 동작한다. 게이트된 회귀 테스트로는 
 
 | 항목 | 내용 |
 |---|---|
-| 라이브 e2e 고정 | stablenet 과 달리 `GWBFT_BIN` 게이트 회귀 테스트가 없다 — 위 실행을 테스트로 고정할 것 |
+| 라이브 e2e 고정 | (2026-10-29 확인: 해결됨) 지금은 `GWBFT_BIN` 으로 게이트한 테스트 파일이 41개 있다(`cmd/chainbench`, `internal` 아래) |
 | n=6 쿼럼 | WBFT-012/013 은 6노드 프리셋 필요(`validator set`) |
-| useNCP 시나리오 | 오버레이로 켤 수 있으나 golden 프로파일 없음 |
+| useNCP 시나리오 | (2026-10-29 확인: 해결됨) `cmd/chainbench/ncp_*_test.go` 의 NCP 선정·제거·공백 테스트가 다룬다 |

@@ -1,16 +1,17 @@
 # tests/tc/common — 세 체인에서 같은 목적으로 도는 테스트
 
 Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987917348)
-가 가려낸 공통 테스트 CT 70개의 자리다. 저장소에 옮겨 둔 사본은
+가 가려낸 공통 테스트 CT 70개와, 이 저장소가 2026-10-20 에 더한 CT-CONTRACT-008·CT-RPC-016 두 개의 자리다. 저장소에 옮겨 둔 사본은
 [`docs/tc/common/`](../../../docs/tc/common/) 에 있다.
 
 여기 있는 케이스는 **파일 하나로 세 체인을 돈다.** 체인마다 사본을 두지 않고,
-`stablenet-*` 프리셋으로 적어 두고 실행할 때 갈아 끼운다.
+`stablenet-*` 프리셋으로 적어 두고 실행할 때 갈아 끼운다. 예외는
+`rpc/CT-RPC-016-isolated-en-pending-queued` 하나로, `wbft-bp4-en1` 을 바탕으로 적었다.
 
 ## 1. 무엇이 여기 있나
 
-케이스 **69개**다. **CT 하나에 파일 하나**이고 여섯 영역이 모두 그렇다. CT 는 70개인데
-파일이 69개인 것은 CT-RPC-008 하나 때문이다. 그 CT 는 전용 파일 없이 `node/` 의 두 파일과
+케이스 **71개**다. **CT 하나에 파일 하나**이고 여섯 영역이 모두 그렇다. CT 는 72개인데
+파일이 71개인 것은 CT-RPC-008 하나 때문이다. 그 CT 는 전용 파일 없이 `node/` 의 두 파일과
 목적이 겹쳐 그것을 공유한다.
 
 ```
@@ -18,8 +19,8 @@ tests/tc/common/
 ├── node/       15건   노드·동기화·네트워크
 ├── tx/         20건   트랜잭션 전송·거부
 ├── fee/         7건   수수료·가스 정책
-├── contract/    7건   컨트랙트 실행
-├── rpc/        14건   조회·구독 API
+├── contract/    8건   컨트랙트 실행
+├── rpc/        15건   조회·구독 API
 └── fault/       6건   장애·복구
 ```
 
@@ -36,7 +37,7 @@ CT 를 따라 `node/` 에 두었다.
 
 ## 2. 세 체인에서 돈다
 
-케이스의 `requires` 를 세 체인이 내놓는 capability 집합과 대조하면, **69개 중 68개가 세
+케이스의 `requires` 를 세 체인이 내놓는 capability 집합과 대조하면, **71개 중 70개가 세
 체인 모두에서 게이트를 통과한다.**
 
 남은 하나는 `fault/CT-FAULT-004-network-partition` 이다. 체인이 아니라 실행 대상에
@@ -168,7 +169,7 @@ bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
 | CT-FEE-010 | 권장 가스 가격 조회 | `fee/CT-FEE-010-suggested-gas-price.json` / 공통 아님: `go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json` |
 | CT-FEE-012 | 수수료 이력 조회 | `fee/CT-FEE-012-fee-history.json` |
 
-### CONTRACT — CT 7개 모두 공통 케이스를 갖고 있다
+### CONTRACT — CT 8개 모두 공통 케이스를 갖고 있다
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
@@ -179,8 +180,9 @@ bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
 | CT-CONTRACT-005 | 조회 호출의 되돌림 오류 | `contract/CT-CONTRACT-005-eth-call-revert-returns-error.json` |
 | CT-CONTRACT-006 | 되돌림 트랜잭션의 실패 상태 | `contract/CT-CONTRACT-006-revert-tx-status-zero.json` |
 | CT-CONTRACT-007 | 가스 소진 트랜잭션 | `contract/CT-CONTRACT-007-out-of-gas-consumes-all.json` |
+| CT-CONTRACT-008 | 유한한 쓰기 호출의 가스 경계 | `contract/CT-CONTRACT-008-finite-gas-boundary.json` (2026-10-20 신규, 이 저장소가 더한 CT) |
 
-### RPC — CT 15개 모두 공통 케이스를 갖고 있다
+### RPC — CT 16개 모두 공통 케이스를 갖고 있다
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
@@ -199,6 +201,7 @@ bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
 | CT-RPC-013 | 새 블록 구독 | `rpc/CT-RPC-013-ws-subscribe-new-heads.json` |
 | CT-RPC-014 | 이벤트 로그 구독 | `rpc/CT-RPC-014-ws-subscribe-logs.json` |
 | CT-RPC-015 | 노드 지표 조회 | `rpc/CT-RPC-015-metric-head-block.json` |
+| CT-RPC-016 | 격리된 종단 노드의 대기·보류 트랜잭션 상세 | `rpc/CT-RPC-016-isolated-en-pending-queued.json` (2026-10-20 신규, 이 저장소가 더한 CT) |
 
 ### FAULT — CT 6개 중 6개가 공통 케이스를 갖고 있다
 
@@ -218,4 +221,4 @@ bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
 
 CT 와 DSL 파일의 대응을 더 자세히 보려면
 [`docs/tc/common/10-ct-dsl-mapping.md`](../../../docs/tc/common/10-ct-dsl-mapping.md) 가
-70개 CT 를 한 줄씩 적는다.
+72개 CT 를 한 줄씩 적는다.

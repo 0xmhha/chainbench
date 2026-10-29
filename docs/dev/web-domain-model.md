@@ -4,6 +4,14 @@ Web 데이터 모델 계획(지운 문서) 3-3단계의 결과물이다. [데이
 지금 서버가 무엇을 주는지 적었고, 이 문서는 화면이 앞으로 무엇을 받아야 하는지 정한다. 3-4단계는 이 문서를
 Go 응답 구조체와 OpenAPI로 옮기고, 3-5단계는 이 모델을 SSE로 실어 보낸다.
 
+> **구현과 다른 점 (2026-10-29 확인).** 3-4·3-5단계는 끝났지만 코드가 이 문서를 그대로 따르지는 않았다. 응답 모양의
+> 정본은 Go 응답 구조체(`internal/app/web_*.go`)와 [OpenAPI](web-ui.openapi.yaml)이고, 이 문서는 설계 근거로 읽는다.
+> 확인한 차이는 다음과 같다. 작업 상태는 여전히 `accepted`를 쓰고 `pending`으로 바꾸지 않았다(`internal/app/web_jobs.go`).
+> 노드는 `observation`을 따로 두지 않고 `state`, `observedPid`, `observationReason`, `supportedControls`,
+> `controlLimits`, `hostIdentity`를 평평하게 싣는다(`WebNode`). 네트워크에는 `chain` 필드가 없다(`WebNetwork`).
+> 작업에는 `finishedAt`이 없고, 취소는 `cancelReason`·`cancelMessage` 두 필드로, 오류는 문자열 맵으로 싣는다(`WebJob`).
+> 실시간 이벤트 `node`, `metrics`, `gap`, `logs`는 구현됐다(#479, `internal/app/web_monitor_events.go`).
+
 ## 왜 이 문서가 필요한가
 
 인벤토리에서 본 문제는 대부분 같은 뿌리에서 나왔다. 서버가 엔진의 내부 모양을 거의 그대로 내보내고, 화면이
@@ -307,10 +315,10 @@ observedAt}`를 갖고, 종류에 따라 하나를 더 싣는다.
 |---|---|---|
 | `resync_required` | `reason` | 있다 |
 | `job` | `job: Job` | 있다 |
-| `node` | `node: Node` (관측이 바뀐 노드만) | 없다 |
-| `metrics` | `networkId`, `samples: {metric, source, nodeId, time, value}[]` (한 수집 회차) | 없다 |
-| `gap` | `networkId`, `gap: Gap` (열리거나 닫힌 누락) | 없다 |
-| `logs` | `networkId`, `lines: LogLine[]` (노드마다 회차당 최대 줄 수 제한) | 없다 |
+| `node` | `node: Node` (관측이 바뀐 노드만) | 있다(#479) |
+| `metrics` | `networkId`, `samples: {metric, source, nodeId, time, value}[]` (한 수집 회차) | 있다(#479) |
+| `gap` | `networkId`, `gap: Gap` (열리거나 닫힌 누락) | 있다(#479) |
+| `logs` | `networkId`, `lines: LogLine[]` (노드마다 회차당 최대 줄 수 제한) | 있다(#479) |
 
 지금 1초마다 오는 `observation` 이벤트는 내용이 없으므로 없애고, 연결 유지는 SSE 주석 줄로 한다. 끊긴 동안 놓친
 이벤트는 지금처럼 `resync_required`를 받고 스냅숏으로 다시 맞춘다. 로그를 회차당 몇 줄까지 보낼지는 3-5단계에서

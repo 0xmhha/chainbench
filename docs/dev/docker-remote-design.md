@@ -1,13 +1,18 @@
 # 로컬 docker 를 원격 서버처럼 — 주소 변환 boundary 설계
 
-> **등급: [현행 설계]** — 분석·준비 단계다. 구현 전이며, 작업 상태는 worklist §1g R 트랙이
-> 정본이다. 참조 구현: `~/Work/github/packages/wemix-bp-test` (동작 검증 완료된 선례).
+> **등급: [현행 설계]** — 분석·준비 단계에 쓴 문서다. 아래 경로 정정대로 지금은 구현되어 있고, 작업 상태는
+> worklist §1g R 트랙이 정본이다. 참조 구현: `~/Work/github/packages/wemix-bp-test` (동작 검증 완료된 선례).
 
 > **경로 정정 (2026-09-11).** 이 설계는 구현됐다 — `--docker` 플래그가 `chain up`·`run` 양쪽에
 > 있고, 주소 치환은 `internal/resource/localmap.go` 가 소유한다(본문의 `internal/config/localmap.go`
 > 는 없다). 접속 경계의 자격증명·주소 변환은 `internal/core/remote`(`AddrMap`·`Credentials`)와
 > `internal/resource` 가 나눠 갖는다. **§4 의 함정 4개(loopback 판정·산출물 오염 등)는 여전히
 > 읽을 값이 있다.**
+>
+> **명령 정정 (2026-10-29).** 본문의 `net new`·`net up` 은 없어졌다. 같은 자리는 `chain new --docker`·
+> `chain up --docker` 가 맡는다. §1 표의 `--keyring <경로>` 와 기본 위치 `./keys/default` 는 2026-08-24 당시의
+> 이름이다. 지금 플래그는 `--keyring-dir` 이고 기본 위치는 `~/.chainbench/keys/default` 다(`CHAINBENCH_KEYRING` 이
+> 있으면 그 값). DR-b 의 `driver.SSHSudoRunner` 는 지금 `internal/core/process/remote.go` 에 있다.
 
 실 원격 서버에 지금 연결할 수 없으므로, Rancher Desktop 의 docker 로 ubuntu 가상
 서버들을 만들어 **원격 코드 경로를 로컬에서 검증**한다. 상위 레이어는 서버 주소를

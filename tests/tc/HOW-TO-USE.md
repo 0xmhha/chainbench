@@ -33,7 +33,7 @@ bin/chainbench --help   # 여기까지 되면 준비 끝
 | go-wbft | `build/bin/gwemix` (`make gwemix` — 저장소가 go-wemix 에서 갈라져 이름이 남았다) | `$GWBFT` |
 | go-wemix | `build/bin/gwemix` | `$GWEMIX` |
 
-세 경로를 한 번 변수로 잡아 두면 5절의 명령을 그대로 붙여 쓸 수 있다. 자기 기계의 실제
+세 경로를 한 번 변수로 잡아 두면 7절의 명령을 그대로 붙여 쓸 수 있다. 자기 기계의 실제
 경로로 바꾼다.
 
 ```sh
@@ -42,7 +42,7 @@ export GWBFT="$HOME/work/github/chain/go-wbft/build/bin/gwemix"
 export GWEMIX="$HOME/work/github/chain/go-wemix/build/bin/gwemix"
 ```
 
-**셋 다 없어도 좋다.** 202건 중 175건이 stablenet 하나로 돈다. wbft 8건, wemix 7건만 그
+**셋 다 없어도 좋다.** 220건 중 200건이 stablenet 하나로 돈다. wbft 8건, wemix 7건만 그
 체인의 빌드를 요구하고, `go-stablenet/mixed` 5건은 gstable 과 함께 wbft-stablenet 빌드를 요구한다.
 
 **(원격을 흉내 낼 때만) Docker 함대.** 로컬 바이너리가 없는 기계, 또는 노드가 서로 다른
@@ -99,14 +99,14 @@ bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
 `presets/chain/` 에 `<체인>-<모양>.json` 으로 세 벌씩 있다. 체인을 세우는 네 갈래는
 [`CHAIN-BRINGUP.md`](CHAIN-BRINGUP.md) 가 적는다.
 
-### 3.2 환경변수를 더 받는 일곱
+### 3.2 환경변수를 더 받는 케이스
 
 프리셋이 `${VAR}` 로 적어 둔 값이다. 안 걸면 실행이 멈추고 무엇을 걸라고 말한다.
 
 | 케이스 | 변수 | 무엇 |
 | --- | --- | --- |
 | `basic/08-attached-chain-produces` | `GSTABLE_RPC` | 이미 떠 있는 망의 주소 |
-| `go-stablenet/testnet/01`~`04` | `GSTABLE_TESTNET_RPC` | 실제 testnet 주소. 기본값 없음 |
+| `go-stablenet/testnet/01`~`04`, `06`~`09` | `GSTABLE_TESTNET_RPC` | 실제 testnet 주소. 기본값 없음 |
 | `go-stablenet/testnet/05` | 위 + `GSTABLE_TESTNET_KEY_FILE` | 자금을 쥔 계정의 평문 hex 키 파일 |
 | `go-stablenet/.../boho-crossed-by-restart` | `GSTABLE_POSTFORK_BIN` | boho 이후 빌드. 안 걸면 대상의 `gstable-postfork` 를 찾는다 |
 | `go-stablenet/.../signature-compat-across-swap` | `GSTABLE_UPGRADE_BIN` | 바꿔 낄 다른 빌드. 안 걸면 대상의 `gstable-hardfork` 를 찾는다 |

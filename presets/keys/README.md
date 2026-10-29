@@ -30,8 +30,9 @@
 > accounts under `dev1/`, minted by the harness on its first run and committed
 > so a label keeps naming one address.
 >
-> Use `keys.mode: generate` in your profile (or override the `source` to a
-> directory outside of git) when you need keys that are not public.
+> When you need keys that are not public, pass `--keys-source generate` to
+> `chain up` or `run` (with `--keys` naming a directory outside of git), or set
+> `"keys": {"nodekeys": {"source": "generate"}}` in a chain preset.
 >
 > The repository's secret scanner is configured to stay quiet about this
 > directory ([`.betterleaks.toml`](../../.betterleaks.toml)), because every
@@ -48,7 +49,10 @@
 | `node{1..5}/pubkey` | secp256k1 public key (public). |
 | `node{1..5}/bls_pubkey` | BLS public key (public). |
 | `node{1..5}/nodekey` | secp256k1 **private** key (test-only, public-equivalent). |
-| `node{1..4}/keystore/UTC--*` | Ethereum keystore (encrypted with password `1`). |
+| `node{1..5}/private` | the same secp256k1 **private** key as `nodekey`, in the keyring's file layout (test-only, public-equivalent). |
+| `node{1..5}/bls` | BLS **secret** key (test-only, public-equivalent). |
+| `node{1..5}/pop` | BLS proof of possession (public). |
+| `node{1..5}/keystore/UTC--*` | Ethereum keystore (encrypted with password `1`). |
 | `dev1/address` | Dev account address (public). |
 | `dev1/private` | secp256k1 **private** key (test-only, public-equivalent). |
 
@@ -81,7 +85,8 @@ a plaintext private key, public-equivalent, never to be funded anywhere real.
 ## How chainbench consumes these
 
 This directory is the built-in default, not a special case. The default lives in
-one place — `defaultKeysDir` in `internal/testengine/compose.go` — and a chain
+one place — `preset.KeysDir` in `internal/preset/doc.go`, which
+`defaultKeysDir` in `internal/testengine/compose.go` aliases — and a chain
 declaration overrides it by naming another directory:
 
 ```json
