@@ -132,6 +132,7 @@
   .context, .status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-width: 0; }
   .context .label { color: var(--text-faint); }
   .context a { color: var(--warn); } .context a.quiet { color: var(--text-muted); }
+  @media (pointer: coarse) { .context a { display: inline-flex; align-items: center; min-height: 44px; } }
   .signal { display: inline-block; width: 7px; height: 7px; margin-right: var(--space-2); background: var(--danger); }
   .signal.on { background: var(--ok); }
   main { max-width: 1440px; margin: 0 auto; padding: var(--space-4) var(--space-5) var(--space-5); }
@@ -146,8 +147,9 @@
     .shell { grid-template-columns: minmax(0, 1fr); }
     .workspace { border-left: 0; }
     aside { position: static; height: auto; padding: var(--space-2) var(--space-4); border-right: 0; border-bottom: 1px solid var(--border-subtle); }
-    nav { display: flex; gap: var(--space-4); margin-top: var(--space-2); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; mask-image: linear-gradient(to right, black 85%, transparent); }
-    nav a { white-space: nowrap; scroll-snap-align: start; }
+    /* Every page stays in view on a phone: three to a row, each a full touch target. */
+    nav { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--space-3); margin-top: var(--space-2); }
+    nav a { align-items: center; gap: var(--space-1); min-height: 44px; }
     .topbar { position: static; padding: var(--space-2) var(--space-4); flex-direction: column; align-items: flex-start; gap: var(--space-1); }
     main { padding: var(--space-3) var(--space-4); }
     .events li { grid-template-columns: 1fr; gap: 2px; }

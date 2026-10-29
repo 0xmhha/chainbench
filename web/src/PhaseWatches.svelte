@@ -26,6 +26,7 @@
  li.failed { border-bottom: 3px double var(--danger); }
  summary { display: grid; grid-template-columns: 6.5rem 9rem minmax(0, 1fr) auto; align-items: baseline; gap: var(--space-3); min-height: 40px; padding: var(--space-2) 0; cursor: pointer; }
  summary:hover { background: var(--surface); }
+ @media (pointer: coarse) { summary { min-height: 44px; } }
  .t { font: 700 var(--text-sm) var(--font-mono); font-variant-numeric: tabular-nums; }
  .name { font: var(--text-sm) var(--font-mono); overflow-wrap: anywhere; }
  .name small { color: var(--text-muted); font-family: var(--font-sans); }
