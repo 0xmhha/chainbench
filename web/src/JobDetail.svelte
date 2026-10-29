@@ -8,6 +8,7 @@
   import { formatTime } from './labels.mjs'
   import { follow } from './nav.mjs'
   import JobCard from './JobCard.svelte'
+  import { recordName } from './dashboard-view.mjs'
   import CasualtyEntry from './CasualtyEntry.svelte'
   import CauseBench from './CauseBench.svelte'
   import RunBench from './RunBench.svelte'
@@ -138,7 +139,7 @@
     <!-- The job's other runs wait folded; each reads its logs and metrics only once opened. -->
     {#each [...failingRuns, ...passingRuns].filter(r => r !== firstRun) as run (run.id)}
       <details class="run" ontoggle={e => { if (e.currentTarget.open) opened = { ...opened, [run.id]: true } }}>
-        <summary>테스트 실행 <code>{run.id}</code> <span class="muted">{verdicts(run)}</span></summary>
+        <summary>테스트 실행 <code title={run.id}>{recordName(run)}</code> <span class="muted">{verdicts(run)}</span></summary>
         {#if opened[run.id]}<RunBench {run} nodes={networkNodes} networkId={network?.id} anchor={'run-' + run.id} logTestid="run-logs" />{/if}
       </details>
     {/each}

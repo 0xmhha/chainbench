@@ -3,6 +3,7 @@
  // ink (the failing test and its evidence, or how the run ended), the cause
  // bench the job detail uses, and the record's facts as a ledger below.
  import CasualtyEntry from './CasualtyEntry.svelte'
+ import {recordName} from './dashboard-view.mjs'
  import RunBench from './RunBench.svelte'
  import PhaseWatches from './PhaseWatches.svelte'
  import ConfirmAction from './ConfirmAction.svelte'
@@ -53,7 +54,7 @@
  }
 </script>
 
-<div class="folio"><span>실행 기록 · <strong>{operation}</strong> · <code>{run.id}</code></span><span>{run.startedAt?formatTime(run.startedAt).slice(0,10):'시각 없음'}{#if observations} · 네트워크 <code>{observations.networkId.slice(0,8)}</code>{#if nodes.length} · 노드 {nodes.length}{/if}{/if}</span></div>
+<div class="folio"><span>실행 기록 · <strong>{operation}</strong> · <code title={run.id}>{recordName(run)}</code></span><span>{run.startedAt?formatTime(run.startedAt).slice(0,10):'시각 없음'}{#if observations} · 네트워크 <code>{observations.networkId.slice(0,8)}</code>{#if nodes.length} · 노드 {nodes.length}{/if}{/if}</span></div>
 <CasualtyEntry scope="run" job={{state:run.state,operation,createdAt:run.startedAt}} {head} summary={{active:!terminal}} network={observations?{id:observations.networkId}:null} nodeCount={nodes.length} at={endedAt} {evidence} {duration} trailNode={head.node} {finding} onphase={()=>reveal(PHASES)} ontest={()=>{test=head.test;node='';at='';reveal()}} onnode={()=>{test=head.test;node=head.node;reveal()}} />
 <div class="actions">
  <button disabled={busy} onclick={()=>ondownload(run.id)}>결과 내보내기</button>
@@ -68,7 +69,8 @@
 <section class="record" aria-label="기록 정보">
  <h3>기록 정보</h3>
  <dl>
-  <dt>실행</dt><dd><code>{run.id}</code></dd>
+  <dt>실행 기록</dt><dd><code>{recordName(run)}</code></dd>
+  <dt>기록 ID</dt><dd><code>{run.id}</code></dd>
   <dt>원본 세션</dt><dd>{run.sessionRefs.join(', ')||'연결된 엔진 세션 없음'}</dd>
   <dt>시작 · 끝</dt><dd class="num">{format(run.startedAt)} – {run.finishedAt?format(run.finishedAt):'기록 없음'}</dd>
   {#if run.coverage}<dt>수집</dt><dd>{run.coverage.sampleIntervalSeconds}초마다 · {run.coverage.complete?'누락 없음':`누락 구간 ${run.coverage.gaps.length}개`}{run.coverage.downsampled?' · 다운샘플됨':''}</dd>{/if}

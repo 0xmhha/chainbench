@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { nodeTally, attentionJobs, shortId, runLabel } from '../../web/src/dashboard-view.mjs'
+import { nodeTally, attentionJobs, shortId, runLabel, recordName, recordRef } from '../../web/src/dashboard-view.mjs'
 
 test('nodes are tallied as running, stopped and everything else', () => {
  assert.deepEqual(nodeTally([{ state: 'running' }, { state: 'running' }, { state: 'stopped' }, { state: 'unknown' }, {}]), { running: 2, stopped: 1, other: 2, total: 5 })
@@ -29,4 +29,13 @@ test('long ids are shortened for display only', () => {
 test('a run record is named by its session moment, not by the prefix every run shares', () => {
  assert.equal(runLabel('web:20261028-014151-85041/UTC-20261028-014151'), '20261028-014151-85041')
  assert.equal(runLabel('run-1'), 'run-1')
+})
+
+test('a run record goes by its engine session everywhere, and by its record id only without one', () => {
+ const session = { id: 'session-9c72fc8abc42fe79c0fd00f3efc63fd5', sessionRefs: ['web:20261026-220702-8312/UTC-20261026-220702'] }
+ assert.deepEqual([recordName(session), recordRef(session)], ['20261026-220702-8312', 'web:20261026-220702-8312/UTC-20261026-220702'])
+ // A job record has no engine session of its own, and two sessions are not one name.
+ const job = { id: 'job-d8712a77aff3b2b126a166f40ea9ca12', sessionRefs: [] }
+ assert.deepEqual([recordName(job), recordRef(job)], ['job-d8712a77aff3b2b126a166f40ea9ca12', 'job-d8712a77aff3b2b126a166f40ea9ca12'])
+ assert.equal(recordName({ id: 'r', sessionRefs: ['web:a/UTC', 'web:b/UTC'] }), 'r')
 })

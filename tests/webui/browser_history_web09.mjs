@@ -1,6 +1,7 @@
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
+import {recordName} from '../../web/src/dashboard-view.mjs'
 const [fixturePath,out]=process.argv.slice(2),f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
 const owned=await launchOwnedBrowser(),context=await owned.browser.newContext({viewport:{width:1440,height:1100},acceptDownloads:true})
 const sleep=ms=>new Promise(r=>setTimeout(r,ms))
@@ -69,7 +70,8 @@ try{
  record.comparison={comparable:comparison.comparable,refusal:refused.limitations}
 
  // Detail and secret-free export from the UI.
- await page.getByRole('button',{name:new RegExp(sessions[0].id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))}).first().click()
+ // A row names its run by the engine session, as the job page does.
+ await page.getByRole('button',{name:new RegExp(recordName(sessions[0]).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))}).first().click()
  await page.getByLabel('실행 상세 결과',{exact:true}).waitFor()
  const download=page.waitForEvent('download')
  await page.getByRole('button',{name:'결과 내보내기',exact:true}).click()

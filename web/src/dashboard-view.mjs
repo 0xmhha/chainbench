@@ -30,3 +30,15 @@ export function shortId(id) {
 export function runLabel(id) {
  return String(id ?? '').split('/')[0].replace(/^[a-z]+:/, '')
 }
+
+// recordRef is the id a run record is addressed by: its one engine session,
+// the same id a job lists in runIds, or else the record's own id. recordName
+// is that id as people read it, so a job and its record name one run alike.
+export function recordRef(run) {
+ const refs = run?.sessionRefs ?? []
+ return refs.length === 1 ? refs[0] : run?.id ?? ''
+}
+export function recordName(run) {
+ const refs = run?.sessionRefs ?? []
+ return refs.length === 1 ? runLabel(refs[0]) : run?.id ?? ''
+}
