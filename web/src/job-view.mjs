@@ -31,7 +31,7 @@ const shown = value => (typeof value === 'string' ? value : JSON.stringify(value
 // (phase, test, node, run) a reader jumps to next. While the job's test runs
 // are still being read (pending) a failed job claims nothing yet, so the first
 // line never names a phase only to be replaced by the test a moment later.
-export function failureHeadline(job, summary, failingRuns, pending = false) {
+export function failureHeadline(job, summary, failingRuns, pending = false, passingRuns = []) {
  const base = { tone: 'fail', title: '', reason: '', phase: summary?.failedPhase?.name ?? '', test: '', node: '', runId: '' }
  if (pending && !failingRuns?.length && job?.terminal) return { ...base, tone: 'pending', title: '테스트 판정을 읽는 중입니다', phase: '' }
  for (const run of failingRuns ?? []) {
@@ -40,13 +40,26 @@ export function failureHeadline(job, summary, failingRuns, pending = false) {
  }
  if (summary?.failedPhase) return { ...base, title: `${summary.failedPhase.name} 단계에서 실패했습니다`, reason: summary.failedPhase.message || summary.failure }
  switch (job?.state) {
-  case 'succeeded': return { ...base, tone: 'ok', title: '작업이 성공했습니다' }
+  case 'succeeded': return { ...base, tone: 'ok', title: '작업이 성공했습니다', ...passed(passingRuns) }
   case 'cancelled': return { ...base, tone: 'warn', title: '작업이 취소되었습니다', reason: [job.cancelReason, job.cancelMessage].filter(Boolean).join(' · ') || summary?.failure }
   case 'interrupted': return { ...base, tone: 'warn', title: '작업이 중단되었습니다', reason: summary?.failure || '서버가 작업을 끝까지 지켜보지 못했습니다. 노드의 실제 상태를 확인해야 합니다.' }
   case 'failed': return { ...base, title: '작업이 실패했습니다', reason: summary?.failure }
  }
  const current = (job?.phases ?? []).find(p => p.state === 'running')
  return { ...base, tone: 'active', title: current ? `${current.name} 단계를 실행하고 있습니다` : '작업을 기다리고 있습니다' }
+}
+
+// passed is a passing job's sentence: how many tests passed, then the first
+// few by name and length, or nothing for a job that ran no tests.
+function passed(runs) {
+ const rows = (runs ?? []).flatMap(testRows)
+ if (!rows.length) return {}
+ const took = r => r.durationMs === null ? r.id : `${r.id} ${(r.durationMs / 1000).toFixed(1)}초`
+ // A skipped test is not a pass, so the sentence then counts what passed.
+ const ok = rows.filter(r => r.status === 'succeeded')
+ const more = ok.length > 3 ? ` 외 ${ok.length - 3}건` : ''
+ const title = ok.length === rows.length ? `테스트 ${rows.length}건이 모두 통과했습니다` : `테스트 ${rows.length}건 중 ${ok.length}건이 통과했습니다`
+ return { title, reason: ok.slice(0, 3).map(took).join(' · ') + more }
 }
 
 // testFailure is the headline of a run's first failing test: the test, the

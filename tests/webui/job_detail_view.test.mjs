@@ -158,3 +158,16 @@ test('a recorded job run without test verdicts names its failed phase and the re
  assert.deepEqual([h.tone, h.title, h.reason, h.phase], ['fail', 'test.run 단계에서 실패했습니다', 'one or more selected test cases failed or were blocked', 'test.run'])
  assert.equal(runHeadline({ id: 'r', state: 'failed', summary: { error: { message: 'plan expired' } } }).reason, 'plan expired')
 })
+
+test('a passing job says which tests passed and how long they took', () => {
+ const run = id => ({ id, summary: { counts: { pass: 1 } }, tests: [{ seq: 1, id, state: 'succeeded', startedAt: '2026-10-23T07:00:00Z', finishedAt: '2026-10-23T07:00:02Z', assertions: [], steps: [] }] })
+ const one = failureHeadline(job({ state: 'succeeded' }), jobSummary(job({ state: 'succeeded' })), [], false, [run('sample-passes')])
+ assert.deepEqual([one.tone, one.title, one.reason], ['ok', '테스트 1건이 모두 통과했습니다', 'sample-passes 2.0초'])
+ const many = failureHeadline(job({ state: 'succeeded' }), jobSummary(job({ state: 'succeeded' })), [], false, ['a', 'b', 'c', 'd'].map(run))
+ assert.deepEqual([many.title, many.reason], ['테스트 4건이 모두 통과했습니다', 'a 2.0초 · b 2.0초 · c 2.0초 외 1건'])
+ const skip = { ...run('s'), tests: [{ ...run('s').tests[0], state: 'skipped' }] }
+ const partial = failureHeadline(job({ state: 'succeeded' }), jobSummary(job({ state: 'succeeded' })), [], false, [run('a'), skip])
+ assert.deepEqual([partial.title, partial.reason], ['테스트 2건 중 1건이 통과했습니다', 'a 2.0초'])
+ // A job that ran no tests keeps the plain sentence.
+ assert.equal(failureHeadline(job({ state: 'succeeded' }), jobSummary(job({ state: 'succeeded' })), [], false, []).title, '작업이 성공했습니다')
+})

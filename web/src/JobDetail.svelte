@@ -42,7 +42,7 @@
   const passingRuns = $derived(runs.filter(r => !failed(r)))
   // Until the job's runs are read, a failed job's first line waits for them.
   const runsPending = $derived(Boolean(job?.runIds?.length) && !runsLoaded)
-  const head = $derived(job ? failureHeadline(job, summary, failingRuns, runsPending) : null)
+  const head = $derived(job ? failureHeadline(job, summary, failingRuns, runsPending, passingRuns) : null)
   const duration = $derived(job ? jobDuration(job) : null)
   // A running job's elapsed time ticks once a second, and only while it runs.
   let now = $state(Date.now())
@@ -64,8 +64,9 @@
   // Whether the bench found the asserted node at fault; null until it reads.
   let finding = $state(null)
   // The first failing run is read on the cause bench (RunBench): its chosen
-  // test, the first failure unless the URL names another, sets the window.
-  const firstRun = $derived(failingRuns[0] ?? null)
+  // test, the first failure unless the URL names another, sets the window. A
+  // job that succeeded opens its first run instead, so what passed is in view.
+  const firstRun = $derived(failingRuns[0] ?? (job?.state === 'succeeded' ? passingRuns[0] : null) ?? null)
   const testList = $derived(testRows(firstRun))
   const headRow = $derived(testList.find(r => r.id === head?.test) ?? null)
   const evidence = $derived(headRow?.failedAsserts[0] ?? null)
@@ -135,13 +136,13 @@
     {#if rows.length}<PhaseWatches {rows} />{/if}
 
     <!-- The job's other runs wait folded; each reads its logs and metrics only once opened. -->
-    {#each [...failingRuns.slice(1), ...passingRuns] as run (run.id)}
+    {#each [...failingRuns, ...passingRuns].filter(r => r !== firstRun) as run (run.id)}
       <details class="run" ontoggle={e => { if (e.currentTarget.open) opened = { ...opened, [run.id]: true } }}>
         <summary>테스트 실행 <code>{run.id}</code> <span class="muted">{verdicts(run)}</span></summary>
         {#if opened[run.id]}<RunBench {run} nodes={networkNodes} networkId={network?.id} anchor={'run-' + run.id} logTestid="run-logs" />{/if}
       </details>
     {/each}
-    <details class="meta" open={!summary.failedPhase && !summary.failure && !failingRuns.length}>
+    <details class="meta" open={!summary.failedPhase && !summary.failure && !failingRuns.length && !passingRuns.length}>
       <summary>작업 정보</summary>
       <dl class="summary">
         <dt>작업</dt><dd>{job.operation} · <code>{job.id}</code></dd>
