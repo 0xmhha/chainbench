@@ -115,7 +115,11 @@
  </div>
  <div class="measure" data-testid="recorder-measure">
   <h3>측정 · A에서 B까지</h3>
-  <div class="mode" role="group" aria-label="옮길 커서"><button type="button" aria-pressed={moving==='a'} onclick={()=>{moving='a'}}>A 옮기기</button><button type="button" aria-pressed={moving==='b'} onclick={()=>{moving='b'}}>B 옮기기</button><button type="button" onclick={onreset}>기본 위치로</button><button type="button" disabled={prevError===null} onclick={()=>jump(-1)}>← 이전 오류</button><button type="button" disabled={nextError===null} onclick={()=>jump(1)}>다음 오류 →</button></div>
+  <!-- One row: which cursor moves, then stepping that cursor between errors. -->
+  <div class="tools">
+   <div class="mode" role="group" aria-label="옮길 커서"><button type="button" aria-pressed={moving==='a'} aria-label="A 옮기기" title="A 옮기기" onclick={()=>{moving='a'}}>A</button><button type="button" aria-pressed={moving==='b'} aria-label="B 옮기기" title="B 옮기기" onclick={()=>{moving='b'}}>B</button><button type="button" title="두 커서를 기본 위치로" onclick={onreset}>기본</button></div>
+   <div class="mode" role="group" aria-label="오류 사이 이동"><span class="lab-mini" aria-hidden="true">오류</span><button type="button" aria-label="이전 오류" title="이전 오류" disabled={prevError===null} onclick={()=>jump(-1)}>←</button><button type="button" aria-label="다음 오류" title="다음 오류" disabled={nextError===null} onclick={()=>jump(1)}>→</button></div>
+  </div>
   {#if verdict}<p class="verdict" class:bad={verdict.abnormal} data-testid="recorder-verdict">{verdict.text}</p>{/if}
   {#if chosenRow?.failedAsserts?.length}<p class="note">띠의 값은 {step}초마다 모은 표본이라 단언이 읽은 실제값과 다를 수 있습니다.</p>{/if}
   {#if measure}
@@ -125,8 +129,9 @@
     <dt>다른 노드 블록</dt><dd>{fmt(measure.others.a)} → {fmt(measure.others.b)}</dd>
    </dl>
   {:else if !metrics}<p class="muted">지표를 불러오는 중이거나 이 구간에 지표가 없습니다.</p>{/if}
-  <p class="keys-touch">띠를 누르면 고른 커서가 그 시각으로 옮겨집니다. 옮길 커서는 A 옮기기와 B 옮기기로 고르고, 오류 사이는 이전 오류와 다음 오류로 오갑니다.</p>
-  <p class="keys">띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 띠에 초점이 있을 때 ]와 [는 고른 커서를 이 노드의 다음 오류와 이전 오류로 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p>
+  <!-- The how-to is read once, so it waits folded behind a one-line reminder. -->
+  <details class="keys-touch"><summary>조작법 · 누르면 고른 커서</summary><p>띠를 누르면 고른 커서가 그 시각으로 옮겨집니다. 옮길 커서는 A와 B로 고르고, 오류 사이는 ←와 →로 오갑니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p></details>
+  <details class="keys"><summary>조작법 · 클릭 · Shift+클릭 · ] [ 오류</summary><p>띠를 누르면 고른 커서가 옮겨집니다. Shift를 누른 채 누르면 다른 커서를 옮깁니다. 띠에 초점이 있을 때 ←와 →는 1초씩, ]와 [는 고른 커서를 이 노드의 다음 오류와 이전 오류로 옮깁니다. 빨간 값은 다른 모든 노드보다 뒤처지거나 적거나 많은 값입니다.</p></details>
  </div>
 </section>
 
@@ -172,19 +177,24 @@
  .chan { position: relative; }
  .barname { position: absolute; top: 12px; font: 600 var(--text-xs) var(--font-mono); color: var(--text); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
  .barname.failed { color: var(--danger); }
- .mode { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
- .mode button { min-height: 30px; padding: 2px 8px; font-size: var(--text-xs); }
+ .tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-2); }
+ .mode { display: flex; align-items: center; }
+ .mode button { min-height: 30px; min-width: 30px; padding: 2px 8px; font-size: var(--text-xs); }
+ .mode button + button { margin-left: -1px; }
+ .lab-mini { margin-right: var(--space-1); font: 600 var(--text-xs) var(--font-cond); color: var(--text-muted); }
  .mode button[aria-pressed=true] { border-color: var(--text); border-bottom-width: 3px; }
  .keys-touch { display: none; }
  .verdict { margin: var(--space-2) 0 0; font-size: var(--text-sm); font-weight: 600; }
  .verdict.bad { color: var(--danger); }
  .note { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--text-muted); }
- @media (pointer: coarse) { .mode button, .pick .link { min-height: 44px; } .keys { display: none; } .keys-touch { display: block; } }
+ @media (pointer: coarse) { .mode button, .pick .link { min-height: 44px; } .mode button { min-width: 44px; } .keys { display: none; } .keys-touch { display: block; } }
  .measure { padding: var(--space-3) 0 var(--space-3) var(--space-4); }
  .measure dl { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--space-3); margin: var(--space-2) 0 0; font: var(--text-sm) var(--font-mono); font-variant-numeric: tabular-nums; }
  .measure dt { font: 600 var(--text-xs) var(--font-cond); color: var(--text-muted); padding-top: 2px; } .measure dd { margin: 0; }
  .measure .bad { color: var(--danger); font-weight: 700; }
- .keys, .keys-touch { margin: var(--space-3) 0 0; color: var(--text-faint); font-size: var(--text-xs); }
+ .keys, .keys-touch { margin: var(--space-3) 0 0; color: var(--text-muted); font-size: var(--text-xs); }
+ .keys summary, .keys-touch summary { cursor: pointer; font: 600 var(--text-xs) var(--font-cond); letter-spacing: .02em; }
+ .keys p, .keys-touch p { margin: var(--space-1) 0 0; color: var(--text-faint); }
  @media (max-width: 900px) {
   .strip { grid-template-columns: minmax(0, 1fr); }
   .chart { padding-right: 0; border-right: 0; }
