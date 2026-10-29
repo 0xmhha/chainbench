@@ -8,6 +8,8 @@
  import StatusBadge from './StatusBadge.svelte'
  import {formatTime} from './labels.mjs'
  import {assertDiff} from './run-timeline.mjs'
+ import {runLabel} from './dashboard-view.mjs'
+ import {follow} from './nav.mjs'
  let {job,head,summary,network=null,nodeCount=0,at=null,evidence=null,duration=null,elapsed=null,stale=false,connection='',trailNode='',finding=null,scope='job',onphase=()=>{},ontest=()=>{},onnode=()=>{}}=$props()
  // The bench's reading of the asserted node: null until it reads, so the
  // headline never blames a node on the assertion's target alone.
@@ -42,7 +44,7 @@
   <dt>걸린 시간</dt><dd class="num" data-testid="{scope}-elapsed">{summary.active?elapsed===null?'실행 중':`실행 중 · ${clock(elapsed)} 지남`:seconds(duration)}</dd>
   <dt>{scope==='job'?'작업':'명령'}</dt><dd><code>{job.operation}</code></dd>
   <dt>네트워크</dt><dd>{#if network}<code title={network.id}>{network.id.slice(0,8)}</code> · 노드 {nodeCount}{:else}<span class="muted">기록 없음</span>{/if}</dd>
-  {#if head.runId}<dt>보관 기록</dt><dd><code title={head.runId}>{head.runId}</code></dd>{/if}
+  {#if head.runId}<dt>실행 기록</dt><dd><a class="mono" href={'/history?run='+encodeURIComponent(head.runId)} title={head.runId} onclick={e=>follow(e,'/history?run='+encodeURIComponent(head.runId))}>{runLabel(head.runId)}</a></dd>{/if}
   <dt>시작</dt><dd class="num">{formatTime(job.createdAt)}</dd>
  </dl>
 </header>

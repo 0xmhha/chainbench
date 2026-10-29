@@ -1,4 +1,5 @@
 import { testRows } from './run-timeline.mjs'
+import { recordRef } from './dashboard-view.mjs'
 
 // jobSummary reads what a job detail shows first: whether it is still active,
 // the phase that failed and why, the changes it already made, and whether its
@@ -70,7 +71,7 @@ function testFailure(run) {
  const a = row.failedAsserts[0], s = row.stepErrors[0]
  const node = a?.on || s?.on || ''
  const reason = a ? `${a.assert} · 기대 ${shown(a.expected)} · 실제 ${shown(a.actual)}` : s ? `#${s.index} ${s.type} · ${s.error}` : row.reason
- return { title: `${row.id} 테스트가 ${node ? node + '에서 ' : ''}실패했습니다`, reason, test: row.id, node, runId: run.id }
+ return { title: `${row.id} 테스트가 ${node ? node + '에서 ' : ''}실패했습니다`, reason, test: row.id, node, runId: recordRef(run) }
 }
 
 // runHeadline is the same first sentence for a recorded run read on its own
