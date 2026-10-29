@@ -5,8 +5,8 @@
 > 규약으로 지금 코드의 상태를 하나씩 이름 짓고 계약과 예외 원칙을 더한다.
 >
 > 기준 코드: `cde3a08f`(PR #425 머지) 위의 `cd9664b3`. 2026-09-24.
-> 근거 분석: [19 — 빈 경로](../../../research/chainbench/analyses/19-state-machine-gaps-2026-09-24.md),
-> [20 — 이름 재검토](../../../research/chainbench/analyses/20-state-naming-review-2026-09-24.md).
+> 근거 분석: 19 — 빈 경로(지운 문서),
+> 20 — 이름 재검토(지운 문서).
 > 결정 기록: ouroboros 인터뷰 `interview_20260924_082220`, 시드 `seed_c07a39436198`.
 >
 > 구현은 같은 PR 에서 들어왔다. §10 의 증거가 그 결과다.

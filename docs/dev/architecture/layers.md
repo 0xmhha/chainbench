@@ -9,7 +9,7 @@
 > 상태를 쓸 수 있는 곳을 한정한다.
 >
 > 실측 기준: 2026-08-18, 내부 패키지 **57개** / 패키지 간 의존 엣지 전수 조사(`go list`).
-> 관련: [[family-bringup-design]](../family-bringup-design.md) · [[server-set]](../server-set.md) · [[code-graph]](code-graph.md)
+> 관련: family-bringup-design(지운 문서) · [[server-set]](../server-set.md) · [[code-graph]](code-graph.md)
 
 ---
 

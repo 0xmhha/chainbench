@@ -310,4 +310,4 @@ miner). 옛 `chain up` 의 OK/FAIL/TODO 세 결과 중 TODO 는 사라졌다 —
 6 만 go-wemix 와의 계약 차이이며, 2·3 은 static 경로가 이미 올바르게 하는 것을 핸드오프 경로가
 빠뜨린 것이다.
 
-- [`cli-steps.md`](cli-steps.md) — **CLI 기준 3체인 구동 절차 대조.** 공통 9스텝 · 체인별 함정 · wemix 갭 6개와 그것이 `chain genesis`/`chain start` 두 스텝으로 흡수되는 방식.
+- `cli-steps.md`(지운 문서) — **CLI 기준 3체인 구동 절차 대조.** 공통 9스텝 · 체인별 함정 · wemix 갭 6개와 그것이 `chain genesis`/`chain start` 두 스텝으로 흡수되는 방식.

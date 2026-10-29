@@ -154,7 +154,7 @@ file the same way.
   격리된 노드 DB·생성 genesis/config·로그 위치가 되고(`clean --stale-compositions` 도 이 셋을
   뒤진다), `binaries` 는 위 바이너리 해석, `configs`/`genesis`/`keyrings` 는 상대 파일명 참조의
   기준, `keystore` 는 `file upload`/`download` 의 목적지다. 배선 경위는 인계 문서
-  `docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 참고.
+  이 결정의 분석 기록은 구현이 끝나 지웠다.
 - **`existingInputs` 참조는 문자열 세 형식이 전부다** — `srv://<서버>/<절대경로>`, 대상의 용도별
   디렉터리 아래를 가리키는 상대 파일명, 그리고 이 기계의 절대경로(로컬 키셋을 가리킬 때).
   객체형 참조(`{server, ref}`·`{serverIndex, ref}`·`{localPath}`)는 **계획을 철회했다

@@ -19,9 +19,6 @@
 // boundary once, for every snapshot already here and every one added later. It
 // is a marker, not a buildable module: nothing here is compiled, imported, or
 // released, and no dependency of it belongs in the parent go.sum.
-//
-// Tracked Go code under docs/ stays outside this boundary — docs/dev/codegraph
-// is a real tool of this repo and keeps its own `//go:build ignore`.
 
 module chainbench.local/docs-research
 

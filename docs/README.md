@@ -16,7 +16,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | **무엇을 만들기로 했나** — 요구·계약·인터페이스 | [정본 4종](#2-정본--설계-ssot-4종-docsdev) |
 | **다음에 무엇을 하나** | [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) — **작업 순서·상태의 단일 출처** |
 | **지금 어떤 구조를 향하나** | [`dev/architecture/`](#4-devarchitecture--구조와-측정) · [현행 설계 문서들](#3-dev--현행-설계) |
-| **코드가 실제로 어떤 모양인가** | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) (AST 실측) · [`dev/codegraph/`](dev/codegraph/README.md) (호출 그래프) |
+| **코드가 실제로 어떤 모양인가** | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) (AST 실측) · `dev/codegraph/`(지운 문서) (호출 그래프) |
 | **체인 바이너리의 플래그·RPC 가 궁금하다** | [`chain-analysis/`](chain-analysis/README.md) — **체인 소스를 읽기 전에 여기부터** |
 | **테스트는 어디에 있나** | [`../tests/README.md`](../tests/README.md) |
 | **왜 이렇게 결정했었나** | git 이력 — `dev/archive/` 는 2026-09-24 에 정리됐다. `git log --diff-filter=D -- docs/dev/archive/` 로 목록을, `git show cde3a08f:<경로>` 로 본문을 본다 |
@@ -74,27 +74,18 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 
 | 문서 | 내용 |
 |---|---|
-| [`dev/keyring-design.md`](dev/keyring-design.md) | **키 자료의 단일 소유자** — 키가 세 체인 동일함을 실증 · BLS 를 Go 로 파생(외부 바이너리 제거) · preset 이 신원/결정/산출물을 섞어 담은 문제와 분해. |
-| [`dev/key-and-material-design.md`](dev/key-and-material-design.md) | **키·자료 소유 구조** — 신원 타입 5개와 키 패키지 실측 · **재업로드 방지가 존재 여부만 봐서 틀린 자료를 재사용하는 결함** · destination 레이아웃(`bin`/`material`/`run`, 내용 해시 경로). |
-| [`dev/netmap-design.md`](dev/netmap-design.md) | **노드 배치의 단일 소유자** — 배치 타입·포트 표현·역할 어휘·static-nodes 조립의 중복 실측과 통합 설계 · 피어링 그래프 파생. 통합된 결과가 지금의 `internal/resource` 다. |
 | [`dev/network-blueprint-design.md`](dev/network-blueprint-design.md) | **네트워크 청사진** — 구성 요소 전수(네트워크 14 · 노드 13 · 연결 4)와 누락 지점 · 선언→해석→물질화 3단계 · preset 을 전제에서 **생성기**로 강등 · 출처 사슬. |
-| [`dev/family-bringup-design.md`](dev/family-bringup-design.md) | **패밀리별 기동 설계** — 상위 일관/하위 특화. 3체인 차이 실측표 · 4 boundary(BringUpPhases·Action·GenesisArtifacts·PortReservation). |
 | [`dev/server-set.md`](dev/server-set.md) | **서버 세트** — 노드 포트·호스트·접속 정보의 단일 출처(`server-set.yaml`, gitignore). local/remote 동일 구조·포트 규칙·자격증명 취급. 만드는 법은 [`guide/config-files.md`](guide/config-files.md). |
 | [`dev/docker-remote-design.md`](dev/docker-remote-design.md) | **로컬 docker 를 원격 서버처럼** — 인벤토리는 실주소 유지, 접속 경계 4곳에서만 `AddrMap` 치환 · 함정 4개(loopback 판정·산출물 오염 등). |
-| [`dev/surface-unification-design.md`](dev/surface-unification-design.md) | **표면 통일 리팩토링** — 기능을 한 번 등록하면 CLI/MCP/DSL 이 렌더링. **[일부 대체됨 2026-09-05]** — 해법의 형태가 "세 표면이 모두 app 을 지나고 게이트는 기능별 동등성 테스트" 로 바뀌었다. 규칙의 정본은 `architecture-v2` §2. |
 | [`dev/dsl-v2-proposal.md`](dev/dsl-v2-proposal.md) | **DSL v2 문법** + x-bar 정렬 갭 분석(G1~G7). T7.8 에서 구현됨. 쓰는 법은 [`guide/dsl-authoring.md`](guide/dsl-authoring.md). |
 | [`dev/dashboard-metrics-design.md`](dev/dashboard-metrics-design.md) | **대시보드 metric 시각화** — Prometheus·Grafana 서버 없이 자체 동작한다는 결정과 근거 · 목표 구조(스크레이프→링버퍼→SSE→차트) · 참조 오픈소스 5종(라이선스 포함). |
-| [`dev/web-ui-spec.md`](dev/web-ui-spec.md) | **Web UI 동작 명세** — 개인·팀 체인 구성·배포·노드 제어·DSL 작성·실행·모니터링·히스토리 9개 요구, 체인 명령·옵션, 권한·작업 복구. [화면 디자인](dev/web-ui-design.md) · [OpenAPI](dev/web-ui.openapi.yaml) · [인수 기준](dev/web-ui-acceptance.md) · [실행 Seed](dev/architecture/chainbench-web-ui.seed.yaml) · [보강 기록](dev/architecture/chainbench-web-ui.seed-revision.md). |
+| [`dev/web-ui-spec.md`](dev/web-ui-spec.md) | **Web UI 동작 명세** — 개인·팀 체인 구성·배포·노드 제어·DSL 작성·실행·모니터링·히스토리 9개 요구, 체인 명령·옵션, 권한·작업 복구. [화면 디자인](dev/web-ui-design.md) · [OpenAPI](dev/web-ui.openapi.yaml) · [인수 기준](dev/web-ui-acceptance.md) · [실행 Seed](dev/architecture/chainbench-web-ui.seed.yaml) · 보강 기록(지운 문서). |
 | [`dev/web-ui-worklist.md`](dev/web-ui-worklist.md) | **Web UI 작업 목록과 완료 기준** — 상태 정본은 `web-ui-worklist.json`. 출시 기록은 완료 14/14, 누락 목록은 닫힘 48/48. |
-| [`dev/web-ux-handoff-2026-10-23.md`](dev/web-ux-handoff-2026-10-23.md) | **[측정] Web UX 개선 인수인계** — PR #458 로 끝난 것, 확인하지 못한 것, 남은 순서(Web UX 후속 → 코드 리팩토링 → 문서 정리 → Web 14개 재capture)와 각 단계의 목적·완료 조건, 바꾸면 안 되는 UI·API 계약. |
-| [`dev/web-ux-handoff-2026-10-25.md`](dev/web-ux-handoff-2026-10-25.md) | **[측정] Web UX 인수인계 (작업 상세 개편 뒤)** — PR #460~#462 로 바뀐 것, 뒤집은 시각 방향(기관 일지 테마), 10-23 남은 일의 항목별 현재 상태, 처리하지 못한 것과 남은 순서. |
-| [`dev/web-data-model-plan.md`](dev/web-data-model-plan.md) | **[측정] Web 데이터 모델 계획** — 화면보다 먼저 정할 데이터 인벤토리, 실제 표본, 도메인 모델, 계약의 단일 출처, 수집과 전달 구조, 설정 입력 모델. 조사한 문제와 정한 방식. |
+| [`dev/web-ui-status.md`](dev/web-ui-status.md) | **Web UI 현황과 남은 작업 (2026-10-29)** — 리뉴얼과 WEB-01~14 capture가 끝난 상태, 그 뒤 화면 수정(#503~#509), 정해야 할 것, 확인하지 못한 것, 지금도 지키는 원칙. |
 | [`dev/web-data-inventory.md`](dev/web-data-inventory.md) | **[측정] Web 데이터 인벤토리** — 데이터 모델 계획 3-1단계 결과. API마다 필드의 타입, 비어 있을 수 있는지, 원본, 화면이 읽는지와, 확인한 문제와 #466에서 고친 결함. |
 | [`dev/web-domain-model.md`](dev/web-domain-model.md) | **[현행 설계] Web 도메인 모델** — 데이터 모델 계획 3-3단계 결과. 2026-10-26 사용자 승인. 화면이 받을 개념마다 필드, 타입, 필수 여부, 출처와 상태 어휘, 노출 결정. |
 | [`dev/web-ui-gap-review.md`](dev/web-ui-gap-review.md) | **Web UI 계획 대비 누락 검토** — 인수 기준 통과 뒤에도 Seed·명세·OpenAPI·디자인과 코드가 어긋난 곳을 찾은 근거. 상태 정본은 `web-ui-gaps.json`. |
-| [`dev/web-ui-implementation.md`](dev/web-ui-implementation.md) | **Web UI 구현 진행 기록** (2026-10-08~11). 뒤에 해결된 한계를 미완료로 적은 곳이 있어 상태는 위 작업 목록을 따른다. |
 | [`dev/web-ui-manifests.md`](dev/web-ui-manifests.md) | **WEB-04 manifest 모듈** — 내장 플러그인 목록, manifest·템플릿 가져오기 검증, 내용 주소 번들 저장·내보내기. |
-| [`dev/architecture/web-execution-adapter-decision.md`](dev/architecture/web-execution-adapter-decision.md) | **[결정] Web 실행 경로를 CLI 어댑터로** (2026-10-12 승인) — Web 이 chainbench CLI 를 하위 프로세스로 실행한다. 구현은 `internal/webcli`. |
 | [`dev/endpoint-profiles.md`](dev/endpoint-profiles.md) | **외부 노드 엔드포인트 프로필** — `chain-preset.attach.endpoints` 로 이미 도는 노드의 RPC·WS·metrics 와 역할을 선언한다. 노드 제어는 하지 않는다. |
 | [`dev/native-proof-compaction.md`](dev/native-proof-compaction.md) | **종료된 증명의 바이너리 공유 복사** — `scripts/proof_native_cow.py` 가 같은 바이너리 사본을 APFS 공유 복사로 바꾼다. 기본은 계획만 출력. |
 
@@ -102,7 +93,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 
 | 문서 | 내용 |
 |---|---|
-| [`dev/chain-setup/`](dev/chain-setup/README.md) | **체인 구성 절차** — 공통 파이프라인과 변곡점, 케이스 4종([wemix](dev/chain-setup/case-1-wemix.md) · [wemix→wbft](dev/chain-setup/case-2-wemix-to-wbft.md) · [wbft](dev/chain-setup/case-3-wbft.md) · [stablenet](dev/chain-setup/case-4-stablenet.md)), [`cli-steps`](dev/chain-setup/cli-steps.md). 검증 기준일 2026-08-09 의 실측이며, 각 문서 상단에 **명령 표면 정정(2026-09-11)** 이 붙어 있다. |
+| [`dev/chain-setup/`](dev/chain-setup/README.md) | **체인 구성 절차** — 공통 파이프라인과 변곡점, 케이스 4종([wemix](dev/chain-setup/case-1-wemix.md) · [wemix→wbft](dev/chain-setup/case-2-wemix-to-wbft.md) · [wbft](dev/chain-setup/case-3-wbft.md) · [stablenet](dev/chain-setup/case-4-stablenet.md)), `cli-steps`(지운 문서). 검증 기준일 2026-08-09 의 실측이며, 각 문서 상단에 **명령 표면 정정(2026-09-11)** 이 붙어 있다. |
 | [`dev/legacy-port-audit/`](dev/legacy-port-audit/README.md) | **[측정] 이관 감사** — 셸 460파일과 신규 Go+DSL 을 각각 AST 그래프로 만들어(노드 943 / 1,413) 테스트 단위로 대조한 기록. |
 | [`dev/chain-handover-2026-09-12.md`](dev/chain-handover-2026-09-12.md) | **[측정] 체인팀 인계 3건** — chainbench 를 고쳐서는 해소되지 않는 go-wemix / go-wbft 결함. `verifyBlockSig` 의 nil 역참조 패닉(원인 확정), 부트 etcd 붕괴(R6, 범위 좁힘), `istanbul_getWbftExtraInfo` 의 블록 태그. 증상·근거·재현·제안까지. |
 
@@ -110,23 +101,20 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 
 | 문서 | 등급 | 내용 |
 |---|---|---|
-| [`design-v3/`](dev/architecture/design-v3/direction.md) | **[측정] + [제안]** | **리팩토링 설계 v3 (2026-09-21~).** `measurement-…md` 는 잰 것만, `direction.md` 는 방향과 결정(§8·§13·§14 가 이름 판단의 근거), `chain-as-a-run-dimension.md` 는 공통 TC 한 벌이 세 체인에 도는 문제, `state-machine-01~05` 는 실패를 재고 상태·전이를 정한 것(05 는 테스트 영역), [`state-machine-06-naming-and-contract.md`](dev/architecture/design-v3/state-machine-06-naming-and-contract.md) 는 **[결정]** 이름을 02 규약으로 되돌리고 상태별 커맨드/이벤트 계약과 예외 원칙을 정한 것(구현 포함), `cohesion-candidates-…md` 는 응집 후보 셋, `declaration-model-2026-09-22.md` 는 체인을 무엇으로 서술하고 값이 어느 순서로 정해지나(우선순위 줄 확정, 결함 셋). **닫은 세 계획의 수치를 하나도 가져오지 않았다.** |
+| [`design-v3/`](dev/architecture/design-v3/state-machine-02-states.md) | **[측정] + [제안]** | **리팩토링 설계 v3 (2026-09-21~).** 상태 머신 규약(`state-machine-02`·`04`·`05`·`06`), 선언 모델(`declaration-model-2026-09-22.md`), 체인마다 달라지는 공통 TC(`common-tc-01-chain-varying.md`)가 남아 있다. 방향 문서와 측정 기록은 일이 끝나 지웠다. |
 | [`architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, 자원/노드정보 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. **모듈 경계는 이 문서가 이긴다.** |
 | [`layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 패키지 전수 배치 · 의존 규칙 · **상태 소유 규칙**(control plane=session / data plane=FileSink) · `internal/arch` 가 기계로 강제하는 규칙. |
 | [`module-responsibilities.md`](dev/architecture/module-responsibilities.md) | [현행 설계] | **관심사별 소유 모듈** 16개 · 소유자 부재 실측 · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 4분할. |
 | [`mainnet-config-worklist.md`](dev/architecture/mainnet-config-worklist.md) | [현행 설계] | **메인넷별 설정 구조 개선 작업 리스트 (2026-09-14)** — 항목 58건(결정 D · 주석 C · 어휘 V · 워크스페이스 W · 병합 M · preset P · 하드코딩 H · 실제망 R · 결함 X · 마무리 Z). PR #419 `HANDOFF.md` (2026-09-24 삭제) 요구사항 9개와의 대응, 측정 사실, 검증 기준. **이 트랙의 작업은 이 문서를 따른다.** |
 | [`terminology-map.md`](dev/architecture/terminology-map.md) | [측정] | **용어 지도 (2026-09-14)** — 한 낱말이 몇 뜻으로 쓰이는지, 뜻마다 주인이 우리인지 체인인지. `validator` 6뜻 · `boot` 4뜻 · `workspace` 4뜻 · `preset` 3뜻. **새 낱말을 쓰기 전에 본다.** |
-| [`f1-recovery.md`](dev/architecture/f1-recovery.md) | [현행 설계] | **F1 파일 영속·복구** — 프로세스가 죽어도 다시 실행하면 이전 진행을 이어받는다. §0 원칙: 복구용 사본을 만들지 않는다. |
 | [`code-graph.md`](dev/architecture/code-graph.md) | [측정] | **AST 실측 패키지 그래프** — 2026-10-22 재측정(80패키지 · 266엣지 · 94,866줄 · **층 위반 0**), 레이어별 규모와 fan-in/out, 자원 소유자로의 수렴. 다시 뽑기: `go run ./scripts/inventory/code-graph .` |
-| [`../codegraph/`](dev/codegraph/README.md) | [측정] | **호출(선택자) 그래프** — 패키지 그래프가 답하지 않는 "누가 무엇을 부르는가". `codegraph.json` + [파이프라인 mermaid](dev/codegraph/pipeline.md). |
 | [`package-tree.md`](dev/architecture/package-tree.md) | [측정] | **패키지 전수 트리** — 디렉토리가 지금 어떻게 생겼고 각 패키지가 무엇을 지원하는지. 레이어 축은 `layers.md` 가 답한다. `scripts/refresh-package-tree.py` 로 다시 뽑는다. |
-| [`case-gate-table.md`](dev/architecture/case-gate-table.md) | [측정] | **케이스별 게이트 판정표** (2026-09-15) — `applicableChains` 를 든 107건을 한 건씩 판정한 기록. 방법은 `mainnet-config-worklist.md` §7.0. |
 
 ## 5. 하위 디렉토리 — 외부 축
 
 | 경로 | 내용 |
 |---|---|
 | [`chain-analysis/`](chain-analysis/README.md) | **체인 바이너리의 CLI 표면과 배선** — gstable · gwbft · gwemix 각각의 명령/플래그 그래프와 RPC/metrics 그래프. 실행 옵션 질문은 **체인 소스를 읽기 전에 여기부터.** 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. 대상이 외부 바이너리라 설계 4종과는 별개 축이다. |
-| `research/` | 동결된 분석 기록. 살아 있는 문서가 인용하는 것만 남는다 — [`chainbench/analyses/`](research/chainbench/analyses/README.md)(그 README 가 누가 무엇을 인용하는지 적는다)와 `common-tests/doc-vs-tests-20260929.md`(공통 테스트 문서와 케이스 대조). 기록이라 오늘의 코드와 어긋나는 것이 정상이다. 메인넷 의존 분석 2종(2026-09-09 · 09-11)과 그 Confluence 초안은 결론이 `tc/common/` 으로 옮겨간 뒤 2026-09-29 에 지웠다 — 본문은 git 이력에 있다. |
+| `research/` | 동결된 분석 기록. 살아 있는 문서가 인용하는 것만 남는다 — [`chainbench/analyses/`](research/chainbench/analyses/README.md)(그 README 가 누가 무엇을 인용하는지 적는다). 기록이라 오늘의 코드와 어긋나는 것이 정상이다. 메인넷 의존 분석 2종(2026-09-09 · 09-11)과 그 Confluence 초안은 결론이 `tc/common/` 으로 옮겨간 뒤 2026-09-29 에 지웠다 — 본문은 git 이력에 있다. |
 
 > `dev/session-data/`(원본 세션 transcript)는 검증용 로컬 자료로 **git 미추적**(`.gitignore`).

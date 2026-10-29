@@ -4,7 +4,7 @@
 > [`state-machine-06-naming-and-contract.md`](state-machine-06-naming-and-contract.md) 에 있다 (2026-09-24).**
 > 코드의 상태 이름 값은 이 문서의 `STATE_<영역>_<단계>` 에서 `STATE_` 를 뗀 UPPER_SNAKE 다.
 
-> **[결정]** 1번의 측정([`state-machine-01-failures.md`](state-machine-01-failures.md))을
+> **[결정]** 1번의 측정(`state-machine-01-failures.md`(지운 문서))을
 > 입력으로 삼아 상태를 확정한다. 전이는 이 문서가 정하지 않는다 — 3번이 정한다.
 >
 > 세부 상태는 지어내지 않았다. **지금 코드가 실제로 가르는 갈래**만 상태가 된다. 갈래의

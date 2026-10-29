@@ -197,10 +197,11 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
    L1의 간헐 실패(ethereum/08 정리 단계 정지 시간 초과)와 mixed 구현 5건은 다음 테스트 때 함께 본다.
 
 **2026-10-23 진행:** 위 2번의 Web UI 리팩토링 첫 묶음(실패 우선 UX)을 PR #458로 병합했다(main `5397659e`).
-남은 Web UX 후속, 확인하지 못한 것, 다음 단계의 목적과 완료 조건은 [인수인계](web-ux-handoff-2026-10-23.md)에 있다. PR #460, #461 뒤의 현재 상태와 남은 순서는 [2026-10-25 인수인계](web-ux-handoff-2026-10-25.md)에 있다.
+남은 Web UX 후속, 확인하지 못한 것, 다음 단계의 목적과 완료 조건은 인수인계(지운 문서)에 있다. PR #460, #461 뒤의 현재 상태와 남은 순서는 2026-10-25 인수인계(지운 문서)에 있다.
 
 **2026-10-25 사용자 결정:** Web UI 리팩토링의 남은 부분은 데이터부터 한다. 쓸 수 있고 수집할 수 있는 데이터를
-조사해 구조체와 타입, 수집과 갱신 구조를 정한 뒤 화면을 만든다([Web 데이터 모델 계획](web-data-model-plan.md)).
+조사해 구조체와 타입, 수집과 갱신 구조를 정한 뒤 화면을 만든다. 이 일과 WEB-01~14 재capture는 끝났고, 결과와
+남은 일은 [Web UI 현황과 남은 작업](web-ui-status.md)에 있다.
 위 3번의 Web 14개 재capture는 Web 리뉴얼을 마치고 주요 기능 몇 개를 실제로 확인한 뒤 한 번만 한다.
 
 **2026-10-22 Web 최종 인수 완료 처리 (사용자 결정):**
@@ -2902,7 +2903,7 @@ chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
 ## 1g. 아키텍처 정합 · 패밀리 기동 (사전 작업 완료 · K0 부터 착수)
 
 > 설계 근거: [[layers]](architecture/layers.md) · [[module-responsibilities]](architecture/module-responsibilities.md) ·
-> [[family-bringup-design]](family-bringup-design.md).
+> family-bringup-design(지운 문서).
 > **작업 상태는 이 절에서만 관리한다** — 설계 문서는 *무엇을 왜*, 이 절은 *언제 어디까지*.
 
 세 갈래가 있고 서로 독립이다. A(규칙) → B(파서) → F(패밀리 기동) 순으로 착수하되,
@@ -3001,7 +3002,7 @@ concurrent/restart는 현행 선언에서 이미 공통화되어 있다. 새 범
 
 ### K — keyring (첫 착수 대상)
 
-> 근거: [[keyring-design]](keyring-design.md).
+> 근거: keyring-design(지운 문서).
 > **키는 세 체인이 동일하다**(실증: 같은 nodekey → 세 체인 동일한 address·pubkey, BLS 도 Go 파생이
 > `bootnode` 출력과 바이트 동일). 그래서 여기부터 정리하면 위쪽이 단순해진다.
 > 실측 문제: 키 관심사가 **5패키지 1,236줄**에 흩어져 있고(읽기 `keys`/쓰기 `keygen`/저장 `keymat`/
@@ -3086,7 +3087,7 @@ genesis·config 를 쓸 때 해시를 `State.LaunchInputs` 에 기록하고, dep
 
 ### S — 표면 통일 (CLI/MCP/DSL 을 한 레지스트리로)
 
-> 근거: [[surface-unification-design]](surface-unification-design.md).
+> 근거: surface-unification-design(지운 문서).
 > **2026-09-05: 표면 경로 부분은 §1l 의 U 트랙이 가져갔다.** S5·S6 은 폐기했다. 아래 줄수는
 > 08-18 시점 기록이며, 지금은 CLI 가 네 패키지로 나뉘어 합계 4,176줄이다(`cmd/chainbench`
 > 1,981 · `keyringcmd` 1,119 · `chaincmd` 828 · `resourcecmd` 248, 비테스트 기준). 코드가 옮겨

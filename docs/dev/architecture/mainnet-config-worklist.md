@@ -8,7 +8,7 @@
 > 대상 리비전: main `7f39c5627e0bdaccaa8e207a67767d71579283f5` (#418)
 > 검증 기준선: `20260913T101856Z`
 > 상위 맥락: PR [#419](https://github.com/0xmhha/chainbench/pull/419) `HANDOFF.md` (2026-09-24 삭제) 의 요구사항 9개
-> 배경 분석: `docs/research/chainbench/analyses/12-mainnet-profile-plan.md`
+> 배경 분석은 이 목록으로 옮겨 와 지웠다.
 
 ## 이 문서의 용도
 
