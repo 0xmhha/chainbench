@@ -1,32 +1,23 @@
 # Chainbench project instructions
 
-## Continuing the Web UI work
+## Web UI status
 
-Read `docs/dev/web-ui-claude-handoff.md` first. It records the paused work,
-source-of-truth documents, uncommitted implementation, failed native proof,
-verification commands, and exact resume point. The paste-ready continuation
-prompt with Ouroboros usage is `docs/dev/web-ui-claude-resume-prompt.md`.
-Reuse the validated Seed; inspect active workers before any `ooo run` or Ralph
-start, preserve uncommitted inputs, and distinguish QA from formal evaluation.
-Then read the approved Seed,
-specification, acceptance contract, and all fourteen worklist entries it links.
+The Web UI renewal is finished; WEB-01..14 passed on 72a7b464. Read
+`docs/dev/web-ui-status.md` first: what is done, what is still to decide,
+what was not verified, and the principles still in force. Screen rules are in
+`web/DESIGN.md`, users and scenes in `web/PRODUCT.md`, the API contract in
+`docs/dev/web-ui.openapi.yaml`. Use Ouroboros only for qa, lateral and
+evaluate; implement directly, without `ooo run` or Ralph.
 
-The handoff is a snapshot, not a completion certificate. Inspect current files
-and `git status` before editing. The user paused Codex implementation to move
-this work to Claude Code. Resume implementation when the user requests it.
-
-When resuming, continue until all approved requirements are verified. Before
-every next implementation stage, list all fourteen items, distinguish partial
-implementation from full acceptance, and define that stage's completion tests.
-Use meaningful RED -> GREEN, required regression checks, then commit the verified
-stage and continue. Never award completion for mocks, skipped scenarios, stale
+Before each next stage, define its completion tests and use meaningful
+RED -> GREEN. Never award completion for mocks, skipped scenarios, stale
 receipts, missing evidence, environmental failures, or artifact existence alone.
-Do not reduce the approved scope or silently ignore unsupported input.
+New entry points add to existing flows: keep the mouse-driven setup, and have
+new APIs call the existing plan and job functions.
 
 ## Git and review rules
 
-- Keep unrelated user changes intact. In this checkout `.gitignore` was already
-  staged by the user; refactoring-preparation documents and baselines are theirs.
+- Keep unrelated user changes intact.
 - Do not use `git add .`, `git commit -a`, destructive resets, or cleaning the
   checkout. Commit only explicit files owned by the current work.
 - Commit and PR titles use English Conventional Commit style. Explain concrete
@@ -38,8 +29,8 @@ Do not reduce the approved scope or silently ignore unsupported input.
   `SAGE-X-project/sage-core-dev`, directly or through automatic assignment.
   Inspect CODEOWNERS/workflows/settings before creating or making a PR ready.
   Keep a PR draft if its base automatically assigns that team.
-- The current branch is `codex/web-ui`, with draft PR #443. Do not switch to main
-  or create a duplicate implementation branch just to start this handoff.
+- Branch from main, one PR per change, and squash-merge only after all CI
+  checks pass.
 
 ## Architecture and verification
 
@@ -58,7 +49,11 @@ Do not reduce the approved scope or silently ignore unsupported input.
 - Serialize native proofs that share fixed RPC/P2P/SSH ports and original
   acceptance captures that rebuild the same embedded SPA.
 - Disk below 2 GiB causes existing genesis preflight refusals. Preserve those
-  checks. See the handoff's rejected cleanup action before considering deletion.
+  checks. Native proofs refuse to start below 20 GiB free
+  (`tests/webui/runtime_storage.py`).
+- WEB-14 needs chain binaries built at the commits `docs/chain-analysis`
+  records (stablenet 4d17eea, wbft d535dd3, wemix 4538a9f), not the chain
+  repositories' HEAD.
 - Secrets belong in private encrypted stores, not shared export, documentation,
   logs, patches, or portable handoff bundles.
 
