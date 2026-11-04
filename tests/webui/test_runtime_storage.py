@@ -1,8 +1,10 @@
 """Contracts for automatic cleanup of completed, exclusively owned proofs."""
 import ast
 import contextlib
+import inspect
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -349,6 +351,15 @@ class RuntimeStorageTests(unittest.TestCase):
             storage.reclaim_after_shutdown(runtime, out)
         pause.assert_called_once()
         self.assertFalse(db.exists())
+
+    def test_shutdown_waits_as_long_as_the_engine_lets_a_node_stop(self):
+        # Runners only send SIGTERM. A wemix node stopped together with its
+        # etcd peers measured 12.7s to exit (2026-11-05), so the wait must
+        # cover the engine's own grace and kill wait, not an arbitrary 10s.
+        stop = (Path(__file__).resolve().parents[2] / 'internal/core/process/stop.go').read_text()
+        seconds = lambda name: int(re.search(name + r'\s*=\s*(\d+) \* time\.Second', stop)[1])
+        default = inspect.signature(storage.reclaim_after_shutdown).parameters['timeout'].default
+        self.assertGreaterEqual(default, seconds('StopGrace') + seconds('killWait'))
 
     def test_shutdown_timeout_preserves_data_and_refuses_cleanup(self):
         runtime = self.runtime(); db, _, _ = self.fixture(runtime)

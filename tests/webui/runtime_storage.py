@@ -180,12 +180,17 @@ def reclaim_runtime(runtime, references=()):
     return reclaimed
 
 
-def reclaim_after_shutdown(runtime, directory, timeout=10):
+def reclaim_after_shutdown(runtime, directory, timeout=20):
     """Finalize both passed and failed proofs after their owned processes exit.
 
     The caller's finally block closes its servers/logs first. Partial evidence,
     logs and source inputs survive; an explicitly cited database survives too.
     No process is killed here, and an unavailable inventory refuses deletion.
+
+    The wait matches the engine's own stop (StopGrace plus killWait in
+    internal/core/process/stop.go). A wemix node stopped together with its
+    etcd peers waits out an etcd request timeout before it exits; one took
+    12.7s, longer than the 10s this used to allow.
     """
     runtime = validate_runtime(runtime)
     deadline = time.monotonic() + timeout
