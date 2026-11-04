@@ -75,9 +75,6 @@ try{
       assert.equal((await api('networks')).items.find(n=>n.workspaceId===w.id).nodes.find(n=>n.id==='node1').pid,0,'retained test node was not stopped')
       // Running the finished test job again: a fresh plan from its recorded
       // input, reviewed on the job page, started only by the reviewed button.
-      // One chain proves the path; a gwemix node the rerun has just started can
-      // outlast the runner's ten-second shutdown wait, so wemix is not rerun.
-      if(i===0){
       await page.goto(f.url+'/jobs/'+first.id)
       await page.getByRole('button',{name:'다시 실행 계획 만들기',exact:true}).click()
       const rerun=page.getByLabel('다시 실행',{exact:true})
@@ -98,7 +95,6 @@ try{
         await waitJob((await api('jobs','POST',{planId:restop.id},restop.id,202)).id,'succeeded')
       }
       jobs.push({rerunOf:first.id,rerunJob:again?.id??null,rerunBlockedByConflict:blocked})
-      }
       await page.screenshot({path:out+'/test-results.png',fullPage:true})
     }
   }
