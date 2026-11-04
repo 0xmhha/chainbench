@@ -50,7 +50,6 @@ WEB-01~14 전체 capture를 `72a7b464`(#500 머지 뒤)에서 돌려 14개 모�
 
 - `tests/repro/attach-external.sh`는 지금 없는 `chainbench test --rpc`를 불러 실패한다. `tests/repro/run-all.sh`의 전체 실행 예도 이 스크립트를 부른다. 지금 동작하는 방법은 `chainbench run --rpc <url> --chain <id> <spec>`이다.
 - `scripts/inventory/list-adapter-functions.sh`와 `scan-binary-hardcoding.sh`는 지금 없는 옛 셸 파일을 읽어 오류로 끝난다.
-- 루트 `CLAUDE.md`는 지운 Web UI 인수인계와 resume prompt를 먼저 읽으라고 하고, Web UI 작업이 draft PR #443에서 멈춰 있다고 적는다. 자동으로 읽히는 설정 파일이라 저장소 주인이 직접 고친다.
 - `docs/dev/web-ui-evidence/`의 게시 증거는 2026-10-13 capture의 것이다. 다음 전체 capture가 다시 만든다.
 
 ## 6. 다음 순서 제안
