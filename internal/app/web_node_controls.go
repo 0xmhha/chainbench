@@ -136,9 +136,6 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		if target != owned && !slices.Contains(also, target) {
 			return webConflict("the node is not on a machine this plan reviewed")
 		}
-		if webNodeNeverLaunched(ns) {
-			continue
-		}
 		binary := state.Binary
 		if ns.Binary != "" {
 			binary = state.Binaries[ns.Binary]
