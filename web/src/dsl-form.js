@@ -36,7 +36,17 @@ function compatible(schema, value) {
 }
 export function selectedVariant(choices, value) {
   const index=choices.findIndex(s=>compatible(s,value))
-  return index<0?0:index
+  if(index>=0)return index
+  // A value no variant fully accepts keeps its own shape on screen.
+  const shape=Array.isArray(value)?'array':value===null?'null':typeof value
+  return Math.max(choices.findIndex(s=>(s.type??(s.properties?'object':''))===shape),0)
+}
+// unsupportedField reports a field the object's schema rejects. A case's own
+// chain preset may name the one it builds on with extends, which the engine
+// reads before the schema applies.
+export function unsupportedField(schema, path, name) {
+  if(Object.hasOwn(schema.properties??{},name)||schema.additionalProperties!==false)return false
+  return !(name==='extends'&&path.endsWith('/chainPreset'))
 }
 export function initial(schema, root) {
   schema = variants(schema, root)[0]

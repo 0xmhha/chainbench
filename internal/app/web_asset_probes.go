@@ -23,6 +23,12 @@ const webInspectionServerRequired = "server-required"
 // webInspectionOnServer marks a binary whose identity came from a server.
 const webInspectionOnServer = "server-version-and-help"
 
+// WaitsForServer reports a binary registered here that no server has answered
+// for yet, so no plan can use it.
+func (a WebAsset) WaitsForServer() bool {
+	return a.Compatibility["inspection"] == webInspectionServerRequired
+}
+
 // webBinaryProbes is what a binary answered on a server of its own platform.
 // Every later check of the binary reads these answers, because this machine
 // cannot ask it again. The bytes are pinned by checksum, so the answers hold.

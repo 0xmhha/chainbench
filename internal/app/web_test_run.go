@@ -12,6 +12,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -383,6 +384,15 @@ const webTestLogCapture = 2 * time.Minute
 // holds its logins, before any cleanup removes the nodes. A failed or cancelled
 // run is exactly when they are wanted, so it does not inherit the job's context.
 func (e *WebChainEngine) captureTestLogs(ctx context.Context, a DeploymentActor, p webChainPayload) error {
+	return e.captureRemoteLogs(ctx, a, p, e.monitor.CollectRemoteLogsToEnd)
+}
+
+// finishRemoteLogs keeps what stopped nodes logged last, before their logs are removed.
+func (e *WebChainEngine) finishRemoteLogs(ctx context.Context, a DeploymentActor, p webChainPayload) error {
+	return e.captureRemoteLogs(ctx, a, p, e.monitor.FinishRemoteLogs)
+}
+
+func (e *WebChainEngine) captureRemoteLogs(ctx context.Context, a DeploymentActor, p webChainPayload, read func(context.Context, string, func(context.Context, State, node.Record) (webLogSource, error)) error) error {
 	if e.monitor == nil || p.Target.Transport != "ssh" {
 		return nil
 	}
@@ -395,7 +405,7 @@ func (e *WebChainEngine) captureTestLogs(ctx context.Context, a DeploymentActor,
 	network := filepath.Base(p.ControlDir)
 	detach := e.monitor.attachRemote(network)
 	defer detach()
-	return e.monitor.CollectRemoteLogsToEnd(ctx, network, webRemoteLogOpener(lookup, p))
+	return read(ctx, network, webRemoteLogOpener(lookup, p))
 }
 
 // webSuiteVerdict fails a run whose document reports a failed or blocked

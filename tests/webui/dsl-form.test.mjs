@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {variants, initial, selectedVariant, references, finishedGenesisRef, caseAssetRefs} from '../../web/src/dsl-form.js'
+import {variants, initial, selectedVariant, unsupportedField, references, finishedGenesisRef, caseAssetRefs} from '../../web/src/dsl-form.js'
 test('nested references and variants expose each selected reader',()=>{
  const root={$defs:{read:{oneOf:['a','b'].map(source=>({type:'object',properties:{do:{const:'read'},source:{const:source}},required:['do','source']}))}}}
  const choices=variants({$ref:'#/$defs/read'},root)
@@ -224,4 +224,17 @@ test('catalog-tagged node references offer declared nodes and prior bindings',as
  assert.deepEqual(fieldSuggestions({},'on','/content/steps/1/on',nodes,refs),nodes)
  assert.deepEqual(fieldSuggestions({},'onEach 1','/content/steps/1/onEach/0',nodes,refs),['all',...nodes])
  assert.deepEqual(fieldSuggestions({},'value','/content/steps/1/value',nodes,refs),refs)
+})
+test('a case extending a preset is not told its extends field is unsupported',()=>{
+ const envSpec={additionalProperties:false,properties:{chain:{type:'string'}}}
+ assert.equal(unsupportedField(envSpec,'/content/chainPreset','extends'),false)
+ assert.equal(unsupportedField(envSpec,'/content/chainPreset','chain'),false)
+ assert.equal(unsupportedField(envSpec,'/content/chainPreset','typo'),true)
+ assert.equal(unsupportedField(envSpec,'/content/steps/0','extends'),true)
+ assert.equal(unsupportedField({properties:{}},'/content/chainPreset','typo'),false)
+})
+test('an object that fits no variant exactly still opens on the object form, never as a string',()=>{
+ const choices=[{type:'string'},{type:'object',properties:{schemaVersion:{const:'2'}},required:['schemaVersion']}]
+ assert.equal(selectedVariant(choices,{extends:'stablenet-bp4',capabilities:['rpc']}),1)
+ assert.equal(selectedVariant(choices,'stablenet-bp4'),0)
 })

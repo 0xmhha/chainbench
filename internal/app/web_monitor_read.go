@@ -323,7 +323,11 @@ func (m *WebMonitor) Logs(ctx context.Context, a DeploymentActor, nodeID string,
 		corrupt += n
 	}
 	gaps, err := m.coverageGaps(network, from, to, corrupt, func(g webMonitorGap) bool {
-		return (g.Source == "logs" && g.Node == label) || g.Source == "collector" || g.Source == "archive"
+		if g.Reason == webNodeStopped {
+			return false // A stopped node writes nothing, so no line is missing.
+		}
+		ownOrNetwork := g.Node == label || g.Node == ""
+		return (g.Source == "logs" && g.Node == label) || (g.Source == "collector" && ownOrNetwork) || g.Source == "archive"
 	})
 	if err != nil {
 		return WebLogs{}, err
@@ -370,6 +374,25 @@ func parseWebLogCursor(raw string) (int, time.Time, time.Time, string, error) {
 	return index, time.Unix(0, from).UTC(), time.Unix(0, to).UTC(), filter, nil
 }
 
+// withoutDrainedRemoteGaps drops, node by node, the part of a "no collection job"
+// gap that a later read of the whole log has since covered.
+func withoutDrainedRemoteGaps(gaps []webMonitorGap, drained map[string]time.Time) []webMonitorGap {
+	out := make([]webMonitorGap, 0, len(gaps))
+	for _, g := range gaps {
+		at, ok := drained[g.Node]
+		if ok && g.Reason == "remote_log_collection_unavailable" {
+			if !g.To.After(at) {
+				continue
+			}
+			if g.From.Before(at) {
+				g.From = at
+			}
+		}
+		out = append(out, g)
+	}
+	return out
+}
+
 // coverageGaps lists archived and still-open gaps in the window, merging
 // touching intervals of the same failure, plus the time before the first
 // collection round and any unreadable archive lines.
@@ -385,6 +408,7 @@ func (m *WebMonitor) coverageGaps(network string, from, to time.Time, corrupt in
 		return nil, err
 	}
 	recorded = append(append(recorded, cursor.Open...), cursor.RemoteOpen...)
+	recorded = withoutDrainedRemoteGaps(recorded, cursor.RemoteDrained)
 	// A collector that has not completed a round for three periods is stale:
 	// the time since its last round is unobserved even though no restart
 	// recorded it, so it is shown rather than read as quiet coverage.

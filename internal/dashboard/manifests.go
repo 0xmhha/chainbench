@@ -78,7 +78,7 @@ func WithManifests(store *app.ManifestStore, authenticate DeploymentAuthenticato
 				return
 			}
 			for _, item := range uploaded {
-				if item.Kind != "binary" {
+				if item.Kind != "binary" || item.WaitsForServer() {
 					continue
 				}
 				asset, err := store.BinaryAsset(item.ID)

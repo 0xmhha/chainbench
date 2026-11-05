@@ -77,7 +77,7 @@ try{
  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
  const panel=page.getByLabel('자원 충돌',{exact:true});await panel.waitFor({timeout:15000})
  const panelText=await panel.innerText();assert.ok(panelText.includes(jobA)&&panelText.includes(operator.id),'UI omitted the conflicting owner')
- assert.ok(await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).isDisabled(),'UI offered conflicting execution')
+ assert.ok(await page.getByRole('button',{name:/^(검토한 계획 실행|테스트 실행)$/}).isDisabled(),'UI offered conflicting execution')
  await page.screenshot({path:out+'/physical-conflict.png',fullPage:true})
 
  // Another path and other ports do not make the same node binary independent:

@@ -1,6 +1,6 @@
 <script>
  import Field from './DSLField.svelte'
- import {variants, selectedVariant, variantLabel, initial, valueProblem, forbiddenFields, propertySchema, fieldSuggestions} from './dsl-form.js'
+ import {variants, selectedVariant, variantLabel, initial, valueProblem, forbiddenFields, propertySchema, fieldSuggestions, unsupportedField} from './dsl-form.js'
  // errors maps a field path to the engine's message about it; that field is
  // marked invalid and described by the message.
  let {schema,root,value,path='/content',label='문서',onchange,suggestions={nodes:[],before:new Map()},errors={}}=$props()
@@ -54,7 +54,7 @@
      <Field schema={propertySchema(current,name)} {root} value={child} path={`${path}/${name}`} label={name} {suggestions} {errors} onchange={v=>update(name,v)} />
      {#if !current.required?.includes(name) && properties[name]?.const===undefined}<button aria-label={`${path}/${name} 삭제`} onclick={()=>remove(name)}>삭제</button>{/if}
      {#if forbidden.has(name)}<p role="alert">현재 형식에서 허용하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
-     {#if !Object.hasOwn(properties,name) && current.additionalProperties===false}<p role="alert">지원하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
+     {#if unsupportedField(current,path,name)}<p role="alert">지원하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
     </div>
    {/each}
    {#if optional.length}

@@ -781,6 +781,7 @@ paths:
     post:
       operationId: previewImport
       summary: Parse import, preserve source and isolate sensitive bindings privately
+      description: Body is filename, format and source for one file, or filename and files, a list of filename, format and source, for the separate files of one pool. A picked localmap joins the picked server set.
       x-minimum-role: operator
       responses:
         '200':

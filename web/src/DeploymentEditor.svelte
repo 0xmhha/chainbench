@@ -86,6 +86,11 @@
       throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: ' + (changedDefinitions(before, contract).join(', ') || '세부 항목') + '. 새 계약 검증 ' + (result.valid ? '통과' : '실패: ' + result.errors.map(x => x.message).join('; ')) + '. 확인한 뒤 다시 저장하세요.')
     }
   }
+  // One login usually reaches a whole pool; bindings go one server at a time.
+  async function bindAll() {
+    for (const host of hosts) bindings = await api(`workspaces/${workspaceId}/credential-bindings`, 'PUT', { serverRef: hostName(host), credentialId: selectedCredential })
+    status = `서버 ${hosts.length}대에 내 자격증명을 연결했습니다`
+  }
   async function saveWorkspace() { const documents = [setRef, configRef].map(ref => { const [id, rev] = ref.split(':'); return { id, revision: Number(rev) } }); const w = await api(workspaceId ? `workspaces/${workspaceId}` : 'workspaces', workspaceId ? 'PATCH' : 'POST', { name: workspaceName, documents }, workspaceRevision); onsaved(); await refresh(); await loadWorkspace(w.id); status = `공유 workspace revision ${w.revision} 저장됨` }
   function download(blob, filename) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url) }
   async function exportDocument() { download(new Blob([JSON.stringify(await api(`documents/${docId}/export`), null, 2)], { type: 'application/json' }), `${kind}.json`); status = '공유 선언을 내보냈습니다' }
@@ -131,7 +136,7 @@
       {#if docId}<p>revision {revision}</p><button disabled={busy} onclick={() => action(exportDocument)}>공유 문서 내보내기</button>{/if}
     </div>
     <div>
-      {#if canEdit}<BundleImport {webSession} onsaved={() => action(async () => { onsaved(); await refresh() })} />{/if}
+      {#if canEdit}<BundleImport {webSession} onsaved={(saved, workspace) => action(async () => { onsaved(); await refresh(); const set = saved?.find(d => d.kind === 'server-set'); if (set) loadDocument(set.id); if (workspace) await loadWorkspace(workspace.id) })} />{/if}
       <h3>공유 workspace</h3>
       {#if workspaceId}<button disabled={busy} onclick={() => action(exportWorkspace)}>workspace 묶음 내보내기</button>{/if}
       <label>저장된 workspace <select name="deployment-editor-select-2" aria-label="저장된 배포 workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">새 workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
@@ -147,6 +152,7 @@
           <label>대상 서버 <select name="server-ref" aria-label="연결 서버" bind:value={serverRef}><option value="">서버 선택</option>{#each hosts as h}<option value={hostName(h)}>{hostName(h)}</option>{/each}</select></label>
           <label>내 자격증명 <select name="selected-credential" aria-label="연결 자격증명" bind:value={selectedCredential}><option value="">내 자격증명 선택</option>{#each credentials.filter(c => c.kind !== 'account-key' && !c.revoked) as c}<option value={c.id}>{c.label}</option>{/each}</select></label>
           <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { bindings = await api(`workspaces/${workspaceId}/credential-bindings`, 'PUT', { serverRef, credentialId: selectedCredential }); status = '내 SSH 연결 저장됨' })}>내 자격증명 연결</button>
+          <button disabled={busy || !selectedCredential || !hosts.length} onclick={() => action(bindAll)}>모든 서버에 연결</button>
           <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { access = await api(`credentials/${selectedCredential}/check`, 'POST', { workspaceId, serverRef }); status = access.allowedOperations.includes('deploy') ? 'SSH 배포 접근 확인됨' : access.reason ?? '접근 거절' })}>SSH 접근 확인</button>
           <p data-testid="personal-bindings">내 연결: {Object.keys(bindings).join(', ') || '없음'}</p>
           {#if access}<p data-testid="ssh-access">인증 {access.authenticated ? '성공' : '실패'} · 배포 {access.allowedOperations.includes('deploy') ? '허용' : '거절'} · {access.hostIdentity}</p>{/if}

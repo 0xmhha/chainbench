@@ -263,3 +263,15 @@ func TestRemoteBinaryKeepsTheManifestsName(t *testing.T) {
 		t.Fatalf("a manifest without a binary name gave %q", got)
 	}
 }
+
+// A refusal reads as its reason. "revision changed" in front of it sends the
+// reader looking for an edit that never happened.
+func TestWebConflictSaysOnlyItsReason(t *testing.T) {
+	err := webConflict("the network is recorded on server1")
+	if err.Error() != "the network is recorded on server1" {
+		t.Fatalf("err = %q", err)
+	}
+	if !errors.Is(err, ErrDeploymentConflict) {
+		t.Fatal("no longer a conflict")
+	}
+}
