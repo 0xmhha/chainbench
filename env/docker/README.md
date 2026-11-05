@@ -132,6 +132,8 @@ for i in $(seq 1 15); do
   for b in gstable gwbft gwemix; do
     docker cp "$OUT/$b" chainbench-server$i:/data/chainbench/bin/$b
     docker exec -u root chainbench-server$i chmod 755 /data/chainbench/bin/$b
+    # docker cp 가 만든 bin/ 은 root 소유다. Web 은 devuser1 로 이 아래에 바이너리를 올린다.
+    docker exec -u root chainbench-server$i chown devuser1:devuser1 /data/chainbench/bin
   done
 done
 

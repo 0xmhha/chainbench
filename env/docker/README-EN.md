@@ -147,6 +147,8 @@ for i in $(seq 1 15); do
   for b in gstable gwbft gwemix; do
     docker cp "$OUT/$b" chainbench-server$i:/data/chainbench/bin/$b
     docker exec -u root chainbench-server$i chmod 755 /data/chainbench/bin/$b
+    # docker cp leaves bin/ owned by root; the Web uploads under it as devuser1.
+    docker exec -u root chainbench-server$i chown devuser1:devuser1 /data/chainbench/bin
   done
 done
 

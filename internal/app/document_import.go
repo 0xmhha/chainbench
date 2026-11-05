@@ -57,6 +57,19 @@ type deploymentImport struct {
 	QuarantinedPreview []byte                `json:"quarantinedPreview,omitempty"`
 }
 
+// undeclaredImportKind names a document that carries no kind by the fields only
+// that kind has. Files written for the CLI never declare one, and the import
+// screen has no way to choose it. An unknown shape stays unknown.
+func undeclaredImportKind(value map[string]any) string {
+	if _, ok := value["pool"]; ok {
+		return "server-set"
+	}
+	if _, ok := value["dataRoot"]; ok {
+		return "workspace-config"
+	}
+	return ""
+}
+
 // PreviewImport keeps the original encrypted and returns only the validated
 // public declaration. Secret paths/material require a separate personal binding.
 func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInput) (DocumentImportPreview, error) {
@@ -80,7 +93,10 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 			kind = declared
 		}
 		if kind == "" {
-			return preview, errors.New("select document kind")
+			kind = undeclaredImportKind(values[0])
+		}
+		if kind == "" {
+			return preview, errors.New(`cannot tell what this document is: add kind, or a pool or dataRoot field`)
 		}
 		name, _ := values[0]["id"].(string)
 		if name == "" {

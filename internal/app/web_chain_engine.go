@@ -469,6 +469,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if webRecordedOperation(in.Operation) && webRecordSpansServers(state) != args.AllServers {
 			return out, errSpreadSelection
 		}
+		if err = webRecordOnSelectedServers(state.Target, servers); err != nil {
+			return out, err
+		}
 		ownedTarget, err := lookup.Inspect(ctx, state.Target)
 		if err != nil {
 			return out, err

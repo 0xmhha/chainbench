@@ -197,6 +197,9 @@ func (s *WebJobs) Plan(ctx context.Context, a DeploymentActor, in WebPlanInput) 
 	}
 	plan := WebPlan{ID: deploymentID(), ActorID: a.ID, WorkspaceID: in.WorkspaceID, Operation: in.Operation, DocumentRefs: in.DocumentRefs, TargetFingerprint: p.Fingerprint, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Phases: p.Phases, Changes: p.Changes, RequiredAccess: p.RequiredAccess, Resources: []string{}, ChainSurfaces: p.ChainSurfaces, Validation: map[string]any{"valid": true, "errors": []any{}, "warnings": []any{}}}
 	for _, c := range p.Claims {
+		if c.Idle {
+			continue
+		}
 		if c.Executable != "" {
 			plan.Resources = append(plan.Resources, c.HostIdentity+":process:"+c.Executable)
 			continue

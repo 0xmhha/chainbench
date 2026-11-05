@@ -27,15 +27,18 @@ type WebPlanInput struct {
 // HostIdentity must bind aliases to the same physical host (including SSH key).
 // Executable names a node binary the job launches on that host: the engine
 // refuses to compose while the same binary runs there outside its workspace.
+// Idle marks a server a spread plan inspects but places no node on: it stays
+// in the plan so the job's input is pinned, and it holds nothing.
 type WebResourceClaim struct {
 	HostIdentity string `json:"hostIdentity"`
 	DataPath     string `json:"dataPath,omitempty"`
 	Ports        []int  `json:"ports,omitempty"`
 	Executable   string `json:"executable,omitempty"`
+	Idle         bool   `json:"idle,omitempty"`
 }
 
 func claimsOverlap(a, b WebResourceClaim) bool {
-	if a.HostIdentity != b.HostIdentity {
+	if a.HostIdentity != b.HostIdentity || a.Idle || b.Idle {
 		return false
 	}
 	if a.Executable != "" && a.Executable == b.Executable {

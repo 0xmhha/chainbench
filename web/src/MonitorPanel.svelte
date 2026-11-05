@@ -70,7 +70,7 @@
   <h3>보관된 네트워크 기록</h3><p class="muted">스냅샷 시점: {time(snapshot.observedAt)}. 노드 상태는 서버 수집기가 5초마다 본 마지막 모습이고, 기록된 PID는 실제 가동 증거가 아닙니다. 노드를 제어하기 전에는 노드 상세에서 상태를 다시 확인합니다.</p>
   {#each shown as network (network.id)}<div class="network">
    <p class="folio"><span>네트워크 <code title={network.id}>{network.id}</code></span><span>{network.ownership} · 노드 {network.nodes.length}개</span></p>
-   <div class="table-wrap"><table class="stack"><thead><tr><th>노드</th><th>역할</th><th>상태</th><th>관측</th><th>기록 PID</th></tr></thead><tbody>{#each network.nodes as node (node.id)}{@const shown=shownState(node.state,stale)}
+   {#if network.nodes.some(n=>n.observationReason==='remote_observation_unavailable')}<p class="muted" data-testid="remote-state-note">SSH 노드의 프로세스는 수집기가 볼 수 없어 상태가 알 수 없음으로 남습니다. 실제 상태는 노드 상세의 노드 상태 확인으로 읽습니다.</p>{/if}<div class="table-wrap"><table class="stack"><thead><tr><th>노드</th><th>역할</th><th>상태</th><th>관측</th><th>기록 PID</th></tr></thead><tbody>{#each network.nodes as node (node.id)}{@const shown=shownState(node.state,stale)}
     <tr><td data-label="노드"><a href={`/nodes/${network.id}/${node.id}`} onclick={e=>follow(e,`/nodes/${network.id}/${node.id}`)}>{node.id}</a></td><td data-label="역할">{node.role}</td><td data-label="상태"><StatusBadge state={shown.state} last={shown.last} /></td><td class="num" data-label="관측">{node.observationReason!=='not_observed'&&node.state!=='unknown'?time(node.observedAt).slice(11):'—'}</td><td class="num" data-label="기록 PID">{node.pid||'없음'}</td></tr>
    {/each}</tbody></table></div>
   </div>{/each}

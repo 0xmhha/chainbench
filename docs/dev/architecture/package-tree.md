@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 89,954 |
+| `internal/` | 54 | 90,063 |
 | `cmd/` | 19 | 5,728 |
 | `scripts/inventory/` | 4 | 1,105 |
 | `tests/` | 2 | 353 |
-| **합계** | **79** | **97,140** |
+| **합계** | **79** | **97,249** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,478줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,496줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -57,7 +57,7 @@ internal/core/
 │                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
 ├── rpc            600  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
 ├── remote         651  [L1] 원격 접근 — API key/JWT 전송, SSH 터널, host-key 정책. rpc.DialWithClient 용 *http.Client
-├── process      1,780  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
+├── process      1,798  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
 │                            + 기동 정책(Direct: arm·materialize·init·launch / Launcher: 헬스 게이트·진단·재시도·teardown)
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
@@ -123,14 +123,14 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 64,920줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 65,011줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
                           키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
                           정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
-internal/resource  3,855  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
+internal/resource  3,870  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
                           여는 유일 통로(Opener)·세트를 풀로 해석(Pool·PoolFor)·인벤토리·baseline 드리프트 검사·
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
@@ -171,7 +171,7 @@ internal/nodemonitor  438 [L4] 테스트 실행 허가 판정 + 제한 복구(E6
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다
 
-internal/app      19,366  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
+internal/app      19,442  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
                           RunSuite(s) · RunMatrix · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions
