@@ -57,6 +57,9 @@ type LogSnapshot struct {
 	Size int64  `json:"size"`
 	Head []byte `json:"head"`
 	Data []byte `json:"data"`
+	// UTCOffset is the machine's offset as `date +%z` prints it, because a
+	// geth-family log stamp names no zone. Empty for a local read.
+	UTCOffset string `json:"utcOffset,omitempty"`
 }
 
 // ReadResult contains only requested observations, never credentials.

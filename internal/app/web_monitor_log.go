@@ -56,6 +56,8 @@ type webLogSnapshot struct {
 	// the head is what tells a replacement from the file being read.
 	Head []byte
 	Data []byte
+	// UTCOffset is the log machine's offset; empty means this machine.
+	UTCOffset string
 }
 
 type webLocalLogs struct{}
@@ -171,8 +173,9 @@ func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string
 	}
 	byDay := map[string][]webMonitorLogLine{}
 	var days []string
+	zone := webLogLocation(snap.UTCOffset)
 	for _, text := range strings.Split(string(chunk[:end]), "\n") {
-		line := m.logLine(m.redactLogLine(label, text, cursor), now)
+		line := m.logLine(m.redactLogLine(label, text, cursor), now, zone)
 		day := webMonitorDay("logs/"+label, line.Time) + ".jsonl"
 		if _, ok := byDay[day]; !ok {
 			days = append(days, day)
@@ -212,17 +215,27 @@ func (m *WebMonitor) redactLogLine(label, text string, cursor *webMonitorCursor)
 	return text
 }
 
+// webLogLocation turns a machine's `date +%z` offset into a zone. A local read
+// has none, and an unreadable offset falls back to this machine's zone.
+func webLogLocation(offset string) *time.Location {
+	parsed, err := time.Parse("-0700", offset)
+	if err != nil {
+		return time.Local
+	}
+	return parsed.Location()
+}
+
 // logLine keeps the geth-family source timestamp when present. Those stamps
-// carry no year or zone: they are read in the collector's local zone with the
+// carry no year or zone: they are read in zone, the log machine's own, with the
 // collection year, moved back a year when that would lie in the future.
-func (m *WebMonitor) logLine(text string, now time.Time) webMonitorLogLine {
+func (m *WebMonitor) logLine(text string, now time.Time, zone *time.Location) webMonitorLogLine {
 	line := webMonitorLogLine{Time: now, CollectedAt: now, TimestampSource: "collection", Text: text}
 	stamp := collector.LineTimestamp(text)
 	if stamp == "" {
 		return line
 	}
-	local := now.In(time.Local)
-	parsed, err := time.ParseInLocation("2006-01-02|15:04:05.999999999", strconv.Itoa(local.Year())+"-"+stamp, time.Local)
+	local := now.In(zone)
+	parsed, err := time.ParseInLocation("2006-01-02|15:04:05.999999999", strconv.Itoa(local.Year())+"-"+stamp, zone)
 	if err != nil {
 		return line
 	}

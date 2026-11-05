@@ -19,6 +19,10 @@ var ErrLogMissing = errors.New("resource: log is absent")
 
 const logHeadBytes = 256
 
+// logHeaderFields counts the remote snapshot's first line: inode, size, head and
+// the server's UTC offset.
+const logHeaderFields = 4
+
 func readLogSnapshot(ctx context.Context, a *Access, r LogRead) (LogSnapshot, error) {
 	if a.Runner == nil {
 		f, err := os.Open(r.Path)
@@ -55,7 +59,7 @@ func readLogSnapshot(ctx context.Context, a *Access, r LogRead) (LogSnapshot, er
 		return out, ctx.Err()
 	}
 	q := remote.ShellQuote(r.Path)
-	command := "test -f " + q + " || exit 3; set -- $(ls -diL " + q + "); s=$(wc -c < " + q + "); h=$(head -c " + strconv.Itoa(logHeadBytes) + " " + q + " | od -An -v -tx1 | tr -d ' \\n'); echo \"$1 $s ${h:--}\"; tail -c +" + strconv.FormatInt(r.Offset+1, 10) + " " + q + " | head -c " + strconv.Itoa(r.Limit)
+	command := "test -f " + q + " || exit 3; set -- $(ls -diL " + q + "); s=$(wc -c < " + q + "); h=$(head -c " + strconv.Itoa(logHeadBytes) + " " + q + " | od -An -v -tx1 | tr -d ' \\n'); echo \"$1 $s ${h:--} $(date +%z)\"; tail -c +" + strconv.FormatInt(r.Offset+1, 10) + " " + q + " | head -c " + strconv.Itoa(r.Limit)
 	res, err := a.Runner(ctx, command)
 	if err != nil {
 		return LogSnapshot{}, err
@@ -65,7 +69,7 @@ func readLogSnapshot(ctx context.Context, a *Access, r LogRead) (LogSnapshot, er
 	}
 	header, data, found := strings.Cut(res.Stdout, "\n")
 	fields := strings.Fields(header)
-	if res.ExitCode != 0 || !found || len(fields) != 3 {
+	if res.ExitCode != 0 || !found || len(fields) != logHeaderFields {
 		return LogSnapshot{}, fmt.Errorf("resource: log snapshot failed (exit %d)", res.ExitCode)
 	}
 	id, err := strconv.ParseUint(fields[0], 10, 64)
@@ -86,5 +90,5 @@ func readLogSnapshot(ctx context.Context, a *Access, r LogRead) (LogSnapshot, er
 	if len(head) > logHeadBytes || len(data) > r.Limit {
 		return LogSnapshot{}, errors.New("resource: log snapshot exceeded its bounds")
 	}
-	return LogSnapshot{ID: id, Size: size, Head: head, Data: []byte(data)}, nil
+	return LogSnapshot{ID: id, Size: size, Head: head, Data: []byte(data), UTCOffset: fields[3]}, nil
 }
