@@ -105,6 +105,7 @@ var webOperations = []WebOperation{
 		webArgument("manifestId", "", "명령에는 넘기지 않습니다. --chain은 바이너리를 검증한 체인입니다."),
 		webArgument("assetId", "--binary", "검증한 바이너리 경로를 --binary와 --binary-for default=로 넘깁니다."),
 		webArgument("serverRef", "--server", "서버 이름을 그대로 넘깁니다."),
+		webArgument("allServers", "--all-servers", "켜면 붙입니다."),
 		webArgument("caseRefs", "", "고정한 revision의 케이스를 파일로 써서 위치 인자로 넘깁니다."),
 		webArgument("runDefinitionRef", "", "실행 목록이 고정한 케이스를 순서대로 파일로 써서 위치 인자로 넘깁니다."),
 		webArgument("binaryAssets", "--binary-for", "이름마다 검증한 바이너리 경로를 name=path로 넘깁니다."),

@@ -14,6 +14,11 @@ test('the run options are the yes-or-no and number arguments the contract lists 
  assert.deepEqual(scalarOptions(undefined), [])
 })
 
+test('spreading is chosen in the server list, so it is no separate run option', () => {
+ const withSpread = { arguments: [...run.arguments, { name: 'allServers', type: 'boolean', title: '모든 서버', cli: '' }] }
+ assert.deepEqual(scalarOptions(withSpread).map(a => a.name), ['noSkips', 'waitBlocks', 'nodeMonitorTimeoutSeconds'])
+})
+
 test('only options the user set reach the plan, as the types the engine reads', () => {
  const options = scalarOptions(run)
  assert.deepEqual(optionArguments(options, {}), {})

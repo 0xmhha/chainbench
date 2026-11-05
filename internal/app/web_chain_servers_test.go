@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -34,7 +35,6 @@ func TestSpreadPlanResolvesEveryServerOfTheSet(t *testing.T) {
 		op   string
 	}{
 		{webChainArguments{AllServers: true, ServerRef: "a"}, "chain.deploy"},
-		{webChainArguments{AllServers: true}, "test.run"},
 	} {
 		if _, err := webPlanServers(set, c.args, c.op); err == nil {
 			t.Errorf("accepted %+v for %s", c.args, c.op)
@@ -210,6 +210,32 @@ func TestRecordedTargetOutsideTheSelectionNamesTheServer(t *testing.T) {
 	}
 	if err = webRecordOnSelectedServers(resource.Spec{DataRoot: "/data"}, servers); err != nil {
 		t.Fatalf("a local record needs no login: %v", err)
+	}
+}
+
+// A case with more nodes than one server's slots has to spread, the way the CLI
+// runs it with --all-servers.
+func TestTestJobsSpreadOverTheServerSet(t *testing.T) {
+	set := spreadSet(t, `{"name":"a","addr":"10.0.0.1"},{"name":"b","addr":"10.0.0.2"}`)
+	all, err := webPlanServers(set, webChainArguments{AllServers: true}, "test.run")
+	if err != nil || len(all) != 2 {
+		t.Fatalf("servers = %v, err = %v", all, err)
+	}
+}
+
+func TestPlacedServersAreOnlyThoseWithNodes(t *testing.T) {
+	servers := []resource.Server{{Name: "a", Host: "192.0.2.1"}, {Name: "b", Host: "192.0.2.2"}, {Name: "c", Host: "192.0.2.3"}}
+	pool := resource.Pool{
+		Hosts: []resource.Host{{Name: "a", Addr: "192.0.2.1"}, {Name: "b", Addr: "192.0.2.2"}, {Name: "c", Addr: "192.0.2.3"}},
+		Slots: 4,
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
+	}
+	placement, err := resource.Assign(pool, []resource.Request{{Role: node.RoleBP, Server: "a"}, {Role: node.RoleBP, Server: "c"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := webPlacedServers(servers, placement); !slices.Equal(got, []string{"a", "c"}) {
+		t.Fatalf("placed = %v", got)
 	}
 }
 

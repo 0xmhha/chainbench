@@ -178,6 +178,31 @@ func (e *WebChainEngine) monitorTargets(ctx context.Context, a DeploymentActor, 
 	return targets, nil
 }
 
+// webRemoteLogOpener gives the log collector access to a node through the job's
+// own logins, on the machine the plan pinned for it.
+func webRemoteLogOpener(lookup *webTargetReader, p webChainPayload) func(context.Context, State, node.Record) (webLogSource, error) {
+	return func(ctx context.Context, state State, ns node.Record) (webLogSource, error) {
+		// The lookup guard reports revocation as ErrDeploymentForbidden, which
+		// ends collection; a refused SSH dial alone carries no such cause.
+		server := ns.Server
+		if server == "" {
+			server = p.Arguments.ServerRef
+		}
+		if err := lookup.CheckServer(ctx, server); err != nil {
+			return nil, err
+		}
+		spec := webNodeTarget(state, ns)
+		machine, err := lookup.Inspect(ctx, spec)
+		if err != nil {
+			return nil, err
+		}
+		if pinned, ok := webNodeMachine(p, ns); !ok || machine != pinned {
+			return nil, ErrDeploymentConflict
+		}
+		return webCLILogs{reader: lookup, spec: spec}, nil
+	}
+}
+
 // executeMonitor archives remote logs every collection period until the job
 // context ends. Every SSH command dials anew through the job's credential
 // guard, so revocation stops further access even before cancellation lands.
@@ -197,27 +222,7 @@ func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, 
 	if err != nil {
 		return result, err
 	}
-	opener := lookup
-	open := func(ctx context.Context, state State, ns node.Record) (webLogSource, error) {
-		// The lookup guard reports revocation as ErrDeploymentForbidden, which
-		// ends collection; a refused SSH dial alone carries no such cause.
-		server := ns.Server
-		if server == "" {
-			server = p.Arguments.ServerRef
-		}
-		if err := lookup.CheckServer(ctx, server); err != nil {
-			return nil, err
-		}
-		spec := webNodeTarget(state, ns)
-		machine, err := opener.Inspect(ctx, spec)
-		if err != nil {
-			return nil, err
-		}
-		if pinned, ok := webNodeMachine(p, ns); !ok || machine != pinned {
-			return nil, ErrDeploymentConflict
-		}
-		return webCLILogs{reader: lookup, spec: spec}, nil
-	}
+	open := webRemoteLogOpener(lookup, p)
 	network := filepath.Base(p.ControlDir)
 	detach := e.monitor.attachRemote(network)
 	defer detach()

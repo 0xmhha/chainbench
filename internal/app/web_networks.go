@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -65,7 +66,10 @@ type WebNetwork struct {
 	WorkspaceID string    `json:"workspaceId"`
 	Ownership   string    `json:"ownership"`
 	Nodes       []WebNode `json:"nodes"`
-	Version     int       `json:"version"`
+	// ArchivedNodes are nodes with kept logs that the record no longer lists,
+	// because the run that made them cleaned them up.
+	ArchivedNodes []string `json:"archivedNodes,omitempty"`
+	Version       int      `json:"version"`
 	// Collector is what the collector has done for this network, when one runs.
 	Collector *WebCollectorStatus `json:"collector,omitempty"`
 }
@@ -152,6 +156,9 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			}
 			network.Nodes = append(network.Nodes, n)
 		}
+		if e.monitor != nil {
+			network.ArchivedNodes = webNodesWithoutRecord(e.monitor.ArchivedNodes(w.ID), network.Nodes)
+		}
 		networks = append(networks, network)
 	}
 	return networks, nil
@@ -165,4 +172,15 @@ func (s *WebJobs) Networks(ctx context.Context) ([]WebNetwork, error) {
 		return []WebNetwork{}, nil
 	}
 	return reader.Networks(ctx)
+}
+
+// webNodesWithoutRecord keeps the archived labels the record does not list.
+func webNodesWithoutRecord(archived []string, nodes []WebNode) []string {
+	var out []string
+	for _, label := range archived {
+		if !slices.ContainsFunc(nodes, func(n WebNode) bool { return n.ID == label }) {
+			out = append(out, label)
+		}
+	}
+	return out
 }

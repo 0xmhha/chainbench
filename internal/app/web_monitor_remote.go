@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -38,6 +39,44 @@ func (m *WebMonitor) attachRemote(network string) func() {
 		}
 		m.publishRound(network, m.now().UTC(), nil, ended, nil, ended, nil)
 	}
+}
+
+// webRemoteLogRounds bounds one drain of remote logs: each round reads at most
+// webMonitorReadLimit from every node.
+const webRemoteLogRounds = 64
+
+// CollectRemoteLogsToEnd repeats CollectRemoteLogs until no node's position
+// moves, for a job whose logins end with it. It stops at webRemoteLogRounds,
+// leaving the rest of a very long log unread.
+func (m *WebMonitor) CollectRemoteLogsToEnd(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error)) error {
+	for range webRemoteLogRounds {
+		before, err := m.remotePositions(network)
+		if err != nil {
+			return err
+		}
+		if err = m.CollectRemoteLogs(ctx, network, open); err != nil {
+			return err
+		}
+		after, err := m.remotePositions(network)
+		if err != nil {
+			return err
+		}
+		if maps.Equal(before, after) {
+			return nil
+		}
+	}
+	return nil
+}
+
+// remotePositions reads how far each node's log has been archived.
+func (m *WebMonitor) remotePositions(network string) (map[string]int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cursor, err := m.readCursor(network)
+	if err != nil {
+		return nil, err
+	}
+	return maps.Clone(cursor.Offsets), nil
 }
 
 // CollectRemoteLogs archives one round of remote node logs. open returns the

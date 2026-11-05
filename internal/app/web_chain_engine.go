@@ -407,6 +407,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
+	if p.TestRun != nil {
+		p.TestRun.Servers = webPlacedServers(servers, placement)
+	}
 	targetClaims := webTargetClaims(servers, webPayloadTargets(p), placement)
 	controlTarget, err := e.inspectTarget(ctx, a, p, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {

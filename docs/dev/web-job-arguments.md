@@ -129,6 +129,7 @@ Web에서 작업을 계획할 때 보내는 인자(`POST /api/v1/plans`의 `argu
 | `manifestId` | 체인 manifest | 없음 | 명령에는 넘기지 않습니다. --chain은 바이너리를 검증한 체인입니다. |
 | `assetId` | 바이너리 | `--binary` | 검증한 바이너리 경로를 --binary와 --binary-for default=로 넘깁니다. |
 | `serverRef` | 서버 | `--server` | 서버 이름을 그대로 넘깁니다. |
+| `allServers` | 모든 서버 | `--all-servers` | 켜면 붙입니다. |
 | `caseRefs` | 케이스 | 없음 | 고정한 revision의 케이스를 파일로 써서 위치 인자로 넘깁니다. |
 | `runDefinitionRef` | 실행 목록 | 없음 | 실행 목록이 고정한 케이스를 순서대로 파일로 써서 위치 인자로 넘깁니다. |
 | `binaryAssets` | 추가 바이너리 | `--binary-for` | 이름마다 검증한 바이너리 경로를 name=path로 넘깁니다. |

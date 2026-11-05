@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -200,5 +202,73 @@ func TestWebRemoteLogsReachTheEventStream(t *testing.T) {
 	detach()
 	if gone := eventsOfType(drainObservations(events), "gap"); len(gone) != 1 || gone[0].GapState != "closed" || gone[0].Gap.NodeID != "node2" || gone[0].Gap.Code != "log_unavailable" {
 		t.Fatalf("detach gap events = %+v", gone)
+	}
+}
+
+// One round reads at most webMonitorReadLimit from each node. A job that holds
+// its logins only until it ends has to read on until the logs are drained.
+func TestWebRemoteLogsCollectToTheEndOfALongLog(t *testing.T) {
+	f := newMonitorFixture(t)
+	writeMonitorJSON(t, filepath.Join(f.root, "networks", f.network, "web-target.json"), resource.Inspection{HostIdentity: "remote", Transport: "ssh"})
+	line := "INFO [10-09|00:46:58.000] " + strings.Repeat("x", 1000) + "\n"
+	content := strings.Repeat(line, webMonitorReadLimit*5/2/len(line))
+	if err := os.WriteFile(f.logPath, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m := f.monitor()
+	open := func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
+	}
+	if err := m.CollectRemoteLogsToEnd(context.Background(), f.network, open); err != nil {
+		t.Fatal(err)
+	}
+	cursor, err := m.readCursor(f.network)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := cursor.Offsets["node1"]; got != int64(len(content)) {
+		t.Fatalf("node1 offset = %d, want the whole log of %d bytes", got, len(content))
+	}
+}
+
+// A run that cleaned up its nodes keeps their logs. Those logs are the reason
+// to open a failed job, so the nodes stay readable after the record lost them.
+func TestLogsOfNodesTheRecordNoLongerHasStayReadable(t *testing.T) {
+	f := newMonitorFixture(t)
+	writeMonitorJSON(t, filepath.Join(f.root, "networks", f.network, "web-target.json"), resource.Inspection{HostIdentity: "remote", Transport: "ssh"})
+	if err := os.WriteFile(f.logPath, []byte("INFO [10-09|00:46:58.000] kept line\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m := f.monitor()
+	open := func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
+	}
+	if err := m.CollectRemoteLogsToEnd(context.Background(), f.network, open); err != nil {
+		t.Fatal(err)
+	}
+	record := filepath.Join(f.root, "networks", f.network, "chain-record.json")
+	raw, err := os.ReadFile(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var state map[string]any
+	if err = json.Unmarshal(raw, &state); err != nil {
+		t.Fatal(err)
+	}
+	state["nodes"] = []any{}
+	writeMonitorJSON(t, record, state)
+
+	if got := m.ArchivedNodes(f.network); !slices.Contains(got, "node1") {
+		t.Fatalf("archived nodes = %v", got)
+	}
+	logs, err := m.Logs(context.Background(), DeploymentActor{ID: "viewer", Role: "viewer"}, f.network+".node1", WebMonitorQuery{})
+	if err != nil {
+		t.Fatalf("logs of a cleaned node: %v", err)
+	}
+	if len(logs.Entries) != 1 || logs.Entries[0].Text != "INFO [10-09|00:46:58.000] kept line" {
+		t.Fatalf("entries = %+v", logs.Entries)
+	}
+	if _, err = m.Logs(context.Background(), DeploymentActor{ID: "viewer", Role: "viewer"}, f.network+".node9", WebMonitorQuery{}); !errors.Is(err, ErrDeploymentNotFound) {
+		t.Fatalf("an unknown node: %v", err)
 	}
 }

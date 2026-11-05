@@ -30,9 +30,6 @@ func webPlanServers(set *resource.Set, args webChainArguments, operation string)
 	if args.ServerRef != "" {
 		return nil, errors.New("spreading over the server set names no single server")
 	}
-	if operation == "test.run" {
-		return nil, errors.New("a test job composes its own network on one server")
-	}
 	if len(set.Servers) < 2 {
 		return nil, errors.New("the server set has one server; select it by name")
 	}
@@ -198,6 +195,20 @@ func webRemoteBinaryName(manifestBinary, assetPath string) string {
 // of this network can exist for it.
 func webNodeNeverLaunched(ns node.Record) bool {
 	return ns.PID == 0 && len(ns.Args) == 0
+}
+
+// webPlacedServers names the servers that receive a node, in server order.
+func webPlacedServers(servers []resource.Server, placement *node.Map) []string {
+	out := make([]string, 0, len(servers))
+	for _, server := range servers {
+		for _, entry := range placement.Placements() {
+			if entry.Host == server.Host {
+				out = append(out, server.Name)
+				break
+			}
+		}
+	}
+	return out
 }
 
 func compactPorts(ports []int) []int {
