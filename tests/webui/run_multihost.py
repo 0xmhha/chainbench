@@ -60,6 +60,8 @@ def main():
     invocation = uuid.uuid4().hex[:12]
     data_root = f'/data/chainbench/mh-{invocation}'
     started_server1 = False
+    # The full docker pool already holds server2's address; its own data root keeps this proof apart.
+    server2 = 'chainbench-server2' if running('chainbench-server2') else SERVER2
     fixture = runtime / 'browser-fixture.json'
     try:
         if docker('network', 'inspect', NETWORK, check=False).returncode:
@@ -84,14 +86,15 @@ def main():
         accounts = Path('env/docker/accounts.env').resolve()
         scripts = Path('env/docker').resolve()
         # server2 is started the way gen-env.sh starts every server.
-        docker('run', '-d', '--name', SERVER2, '--hostname', 'server2', '--network', NETWORK, '--ip', '172.30.0.12', '--cap-add', 'NET_ADMIN',
+        if server2 == SERVER2:
+            docker('run', '-d', '--name', SERVER2, '--hostname', 'server2', '--network', NETWORK, '--ip', '172.30.0.12', '--cap-add', 'NET_ADMIN',
                '-v', f'{accounts}:/etc/chainbench/accounts.env:ro', '-v', f'{scripts}/setup-accounts.sh:/usr/local/lib/chainbench/setup-accounts.sh:ro',
                '-v', f'{scripts}/firewall.sh:/usr/local/lib/chainbench/firewall.sh:ro', IMAGE, '/bin/sh', '-c',
                'SLOTS=4 P2P_SPAN=12 sh /usr/local/lib/chainbench/firewall.sh && sh /usr/local/lib/chainbench/setup-accounts.sh && mkdir -p /data/chainbench && chown devuser1:devuser1 /data/chainbench && exec /usr/sbin/sshd -D -e')
         # The image has an empty /etc/machine-id (nothing generates one without
         # systemd), and the Web tells machines apart by it. A server without
         # one gets a random id once; server1 keeps it for later runs.
-        for server in ('chainbench-server1', SERVER2):
+        for server in ('chainbench-server1', server2):
             docker('exec', '-u', 'root', server, 'sh', '-c', f'test -s /etc/machine-id || echo {uuid.uuid4().hex} > /etc/machine-id')
         version = docker('run', '--rm', '-v', f'{work}:/work:ro', '--entrypoint', '/work/gstable', IMAGE, 'version').stdout
         commit = next((l.split(':', 1)[1].strip() for l in version.splitlines() if l.startswith('Git Commit:')), '')
@@ -151,11 +154,12 @@ def main():
     finally:
         fixture.unlink(missing_ok=True)
         # Nodes of this proof live under its own data root on both servers.
-        for server in ('chainbench-server1', SERVER2):
+        for server in ('chainbench-server1', server2):
             if running(server):
                 docker('exec', '-u', 'root', server, 'sh', '-c', f'pkill -f "{data_root}" ; rm -rf "{data_root}"', check=False)
         for name in (CONTROL, SERVER2):
-            docker('stop', name, check=False)
+            if docker('inspect', name, check=False).returncode == 0:
+                docker('stop', name, check=False)
         if started_server1:
             docker('stop', 'chainbench-server1', check=False)
 
