@@ -39,7 +39,11 @@ type ManifestBinaryEvidence struct {
 }
 
 func (a ManifestBinary) Verify(ctx context.Context, chain string) (ManifestBinaryEvidence, error) {
-	evidence := ManifestBinaryEvidence{ID: a.ID, Chain: a.Chain, OS: runtime.GOOS, Architecture: runtime.GOARCH}
+	osName, arch, err := webBinaryPlatform(ctx, a.Path)
+	if err != nil {
+		return ManifestBinaryEvidence{}, err
+	}
+	evidence := ManifestBinaryEvidence{ID: a.ID, Chain: a.Chain, OS: osName, Architecture: arch}
 	if a.Chain != chain || a.ID == "" || len(a.SHA256) != 64 || len(a.Commit) != 40 {
 		return evidence, errors.New("binary identity is incompatible with selected chain")
 	}
@@ -51,8 +55,10 @@ func (a ManifestBinary) Verify(ctx context.Context, chain string) (ManifestBinar
 	if evidence.SHA256 != a.SHA256 {
 		return evidence, errors.New("binary checksum changed; revalidate asset")
 	}
-	if err := verifyManifestNative(a.Path); err != nil {
-		return evidence, err
+	if osName == runtime.GOOS && arch == runtime.GOARCH {
+		if err := verifyManifestNative(a.Path); err != nil {
+			return evidence, err
+		}
 	}
 	probe, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -61,7 +67,7 @@ func (a ManifestBinary) Verify(ctx context.Context, chain string) (ManifestBinar
 		return evidence, errors.New("binary version probe failed")
 	}
 	commit, identityErr := manifestSourceCommit(a.Path, version)
-	if identityErr != nil || commit != a.Commit || !strings.Contains(string(version), "Operating System: "+runtime.GOOS) || !strings.Contains(string(version), "Architecture: "+runtime.GOARCH) {
+	if identityErr != nil || commit != a.Commit || !strings.Contains(string(version), "Operating System: "+osName) || !strings.Contains(string(version), "Architecture: "+arch) {
 		return evidence, errors.New("binary version identity mismatch")
 	}
 	evidence.Version = string(version)
@@ -207,6 +213,14 @@ func (b *manifestProbeOutput) Bytes() []byte { return b.buffer.Bytes() }
 // the same binary must give the same output, or a plan that pins it could
 // never start.
 func manifestProbe(ctx context.Context, path string, args ...string) ([]byte, error) {
+	if s := webProbeSessionOf(ctx); s != nil {
+		return s.probe(ctx, args)
+	}
+	if recorded, ok, err := readWebBinaryProbes(path); err != nil {
+		return nil, err
+	} else if ok {
+		return recorded.answer(args)
+	}
 	home, err := os.MkdirTemp("", "chainbench-probe-")
 	if err != nil {
 		return nil, err

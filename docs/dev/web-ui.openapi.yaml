@@ -2432,6 +2432,53 @@ paths:
           $ref: '#/components/responses/Invalid'
         '500':
           $ref: '#/components/responses/InternalError'
+  /api/v1/assets/{id}/verify:
+    post:
+      operationId: verifyAssetOnServer
+      summary: Identify a binary this server cannot run, on a server of its platform
+      description: Ships the binary to the chosen server with the caller's own SSH binding, runs the version and help checks there, and records the answers beside the asset. Later plans read those answers. Writes one file to that server; a plan never does.
+      x-minimum-role: operator
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workspaceId:
+                  type: string
+                serverRef:
+                  type: string
+              required:
+              - workspaceId
+              - serverRef
+      responses:
+        '200':
+          description: The verified asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /api/v1/manifests:
     get:
       operationId: manifests

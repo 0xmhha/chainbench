@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
@@ -64,42 +65,32 @@ func (s *ManifestStore) UploadAsset(ctx context.Context, a DeploymentActor, kind
 	out = WebAsset{ID: id, Kind: kind, Name: name, Checksum: stage.Checksum, Bytes: stage.Bytes, UploaderID: a.ID, Compatibility: map[string]any{}}
 	receipt := webAssetReceipt{WebAsset: out}
 	if kind == "binary" {
-		// Verify the native header before granting execute permission or probing.
-		if err = verifyManifestNative(stage.Path); err != nil {
-			return WebAsset{}, err
+		osName, arch, headerErr := webBinaryHeaderPlatform(stage.Path)
+		if headerErr != nil {
+			return WebAsset{}, headerErr
 		}
-		if err = os.Chmod(stage.Path, 0700); err != nil {
-			return WebAsset{}, errors.New("cannot prepare native asset inspection")
-		}
-		probe, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-		version, err := manifestProbe(probe, stage.Path, "version")
-		if err != nil {
-			return WebAsset{}, errors.New("binary version inspection failed")
-		}
-		commit, identityErr := manifestSourceCommit(stage.Path, version)
-		if identityErr != nil {
-			return WebAsset{}, errors.New("binary lacks a valid source commit identity")
-		}
-		var compatible *ManifestBinary
-		var evidence ManifestBinaryEvidence
-		for _, chain := range registry.Names() {
-			asset := ManifestBinary{ID: id, Chain: chain, Path: stage.Path, SHA256: stage.Checksum, Commit: commit}
-			observed, verifyErr := asset.Verify(probe, chain)
-			if verifyErr == nil {
-				if compatible != nil {
-					return WebAsset{}, errors.New("binary identity is ambiguous")
-				}
-				compatible, evidence = &asset, observed
+		if osName != runtime.GOOS || arch != runtime.GOARCH {
+			// This machine cannot ask it anything yet; a server of its platform will.
+			out.Compatibility = map[string]any{"os": osName, "architecture": arch, "inspection": webInspectionServerRequired, "executionReady": false}
+		} else {
+			// Verify the native header before granting execute permission or probing.
+			if err = verifyManifestNative(stage.Path); err != nil {
+				return WebAsset{}, err
 			}
+			if err = os.Chmod(stage.Path, 0700); err != nil {
+				return WebAsset{}, errors.New("cannot prepare native asset inspection")
+			}
+			probe, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			compatible, evidence, err := identifyWebBinary(probe, id, stage.Path, stage.Checksum)
+			if err != nil {
+				return WebAsset{}, err
+			}
+			// The persisted receipt uses a server-owned ID, not the temporary path.
+			compatible.Path = ""
+			receipt.Binary = compatible
+			out.Compatibility = map[string]any{"chain": evidence.Chain, "version": evidence.Version, "commit": compatible.Commit, "helpDigest": evidence.HelpDigest, "os": evidence.OS, "architecture": evidence.Architecture, "inspection": "native-version-and-help"}
 		}
-		if compatible == nil {
-			return WebAsset{}, errors.New("binary does not match a supported native chain and dialect")
-		}
-		// The persisted receipt uses a server-owned ID, not the temporary path.
-		compatible.Path = ""
-		receipt.Binary = compatible
-		out.Compatibility = map[string]any{"chain": evidence.Chain, "version": evidence.Version, "commit": compatible.Commit, "helpDigest": evidence.HelpDigest, "os": evidence.OS, "architecture": evidence.Architecture, "inspection": "native-version-and-help"}
 		receipt.WebAsset = out
 	} else {
 		data, err := os.ReadFile(stage.Path)
@@ -127,6 +118,35 @@ func (s *ManifestStore) UploadAsset(ctx context.Context, a DeploymentActor, kind
 	}
 	_ = s.AuditManifest(a.ID, "asset.upload", id, 201)
 	return out, nil
+}
+
+// identifyWebBinary finds the one supported chain a binary belongs to from what
+// it answers, wherever ctx says it runs.
+func identifyWebBinary(ctx context.Context, id, path, checksum string) (*ManifestBinary, ManifestBinaryEvidence, error) {
+	version, err := manifestProbe(ctx, path, "version")
+	if err != nil {
+		return nil, ManifestBinaryEvidence{}, errors.New("binary version inspection failed")
+	}
+	commit, identityErr := manifestSourceCommit(path, version)
+	if identityErr != nil {
+		return nil, ManifestBinaryEvidence{}, errors.New("binary lacks a valid source commit identity")
+	}
+	var compatible *ManifestBinary
+	var evidence ManifestBinaryEvidence
+	for _, chain := range registry.Names() {
+		asset := ManifestBinary{ID: id, Chain: chain, Path: path, SHA256: checksum, Commit: commit}
+		observed, verifyErr := asset.Verify(ctx, chain)
+		if verifyErr == nil {
+			if compatible != nil {
+				return nil, evidence, errors.New("binary identity is ambiguous")
+			}
+			compatible, evidence = &asset, observed
+		}
+	}
+	if compatible == nil {
+		return nil, evidence, errors.New("binary does not match a supported native chain and dialect")
+	}
+	return compatible, evidence, nil
 }
 
 func validateWebFileAsset(kind, name string, data []byte) error {

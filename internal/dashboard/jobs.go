@@ -58,6 +58,14 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 			network, err := jobs.ObserveNetwork(ctx, a, r.PathValue("networkId"))
 			deploymentResponse(w, network, err, http.StatusOK)
 		})
+		route("POST /api/v1/assets/{id}/verify", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			var in app.WebAssetVerifyIn
+			if !deploymentDecode(w, r, &in) {
+				return
+			}
+			item, err := jobs.VerifyAsset(r.Context(), a, r.PathValue("id"), in)
+			deploymentResponse(w, item, err, http.StatusOK)
+		})
 		route("POST /api/v1/plans", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.WebPlanInput
 			if !deploymentDecode(w, r, &in) {

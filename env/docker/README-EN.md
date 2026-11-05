@@ -183,6 +183,20 @@ servers, so naming none is refused and naming one uses only that server's 4
 slots. A case that splits the network with firewall rules needs a different
 machine per group, so the flag is mandatory there.
 
+## Using these servers from the Web
+
+A Web on a Mac uses these 15 servers as they are; it only writes configuration and runs the CLI.
+
+1. Merge `build/localmap.yaml` into `build/server-set.yaml` under a `localmap:` key and import it on the chains
+   screen, with `build/workspace-config.yaml`. The file's SSH password is not stored.
+2. Register the SSH password as your own credential in settings and bind it to each server of the workspace.
+3. A Linux binary registers as needing a server check. `서버에서 검증` uploads one file to that server, reads
+   its version and help, and makes the binary selectable in plans.
+
+One workspace records one network, so concurrent networks need their own workspaces. `서버 세트 전체` fills
+from the set's first server, so keep concurrent runs apart with separate server sets. Web tests use the key
+preset only; run cases that need `generate` keys from the CLI.
+
 ## Running tests across the 15
 
 `--all-servers` spreads one node per server across all 15, and `--docker`

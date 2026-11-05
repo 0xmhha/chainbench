@@ -33,3 +33,15 @@ func TestResourceReadToolsMirrorCommandObservations(t *testing.T) {
 		t.Fatal(out)
 	}
 }
+
+// A read-only tool must have no way to run a program on a target.
+func TestResourceInspectToolRefusesABinaryProbe(t *testing.T) {
+	s := Default("reads", "test")
+	_, err := s.tools["chainbench_resource_inspect"].Handler(context.Background(), map[string]any{"request": map[string]any{
+		"target": map[string]any{"dataRoot": t.TempDir()},
+		"probe":  map[string]any{"path": "/bin/sh", "args": []any{"-c", "id"}},
+	}})
+	if err == nil {
+		t.Fatal("the read-only tool accepted a probe")
+	}
+}
