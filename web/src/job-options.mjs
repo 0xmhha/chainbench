@@ -5,12 +5,15 @@
 
 /** @typedef {{name: string, type: string, title: string, description?: string, minimum?: number, maximum?: number, flag?: string, cli: string}} OperationArgument */
 
+// The job form's server list already offers these.
+const SERVER_CHOICE = new Set(['allServers'])
+
 /**
  * @param {{arguments?: OperationArgument[]}|undefined} operation
  * @returns {OperationArgument[]}
  */
 export function scalarOptions(operation) {
- return (operation?.arguments ?? []).filter(a => a.type === 'boolean' || a.type === 'integer')
+ return (operation?.arguments ?? []).filter(a => (a.type === 'boolean' || a.type === 'integer') && !SERVER_CHOICE.has(a.name))
 }
 
 /**

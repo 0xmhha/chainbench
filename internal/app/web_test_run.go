@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
@@ -28,6 +29,9 @@ type webTestRun struct {
 	Plan     ComposePlan         `json:"plan"`
 	Requests []resource.Request  `json:"requests"`
 	Genesis  []webPresetGenesis  `json:"genesis,omitempty"`
+	// Servers are those that receive a node, so a spread run ships its binary
+	// to them alone and leaves the rest of the set untouched.
+	Servers []string `json:"servers"`
 }
 
 func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload) ([]resource.Request, error) {
@@ -252,7 +256,7 @@ func (e *WebChainEngine) webSuiteInput(p webChainPayload) RunSuiteIn {
 	for _, named := range p.NamedBinaries {
 		overrides[named.Name] = named.ExecutionBinary
 	}
-	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: overrides, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true, Docker: webDocker(p.Set.DeploymentDocumentInput)}
+	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: overrides, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef, All: p.Arguments.AllServers}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true, Docker: webDocker(p.Set.DeploymentDocumentInput)}
 }
 
 func normalizedWebTestPlan(plan ComposePlan, control string) ComposePlan {
@@ -307,11 +311,7 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		// Save the accepted target before provisioning or launching any nodes.
 		// A daemon interrupted inside RunSuite must still be able to observe
 		// its owned processes without waiting for a final test result.
-		metadata, err := json.Marshal(p.Target)
-		if err != nil {
-			return err
-		}
-		return (filestore.Local{}).Write(ctx, filepath.Join(p.ControlDir, "web-target.json"), metadata, 0600)
+		return writeWebTargetNotes(ctx, p)
 	})
 	if err != nil {
 		return result, err
@@ -365,10 +365,37 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		}
 	}
 	result.PartialEffects = append(result.PartialEffects, out.SetupSteps...)
+	if captureErr := e.captureTestLogs(ctx, a, p); captureErr != nil {
+		// The verdict stands either way; only the evidence is thinner.
+		result.PartialEffects = append(result.PartialEffects, "Node logs were not fully captured: "+captureErr.Error())
+	}
 	if err != nil {
 		result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
 	}
 	return result, err
+}
+
+// webTestLogCapture bounds reading a finished test's logs, so a slow server
+// cannot hold a job that already has its verdict.
+const webTestLogCapture = 2 * time.Minute
+
+// captureTestLogs archives the run's node logs over SSH while the job still
+// holds its logins, before any cleanup removes the nodes. A failed or cancelled
+// run is exactly when they are wanted, so it does not inherit the job's context.
+func (e *WebChainEngine) captureTestLogs(ctx context.Context, a DeploymentActor, p webChainPayload) error {
+	if e.monitor == nil || p.Target.Transport != "ssh" {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), webTestLogCapture)
+	defer cancel()
+	lookup, err := e.targetReader(ctx, a, p)
+	if err != nil {
+		return err
+	}
+	network := filepath.Base(p.ControlDir)
+	detach := e.monitor.attachRemote(network)
+	defer detach()
+	return e.monitor.CollectRemoteLogsToEnd(ctx, network, webRemoteLogOpener(lookup, p))
 }
 
 // webSuiteVerdict fails a run whose document reports a failed or blocked
@@ -400,13 +427,13 @@ func (e *WebChainEngine) uploadTestBinaries(ctx context.Context, p webChainPaylo
 	if e.cli == nil {
 		return errNoChainCLI
 	}
-	upload := func(assetID, sha256, destination string) error {
+	upload := func(server, assetID, sha256, destination string) error {
 		asset, err := e.binaryAsset(assetID)
 		if err != nil {
 			return err
 		}
 		args := []string{"file", "upload", asset.Path, "--remote", destination, "--force-upload",
-			"--sha256", sha256, "--mode", "0755", "--server", p.Arguments.ServerRef,
+			"--sha256", sha256, "--mode", "0755", "--server", server,
 			"--server-set", filepath.Join(p.TestRun.InputDir, "server-set.yaml"),
 			"--workspace-config", filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"),
 			"--server-logins", logins}
@@ -416,12 +443,14 @@ func (e *WebChainEngine) uploadTestBinaries(ctx context.Context, p webChainPaylo
 		_, err = e.cli.Run(ctx, args...)
 		return err
 	}
-	if err := upload(p.Arguments.AssetID, p.Binary.SHA256, p.ExecutionBinary); err != nil {
-		return err
-	}
-	for _, named := range p.NamedBinaries {
-		if err := upload(named.AssetID, named.Binary.SHA256, named.ExecutionBinary); err != nil {
-			return fmt.Errorf("binary %q: %w", named.Name, err)
+	for _, server := range p.TestRun.Servers {
+		if err := upload(server, p.Arguments.AssetID, p.Binary.SHA256, p.ExecutionBinary); err != nil {
+			return err
+		}
+		for _, named := range p.NamedBinaries {
+			if err := upload(server, named.AssetID, named.Binary.SHA256, named.ExecutionBinary); err != nil {
+				return fmt.Errorf("binary %q: %w", named.Name, err)
+			}
 		}
 	}
 	return nil

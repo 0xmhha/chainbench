@@ -186,3 +186,14 @@ func TestWebAttachThroughCLIReadsTheRecordedNetworkOnly(t *testing.T) {
 		t.Errorf("compose-only flags reached an attach: %v", args)
 	}
 }
+
+func TestSuiteCLIArgs_SpreadsOverTheServerSet(t *testing.T) {
+	in := RunSuiteIn{SpecContent: [][]byte{[]byte("{}")}, DataDir: "/control", Server: resource.ServerRef{SetPath: "/inputs/server-set.yaml", All: true}}
+	args, err := suiteCLIArgs(context.Background(), in, t.TempDir(), "/job/server-set.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(args, "--all-servers") || slices.Contains(args, "--server") {
+		t.Fatalf("args = %v", args)
+	}
+}

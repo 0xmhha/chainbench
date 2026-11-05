@@ -3393,6 +3393,11 @@ components:
     Network:
       type: object
       properties:
+        archivedNodes:
+          type: array
+          description: Nodes with kept logs that the chain record no longer lists, because the run that made them cleaned them up.
+          items:
+            type: string
         id: *id002
         workspaceId: *id002
         ownership:

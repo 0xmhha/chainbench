@@ -75,6 +75,9 @@ func suiteCLIArgs(ctx context.Context, in RunSuiteIn, dir, logins string, flags 
 	if in.Docker {
 		args = append(args, "--docker")
 	}
+	if in.Server.All {
+		args = append(args, "--all-servers")
+	}
 	return append(args, flags...), nil
 }
 

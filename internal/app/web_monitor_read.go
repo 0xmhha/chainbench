@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -133,6 +136,27 @@ type WebLogs struct {
 // ErrWebMonitorQuery reports an unusable time window, cursor or limit.
 var ErrWebMonitorQuery = errors.New("invalid observation query")
 
+// webArchivedLogName takes a node label out of an archived log record's name,
+// such as logs/node1-20261009.jsonl.
+var webArchivedLogName = regexp.MustCompile(`^logs/(.+)-\d{8}\.jsonl$`)
+
+// ArchivedNodes names the nodes that have archived logs, in sorted order. A run
+// that removed its nodes leaves them out of the chain record but not out of
+// here. An unreadable archive reads as none.
+func (m *WebMonitor) ArchivedNodes(network string) []string {
+	records, err := m.store.Logs(network)
+	if err != nil {
+		return nil
+	}
+	labels := map[string]bool{}
+	for _, record := range records {
+		if match := webArchivedLogName.FindStringSubmatch(record); match != nil {
+			labels[match[1]] = true
+		}
+	}
+	return slices.Sorted(maps.Keys(labels))
+}
+
 // readable admits every active role: collected observations are shared and
 // redacted before they are archived.
 func (m *WebMonitor) readable(a DeploymentActor, network string) error {
@@ -245,7 +269,7 @@ func (m *WebMonitor) Logs(ctx context.Context, a DeploymentActor, nodeID string,
 	for _, ns := range state.Nodes {
 		known = known || string(ns.NodeLabel()) == label
 	}
-	if !known {
+	if !known && !slices.Contains(m.ArchivedNodes(network), label) {
 		return WebLogs{}, ErrDeploymentNotFound
 	}
 	filter, err := newWebLogFilter(q)

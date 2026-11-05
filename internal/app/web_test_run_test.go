@@ -180,6 +180,7 @@ func TestWebTestBinariesUploadThroughTheCLI(t *testing.T) {
 		t.Fatal(err)
 	}
 	e.assets["verified"] = ManifestBinary{ID: "verified", Path: source}
+	p.TestRun.Servers = []string{p.Arguments.ServerRef}
 	cli := &uploadsCLI{}
 	e.UseCLI(cli)
 	if err := e.uploadTestBinaries(context.Background(), p, "/job/logins.yaml"); err != nil {

@@ -38,7 +38,7 @@
   // Without phase times the bench reads the two hours before the page opened;
   // derived once, so a re-render does not move the window.
   const phaseWindow = $derived(phaseSpan ?? { from: new Date(Date.now() - 7200000).toISOString(), to: new Date().toISOString() })
-  const networkNodes = $derived((network?.nodes ?? []).map(n => n.id))
+  const networkNodes = $derived([...(network?.nodes ?? []).map(n => n.id), ...(network?.archivedNodes ?? [])])
   const failed = run => (run?.summary?.counts?.fail ?? 0) + (run?.summary?.counts?.blocked ?? 0) > 0
   const failingRuns = $derived(runs.filter(failed))
   const passingRuns = $derived(runs.filter(r => !failed(r)))
