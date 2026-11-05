@@ -419,6 +419,11 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 			return genesis.Artifacts{}, lifecycle.Mark(errGenesisTargetUnable,
 				fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there"))
 		}
+		// The generator has to be there before deploy would ship it. A composition
+		// that declares no control.binaries has it on the target already.
+		if _, err := w.shipNodeBinaries(ctx, access); err != nil {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
+		}
 		cfg.Files = access.Files
 		cfg.WorkDir = path.Join(access.DataRoot, genesisWorkDir)
 		cfg.Runner = commanderRunner(cmdr)

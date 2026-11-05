@@ -331,7 +331,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	p.ExecutionBinary = asset.Path
 	if p.Target.Transport == "ssh" {
-		p.ExecutionBinary, err = wc.Resolve(resource.PurposeBinaries, p.Binary.SHA256+"/"+filepath.Base(asset.Path))
+		p.ExecutionBinary, err = wc.Resolve(resource.PurposeBinaries, p.Binary.SHA256+"/"+webRemoteBinaryName(plugin.Manifest().Binary, asset.Path))
 		if err != nil {
 			return out, err
 		}

@@ -169,3 +169,23 @@ func TestPreviewImport_AnUnrecognizableDocumentNamesWhatIsMissing(t *testing.T) 
 		t.Fatalf("err = %v, want the missing kind named", err)
 	}
 }
+
+// A localmap keys its ports by number. YAML keeps those keys as numbers, which
+// JSON cannot hold, so a pool file with its localmap used to be refused.
+func TestPreviewImport_KeepsALocalmapWrittenInYAML(t *testing.T) {
+	store, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := "version: 2\npool:\n  hosts:\n    - name: server1\n      addr: 192.0.2.11\n  slots: 4\n  ports:\n    p2p: {base: 30301, step: 1}\n    rpc: {base: 8601, step: 1}\n    ws: {base: 8701, step: 1}\n    auth: {base: 8501, step: 1}\nssh:\n  user: test\n  port: 10022\nlocalmap:\n  hosts:\n    192.0.2.11:\n      host: 127.0.0.1\n      ports:\n        10022: 2201\n        8601: 18601\n"
+	preview, err := store.PreviewImport(DeploymentActor{ID: "o", Role: "operator"}, DocumentImportInput{Filename: "pool.yaml", Format: "yaml", Source: source})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(preview.RedactedDocuments) != 1 {
+		t.Fatalf("errors = %+v", preview.Validation.Errors)
+	}
+	if !strings.Contains(string(preview.RedactedDocuments[0].Content), `"10022":2201`) {
+		t.Fatalf("content = %s", preview.RedactedDocuments[0].Content)
+	}
+}

@@ -292,5 +292,5 @@ func (l webCLILogs) Snapshot(ctx context.Context, path string, offset int64, lim
 		return webLogSnapshot{}, errors.New("chainbench target read: missing log snapshot")
 	}
 	s := out.Log
-	return webLogSnapshot{ID: s.ID, Size: s.Size, Head: s.Head, Data: s.Data}, nil
+	return webLogSnapshot{ID: s.ID, Size: s.Size, Head: s.Head, Data: s.Data, UTCOffset: s.UTCOffset}, nil
 }

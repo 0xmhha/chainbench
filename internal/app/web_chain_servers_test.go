@@ -212,3 +212,28 @@ func TestRecordedTargetOutsideTheSelectionNamesTheServer(t *testing.T) {
 		t.Fatalf("a local record needs no login: %v", err)
 	}
 }
+
+// A composition that failed before launch recorded its nodes without a launch.
+// Nothing can be running for them, so a retry must not be refused.
+func TestNodeNeverLaunchedHasNothingToVerify(t *testing.T) {
+	if !webNodeNeverLaunched(node.Record{}) {
+		t.Fatal("a node without a launch was checked for a process")
+	}
+	if webNodeNeverLaunched(node.Record{Args: []string{"--datadir", "/data"}}) {
+		t.Fatal("a stopped node with a recorded launch skipped the check")
+	}
+	if webNodeNeverLaunched(node.Record{PID: 7}) {
+		t.Fatal("a node with a PID skipped the check")
+	}
+}
+
+// wemix names its IPC socket after the executable, so a node run as "payload"
+// listens where the bootstrap never looks.
+func TestRemoteBinaryKeepsTheManifestsName(t *testing.T) {
+	if got := webRemoteBinaryName("gwemix", "/data/assets/abc/payload"); got != "gwemix" {
+		t.Fatalf("name = %q", got)
+	}
+	if got := webRemoteBinaryName("", "/data/assets/abc/payload"); got != "payload" {
+		t.Fatalf("a manifest without a binary name gave %q", got)
+	}
+}

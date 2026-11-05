@@ -183,6 +183,23 @@ func webTargetClaims(servers []resource.Server, targets []resource.Inspection, p
 	return out
 }
 
+// webRemoteBinaryName is the file name a binary runs under on a server. A family
+// can derive runtime paths from its executable's name, and the bytes a server
+// receives are stored under an arbitrary one here.
+func webRemoteBinaryName(manifestBinary, assetPath string) string {
+	if manifestBinary != "" {
+		return manifestBinary
+	}
+	return filepath.Base(assetPath)
+}
+
+// webNodeNeverLaunched reports a node recorded by a composition that stopped
+// before starting it: it has no launch to compare a process with, and no process
+// of this network can exist for it.
+func webNodeNeverLaunched(ns node.Record) bool {
+	return ns.PID == 0 && len(ns.Args) == 0
+}
+
 func compactPorts(ports []int) []int {
 	seen := map[int]bool{}
 	out := []int{}

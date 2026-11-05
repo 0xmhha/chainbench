@@ -21,6 +21,31 @@ const webBundleFormat = "chainbench-web-bundle"
 // webBundleLimit bounds one import so a preview stays cheap to validate and store.
 const webBundleLimit = 64
 
+// stringKeyedYAML gives every mapping string keys. YAML keeps a key such as a
+// localmap's port as a number, which JSON cannot hold.
+func stringKeyedYAML(value any) any {
+	switch v := value.(type) {
+	case map[string]any:
+		for key, item := range v {
+			v[key] = stringKeyedYAML(item)
+		}
+		return v
+	case map[any]any:
+		out := make(map[string]any, len(v))
+		for key, item := range v {
+			out[fmt.Sprint(key)] = stringKeyedYAML(item)
+		}
+		return out
+	case []any:
+		for i, item := range v {
+			v[i] = stringKeyedYAML(item)
+		}
+		return v
+	default:
+		return value
+	}
+}
+
 // decodeImportSource reads one declaration, or a bundle of declarations: a JSON
 // or YAML object with a "documents" list, or a YAML stream of documents that
 // each name their kind, name and content.
@@ -49,7 +74,7 @@ func decodeImportSource(in DocumentImportInput) ([]map[string]any, bool, error) 
 				return nil, false, errors.New("invalid YAML document")
 			}
 			if value != nil {
-				values = append(values, value)
+				values = append(values, stringKeyedYAML(value).(map[string]any))
 			}
 			if len(values) > webBundleLimit {
 				return nil, false, fmt.Errorf("a bundle holds at most %d documents", webBundleLimit)
