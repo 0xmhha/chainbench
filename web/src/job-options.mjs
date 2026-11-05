@@ -40,3 +40,19 @@ export function optionArguments(options, values) {
  }
  return out
 }
+
+/**
+ * planBlockers names what the job form still needs before a plan can be made,
+ * in the order the form asks for it.
+ * @param {{workspace?: boolean, manifest?: boolean, asset?: boolean, server?: boolean, needsBinary?: boolean, needsCase?: boolean, cases?: boolean}} form
+ * @returns {string[]}
+ */
+export function planBlockers(form) {
+ const missing = []
+ if (!form.workspace) missing.push('Workspace')
+ if (form.needsBinary && !form.manifest) missing.push('매니페스트')
+ if (form.needsBinary && !form.asset) missing.push('바이너리')
+ if (!form.server) missing.push('서버')
+ if (form.needsCase && !form.cases) missing.push('실행할 케이스')
+ return missing
+}

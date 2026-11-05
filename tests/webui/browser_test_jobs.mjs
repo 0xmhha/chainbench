@@ -82,10 +82,10 @@ try{
       await rerun.getByText(/확인된 자원 충돌이 없습니다|실행할 수 없습니다/).waitFor()
       const blocked=(await rerun.getByText(/실행할 수 없습니다/).count())>0
       let again=null
-      if(blocked)assert.ok(await rerun.getByRole('button',{name:'검토한 계획 실행',exact:true}).isDisabled(),'a blocked rerun can start')
+      if(blocked)assert.ok(await rerun.getByRole('button',{name:/^(검토한 계획 실행|테스트 실행)$/}).isDisabled(),'a blocked rerun can start')
       else{
         const rerunResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-        await rerun.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+        await rerun.getByRole('button',{name:/^(검토한 계획 실행|테스트 실행)$/}).click()
         const rerunStarted=await rerunResponse;assert.equal(rerunStarted.status(),202)
         again=await rerunStarted.json();assert.notEqual(again.id,first.id);assert.equal(again.operation,first.operation)
         await waitJob(again.id,'succeeded')

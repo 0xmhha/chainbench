@@ -189,3 +189,51 @@ func TestPreviewImport_KeepsALocalmapWrittenInYAML(t *testing.T) {
 		t.Fatalf("content = %s", preview.RedactedDocuments[0].Content)
 	}
 }
+
+// The files an operator already has come apart: the pool, its localmap, the
+// paths. Picking them together has to give one server set with its localmap.
+func TestPreviewImport_CombinesTheFilesOfAPool(t *testing.T) {
+	store, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool := "version: 2\npool:\n  hosts:\n    - name: server1\n      addr: 192.0.2.11\n  slots: 4\n  ports:\n    p2p: {base: 30301, step: 1}\n    rpc: {base: 8601, step: 1}\n    ws: {base: 8701, step: 1}\n    auth: {base: 8501, step: 1}\nssh:\n  user: test\n  port: 10022\n  password: imported-secret-sentinel\n"
+	localmap := "hosts:\n  192.0.2.11:\n    host: 127.0.0.1\n    ports:\n      10022: 2201\n      8601: 18601\n"
+	config := "version: 1\ndataRoot: /data/chainbench\npaths:\n  binaries: bin\n  configs: configs\n  genesis: genesis\n  keystore: keystore\n  keyrings: keyrings\n  nodes: node\n  runtime: runtime\n  logs: logs\ncontrol:\n  artifactRoot: ~/.chainbench\ninputs:\n  mode: generated\nexecution:\n  chain: fresh\n"
+	preview, err := store.PreviewImport(DeploymentActor{ID: "o", Role: "operator"}, DocumentImportInput{Filename: "pool files", Files: []DocumentImportFile{
+		{Filename: "localmap.yaml", Format: "yaml", Source: localmap},
+		{Filename: "server-set.yaml", Format: "yaml", Source: pool},
+		{Filename: "workspace-config.yaml", Format: "yaml", Source: config},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !preview.Validation.Valid || len(preview.RedactedDocuments) != 2 {
+		t.Fatalf("preview = %+v", preview.Validation)
+	}
+	set := preview.RedactedDocuments[0]
+	if set.Kind != "server-set" || !strings.Contains(string(set.Content), `"localmap"`) {
+		t.Fatalf("set = %s %s", set.Kind, set.Content)
+	}
+	if strings.Contains(string(set.Content), "imported-secret-sentinel") {
+		t.Fatal("an inline ssh password reached the shared declaration")
+	}
+}
+
+func TestPreviewImport_ALocalmapAloneSaysWhatItNeeds(t *testing.T) {
+	store, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := DeploymentActor{ID: "o", Role: "operator"}
+	_, err = store.PreviewImport(a, DocumentImportInput{Filename: "localmap.yaml", Format: "yaml", Source: "hosts:\n  192.0.2.11:\n    host: 127.0.0.1\n"})
+	if err == nil || !strings.Contains(err.Error(), "server-set") {
+		t.Fatalf("err = %v", err)
+	}
+	_, err = store.PreviewImport(a, DocumentImportInput{Filename: "two", Files: []DocumentImportFile{
+		{Filename: "a.yaml", Format: "yaml", Source: "hosts: {}\n"}, {Filename: "b.yaml", Format: "yaml", Source: "hosts: {}\n"},
+	}})
+	if err == nil {
+		t.Fatal("two localmaps without a server set were accepted")
+	}
+}

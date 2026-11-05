@@ -46,6 +46,10 @@
   const missing=presetIds(declaration).filter(id=>!presets[id]);if(!missing.length)return
   const shared=await allItems(api,'documents?kind=chain-preset')
   for(const id of missing){const doc=shared.filter(d=>d.content?.id===id).at(-1);if(doc)presets={...presets,[id]:doc.content}}
+  // A preset this server ships needs no file from the operator.
+  const unknown=missing.filter(id=>!presets[id]);if(!unknown.length)return
+  const catalogue=await api('chain-presets')
+  for(const id of unknown){const known=catalogue.find(p=>p.id===id);if(known)presets={...presets,[id]:known.content}}
  }
  async function work(fn){busy=true;try{await fn()}catch(e){valid=false;status=e.message;errorList=(e.errors??[]).filter(x=>x.path?.startsWith('/content'))}finally{busy=false}}
  $effect(()=>{if(webSession)work(async()=>{vocabulary=await api('vocabulary');contract=await api('contracts/dsl');await refreshSaved();status='DSL 계약을 읽었습니다'})})

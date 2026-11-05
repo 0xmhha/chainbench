@@ -2,13 +2,17 @@ package dashboard_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
+	"debug/elf"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -100,5 +104,37 @@ func TestUploadedAssetsAreImmutableSharedMetadata(t *testing.T) {
 	}
 	if w := call("GET", "/api/v1/assets/missing", "", "", "", "viewer", ""); w.Code != 404 {
 		t.Fatal(w.Code)
+	}
+}
+
+// A binary waiting for a server to answer for it is registered but not usable.
+// One of those must not take the usable ones down with it.
+func TestManifestAssetsLeaveOutABinaryWaitingForAServer(t *testing.T) {
+	root := t.TempDir()
+	bus := collector.NewBus()
+	defer bus.Close()
+	store, err := app.OpenManifestStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	machine := elf.EM_AARCH64
+	if runtime.GOOS == "linux" && runtime.GOARCH == "arm64" {
+		machine = elf.EM_X86_64
+	}
+	var raw bytes.Buffer
+	header := elf.Header64{Ident: [elf.EI_NIDENT]byte{0x7f, 'E', 'L', 'F', 2, 1, 1}, Type: uint16(elf.ET_EXEC), Machine: uint16(machine), Version: 1, Ehsize: 64, Phentsize: 56, Shentsize: 64}
+	if err = binary.Write(&raw, binary.LittleEndian, header); err != nil {
+		t.Fatal(err)
+	}
+	actor := app.DeploymentActor{ID: "alice", Role: "operator"}
+	if _, err = store.UploadAsset(context.Background(), actor, "binary", "gstable", &raw); err != nil {
+		t.Fatal(err)
+	}
+	auth := func(*http.Request) (app.DeploymentActor, error) { return actor, nil }
+	server := dashboard.NewServer(bus, nil, dashboard.WithManifests(store, auth, nil, ""))
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/manifest-assets", nil))
+	if w.Code != http.StatusOK || strings.Contains(w.Body.String(), "gstable") {
+		t.Fatalf("status %d: %s", w.Code, w.Body)
 	}
 }

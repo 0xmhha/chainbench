@@ -6,20 +6,26 @@
   const client = $derived(apiClient(webSession))
   function api(path, method, data) { return client.request(path, { method, body: data }) }
   async function work(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
+  const formatOf = name => /\.(ya?ml)$/i.test(name) ? 'yaml' : 'json'
   async function choose(event) {
-    const file = event.currentTarget.files?.[0]
-    if (!file) return
+    const files = [...event.currentTarget.files]
+    if (!files.length) return
+    preview = null; saved = []; status = ''
     await work(async () => {
-      saved = []; filename = file.name
-      const format = /\.(ya?ml)$/i.test(file.name) ? 'yaml' : 'json'
-      preview = await api('documents/import', 'POST', { filename: file.name, format, source: await file.text() })
+      filename = files.map(f => f.name).join(', ')
+      const body = files.length === 1
+        ? { filename, format: formatOf(files[0].name), source: await files[0].text() }
+        : { filename, files: await Promise.all(files.map(async f => ({ filename: f.name, format: formatOf(f.name), source: await f.text() }))) }
+      preview = await api('documents/import', 'POST', body)
     })
   }
+  // Each remote server needs a login; the list reads in server order.
+  const servers = $derived((preview?.privateBindingsRequired ?? []).filter(b => b.startsWith('ssh:')).map(b => b.slice(4)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
   async function commit() {
     await work(async () => {
       saved = (await api('documents/import/commit', 'POST', { previewId: preview.previewId })).items
       status = `${filename}에서 공유 문서 revision ${saved.length}개를 저장했습니다`
-      onsaved()
+      onsaved(saved)
     })
   }
   // A workspace pins exactly one server set and one path configuration.
@@ -30,16 +36,16 @@
   async function createWorkspace() {
     await work(async () => {
       const w = await api('workspaces', 'POST', { name: workspaceName, documents: [{ id: set.id, revision: set.revision }, { id: config.id, revision: config.revision }] })
-      status = `가져온 revision으로 공유 workspace ${w.name}을(를) 만들었습니다`
-      onsaved()
+      status = `가져온 revision으로 공유 workspace ${w.name}을(를) 만들었습니다. 이어서 서버에 내 자격증명을 연결하세요`
+      onsaved(saved, w)
     })
   }
 </script>
 
 <section class="bundle" aria-label="구성 가져오기">
   <h3>구성 가져오기</h3>
-  <p>선언 하나나 서버, 경로, 프리셋, 케이스 문서 묶음(<code>documents</code> 목록이 있는 JSON 또는 YAML stream)을 가져옵니다. 미리 보기를 확인하기 전에는 아무것도 저장하지 않습니다. 개인 SSH 값은 지우며, 내 자격증명으로 다시 연결해야 합니다.</p>
-  <label>구성 파일 <input name="bundle-import-input-1" aria-label="가져올 구성 파일" type="file" accept=".json,.yaml,.yml" disabled={busy} onchange={choose} /></label>
+  <p>가지고 있는 설정 파일을 그대로 고르세요. <code>server-set</code>, <code>localmap</code>, <code>workspace-config</code> 를 함께 고르면 하나의 서버 풀로 합칩니다. 문서 묶음 파일도 됩니다. 미리 보기를 확인하기 전에는 아무것도 저장하지 않고, 파일의 SSH 비밀번호는 저장하지 않습니다.</p>
+  <label>구성 파일 <input name="bundle-import-input-1" aria-label="가져올 구성 파일" type="file" multiple accept=".json,.yaml,.yml" disabled={busy} onchange={choose} /></label>
   {#if preview}
     <div data-testid="import-preview" data-valid={preview.validation.valid}>
       {#if preview.validation.valid}
@@ -50,7 +56,7 @@
         <ul>{#each preview.validation.errors as issue}<li class="error" data-import-error={issue.path}><code>{issue.path}</code> {issue.message}</li>{/each}</ul>
       {/if}
       {#each preview.changes as change}<p class="notice">{change}</p>{/each}
-      {#if preview.privateBindingsRequired.length}<p class="notice">다음 서버에 내 SSH 자격증명을 연결해야 합니다: {preview.privateBindingsRequired.join(', ')}</p>{/if}
+      {#if servers.length}<p class="notice">저장한 뒤 서버 {servers.length}대에 내 SSH 자격증명을 연결해야 합니다: {servers.length > 4 ? `${servers[0]} ~ ${servers.at(-1)}` : servers.join(', ')}</p>{/if}
       <button disabled={busy || !preview.validation.valid || saved.length > 0} onclick={commit}>가져온 문서 저장</button>
     </div>
   {/if}

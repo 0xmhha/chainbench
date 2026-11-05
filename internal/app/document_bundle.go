@@ -207,7 +207,7 @@ func importDocument(preview *DocumentImportPreview, prefix, kind, name string, v
 						binding = prefix + "/" + binding
 					}
 					preview.PrivateBindingsRequired = append(preview.PrivateBindingsRequired, binding)
-					preview.Changes = append(preview.Changes, "Moved "+binding+" out of shared declaration")
+					preview.Changes = append(preview.Changes, "SSH 값("+key+")은 공유 문서에 넣지 않았습니다. 개인 자격증명을 대신 씁니다")
 				}
 			}
 		}

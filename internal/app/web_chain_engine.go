@@ -173,9 +173,15 @@ func (e *WebChainEngine) allowed(a DeploymentActor) error {
 	return nil
 }
 
+// webConflictError reads as its reason alone and stays ErrDeploymentConflict.
+type webConflictError struct{ reason string }
+
+func (e webConflictError) Error() string { return e.reason }
+func (e webConflictError) Unwrap() error { return ErrDeploymentConflict }
+
 // webConflict is ErrDeploymentConflict naming the check that refused, so a
 // 409 says what no longer matches rather than only that something changed.
-func webConflict(reason string) error { return fmt.Errorf("%w: %s", ErrDeploymentConflict, reason) }
+func webConflict(reason string) error { return webConflictError{reason} }
 
 func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebPlanInput) (WebPreparedJob, error) {
 	var out WebPreparedJob
@@ -882,10 +888,15 @@ func (e *WebChainEngine) Cleanup(ctx context.Context, a DeploymentActor, prepare
 	if err = e.runControl(ctx, a, p, "chain", "stop"); err != nil {
 		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir, p.Target.DataPath}}, err
 	}
-	if err = e.runControl(ctx, a, p, "chain", "rm"); err != nil {
-		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir}, PartialEffects: []string{"owned nodes stopped before removal"}}, err
+	var effects []string
+	if captureErr := e.finishRemoteLogs(ctx, a, p); captureErr != nil {
+		// Cleanup goes on either way; only the evidence is thinner.
+		effects = append(effects, "Last node log lines were not fully captured: "+captureErr.Error())
 	}
-	return WebJobResult{NodeDisposition: "cleaned", PartialEffects: []string{"owned nodes stopped", "owned composition cleaned"}}, nil
+	if err = e.runControl(ctx, a, p, "chain", "rm"); err != nil {
+		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir}, PartialEffects: append(effects, "owned nodes stopped before removal")}, err
+	}
+	return WebJobResult{NodeDisposition: "cleaned", PartialEffects: append(effects, "owned nodes stopped", "owned composition cleaned")}, nil
 }
 
 // webLaunchesNodes reports whether an operation composes and launches a

@@ -45,27 +45,110 @@ func (m *WebMonitor) attachRemote(network string) func() {
 // webMonitorReadLimit from every node.
 const webRemoteLogRounds = 64
 
-// CollectRemoteLogsToEnd repeats CollectRemoteLogs until no node's position
-// moves, for a job whose logins end with it. It stops at webRemoteLogRounds,
-// leaving the rest of a very long log unread.
+// webCollectorError is the gap reason of a read that failed.
+const webCollectorError = "collector_error"
+
+// CollectRemoteLogsToEnd repeats CollectRemoteLogs until the logs are caught up,
+// for a job whose logins end with it. A running node keeps logging, so caught up
+// means no read filled its limit, not that nothing new arrived. It stops at
+// webRemoteLogRounds, leaving the rest of a very long log unread.
 func (m *WebMonitor) CollectRemoteLogsToEnd(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error)) error {
+	return m.drainRemoteLogs(ctx, network, open, runningRemoteNodes)
+}
+
+// FinishRemoteLogs reads the logs of a network's stopped nodes to their end and
+// forgets where those logs were. The network is being removed, so the next run's
+// log is a first read and not a replacement of this one.
+func (m *WebMonitor) FinishRemoteLogs(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error)) error {
+	drainErr := m.drainRemoteLogs(ctx, network, open, everyRemoteNode)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cursor, err := m.readCursor(network)
+	if err != nil {
+		return errors.Join(drainErr, err)
+	}
+	cursor.Offsets, cursor.Files, cursor.Heads = map[string]int64{}, map[string]uint64{}, map[string]string{}
+	cursor.Skipping, cursor.InSecret = map[string]bool{}, map[string]bool{}
+	var raw bytes.Buffer
+	if err = json.NewEncoder(&raw).Encode(cursor); err != nil {
+		return errors.Join(drainErr, err)
+	}
+	return errors.Join(drainErr, m.store.WriteCursor(network, raw.Bytes()))
+}
+
+// remoteNodes selects whose logs a collection round reads.
+type remoteNodes int
+
+const (
+	runningRemoteNodes remoteNodes = iota // Nodes recorded as launched.
+	everyRemoteNode                       // Stopped nodes too, for their last lines.
+)
+
+func (m *WebMonitor) drainRemoteLogs(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error), which remoteNodes) error {
 	for range webRemoteLogRounds {
 		before, err := m.remotePositions(network)
 		if err != nil {
 			return err
 		}
-		if err = m.CollectRemoteLogs(ctx, network, open); err != nil {
+		if err = m.collectRemoteLogs(ctx, network, open, which); err != nil {
 			return err
 		}
 		after, err := m.remotePositions(network)
 		if err != nil {
 			return err
 		}
-		if maps.Equal(before, after) {
-			return nil
+		if !filledARead(before, after) {
+			return m.markRemoteDrained(network)
 		}
 	}
 	return nil
+}
+
+// filledARead reports a node whose position moved by most of a read, which means
+// more was waiting behind it. A read ends at a line break, so it stops just short
+// of the limit; what a live node logs between two reads is far below half. A
+// position that moved back started over in a new file, so it counts from zero.
+func filledARead(before, after map[string]int64) bool {
+	for label, position := range after {
+		moved := position - before[label]
+		if moved < 0 {
+			moved = position
+		}
+		if moved >= webMonitorReadLimit/2 {
+			return true
+		}
+	}
+	return false
+}
+
+// markRemoteDrained records that the nodes read in the last round reached the
+// end of their logs. A node whose read failed keeps its open gap and stays out;
+// a replaced log was still read, so its gap does not.
+func (m *WebMonitor) markRemoteDrained(network string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cursor, err := m.readCursor(network)
+	if err != nil {
+		return err
+	}
+	failed := map[string]bool{}
+	for _, g := range cursor.RemoteOpen {
+		failed[g.Node] = failed[g.Node] || g.Reason == webCollectorError
+	}
+	if cursor.RemoteDrained == nil {
+		cursor.RemoteDrained = map[string]time.Time{}
+	}
+	now := m.now().UTC()
+	for label := range cursor.Offsets {
+		if !failed[label] {
+			cursor.RemoteDrained[label] = now
+		}
+	}
+	var raw bytes.Buffer
+	if err = json.NewEncoder(&raw).Encode(cursor); err != nil {
+		return err
+	}
+	return m.store.WriteCursor(network, raw.Bytes())
 }
 
 // remotePositions reads how far each node's log has been archived.
@@ -85,6 +168,10 @@ func (m *WebMonitor) remotePositions(network string) (map[string]int64, error) {
 // access is refused, the positions of nodes already archived are kept and
 // nothing else is recorded.
 func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error)) error {
+	return m.collectRemoteLogs(ctx, network, open, runningRemoteNodes)
+}
+
+func (m *WebMonitor) collectRemoteLogs(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error), which remoteNodes) error {
 	m.mu.Lock()
 	state, _, err := m.loadNetwork(ctx, network)
 	var work webMonitorCursor
@@ -106,7 +193,7 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 	committed := 0 // pending lines belonging to nodes whose positions are kept
 	var stop error
 	for _, ns := range state.Nodes {
-		if ns.PID <= 0 {
+		if ns.PID <= 0 && which == runningRemoteNodes {
 			continue
 		}
 		label := string(ns.NodeLabel())
@@ -130,7 +217,7 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 		done = append(done, label)
 		committed = len(pending)
 		if err != nil {
-			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "collector_error"})
+			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: webCollectorError})
 		}
 	}
 	m.mu.Lock()

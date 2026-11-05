@@ -80,8 +80,8 @@ try{
  assert.match(review.surfaces,/wbft · 자료 wbft · 계약/)
  await page.screenshot({path:out+'/plan-review.png',fullPage:true})
  observed.planReview=review
- const run=page.getByRole('button',{name:'검토한 계획 실행',exact:true})
- await page.waitForFunction(()=>![...document.querySelectorAll('button')].find(b=>b.textContent==='검토한 계획 실행')?.disabled,null,{timeout:60000})
+ const run=page.getByRole('button',{name:/^(검토한 계획 실행|테스트 실행)$/})
+ await page.waitForFunction(()=>![...document.querySelectorAll('button')].find(b=>['검토한 계획 실행','테스트 실행'].includes(b.textContent))?.disabled,null,{timeout:60000})
  await run.click()
  await page.waitForURL(/\/jobs\/[0-9a-f]{32}$/,{timeout:30000})
  const stopJob=await settle(api,page.url().split('/').pop())
@@ -103,7 +103,7 @@ try{
  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
  await page.getByTestId('missing-access').waitFor({timeout:30000})
  assert.match(await page.getByTestId('missing-access').textContent(),/ssh:remote/)
- assert.equal(await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).count(),0,'a run button appeared without access')
+ assert.equal(await page.getByRole('button',{name:/^(검토한 계획 실행|테스트 실행)$/}).count(),0,'a run button appeared without access')
  await page.screenshot({path:out+'/missing-access.png',fullPage:true})
  observed.missingAccess='ssh:remote'
 

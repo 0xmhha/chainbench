@@ -7,7 +7,7 @@
 // the start was refused, together with the start response.
 export async function runReviewedPlan(page) {
  const started = page.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname === '/api/v1/jobs', { timeout: 60000 })
- await page.getByRole('button', { name: '검토한 계획 실행', exact: true }).click()
+ await page.getByRole('button', { name:/^(검토한 계획 실행|테스트 실행)$/ }).click()
  const response = await started
  if (response.status() !== 202) return { id: null, response }
  const { id } = await response.json()

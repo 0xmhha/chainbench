@@ -91,6 +91,9 @@ type webMonitorGap struct {
 	Reason string    `json:"r"`
 }
 
+// webNodeStopped is the gap reason of a node recorded as not launched.
+const webNodeStopped = "node_stopped"
+
 // webMonitorCursor is the replaceable collection position. Ongoing gaps stay
 // here and grow each round; a gap reaches gaps.jsonl only once it ends, so an
 // outage of days is one archived interval rather than one line per round.
@@ -105,6 +108,9 @@ type webMonitorCursor struct {
 	Open           []webMonitorGap   `json:"open,omitempty"`
 	RemoteLast     time.Time         `json:"remoteLast,omitempty"`
 	RemoteOpen     []webMonitorGap   `json:"remoteOpen,omitempty"`
+	// RemoteDrained is when each node's remote log was last read to its end.
+	// Nothing before that moment is missing, whatever was collected at the time.
+	RemoteDrained map[string]time.Time `json:"remoteDrained,omitempty"`
 }
 
 func OpenWebMonitor(root string, redact func(string) string) (*WebMonitor, error) {
@@ -217,7 +223,7 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 		if ns.PID <= 0 {
 			// Not recorded as launched, so nothing is probed; the missing data
 			// is still a gap, or a stopped node would read as quiet coverage.
-			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "collector", Reason: "node_stopped"})
+			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "collector", Reason: webNodeStopped})
 			continue
 		}
 		s, g := m.sampleNode(ctx, reach, ns, now, since)
@@ -231,13 +237,13 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 		g, err := m.archiveLog(ctx, network, label, ns.LogPath, webLocalLogs{}, &cursor, since, now, nil)
 		if err != nil {
 			errs = append(errs, err)
-			g = append(g, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "collector_error"})
+			g = append(g, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: webCollectorError})
 		}
 		gaps = append(gaps, g...)
 	}
 	if err = appendWebMonitorLines(m.store, network, webMonitorDay("samples", now)+".jsonl", samples); err != nil {
 		errs = append(errs, err)
-		gaps = append(gaps, webMonitorGap{From: since, To: now, Source: "collector", Reason: "collector_error"})
+		gaps = append(gaps, webMonitorGap{From: since, To: now, Source: "collector", Reason: webCollectorError})
 	}
 	before := cursor.Open
 	open, ended := mergeWebMonitorGaps(cursor.Open, gaps)

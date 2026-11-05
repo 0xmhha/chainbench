@@ -17,7 +17,18 @@ type DocumentImportInput struct {
 	Format   string `json:"format"`
 	Source   string `json:"source"`
 	Kind     string `json:"kind,omitempty"`
+	// Files, when set, replaces Format and Source: the separate files of one
+	// pool, read as a bundle. See combineImportFiles.
+	Files []DocumentImportFile `json:"files,omitempty"`
 }
+
+// DocumentImportFile is one file an operator picked to import.
+type DocumentImportFile struct {
+	Filename string `json:"filename"`
+	Format   string `json:"format"`
+	Source   string `json:"source"`
+}
+
 type DocumentValidationIssue struct {
 	Path    string `json:"path"`
 	Code    string `json:"code"`
@@ -70,11 +81,86 @@ func undeclaredImportKind(value map[string]any) string {
 	return ""
 }
 
+// errLoneLocalMap answers a localmap picked without the pool it belongs to.
+const errLoneLocalMap = "localmap 파일은 server-set 파일과 함께 고르세요. 둘을 하나로 합쳐 저장합니다"
+
+// isImportedLocalMap recognizes a localmap file: it maps hosts and declares no
+// pool of its own.
+func isImportedLocalMap(value map[string]any) bool {
+	_, hosts := value["hosts"].(map[string]any)
+	_, pool := value["pool"]
+	return hosts && !pool
+}
+
+// webImportFileLimit bounds one pick of files.
+const webImportFileLimit = 8
+
+// combineImportFiles turns the separate files of a pool into one bundle: each
+// file is a document, and a localmap joins the server set it belongs to. The
+// bundle goes through the same preview as a bundle file, so secrets are moved
+// out of it the same way.
+func combineImportFiles(in DocumentImportInput) (DocumentImportInput, error) {
+	if len(in.Files) > webImportFileLimit {
+		return in, fmt.Errorf("한 번에 파일 %d개까지 고를 수 있습니다", webImportFileLimit)
+	}
+	var documents []map[string]any
+	var set, localmap map[string]any
+	for _, file := range in.Files {
+		values, bundle, err := decodeImportSource(DocumentImportInput{Format: file.Format, Source: file.Source})
+		if err != nil {
+			return in, fmt.Errorf("%s: %w", file.Filename, err)
+		}
+		if bundle {
+			return in, fmt.Errorf("%s: 문서 묶음은 다른 파일과 함께 고를 수 없습니다", file.Filename)
+		}
+		value := values[0]
+		if isImportedLocalMap(value) {
+			if localmap != nil {
+				return in, errors.New("localmap 파일은 하나만 고를 수 있습니다")
+			}
+			localmap = value
+			continue
+		}
+		kind, _ := value["kind"].(string)
+		if kind == "" {
+			kind = undeclaredImportKind(value)
+		}
+		if kind == "" {
+			return in, fmt.Errorf("%s: 문서 종류를 알 수 없습니다", file.Filename)
+		}
+		if kind == "server-set" {
+			if set != nil {
+				return in, errors.New("server-set 파일은 하나만 고를 수 있습니다")
+			}
+			set = value
+		}
+		documents = append(documents, map[string]any{"kind": kind, "name": file.Filename, "contractVersion": "2", "content": value})
+	}
+	if localmap != nil {
+		if set == nil {
+			return in, errors.New(errLoneLocalMap)
+		}
+		set[webLocalMapField] = localmap
+	}
+	raw, err := json.Marshal(map[string]any{"documents": documents})
+	if err != nil {
+		return in, errors.New("invalid declaration values")
+	}
+	return DocumentImportInput{Filename: in.Filename, Format: "json", Source: string(raw)}, nil
+}
+
 // PreviewImport keeps the original encrypted and returns only the validated
 // public declaration. Secret paths/material require a separate personal binding.
 func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInput) (DocumentImportPreview, error) {
 	if !a.canEdit() {
 		return DocumentImportPreview{}, ErrDeploymentForbidden
+	}
+	if len(in.Files) > 0 {
+		combined, err := combineImportFiles(in)
+		if err != nil {
+			return DocumentImportPreview{}, err
+		}
+		in = combined
 	}
 	if in.Filename == "" || len(in.Source) > 1<<20 {
 		return DocumentImportPreview{}, errors.New("invalid import")
@@ -95,8 +181,11 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 		if kind == "" {
 			kind = undeclaredImportKind(values[0])
 		}
+		if kind == "" && isImportedLocalMap(values[0]) {
+			return preview, errors.New(errLoneLocalMap)
+		}
 		if kind == "" {
-			return preview, errors.New(`cannot tell what this document is: add kind, or a pool or dataRoot field`)
+			return preview, errors.New("문서 종류를 알 수 없습니다. kind 를 적거나 pool 또는 dataRoot 가 있는 파일을 고르세요")
 		}
 		name, _ := values[0]["id"].(string)
 		if name == "" {
