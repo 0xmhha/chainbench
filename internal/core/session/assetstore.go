@@ -113,6 +113,33 @@ func (s *AssetFiles) Publish(stage AssetStage, id string, receipt []byte, execut
 	return os.Rename(stage.Directory, filepath.Join(s.root, id))
 }
 
+// AssetProbesFile holds what a binary answered where it can actually run, beside
+// the receipt of an asset this machine cannot execute.
+const AssetProbesFile = "probes.json"
+
+// Amend replaces a published asset's receipt and writes its probes file. The
+// bytes stay untouched, so the content address still holds. The probes land
+// first: a receipt never claims evidence that is not there.
+func (s *AssetFiles) Amend(id string, receipt, probes []byte) error {
+	if !validAssetID(id) {
+		return errors.New("invalid asset amendment")
+	}
+	dir := filepath.Join(s.root, id)
+	for _, file := range []struct {
+		name string
+		data []byte
+	}{{AssetProbesFile, probes}, {"receipt.json", receipt}} {
+		temp := filepath.Join(dir, file.name+".new")
+		if err := os.WriteFile(temp, file.data, 0600); err != nil {
+			return err
+		}
+		if err := os.Rename(temp, filepath.Join(dir, file.name)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Read refuses links, oversized receipts and replacement bytes. Metadata is
 // useful only while its content-addressed payload still matches the receipt.
 func (s *AssetFiles) Read(id string) ([]byte, string, string, int64, error) {

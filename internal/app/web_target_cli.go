@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 // or process driver is opened in the dashboard; each call has private inputs.
 type webTargetReader struct {
 	read  func(context.Context, ResourceReadIn) (ResourceReadOut, error)
+	probe func(context.Context, resource.ProbeRequest) (resource.BinaryProbeResult, error)
 	check func(context.Context, string) error
 }
 
@@ -104,46 +106,59 @@ func (e *WebChainEngine) targetReader(ctx context.Context, a DeploymentActor, p 
 		}
 		return nil
 	}
-	r.read = func(ctx context.Context, in ResourceReadIn) (out ResourceReadOut, err error) {
-		if err = resource.ValidateNamedRead(in.Target); err != nil {
-			return out, err
+	// target runs one `chainbench resource` command for a server with the job's
+	// logins, which live in a private directory only as long as the command.
+	target := func(ctx context.Context, spec resource.Spec, command []string, request func(logins string, docker bool) any, result any) (err error) {
+		if err = resource.ValidateNamedRead(spec); err != nil {
+			return err
 		}
-		guard := func() error { return r.check(ctx, in.Target.Server) }
+		guard := func() error { return r.check(ctx, spec.Server) }
 		if err = guard(); err != nil {
-			return out, err
+			return err
 		}
 		dir, err := os.MkdirTemp(e.root, "target-read-")
 		if err != nil {
-			return out, err
+			return err
 		}
 		defer func() { err = errors.Join(err, os.RemoveAll(dir)) }()
 		logins, err := e.documents.writeJobServerSet(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings, filepath.Join(dir, "secrets"))
 		if err != nil {
-			return out, err
+			return err
 		}
-		in.ServerSet = logins
 		// A docker pool is reached through the localmap written beside logins.
-		in.Docker = webDocker(p.Set.DeploymentDocumentInput)
-		raw, err := json.Marshal(in)
+		raw, err := json.Marshal(request(logins, webDocker(p.Set.DeploymentDocumentInput)))
 		if err != nil {
-			return out, err
+			return err
 		}
 		path := filepath.Join(dir, "request.json")
 		if err = (filestore.Local{}).Write(ctx, path, raw, 0600); err != nil {
-			return out, err
+			return err
 		}
-		args := []string{"resource", "inspect", "--json", "--request", path}
+		args := append(slices.Clone(command), "--request", path)
 		if logins != "" {
 			args = append(args, "--server-logins", logins)
 		}
 		stdout, err := runCLIWithAccessGuard(ctx, e.cli, guard, args)
 		if err != nil {
-			return out, err
+			return err
 		}
-		if err = json.Unmarshal(stdout, &out); err != nil {
-			return out, fmt.Errorf("chainbench target read: invalid output: %w", err)
+		if err = json.Unmarshal(stdout, result); err != nil {
+			return fmt.Errorf("chainbench target read: invalid output: %w", err)
 		}
-		return out, nil
+		return nil
+	}
+	r.read = func(ctx context.Context, in ResourceReadIn) (out ResourceReadOut, err error) {
+		err = target(ctx, in.Target, []string{"resource", "inspect", "--json"}, func(logins string, docker bool) any {
+			in.ServerSet, in.Docker = logins, docker
+			return in
+		}, &out)
+		return out, err
+	}
+	r.probe = func(ctx context.Context, in resource.ProbeRequest) (out resource.BinaryProbeResult, err error) {
+		err = target(ctx, in.Target, []string{"resource", "probe", "--json"}, func(logins string, docker bool) any {
+			return ResourceProbeIn{ProbeRequest: in, ServerSet: logins, Docker: docker}
+		}, &out)
+		return out, err
 	}
 	return r, nil
 }

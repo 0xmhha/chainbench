@@ -20,3 +20,16 @@ type ResourceReadOut = resource.ReadResult
 func ResourceRead(ctx context.Context, d Deps, in ResourceReadIn) (ResourceReadOut, error) {
 	return (resource.Opener{ServerSet: in.ServerSet, Lookup: d.ServerLookup, Docker: in.Docker, Env: d.Env, Report: d.Logf}).Read(ctx, in.ReadRequest)
 }
+
+// ResourceProbeIn asks a target to run one inspection of a binary in its data
+// root, with file-backed logins. It is no read: nothing read-only may reach it.
+type ResourceProbeIn struct {
+	resource.ProbeRequest
+	ServerSet string `json:"serverSet,omitempty"`
+	Docker    bool   `json:"docker,omitempty"`
+}
+
+// ResourceProbe runs that inspection for the command adapter.
+func ResourceProbe(ctx context.Context, d Deps, in ResourceProbeIn) (resource.BinaryProbeResult, error) {
+	return (resource.Opener{ServerSet: in.ServerSet, Lookup: d.ServerLookup, Docker: in.Docker, Env: d.Env, Report: d.Logf}).Probe(ctx, in.ProbeRequest)
+}
