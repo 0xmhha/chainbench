@@ -2,8 +2,9 @@
 
 ## Web UI status
 
-The Web UI renewal is finished; WEB-01..14 passed on 72a7b464. Read
-`docs/dev/web-ui-status.md` first: what is done, what is still to decide,
+The Web UI renewal is finished. WEB-01..14 last passed on 658e8632, before
+#516-#520, so a fresh capture is still owed. UI work counts as done only when
+real clicks go end to end. Read `docs/dev/web-ui-status.md` first: what is done, what is still to decide,
 what was not verified, and the principles still in force. Screen rules are in
 `web/DESIGN.md`, users and scenes in `web/PRODUCT.md`, the API contract in
 `docs/dev/web-ui.openapi.yaml`. Use Ouroboros only for qa, lateral and
