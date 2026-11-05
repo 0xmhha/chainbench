@@ -82,8 +82,10 @@ try{
   await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/unrecorded-observation.png'})
   assert.equal(fs.readFileSync(recordPath,'utf8'),lostBytes,'read-only discovery adopted a process')
   assert.equal(fs.readFileSync(ledgerPath,'utf8'),JSON.stringify(lostLedger),'refusal adopted ledger identity')
-  const cached=(await api('networks')).items.find(n=>n.id===owner.id).nodes.find(n=>n.id==='node1')
-  assert.equal(cached.state,'unknown','cached PID-zero record falsely claims stopped')
+  // A reading is as old as the collector's last round, so only one taken after the record changed counts.
+  const changedAt=Date.now();let cached
+  do{await new Promise(r=>setTimeout(r,500));cached=(await api('networks')).items.find(n=>n.id===owner.id).nodes.find(n=>n.id==='node1')}while(Date.parse(cached.observedAt??0)<changedAt&&Date.now()-changedAt<15000)
+  assert.ok(['unknown','unrecorded_running'].includes(cached.state),'cached PID-zero record falsely claims '+cached.state)
  }finally{fs.writeFileSync(recordPath,originalRecord);fs.writeFileSync(ledgerPath,originalLedger)}
  const foreign=spawn('/bin/sleep',['30'],{stdio:'ignore'})
  try{

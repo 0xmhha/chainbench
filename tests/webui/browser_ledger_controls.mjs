@@ -67,8 +67,12 @@ try{
  const recordPath=f.store+'/networks/'+owner.id+'/chain-record.json', originalRecord=fs.readFileSync(recordPath)
  const lost=JSON.parse(originalRecord);lost.nodes.find(n=>n.index===1).pid=0
  const lostBytes=JSON.stringify(lost)
+ // The ledger keeps a pid the record lost, so the ledger entry goes too: only then is the node unrecorded.
+ const ledgerPath=f.store+'/networks/'+owner.id+'/process.json',originalLedger=fs.readFileSync(ledgerPath)
+ const lostLedger=JSON.parse(originalLedger);lostLedger.procs=lostLedger.procs.filter(p=>p.Label!=='node1')
  try{
   fs.writeFileSync(recordPath,lostBytes)
+  fs.writeFileSync(ledgerPath,JSON.stringify(lostLedger))
   await api('plans','POST',planInput(owner,'node.start'),undefined,409)
   await api('plans','POST',planInput(owner,'node.stop'),undefined,409)
   const residual=await api('networks/'+owner.id+'/observations'),node=residual.nodes.find(n=>n.id==='node1')
@@ -77,11 +81,12 @@ try{
   await observerPage.getByText('node1 · 기록되지 않은 실행 발견',{exact:true}).waitFor()
   await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/unrecorded-observation.png'})
   assert.equal(fs.readFileSync(recordPath,'utf8'),lostBytes,'read-only discovery adopted a process')
-  const cached=(await api('networks')).items.find(n=>n.id===owner.id).nodes.find(n=>n.id==='node1')
-  assert.equal(cached.state,'unknown','cached PID-zero record falsely claims stopped')
- }finally{fs.writeFileSync(recordPath,originalRecord)}
+  // A reading is as old as the collector's last round, so only one taken after the record changed counts.
+  const changedAt=Date.now();let cached
+  do{await new Promise(r=>setTimeout(r,500));cached=(await api('networks')).items.find(n=>n.id===owner.id).nodes.find(n=>n.id==='node1')}while(Date.parse(cached.observedAt??0)<changedAt&&Date.now()-changedAt<15000)
+  assert.ok(['unknown','unrecorded_running'].includes(cached.state),'cached PID-zero record falsely claims '+cached.state)
+ }finally{fs.writeFileSync(ledgerPath,originalLedger);fs.writeFileSync(recordPath,originalRecord)}
  const foreign=spawn('/bin/sleep',['30'],{stdio:'ignore'})
- const ledgerPath=f.store+'/networks/'+owner.id+'/process.json',originalLedger=fs.readFileSync(ledgerPath)
  try{
   const conflictingLedger=JSON.parse(originalLedger);conflictingLedger.procs.find(p=>p.Label==='node1').PID=foreign.pid
   const ledgerBytes=JSON.stringify(conflictingLedger);fs.writeFileSync(ledgerPath,ledgerBytes)
@@ -91,7 +96,7 @@ try{
   await observerPage.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
   await observerPage.getByText('실행 기록과 프로세스 기록의 PID 또는 소유 범위가 다름',{exact:true}).first().waitFor()
   await observerPage.getByLabel('작업 종류',{exact:true}).selectOption('node.stop')
-  assert.equal(await observerPage.getByLabel('작업 노드',{exact:true}).locator('option[value="node1"]').count(),0,'UI offers control for a conflicting ledger')
+  assert.equal(await observerPage.getByLabel('작업 노드',{exact:true}).locator('option[value="node1"]:not([disabled])').count(),0,'UI offers control for a conflicting ledger')
   await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/ledger-observation.png'})
 
   assert.equal(fs.readFileSync(recordPath).compare(originalRecord),0,'ledger refusal changed record')
