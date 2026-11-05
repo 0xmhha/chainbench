@@ -117,6 +117,10 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 				return nil, err
 			}
 		}
+		machines, err := readWebRecordedMachines(dir)
+		if err != nil {
+			return nil, err
+		}
 		network := WebNetwork{ID: w.ID, WorkspaceID: w.ID, Ownership: "owned", Version: w.Revision, Nodes: []WebNode{}}
 		readings := map[string]WebNodeObserved{}
 		if e.monitor != nil {
@@ -139,7 +143,7 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			if target.HostIdentity == "" {
 				controls = []string{}
 			}
-			n := WebNode{ID: string(ns.NodeLabel()), Ref: w.ID + "." + string(ns.NodeLabel()), Server: ns.Server, SyncMode: ns.SyncMode, Ports: webNodePorts(ns), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
+			n := WebNode{ID: string(ns.NodeLabel()), Ref: w.ID + "." + string(ns.NodeLabel()), Server: ns.Server, SyncMode: ns.SyncMode, Ports: webNodePorts(ns), NetworkID: w.ID, Role: ns.Role, HostIdentity: webMachineOf(machines, target, ns).HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
 			n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
 			if seen, ok := readings[n.ID]; ok {
 				n.State, n.ObservationReason, n.ObservedPID, n.ObservedAt, n.Executable = seen.State, seen.Reason, seen.PID, seen.At, seen.Executable

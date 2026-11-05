@@ -72,7 +72,22 @@ printf '%s\n%s\n%s\n%s\n' "$system" "$arch" "$identity" "$resolved"`
 	if err != nil {
 		return Inspection{}, errors.New("resource: target identity, platform or data-root access could not be verified")
 	}
+	parsed, err := parseInspection(output)
+	if err != nil {
+		return Inspection{}, err
+	}
+	parsed.Transport = out.Transport
+	return parsed, nil
+}
+
+// parseInspection reads the four lines the inspection command prints: system,
+// architecture, machine identity and the resolved data path.
+func parseInspection(output string) (Inspection, error) {
+	var out Inspection
 	lines := strings.Split(strings.TrimSuffix(output, "\n"), "\n")
+	if len(lines) == 4 && lines[2] == "" {
+		return Inspection{}, errors.New("resource: target has no machine identity: /etc/machine-id is empty, and the Web tells servers apart by it")
+	}
 	if len(lines) != 4 || len(lines[2]) < 8 || !filepath.IsAbs(lines[3]) || (lines[0] != "linux" && lines[0] != "darwin") || (lines[1] != "arm64" && lines[1] != "amd64") {
 		return Inspection{}, errors.New("resource: malformed target inspection")
 	}

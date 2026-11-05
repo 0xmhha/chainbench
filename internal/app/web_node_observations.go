@@ -52,24 +52,14 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	}
 	// A spread network records each server's machine; a node is observed
 	// only on the machine recorded for its own server.
-	machines := map[string]resource.Inspection{}
-	if raw, err := os.ReadFile(filepath.Join(dir, "web-targets.json")); err == nil {
-		var recorded []webRecordedMachine
-		if err = json.Unmarshal(raw, &recorded); err != nil {
-			return WebNetwork{}, err
-		}
-		for _, m := range recorded {
-			machines[m.Server] = m.Target
-		}
-	} else if webRecordSpansServers(state) {
+	machines, err := readWebRecordedMachines(dir)
+	if err != nil {
+		return WebNetwork{}, err
+	}
+	if len(machines) == 0 && webRecordSpansServers(state) {
 		return network, nil
 	}
-	expectedOf := func(ns node.Record) resource.Inspection {
-		if m, ok := machines[ns.Server]; ok {
-			return m
-		}
-		return target
-	}
+	expectedOf := func(ns node.Record) resource.Inspection { return webMachineOf(machines, target, ns) }
 	for i, ns := range state.Nodes {
 		network.Nodes[i].HostIdentity = expectedOf(ns).HostIdentity
 	}

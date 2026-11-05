@@ -127,3 +127,45 @@ func TestSharedCaseAndChainPresetRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+// A server set or workspace config written for the CLI declares no kind and the
+// import screen sends none, so the document's own fields have to say what it is.
+func TestPreviewImport_RecognizesAnUndeclaredCLIDeclaration(t *testing.T) {
+	store, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := DeploymentActor{ID: "o", Role: "operator"}
+	cases := []struct {
+		name, filename, source, wantKind string
+	}{
+		{"server set", "server-set.yaml", "version: 2\npool:\n  hosts:\n    - name: server1\n      addr: 192.0.2.11\n  slots: 4\n  ports:\n    p2p: {base: 30301, step: 1}\n    rpc: {base: 8601, step: 1}\n    ws: {base: 8701, step: 1}\n    auth: {base: 8501, step: 1}\nssh:\n  user: test\n  password: imported-secret-sentinel\n", "server-set"},
+		{"workspace config", "workspace-config.yaml", "version: 1\ndataRoot: /data/chainbench\npaths:\n  binaries: bin\n  configs: configs\n  genesis: genesis\n  keystore: keystore\n  keyrings: keyrings\n  nodes: node\n  runtime: runtime\n  logs: logs\ncontrol:\n  artifactRoot: ~/.chainbench\ninputs:\n  mode: generated\nexecution:\n  chain: fresh\n", "workspace-config"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			preview, err := store.PreviewImport(a, DocumentImportInput{Filename: tc.filename, Format: "yaml", Source: tc.source})
+			if err != nil {
+				t.Fatalf("PreviewImport: %v", err)
+			}
+			if len(preview.RedactedDocuments) != 1 || preview.RedactedDocuments[0].Kind != tc.wantKind {
+				t.Fatalf("documents = %+v, errors %+v, want one %s", preview.RedactedDocuments, preview.Validation.Errors, tc.wantKind)
+			}
+			if strings.Contains(string(preview.RedactedDocuments[0].Content), "imported-secret-sentinel") {
+				t.Fatal("an inline ssh password reached the shared declaration")
+			}
+		})
+	}
+}
+
+func TestPreviewImport_AnUnrecognizableDocumentNamesWhatIsMissing(t *testing.T) {
+	store, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := DeploymentActor{ID: "o", Role: "operator"}
+	_, err = store.PreviewImport(a, DocumentImportInput{Filename: "notes.yaml", Format: "yaml", Source: "hello: world\n"})
+	if err == nil || !strings.Contains(err.Error(), "kind") {
+		t.Fatalf("err = %v, want the missing kind named", err)
+	}
+}

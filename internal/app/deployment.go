@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"go.yaml.in/yaml/v3"
 )
@@ -205,6 +206,10 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 		if p.Slots > 4096 || len(p.Hosts) > 4096 || p.Cap() > 4096 {
 			return contentFieldError(errors.New("placement exceeds 4096 slots"), "pool", "slots")
 		}
+		// A pool is saved before any chain is chosen, so only the smallest
+		// family's room can be asked of it here; the plan checks the room of
+		// the chain it composes.
+		p.Reservation = node.Reservation{P2PSpan: minChainP2PSpan}
 		if err := p.Validate(); err != nil {
 			// The pool's own checks cover its hosts, slots and port bands together.
 			return contentFieldError(err, "pool")
@@ -220,6 +225,10 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 		return errors.New("unsupported deployment document kind")
 	}
 }
+
+// minChainP2PSpan is the p2p room of the family that needs the least: wbft
+// listens on the p2p port alone, while wemix adds two for its embedded etcd.
+const minChainP2PSpan = 1
 
 func deploymentSet(in DeploymentDocumentInput) (*resource.Set, error) {
 	value, _, err := splitWebServerSet(in.Content)

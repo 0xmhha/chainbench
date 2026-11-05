@@ -2414,6 +2414,10 @@ paths:
                     type: array
                     items:
                       type: object
+                      properties:
+                        name:
+                          type: string
+                          description: The uploaded file's name. A server-provisioned asset has none.
                 required:
                 - items
         '400':
@@ -3455,6 +3459,9 @@ components:
               executable:
                 type: string
                 description: Node binary name a launching job runs on that host. The engine refuses to compose while the same binary runs there outside its workspace, so plans conflict on it; a finished job keeps it only while its network record names a launched node.
+              idle:
+                type: boolean
+                description: A server a spread plan inspects but places no node on. It stays in the plan and holds nothing, so it never conflicts.
     PlanInput:
       type: object
       properties:

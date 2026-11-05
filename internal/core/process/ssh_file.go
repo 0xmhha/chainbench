@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
@@ -27,7 +28,24 @@ func (p SSHFileProvisioner) ProvisionFile(ctx context.Context, remotePath string
 		return err
 	}
 	if result.ExitCode != 0 {
-		return fmt.Errorf("driver: SSH file upload %s failed (exit %d)", remotePath, result.ExitCode)
+		return uploadFailure(remotePath, result)
 	}
 	return nil
+}
+
+// maxUploadReason bounds how much of the server's stderr an upload failure
+// carries; the last lines are the ones that name the cause.
+const maxUploadReason = 1024
+
+// uploadFailure says why the server refused an upload. The command writes no
+// file content to stderr, so its text is safe to show.
+func uploadFailure(remotePath string, result remote.ExecResult) error {
+	reason := strings.TrimSpace(result.Stderr)
+	if reason == "" {
+		return fmt.Errorf("driver: SSH file upload %s failed (exit %d)", remotePath, result.ExitCode)
+	}
+	if len(reason) > maxUploadReason {
+		reason = reason[len(reason)-maxUploadReason:]
+	}
+	return fmt.Errorf("driver: SSH file upload %s failed (exit %d): %s", remotePath, result.ExitCode, reason)
 }

@@ -2,7 +2,10 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -62,6 +65,51 @@ func webInspectServers(ctx context.Context, lookup *webTargetReader, servers []r
 		out = append(out, t)
 	}
 	return out, nil
+}
+
+// webRecordOnSelectedServers refuses a plan whose server selection leaves out
+// the machine the workspace's network is recorded on: the plan holds no login
+// for it, and one workspace records one network.
+func webRecordOnSelectedServers(recorded resource.Spec, servers []resource.Server) error {
+	if recorded.Server == "" {
+		return nil
+	}
+	for _, s := range servers {
+		if s.Name == recorded.Server {
+			return nil
+		}
+	}
+	return webConflict("this workspace's network is recorded on " + recorded.Server + "; select that server, or use another workspace for a second network")
+}
+
+// readWebRecordedMachines reads each server's machine from a spread network's
+// web-targets.json, keyed by server name. A single-server network has no file.
+func readWebRecordedMachines(dir string) (map[string]resource.Inspection, error) {
+	machines := map[string]resource.Inspection{}
+	raw, err := os.ReadFile(filepath.Join(dir, "web-targets.json"))
+	if os.IsNotExist(err) {
+		return machines, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var recorded []webRecordedMachine
+	if err = json.Unmarshal(raw, &recorded); err != nil {
+		return nil, err
+	}
+	for _, m := range recorded {
+		machines[m.Server] = m.Target
+	}
+	return machines, nil
+}
+
+// webMachineOf is the machine recorded for a node's own server, or the
+// network's target when no machine is recorded for it.
+func webMachineOf(machines map[string]resource.Inspection, target resource.Inspection, ns node.Record) resource.Inspection {
+	if m, ok := machines[ns.Server]; ok {
+		return m
+	}
+	return target
 }
 
 // webNodeServer is the server one recorded node runs on.
@@ -130,7 +178,7 @@ func webTargetClaims(servers []resource.Server, targets []resource.Inspection, p
 				}
 			}
 		}
-		out = append(out, WebResourceClaim{HostIdentity: t.HostIdentity, DataPath: t.DataPath, Ports: compactPorts(ports)})
+		out = append(out, WebResourceClaim{HostIdentity: t.HostIdentity, DataPath: t.DataPath, Ports: compactPorts(ports), Idle: len(servers) > 1 && len(ports) == 0})
 	}
 	return out
 }

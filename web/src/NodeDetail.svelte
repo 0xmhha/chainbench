@@ -49,7 +49,7 @@
       <dt>상태</dt><dd data-testid="node-state"><StatusBadge state={node.state} /> · {stateSource(node, Boolean(observed)).note}</dd>
       <dt>PID</dt><dd>기록 {node.pid || '없음'} · 관측 {stateSource(node, Boolean(observed)).pid}{node.observationReason && node.observationReason !== 'not_observed' ? ` · ${node.observationReason}` : ''}</dd>
       <dt>RPC</dt><dd data-testid="node-rpc">{#if latest.length}{#each latest as s}<span class="metric">{s.name} {s.value ?? '값 없음'}{s.unit ? ' ' + s.unit : ''} · {s.source} · {time(s.time)}</span>{/each}{:else}최근 10분 동안 수집된 값이 없습니다.{/if}</dd>
-      <dt>서버</dt><dd class="mono">{node.hostIdentity || '—'}</dd>
+      <dt>서버</dt><dd class="mono" title={node.hostIdentity}>{node.server || node.hostIdentity || '—'}</dd>
       <dt>데이터 경로</dt><dd class="mono">{node.dataPath || '—'}</dd>
       <dt>바이너리</dt><dd class="mono">{node.binaryAssetId ? `${node.binaryAssetId} · SHA-256 ${node.binarySHA256}` : observed ? '노드별 지정 없음 · 네트워크를 만든 작업의 기본 바이너리를 씁니다' : '노드별 바이너리는 노드 상태를 확인하면 보입니다'}</dd>
       <dt>구성 revision</dt><dd>{workspace?.name} r{workspace?.revision}{#each documents as d} · {d.name} ({d.kind}) r{d.revision}{/each}</dd>

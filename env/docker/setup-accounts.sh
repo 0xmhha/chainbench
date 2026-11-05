@@ -38,3 +38,7 @@ for entry in $DEV_ACCOUNTS; do
     # printf, not echo: /bin/sh is dash here and its echo eats backslashes.
     printf '%s:%s\n' "$name" "$DEV_ACCOUNTS_PASSWORD" | chpasswd
 done
+
+# Nothing generates a machine id without systemd, and the Web tells servers
+# apart by it. Keep one that exists so a restart stays the same server.
+[ -s /etc/machine-id ] || tr -d '-' </proc/sys/kernel/random/uuid >/etc/machine-id

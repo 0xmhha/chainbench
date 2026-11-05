@@ -2,6 +2,8 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -160,5 +162,53 @@ func TestSpreadRecordedPlacementAcceptsEachServerOfTheSet(t *testing.T) {
 	}
 	if !webRecordSpansServers(state) {
 		t.Fatal("the record is spread")
+	}
+}
+
+// A spread plan visits every server of the set, but writes only to those that
+// get a node. Four nodes on a fifteen-server pool must leave the other eleven
+// free for the next job.
+func TestSpreadClaimsLeaveServersWithoutNodesFree(t *testing.T) {
+	servers := []resource.Server{{Name: "a", Host: "192.0.2.1"}, {Name: "b", Host: "192.0.2.2"}}
+	pool := resource.Pool{
+		Hosts: []resource.Host{{Name: "a", Addr: "192.0.2.1"}, {Name: "b", Addr: "192.0.2.2"}},
+		Slots: 4,
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
+	}
+	placement, err := resource.Assign(pool, []resource.Request{{Role: node.RoleBP, Server: "a"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	targets := []resource.Inspection{{HostIdentity: "host-a", DataPath: "/data"}, {HostIdentity: "host-b", DataPath: "/data"}}
+	claims := webTargetClaims(servers, targets, placement)
+	if claims[0].Idle || !claims[1].Idle {
+		t.Fatalf("claims = %+v, want only the empty server idle", claims)
+	}
+	next := WebResourceClaim{HostIdentity: "host-b", DataPath: "/data", Ports: []int{31000}}
+	if claimsOverlap(claims[1], next) || claimsOverlap(next, claims[1]) {
+		t.Fatal("a server without nodes blocked the next job")
+	}
+	occupied := WebResourceClaim{HostIdentity: "host-a", DataPath: "/data"}
+	if !claimsOverlap(claims[0], occupied) {
+		t.Fatal("a server holding a node stopped conflicting")
+	}
+}
+
+// A workspace records one network. Planning elsewhere used to read the recorded
+// server without its login and answer a bare 403.
+func TestRecordedTargetOutsideTheSelectionNamesTheServer(t *testing.T) {
+	servers := []resource.Server{{Name: "server5"}}
+	err := webRecordOnSelectedServers(resource.Spec{Server: "server1", DataRoot: "/data"}, servers)
+	if err == nil || !strings.Contains(err.Error(), "server1") {
+		t.Fatalf("err = %v, want the recorded server named", err)
+	}
+	if !errors.Is(err, ErrDeploymentConflict) {
+		t.Fatalf("err = %v, want a conflict", err)
+	}
+	if err = webRecordOnSelectedServers(resource.Spec{Server: "server5", DataRoot: "/data"}, servers); err != nil {
+		t.Fatal(err)
+	}
+	if err = webRecordOnSelectedServers(resource.Spec{DataRoot: "/data"}, servers); err != nil {
+		t.Fatalf("a local record needs no login: %v", err)
 	}
 }

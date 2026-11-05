@@ -86,7 +86,7 @@ func WithManifests(store *app.ManifestStore, authenticate DeploymentAuthenticato
 					deploymentError(w, err)
 					return
 				}
-				items = append(items, map[string]string{"id": asset.ID, "chain": asset.Chain, "sha256": asset.SHA256, "commit": asset.Commit})
+				items = append(items, map[string]string{"id": asset.ID, "name": item.Name, "chain": asset.Chain, "sha256": asset.SHA256, "commit": asset.Commit})
 			}
 			deploymentJSON(w, 200, map[string]any{"items": items})
 		})
