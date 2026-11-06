@@ -162,6 +162,8 @@
  /* The top band of the plot holds the cursor labels, clear of the axis ticks. */
  .plot { position: relative; cursor: crosshair; padding-top: 24px; }
  .plot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+ /* The strip fills in after its metrics arrive; holding its height keeps the page still. */
+ .strip { min-height: 300px; }
  .chan { height: 40px; border-bottom: var(--rule); }
  .chan .lab { padding: 4px var(--space-2) 0 0; border-right: var(--rule); font: 600 var(--text-sm)/1.15 var(--font-sans); color: var(--text); }
  .chan .lab small { display: block; margin-top: 2px; font: var(--text-xs) var(--font-mono); color: var(--text-muted); font-weight: 400; }
@@ -212,7 +214,7 @@
  .keys summary, .keys-touch summary { cursor: pointer; font: 600 var(--text-xs) var(--font-cond); letter-spacing: .02em; }
  .keys p, .keys-touch p { margin: var(--space-1) 0 0; color: var(--text-faint); }
  @media (max-width: 900px) {
-  .strip { grid-template-columns: minmax(0, 1fr); }
+  .strip { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .chart { padding-right: 0; border-right: 0; }
   .measure { padding-left: 0; border-top: var(--rule); }
   .chart { --lab: 84px; }

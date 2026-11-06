@@ -633,6 +633,13 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if p.Replacement != nil {
 		out.Changes = append(out.Changes, fmt.Sprintf("Replace only %s executable with registered asset %s · SHA-256 %s; preserve genesis, node data and sibling processes", p.Input.NodeIDs[0], p.Replacement.Evidence.ID, p.Replacement.Evidence.SHA256))
 	}
+	cases := []string{}
+	if p.TestRun != nil {
+		for _, c := range p.TestRun.Cases {
+			cases = append(cases, c.Document.Name)
+		}
+	}
+	out.Summary = webPlanSummary(p.Binary.Chain, p.ExecutionBinary, cases, servers, placement)
 	if p.TestRun != nil {
 		display := p.TestRun.Plan
 		if len(p.TestRun.Genesis) > 0 {

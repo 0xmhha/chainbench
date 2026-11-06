@@ -49,7 +49,7 @@ export function logQuery({ from, to, runId, search, levels, cursor, limit }) {
  if (to) q.set('to', to)
  const needle = search?.trim()
  if (needle) q.set('q', needle)
- if (levels?.length) q.set('level', levels.join(','))
+ if (levels?.length) q.set('level', [...levels].sort().join(','))
  if (cursor) q.set('cursor', cursor)
  if (limit) q.set('limit', String(Math.min(limit, LOG_PAGE_MAX)))
  return q.toString()

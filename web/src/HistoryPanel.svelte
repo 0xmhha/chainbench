@@ -1,4 +1,5 @@
 <script>
+ import { scrollMotion } from './nav.mjs'
   import { formatTime } from './labels.mjs'
   import { recordName } from './dashboard-view.mjs'
   import StatusBadge from './StatusBadge.svelte'
@@ -71,7 +72,7 @@
     if (!kept) Object.assign(focus, { run: id, test: '', node: '', at: '' })
     try { detail = await client.request('history/' + encodeURIComponent(id), runRead(decodeRun)) } catch (e) { error = `실행 기록 ${id}을(를) 열지 못했습니다. ${e.message}`; focus.run = '' } finally { busy = false }
     // The detail opens below the list; bring it into view so the failure is what the reader sees.
-    requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    requestAnimationFrame(() => detailBox?.scrollIntoView({ behavior: scrollMotion(), block: 'start' }))
   }
   const seconds = value => value == null ? '자료 없음' : `${Math.round(value * 10) / 10}초`
   const metricValue = value => value ? `${value.samples}개 · 최소 ${value.min ?? '—'} · 최대 ${value.max ?? '—'} · 마지막 ${value.last ?? '—'}` : '표본 없음'
@@ -116,7 +117,7 @@
   {#if busy}<p role="status">기록을 확인하는 중…</p>{/if}
   <div class="toolbar"><span>{items.length}개 표시 · 비교는 2–4개 선택</span><button disabled={busy || selected.length < 2} onclick={compare}>선택한 실행 비교</button></div>
   {#if items.length === 0}<p class="empty">조건에 맞는 실행 기록이 없습니다.</p>{:else}
-    <div class="table-wrap"><table><thead><tr><th>비교</th><th>실행</th><th>체인 / Workspace</th><th>시작 시각</th><th>상태</th><th>결과</th></tr></thead><tbody>{#each items as run (run.id)}<tr>
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex: a wide table must scroll by keyboard --><div class="table-wrap" tabindex="0" role="region" aria-label="실행 기록 표"><table><thead><tr><th>비교</th><th>실행</th><th>체인 / Workspace</th><th>시작 시각</th><th>상태</th><th>결과</th></tr></thead><tbody>{#each items as run (run.id)}<tr>
       <td><label class="check-cell"><input name="compare" value={run.id} type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></label></td>
       <td><button class="record" onclick={() => open(run.id)}>{run.summary.operation ?? run.summary.command ?? run.id}<small title={run.id}>{recordName(run)}</small></button></td>
       <td>{run.chain || '자료 없음'}<small>{run.workspaceId || '자료 없음'}</small></td><td>{format(run.startedAt)}</td><td><StatusBadge state={run.state} /></td>

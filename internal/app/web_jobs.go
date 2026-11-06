@@ -195,7 +195,7 @@ func (s *WebJobs) Plan(ctx context.Context, a DeploymentActor, in WebPlanInput) 
 	if p.ChainSurfaces == nil {
 		p.ChainSurfaces = []WebChainSurfaceRef{}
 	}
-	plan := WebPlan{ID: deploymentID(), ActorID: a.ID, WorkspaceID: in.WorkspaceID, Operation: in.Operation, DocumentRefs: in.DocumentRefs, TargetFingerprint: p.Fingerprint, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Phases: p.Phases, Changes: p.Changes, RequiredAccess: p.RequiredAccess, Resources: []string{}, ChainSurfaces: p.ChainSurfaces, Validation: map[string]any{"valid": true, "errors": []any{}, "warnings": []any{}}}
+	plan := WebPlan{ID: deploymentID(), ActorID: a.ID, WorkspaceID: in.WorkspaceID, Operation: in.Operation, DocumentRefs: in.DocumentRefs, TargetFingerprint: p.Fingerprint, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Phases: p.Phases, Changes: p.Changes, RequiredAccess: p.RequiredAccess, Resources: []string{}, Summary: p.Summary, ChainSurfaces: p.ChainSurfaces, Validation: map[string]any{"valid": true, "errors": []any{}, "warnings": []any{}}}
 	for _, c := range p.Claims {
 		if c.Idle {
 			continue
@@ -303,6 +303,9 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 		return WebJob{}, &WebBusyError{Holders: holders}
 	}
 	job := WebJob{ID: deploymentID(), ActorID: a.ID, WorkspaceID: p.Input.WorkspaceID, PlanID: planID, Operation: p.Input.Operation, State: "accepted", Retention: p.Input.Retention, NodeDisposition: "unknown", CreatedAt: time.Now().UTC(), Phases: []WebJobPhase{}, RunIDs: []string{}, PartialEffects: []string{}, UnresolvedResources: []string{}, CredentialRefs: webJobCredentialRefs(p.Input), RequestID: requestIDFrom(ctx)}
+	if p.Prepared.Summary != nil {
+		job.Cases = p.Prepared.Summary.Cases
+	}
 	if err = s.commit(a.ID, job.ID, "job.accepted", func(next *webJobState) { next.Jobs[job.ID] = job; next.Keys[keyHash] = webJobKey{body, job.ID} }); err != nil {
 		return WebJob{}, err
 	}
