@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 )
 
-// webTargetPhases change the target machines; the phases before them only
-// write the control directory on this server.
-var webTargetPhases = map[string]bool{"deploy": true, "init": true, "start": true}
+// webTargetPhases change the target machines: genesis ships the binary that
+// generates it. The phases before them only write the control directory on
+// this server.
+var webTargetPhases = map[string]bool{"genesis": true, "deploy": true, "init": true, "start": true}
 
 // webFailureDisposition is what a failed composition left behind. A failure
 // before any target phase leaves the nodes untouched; one during or after a
