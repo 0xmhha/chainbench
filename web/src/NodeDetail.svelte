@@ -65,7 +65,7 @@
     {/if}
     <h3>최근 10분 로그</h3>
     {#if logSpan}<LogViewer {networkId} nodes={[nodeId]} node={nodeId} from={logSpan.from} to={logSpan.to} testid="node-logs" />{/if}
-  {:else if !error}<p class="muted">노드를 불러오는 중…</p>{/if}
+  {:else if network && !error}<p class="muted" data-testid="node-missing">이 네트워크에 {nodeId} 기록이 없습니다. <a href="/monitoring" onclick={e => follow(e, '/monitoring')}>모니터링으로 돌아가기</a></p>{:else if !error}<p class="muted">노드를 불러오는 중…</p>{/if}
 </section>
 
 <style>

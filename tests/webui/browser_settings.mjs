@@ -38,6 +38,7 @@ try{
  // The audit entry is written after the response the screen reacted to, so
  // the period is queried again until it appears.
  let auditText=''
+ await page.locator('details.audit > summary').click()
  for(let i=0;i<20&&!/users/.test(auditText);i++){await page.getByRole('button',{name:'기간 조회',exact:true}).click();await page.getByTestId('audit-row').first().waitFor({timeout:15000});auditText=(await page.getByTestId('audit-row').allTextContents()).join('\n');if(!/users/.test(auditText))await sleep(500)}
  assert.match(auditText,/users/,'user creation is not in the audit trail')
  observed.adminAudit=await page.getByTestId('audit-row').count()

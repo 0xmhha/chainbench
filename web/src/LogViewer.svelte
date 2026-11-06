@@ -191,7 +191,8 @@
    {@const line=entries[selected]}
    <div class="detail">
     <p class="meta"><span class="level {levelTone(line.level)}">{line.level??'레벨 없음'}</span> {time(line.time)}{#if node===ALL} · {line.node}{/if}</p>
-    <pre>{line.text}</pre>
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex: a long line must scroll by keyboard -->
+    <pre tabindex="0" role="region" aria-label="선택한 로그 줄">{line.text}</pre>
     <div class="actions">
      <button type="button" onclick={()=>copy(line.text)}>줄 복사</button>{#if copied}<span role="status">{copied}</span>{/if}
      {#if !context}<button type="button" onclick={()=>aroundLine(line)}>이 줄 전후 {CONTEXT_SECONDS}초 보기</button>{/if}

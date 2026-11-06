@@ -103,13 +103,13 @@
 <section class="panel history-panel" aria-label="실행 히스토리">
   <header><div><h2>실행 기록</h2><p>서버에 보관된 결과 사본입니다. 과거 기록에서 확인할 수 없는 값은 자료 없음으로 표시합니다.</p></div><button disabled={busy} onclick={() => load()}>히스토리 새로고침</button></header>
   <form onsubmit={e => { e.preventDefault(); selected = []; comparison = null; load() }}>
-    <label class="search">기록 검색<input name="search" aria-label="히스토리 검색" bind:value={search} placeholder="실행 ID, 명령, 테스트 이름" /></label>
+    <label class="search">히스토리 검색<input name="search" aria-label="히스토리 검색" bind:value={search} placeholder="실행 ID, 명령, 테스트 이름" /></label>
     <label>체인<select name="chain" aria-label="히스토리 체인" bind:value={chain}><option value="">모든 체인</option>{#each knownChains as value}<option>{value}</option>{/each}</select></label>
     <label>Workspace<select name="workspace-id" aria-label="히스토리 Workspace" bind:value={workspaceId}><option value="">모든 Workspace</option>{#each workspaces as w}<option value={w.id}>{w.name}</option>{/each}</select></label>
     <label>실행자<select name="actor-id" aria-label="히스토리 실행자" bind:value={actorId}><option value="">모든 실행자</option>{#each knownActors as value}<option>{value}</option>{/each}</select></label>
     <label>상태<select name="state" aria-label="히스토리 상태" bind:value={state}><option value="">모든 상태</option>{#each ['accepted', 'running', 'cancelling', 'succeeded', 'failed', 'cancelled', 'interrupted', 'unknown'] as value}<option>{value}</option>{/each}</select></label>
-    <label>테스트 케이스<select name="case-id" aria-label="히스토리 케이스" bind:value={caseId}><option value="">모든 케이스</option>{#each knownCases as value}<option>{value}</option>{/each}</select></label>
-    <label>시작 이후<input name="from" aria-label="히스토리 시작 시각" type="datetime-local" bind:value={from} /></label><label>시작 이전<input name="to" aria-label="히스토리 종료 시각" type="datetime-local" bind:value={to} /></label>
+    <label>히스토리 케이스<select name="case-id" aria-label="히스토리 케이스" bind:value={caseId}><option value="">모든 케이스</option>{#each knownCases as value}<option>{value}</option>{/each}</select></label>
+    <label>히스토리 시작 시각<input name="from" aria-label="히스토리 시작 시각" type="datetime-local" bind:value={from} /></label><label>히스토리 종료 시각<input name="to" aria-label="히스토리 종료 시각" type="datetime-local" bind:value={to} /></label>
     <button type="submit" disabled={busy}>필터 적용</button>
   </form>
   {#if error}<p class="error" role="alert">{error}</p>{/if}

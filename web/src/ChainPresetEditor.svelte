@@ -171,7 +171,7 @@
     {#if webSession}
       <label for="saved-chain-document">공유 체인 구성</label>
       <select id="saved-chain-document" value={savedId} onchange={e => { if(e.target.value) loadSaved(e.target.value) }}><option value="">새 구성</option>{#each saved as entry}<option value={entry.id}>{entry.name} · revision {entry.revision}</option>{/each}</select>
-      {#if writable}<label>체인 구성 파일 가져오기 <input name="chain-preset-editor-input-1" aria-label="체인 구성 import" type="file" accept=".json,.yaml,.yml" onchange={importFile} /></label>{/if}
+      {#if writable}<label>체인 구성 파일 가져오기 <input name="chain-preset-editor-input-1" aria-label="체인 구성 파일 가져오기" type="file" accept=".json,.yaml,.yml" onchange={importFile} /></label>{/if}
       {#if preview}<p>Import 원문은 서버에 암호화되어 {formatTime(preview.expiresAt)}까지 보존되고, 그 전에 확정해야 합니다. {preview.changes.join('; ')}</p>{/if}
     {/if}
     <label for="chain-preset">체인 프리셋</label>

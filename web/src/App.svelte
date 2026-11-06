@@ -47,6 +47,8 @@
   // A panel mounts on its first visit and then stays, so its form is kept.
   let visited = $state(new Set())
   $effect.pre(() => { if (!visited.has(route)) visited = new Set([...visited, route]) })
+  // Running comes first once something is set up; defining it is the rarer task.
+  const savedSetup = $derived(Object.keys(workspaceNames).length > 0)
   const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
   // The top bar names the selected workspace; names are read once per session.
   $effect(() => { if (ready && webSession) webApi(webSession)('workspaces?limit=100').then(page => { workspaceNames = Object.fromEntries(page.items.map(w => [w.id, w.name])) }).catch(() => {}) })
@@ -71,7 +73,7 @@
 <div class="shell">
   <aside aria-label="주 메뉴">
     <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol" aria-hidden="true">cb</span>chainbench</a>
-    <nav>{#each pages as [path, label]}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => follow(e, path)}>{label}</a>{/each}</nav>
+    <nav aria-label="주 메뉴">{#each pages as [path, label]}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => follow(e, path)}>{label}</a>{/each}</nav>
   </aside>
   <div class="workspace">
     <header class="topbar">
@@ -92,9 +94,11 @@
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       {#if ready && webSession !== null}
         {#key webSession?.user.id}
+          {#snippet jobPanel()}{#key route}<JobPanel {webSession} catalogRevision={catalogRevision+assetRevision} testOnly={route==='/tests'} />{/key}{/snippet}
+          {#if route==='/chains'&&savedSetup}{@render jobPanel()}{/if}
           {#if visited.has('/chains')}<div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /><DeploymentEditor {webSession} onsaved={()=>catalogRevision++} /></div>{/if}
           {#if visited.has('/tests')}<div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /></div>{/if}
-          {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} catalogRevision={catalogRevision+assetRevision} testOnly={route==='/tests'} />{/key}{/if}
+          {#if route==='/tests'||(route==='/chains'&&!savedSetup)}{@render jobPanel()}{/if}
           {#if visited.has('/settings')}<div hidden={route !== '/settings'}><SettingsPanel {webSession} {assetRevision} onuploaded={()=>assetRevision++} /></div>{/if}
           {#if visited.has('/history')}<div hidden={route !== '/history'}><HistoryPanel {webSession} active={route === '/history'} /></div>{/if}
         {/key}
@@ -124,7 +128,7 @@
   aside { min-width: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: var(--space-4); }
   .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0 var(--space-3); border-bottom: var(--rule-strong); color: var(--text); font: 700 var(--text-md) var(--font-cond); letter-spacing: .08em; }
   .brand:hover { text-decoration: none; }
-  .brand-symbol { display: grid; place-items: center; width: 26px; height: 26px; border: 1.5px solid var(--danger); color: var(--danger); font: 700 var(--text-sm) var(--font-mono); letter-spacing: 0; }
+  .brand-symbol { display: grid; place-items: center; width: 26px; height: 26px; border: 1.5px solid var(--text); color: var(--text); font: 700 var(--text-sm) var(--font-mono); letter-spacing: 0; }
   nav { display: grid; margin-top: var(--space-3); counter-reset: page; }
   nav a { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: var(--rule); color: var(--text-muted); counter-increment: page; }
   nav a::after { content: counter(page, decimal-leading-zero); font: var(--text-xs) var(--font-mono); color: var(--text-faint); }

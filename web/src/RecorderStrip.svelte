@@ -216,6 +216,8 @@
   .chart { padding-right: 0; border-right: 0; }
   .measure { padding-left: 0; border-top: var(--rule); }
   .chart { --lab: 84px; }
+  .chan { height: auto; min-height: 40px; }
+  .chan .lab small { white-space: normal; }
   .ticks span:not(:nth-child(3n+1)) { display: none; }
   .ticks { min-width: 0; overflow: hidden; }
   .cur b { max-width: 40vw; overflow: hidden; }

@@ -89,8 +89,8 @@
   {/if}
  </dl>
  <p class="muted note">큰 정수는 정확한 숫자 문자열로 표시합니다. 내보낸 파일은 원래 JSON 수치 형식을 유지합니다.</p>
- <details><summary>원본 JSON (테스트 판정 · 단언 · 단계 · 사용 자료)</summary><pre>{JSON.stringify(run.summary,null,2)}</pre></details>
- <details><summary>환경 fingerprint</summary><pre>{JSON.stringify(run.fingerprints,null,2)}</pre></details>
+ <details><summary>원본 JSON (테스트 판정 · 단언 · 단계 · 사용 자료)</summary><!-- svelte-ignore a11y_no_noninteractive_tabindex: a wide block must scroll by keyboard --><pre tabindex="0" role="region" aria-label="원본 JSON">{JSON.stringify(run.summary,null,2)}</pre></details>
+ <details><summary>환경 fingerprint</summary><!-- svelte-ignore a11y_no_noninteractive_tabindex: a wide block must scroll by keyboard --><pre tabindex="0" role="region" aria-label="환경 fingerprint">{JSON.stringify(run.fingerprints,null,2)}</pre></details>
 </section>
 
 <style>

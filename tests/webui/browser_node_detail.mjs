@@ -48,6 +48,9 @@ try{
 
  // 1. The producer's page shows its state and refuses reset with the reason.
  page=await ctx.newPage()
+ // A node the network does not record says so instead of loading forever.
+ await page.goto(`${f.url}/nodes/${w.id}/node99`)
+ await page.getByTestId('node-missing').waitFor({timeout:15000})
  await page.goto(`${f.url}/nodes/${w.id}/${producer.id}`)
  await page.getByTestId('node-role').waitFor({timeout:15000})
  await page.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
@@ -55,7 +58,8 @@ try{
  const resetReason=await page.getByTestId('control-limit-node.reset').textContent()
  assert.match(resetReason,/블록 생산자/)
  assert.ok(await page.getByRole('button',{name:/비생산자 초기화/}).isDisabled(),'producer reset is enabled')
- assert.ok(!(await page.getByRole('button',{name:'노드 정지',exact:true}).isDisabled()),'stop is disabled on a running producer')
+ // The collector may show running first; only the fresh check opens the control.
+ await page.getByRole('button',{name:'노드 정지',exact:true}).and(page.locator(':enabled')).waitFor({timeout:30000})
  await page.screenshot({path:out+'/node-producer.png',fullPage:true})
  observed.producerResetRefused=resetReason
 

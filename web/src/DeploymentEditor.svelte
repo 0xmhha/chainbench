@@ -15,7 +15,7 @@
   import BundleImport from './BundleImport.svelte'
   let { webSession = undefined, onsaved = () => {} } = $props()
   let contract = $state(null), docs = $state([]), workspaces = $state([]), credentials = $state([])
-  let edited = $state(false), kind = $state('server-set'), name = $state('서버 풀'), content = $state({}), docId = $state(''), revision = $state(0)
+  let edited = $state(false), writing = $state(false), kind = $state('server-set'), name = $state('서버 풀'), content = $state({}), docId = $state(''), revision = $state(0)
   let workspaceId = $state(''), workspaceName = $state('팀 workspace'), workspaceRevision = $state(0), setRef = $state(''), configRef = $state('')
   let selectedCredential = $state(''), serverRef = $state(''), bindings = $state({}), status = $state(''), access = $state(null), busy = $state(false)
   const role = $derived(webSession?.user.role)
@@ -101,6 +101,10 @@
   async function exportWorkspace() { const response = await apiClient(webSession).send(`workspaces/${workspaceId}/export`); download(await response.blob(), `${workspaceName}.bundle.json`); status = 'workspace 묶음을 내보냈습니다' }
   $effect(() => { if (webSession) action(async () => { contract = await api('contracts/deployment'); await refresh(); newDocument('server-set'); if (selection.workspaceId && workspaces.some(w => w.id === selection.workspaceId)) await loadWorkspace(selection.workspaceId) }) })
   const hosts = $derived.by(() => { const id = setRef.split(':')[0]; const rev = Number(setRef.split(':')[1]); return docs.find(d => d.id === id && d.revision === rev)?.content.pool.hosts ?? [] })
+  // With saved documents and none chosen, an empty form would only push the rest down.
+  const formOpen = $derived(writing || !docs.length || !!docId || !!viewing || problems.length > 0)
+  // Imports often share a file name, so the choice also shows which document it is.
+  const docLabel = d => `${d.name} · ${d.revision} · ${d.id.slice(0, 6)}`
   const hostName = h => typeof h === 'string' ? h : h.name || h.addr
 </script>
 
@@ -112,8 +116,8 @@
   <fieldset class="editor-controls" disabled={busy}><div class="columns">
     <div>
       <h3>공유 문서</h3>
-      <label>저장된 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision}</option>{/each}</select></label>
-      {#if canEdit}<button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>{/if}
+      <label>저장된 배포 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision} · {d.id.slice(0, 6)}</option>{/each}</select></label>
+      {#if canEdit}<button onclick={() => { writing = true; newDocument('server-set') }}>새 서버 풀</button><button onclick={() => { writing = true; newDocument('workspace-config') }}>새 대상 경로</button>{/if}
       {#if revisions.length}
         <details class="revisions" open={revisions.length > 1 || undefined}>
           <summary>revision 기록 {revisions.length}개</summary>
@@ -131,6 +135,7 @@
           <button type="button" onclick={() => { viewing = null }}>revision {revision}로 돌아가기</button>
         </div>
       {/if}
+      <details class="document-form" open={formOpen || undefined}><summary>문서 내용 · {kindNames[kind]}</summary>
       {#if canEdit && !viewing}<label data-field-path="name">이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>{/if}
       {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button data-problem-path={p.path} onclick={() => focusProblem(p.path)}>{fieldTitle(contract?.[kind], p.path)}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
       {#if contract}<DeploymentForm {kind} schema={contract[kind]} value={viewing?.content ?? content} readonly={!canEdit || !!viewing} changed={differs} problems={viewing ? {} : problemMap} change={v => { content = v; edited = true; problems = [] }} />{/if}
@@ -138,17 +143,18 @@
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>
         <button class="primary" disabled={busy} onclick={() => action(async () => { await check(); await saveDocument() })}>공유 문서 저장</button>
       {/if}
+      </details>
       {#if docId}<p>revision {revision}</p><button disabled={busy} onclick={() => action(exportDocument)}>공유 문서 내보내기</button>{/if}
     </div>
     <div>
       <h3>공유 workspace</h3>
       {#if workspaceId}<button disabled={busy} onclick={() => action(exportWorkspace)}>workspace 묶음 내보내기</button>{/if}
-      <label>저장된 workspace <select name="deployment-editor-select-2" aria-label="저장된 배포 workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">새 workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
+      <label>저장된 배포 workspace <select name="deployment-editor-select-2" aria-label="저장된 배포 workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">새 workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
       {#if canEdit}
         <button onclick={() => { workspaceId = ''; workspaceRevision = 0; bindings = {} }}>새 공유 workspace</button>
         <label>이름 <input name="workspace-name" aria-label="배포 workspace 이름" bind:value={workspaceName} /></label>
-        <label>서버 풀 revision <select name="set-ref" aria-label="workspace 서버 풀 revision" bind:value={setRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'server-set') as d}<option value={`${d.id}:${d.revision}`}>{d.name} · {d.revision}</option>{/each}</select></label>
-        <label>대상 경로 revision <select name="config-ref" aria-label="workspace 대상 경로 revision" bind:value={configRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'workspace-config') as d}<option value={`${d.id}:${d.revision}`}>{d.name} · {d.revision}</option>{/each}</select></label>
+        <label>서버 풀 revision <select name="set-ref" aria-label="workspace 서버 풀 revision" bind:value={setRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'server-set') as d}<option value={`${d.id}:${d.revision}`}>{docLabel(d)}</option>{/each}</select></label>
+        <label>대상 경로 revision <select name="config-ref" aria-label="workspace 대상 경로 revision" bind:value={configRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'workspace-config') as d}<option value={`${d.id}:${d.revision}`}>{docLabel(d)}</option>{/each}</select></label>
         <button disabled={busy || !setRef || !configRef} onclick={() => action(saveWorkspace)}>공유 workspace 저장</button>
         {#if workspaceId}
           <h3>내 SSH 자격증명 연결</h3>

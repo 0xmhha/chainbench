@@ -18,4 +18,9 @@
 {/if}
 <AssetManager {webSession} {onuploaded} />
 <ManifestManager {webSession} {assetRevision} />
-{#if access && role === 'administrator'}<AuditPanel {webSession} />{/if}
+{#if access && role === 'administrator'}<details class="audit"><summary>감사 기록</summary><AuditPanel {webSession} /></details>{/if}
+
+<style>
+  .audit { margin-top: var(--space-4); }
+  .audit > summary { cursor: pointer; padding: var(--space-2) 0; font: 600 var(--text-sm) var(--font-cond); color: var(--text); }
+</style>

@@ -23,3 +23,6 @@ internal/resource/serverset_credentials.go
 # 비밀 스캐너 자신. 'secret' 이 파일명에 든 이유가 비밀을 담아서가 아니라 비밀을
 # 찾는 스크립트라서다. 내용 스캔(betterleaks)은 그대로 돈다.
 scripts/check-secrets.sh
+
+# 자격증명을 관리하는 화면 컴포넌트. 이름과 상태만 보여 주고 비밀 값을 담지 않는다.
+web/src/CredentialManager.svelte
