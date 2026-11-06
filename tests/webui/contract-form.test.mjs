@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { fieldTitle, remainder, changedPaths } from '../../web/src/contract-form.mjs'
 
-const schema = { type: 'object', title: '서버 풀', properties: {
+const schema = { type: 'object', title: '서버 세트', properties: {
  version: { type: 'integer', title: '형식 버전' },
  pool: { type: 'object', title: '풀', properties: {
   hosts: { type: 'array', title: '서버', items: { type: 'object', title: '서버', properties: { name: { type: 'string', title: '이름' }, addr: { type: 'string', title: '주소' } } } },

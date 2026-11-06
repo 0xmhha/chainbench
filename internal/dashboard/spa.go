@@ -1,12 +1,17 @@
 package dashboard
 
 import (
+	"bytes"
+	"compress/gzip"
 	"embed"
 	"io/fs"
+	"mime"
 	"net/http"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 )
 
 // spaFiles is the built Svelte SPA (decision D5). The sources live in web/ and
@@ -34,6 +39,7 @@ func spaHandler() http.Handler {
 		panic(err)
 	}
 	files := http.FileServer(http.FS(sub))
+	packed := &sync.Map{}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only known UI routes receive the shell. Missing API/assets must stay 404.
 		switch path := r.URL.Path; {
@@ -51,7 +57,51 @@ func spaHandler() http.Handler {
 				http.NotFound(w, r)
 				return
 			}
+			if strings.HasPrefix(r.URL.Path, spaAssetPrefix) {
+				w.Header().Set("Cache-Control", spaAssetCache)
+				if serveGzippedAsset(w, r, sub, packed) {
+					return
+				}
+			}
 			files.ServeHTTP(w, r)
 		}
 	})
+}
+
+// spaAssetPrefix is where the build puts hashed files. A hash names its bytes, so
+// a browser can keep them for good.
+const (
+	spaAssetPrefix = "/assets/"
+	spaAssetCache  = "public, max-age=31536000, immutable"
+)
+
+// serveGzippedAsset answers a text asset compressed when the client accepts it,
+// compressing each file once. It reports false to leave the request to the plain
+// file server.
+func serveGzippedAsset(w http.ResponseWriter, r *http.Request, assets fs.FS, packed *sync.Map) bool {
+	kind := mime.TypeByExtension(path.Ext(r.URL.Path))
+	if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") || !strings.HasPrefix(kind, "text/") {
+		return false
+	}
+	body, ok := packed.Load(r.URL.Path)
+	if !ok {
+		raw, err := fs.ReadFile(assets, strings.TrimPrefix(r.URL.Path, "/"))
+		if err != nil {
+			return false
+		}
+		var out bytes.Buffer
+		zw := gzip.NewWriter(&out)
+		if _, err = zw.Write(raw); err != nil {
+			return false
+		}
+		if err = zw.Close(); err != nil {
+			return false
+		}
+		body, _ = packed.LoadOrStore(r.URL.Path, out.Bytes())
+	}
+	w.Header().Set("Content-Type", kind)
+	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Set("Vary", "Accept-Encoding")
+	_, _ = w.Write(body.([]byte))
+	return true
 }

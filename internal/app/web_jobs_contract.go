@@ -47,8 +47,8 @@ func webArgument(name, flag, cli string) WebArgument {
 var webArgumentKinds = map[string]WebArgument{
 	"manifestId":                {Type: "string", Title: "체인 manifest"},
 	"assetId":                   {Type: "string", Title: "바이너리", Description: "등록하고 검증한 노드 바이너리입니다."},
-	"serverRef":                 {Type: "string", Title: "서버", Description: "workspace가 고정한 서버 풀의 서버 이름입니다."},
-	"allServers":                {Type: "boolean", Title: "모든 서버", Description: "서버 하나 대신 서버 풀의 모든 서버를 씁니다. serverRef와 함께 쓸 수 없습니다."},
+	"serverRef":                 {Type: "string", Title: "서버", Description: "workspace가 고정한 서버 세트의 서버 이름입니다."},
+	"allServers":                {Type: "boolean", Title: "모든 서버", Description: "서버 하나 대신 서버 세트의 모든 서버를 씁니다. serverRef와 함께 쓸 수 없습니다."},
 	"validators":                {Type: "integer", Title: "블록 생산자 수", Minimum: bound(1), Maximum: bound(128)},
 	"chainPresetRef":            {Type: "documentRef", Title: "체인 구성", Description: "저장한 체인 프리셋의 revision입니다. 노드 배치를 프리셋이 정하므로 validators와 함께 쓸 수 없습니다."},
 	"replacementAssetId":        {Type: "string", Title: "교체할 바이너리"},
@@ -99,7 +99,7 @@ var webOperations = []WebOperation{
 	{"node.reset", "비생산자 초기화 · 정지 상태로 유지", "블록 생산자가 아닌 노드의 자료를 지우고 멈춘 상태로 둡니다.", "chain", "chainbench node reset --index N", controlArguments()},
 	{webNetworkMonitorOperation, "SSH 노드 로그 수집 · 취소할 때까지", "기록된 네트워크의 노드 로그를 취소할 때까지 모읍니다.", "chain", "chainbench resource inspect --request <노드마다>", []WebArgument{
 		webArgument("serverRef", "", "이 서버의 기록된 노드 로그를 읽습니다. 이 서버에 연결한 내 로그인을 --server-logins 파일에 넣습니다."),
-		webArgument("allServers", "", "서버 풀의 모든 서버에서 기록된 노드 로그를 읽습니다."),
+		webArgument("allServers", "", "서버 세트의 모든 서버에서 기록된 노드 로그를 읽습니다."),
 	}},
 	{"test.run", "저장한 DSL 케이스 실행", "저장한 케이스의 구성 선언으로 네트워크를 만들고 실행합니다.", "test", "chainbench run <케이스 파일...> --suite", []WebArgument{
 		webArgument("manifestId", "", "명령에는 넘기지 않습니다. --chain은 바이너리를 검증한 체인입니다."),

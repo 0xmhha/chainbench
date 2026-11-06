@@ -68,7 +68,7 @@ try {
   await status(a,'공유 문서 revision 1 저장됨')
   docs=(await api(actors[0],'documents')).items
   let config=docs.find(d=>d.kind==='workspace-config')
-  await a.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(`${set.id}:1`)
+  await a.getByLabel('workspace 서버 세트 revision',{exact:true}).selectOption(`${set.id}:1`)
   await a.getByLabel('workspace 대상 경로 revision',{exact:true}).selectOption(`${config.id}:1`)
   await a.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()
   await status(a,'공유 workspace revision 1 저장됨')
@@ -81,7 +81,7 @@ try {
   await status(b,'공유 문서 revision 2 저장됨')
   await b.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(workspace.id)
   await b.waitForFunction(() => document.querySelector('[aria-label="배포 workspace 이름"]').value==='팀 workspace')
-  await b.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(`${set.id}:2`)
+  await b.getByLabel('workspace 서버 세트 revision',{exact:true}).selectOption(`${set.id}:2`)
   await b.getByLabel('배포 workspace 이름',{exact:true}).fill('Two operator deployment')
   await b.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()
   await status(b,'공유 workspace revision 2 저장됨')

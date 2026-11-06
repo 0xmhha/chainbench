@@ -60,7 +60,7 @@ try{
  observed.staleRevision=staleBody.message
  // Re-pin the workspace to the edited revision through the form.
  await page.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(workspace.id)
- await page.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(savedSet.id+':2')
+ await page.getByLabel('workspace 서버 세트 revision',{exact:true}).selectOption(savedSet.id+':2')
  const configRef=workspace.documents.find(r=>r.id!==savedSet.id)
  await page.getByLabel('workspace 대상 경로 revision',{exact:true}).selectOption(configRef.id+':'+configRef.revision)
  await page.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()

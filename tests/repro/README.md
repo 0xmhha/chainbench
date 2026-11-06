@@ -58,7 +58,7 @@ to reuse a prebuilt binary.
 | Script | Reproduces | Needs | Notes |
 |--------|-----------|-------|-------|
 | `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
-| `attach-external.sh` | external-chain generic ops (legacy z-layer2 "Layer 2 E2E" RT-Z-02/03/04/05 — an external chain attached over RPC, NOT an Ethereum L2) | `EXTERNAL_RPC` (an already-running chain's RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | **Broken today.** It calls `chainbench test --rpc … --name …`, but `test` now has only the `list` subcommand, so the run fails with `unknown flag: --rpc`. No Go code reads `CHAINBENCH_FUNDED_KEY` either. Use the DSL attach path below instead |
+| `attach-external.sh` | external-chain generic ops (legacy z-layer2 "Layer 2 E2E" RT-Z-03/04 — an external chain attached over RPC, NOT an Ethereum L2) | `EXTERNAL_RPC`, `EXTERNAL_CHAIN` (an already-running chain's RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | **Broken today.** It calls `chainbench test --rpc … --name …`, but `test` now has only the `list` subcommand, so the run fails with `unknown flag: --rpc`. No Go code reads `CHAINBENCH_FUNDED_KEY` either. Use the DSL attach path below instead |
 
 To run cases against an external network today, attach with `run`:
 

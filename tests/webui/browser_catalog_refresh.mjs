@@ -60,7 +60,7 @@ try{
  await waitCatalog(page)
  assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).inputValue(),'local')
  await page.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(w.id)
- await page.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(set.id+':2')
+ await page.getByLabel('workspace 서버 세트 revision',{exact:true}).selectOption(set.id+':2')
  await page.getByLabel('workspace 대상 경로 revision',{exact:true}).selectOption(config.id+':2')
  await page.getByLabel('배포 workspace 이름',{exact:true}).fill('Updated workspace')
  const changedWorkspace=await save(page,'공유 workspace 저장','workspaces/'+w.id);assert.equal(changedWorkspace.revision,2)

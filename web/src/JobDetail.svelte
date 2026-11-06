@@ -1,4 +1,5 @@
 <script>
+  import { selectWorkspace } from './selection.svelte.js'
   import StatusBadge from './StatusBadge.svelte'
   import { onMount } from 'svelte'
   import { apiClient } from './api-client.mjs'
@@ -109,6 +110,8 @@
       .then(found => { if (key !== runKey) return; runs = found.map(f => f.run).filter(Boolean); runsError = found.map(f => f.failure).filter(Boolean).join(' · '); runsLoaded = true })
   })
   $effect(() => { void jobId; if (webSession) load() })
+  // The top bar names what this job belongs to, as a node page does.
+  $effect(() => { if (job?.workspaceId) selectWorkspace(job.workspaceId) })
   onMount(() => feed.start())
 </script>
 

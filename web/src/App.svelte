@@ -44,12 +44,15 @@
   const drops = $derived(live.busDrops), observedAt = $derived(live.lastObserved)
   const stale = $derived(liveStale(live, now))
   const details = { '/jobs': ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'], '/nodes': ['/nodes', '노드 상세', '노드 하나의 상태, 구성, 로그와 쓸 수 있는 제어를 확인합니다.'] }
+  const JOB_TITLE_LENGTH = 8
   // A panel mounts on its first visit and then stays, so its form is kept.
   let visited = $state(new Set())
   $effect.pre(() => { if (!visited.has(route)) visited = new Set([...visited, route]) })
   // Running comes first once something is set up; defining it is the rarer task.
   const savedSetup = $derived(Object.keys(workspaceNames).length > 0)
   const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
+  // Tabs stay apart: a job or a node is named, not only its kind of page.
+  const pageTitle = $derived(parsed.jobId ? `작업 ${parsed.jobId.slice(0, JOB_TITLE_LENGTH)}` : parsed.nodeId ? `노드 ${parsed.nodeId}` : current[1])
   // The top bar names the selected workspace; names are read once per session.
   $effect(() => { if (ready && webSession) webApi(webSession)('workspaces?limit=100').then(page => { workspaceNames = Object.fromEntries(page.items.map(w => [w.id, w.name])) }).catch(() => {}) })
   onMount(() => {
@@ -68,7 +71,7 @@
   const fmtTime = formatTime
 </script>
 
-<svelte:head><title>{current[1]} · chainbench</title><meta name="theme-color" content="#e6ece4" media="(prefers-color-scheme: light)" /><meta name="theme-color" content="#131a15" media="(prefers-color-scheme: dark)" /></svelte:head>
+<svelte:head><title>{pageTitle} · chainbench</title><meta name="theme-color" content="#e6ece4" media="(prefers-color-scheme: light)" /><meta name="theme-color" content="#131a15" media="(prefers-color-scheme: dark)" /></svelte:head>
 <a class="skip-link" href="#content">본문으로 이동</a>
 <div class="shell">
   <aside aria-label="주 메뉴">
@@ -79,7 +82,7 @@
     <header class="topbar">
       <span class="context" data-testid="topbar-context">
         <span><span class="label">Workspace</span> {workspaceName || '선택 안 함'}</span>
-        {#if selection.chain}<span><span class="label">체인</span> {selection.chain}</span>{:else if route === '/chains' || route === '/tests'}<a href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{:else}<a class="quiet" href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{/if}
+        {#if selection.chain}<span><span class="label">체인</span> {selection.chain}</span>{:else if route === '/chains' || route === '/tests'}<a href="/chains" onclick={e => { e.preventDefault(); document.querySelector('[aria-label="작업 매니페스트"]')?.focus() }}>체인을 선택하세요</a>{:else}<a class="quiet" href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{/if}
       </span>
       <span class="status">
         <span class="signal-label" title="이벤트 서버 연결 상태입니다. 노드 상태와는 별개입니다."><span class="signal" class:on={connected} aria-hidden="true"></span>{connected ? '서버 연결됨' : '서버 미연결'}</span>
