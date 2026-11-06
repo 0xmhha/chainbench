@@ -47,8 +47,13 @@ func TestWebControlBinaryAcceptsOnlyRegisteredOwnedExecutables(t *testing.T) {
 	if err = os.WriteFile(native, bytes, 0o700); err != nil {
 		t.Fatal(err)
 	}
+	// A network composed before binaries took their manifest's name records this.
+	retired := filepath.Join(filepath.Dir(native), "payload")
+	if err = os.WriteFile(retired, bytes, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	state := State{Target: resource.Spec{DataRoot: root}}
-	for _, binary := range []string{source, native} {
+	for _, binary := range []string{source, native, retired} {
 		state.Binary = binary
 		got, err := bindWebControlBinary(context.Background(), state, payload, unitTargetReader(t, nil))
 		if err != nil || got != binary {

@@ -1,6 +1,7 @@
 <script>
   import { webApi } from './web-api.mjs'
   import { keepFocus } from './focus.mjs'
+  import { warnWhenUnsaved } from './unsaved.mjs'
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
  import StatementEditor from './DSLStatementEditor.svelte'
@@ -11,7 +12,7 @@
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
  const role=$derived(webSession?.user.role)
  let contract=$state(null),vocabulary=$state(null),document=$state(null),original=$state(null),presets=$state({})
- let status=$state(''),failed=$state(false),valid=$state(false),busy=$state(false),fingerprint=$state('')
+ let status=$state(''),edited=$state(false),failed=$state(false),valid=$state(false),busy=$state(false),fingerprint=$state('')
  let savedCases=$state([]),savedId=$state(''),revision=$state(0),presetRefs=$state([])
  let assets=$state([]),genesisBackup=$state(null)
  const genesisAssets=$derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
@@ -27,8 +28,8 @@
  $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})
  const api=$derived(webApi(webSession))
  async function refreshSaved(){savedCases=await allItems(api,'documents?kind=case')}
- async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;presetRefs=item.presetRefs??[];for(const ref of presetRefs){const preset=await api('documents/'+encodeURIComponent(ref.id)+'?revision='+ref.revision);presets={...presets,[preset.content.id]:preset.content}};original=null;genesisBackup=null;editorKey++;change(structuredClone(item.content));if(role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
- async function save(){await work(async()=>{presetRefs=await pinPresets();let item;try{item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,...draftMeta(contract),content:document,assetRefs:caseAssetRefs(document),presetRefs},revision)}catch(e){if(!contractChanged(e))throw e;const before=contract;contract=await api('contracts/dsl');await api('test-cases/import','POST',{content:document,presets});throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: '+(changedDefinitions(before,contract).join(', ')||'세부 항목')+'. 새 계약으로 다시 검증했으니 확인한 뒤 다시 저장하세요.')}savedId=item.id;revision=item.revision;onsaved();await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}
+ async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;presetRefs=item.presetRefs??[];for(const ref of presetRefs){const preset=await api('documents/'+encodeURIComponent(ref.id)+'?revision='+ref.revision);presets={...presets,[preset.content.id]:preset.content}};original=null;genesisBackup=null;editorKey++;change(structuredClone(item.content));edited=false;if(role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
+ async function save(){await work(async()=>{presetRefs=await pinPresets();let item;try{item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,...draftMeta(contract),content:document,assetRefs:caseAssetRefs(document),presetRefs},revision)}catch(e){if(!contractChanged(e))throw e;const before=contract;contract=await api('contracts/dsl');await api('test-cases/import','POST',{content:document,presets});throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: '+(changedDefinitions(before,contract).join(', ')||'세부 항목')+'. 새 계약으로 다시 검증했으니 확인한 뒤 다시 저장하세요.')}savedId=item.id;revision=item.revision;onsaved();await refreshSaved();edited=false;status=`공유 테스트 revision ${revision} 저장됨`})}
  // A case names presets by id; saving pins the shared revision of each, and
  // registers a loaded preset file that no shared revision matches.
  async function pinPresets(){
@@ -60,7 +61,8 @@
  // A different document (loaded, imported, new or duplicated) starts the
  // statement editor again at the case settings.
  let editorKey=$state(0)
- function change(next){document=next;valid=false;fingerprint='';status='고쳤습니다. 내보내기 전에 검증하세요'}
+ $effect(()=>warnWhenUnsaved(()=>edited))
+ function change(next){document=next;edited=true;valid=false;fingerprint='';status='고쳤습니다. 내보내기 전에 검증하세요'}
  function selectGenesis(id){
   const next=structuredClone($state.snapshot(document)),legacy=next.schemaVersion==='1'
   const env=legacy?next.chain:next.chainPreset

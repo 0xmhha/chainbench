@@ -1,4 +1,5 @@
 <script>
+  import { warnWhenUnsaved } from './unsaved.mjs'
   import { follow } from './nav.mjs'
   import { keepFocus } from './focus.mjs'
   import { apiClient } from './api-client.mjs'
@@ -14,7 +15,7 @@
   import BundleImport from './BundleImport.svelte'
   let { webSession = undefined, onsaved = () => {} } = $props()
   let contract = $state(null), docs = $state([]), workspaces = $state([]), credentials = $state([])
-  let kind = $state('server-set'), name = $state('서버 풀'), content = $state({}), docId = $state(''), revision = $state(0)
+  let edited = $state(false), kind = $state('server-set'), name = $state('서버 풀'), content = $state({}), docId = $state(''), revision = $state(0)
   let workspaceId = $state(''), workspaceName = $state('팀 workspace'), workspaceRevision = $state(0), setRef = $state(''), configRef = $state('')
   let selectedCredential = $state(''), serverRef = $state(''), bindings = $state({}), status = $state(''), access = $state(null), busy = $state(false)
   const role = $derived(webSession?.user.role)
@@ -66,7 +67,7 @@
   }
   function loadDocument(id) {
     const d = docs.filter(d => d.id === id).sort((a, b) => b.revision - a.revision)[0]; if (!d) return
-    kind = d.kind; name = d.name; content = structuredClone($state.snapshot(d.content)); docId = d.id; revision = d.revision; viewing = null; problems = []
+    edited = false; kind = d.kind; name = d.name; content = structuredClone($state.snapshot(d.content)); docId = d.id; revision = d.revision; viewing = null; problems = []
     action(() => loadRevisions(d.id))
   }
   async function loadWorkspace(id) {
@@ -79,8 +80,9 @@
     bindings = canEdit ? await api(`workspaces/${id}/credential-bindings`) : {}; access = null
   }
   function documentInput() { return { kind, name, content, ...draftMeta(contract), assetRefs: [] } }
+  $effect(() => warnWhenUnsaved(() => edited))
   async function saveDocument() {
-    try { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); await loadRevisions(docId); status = `공유 문서 revision ${revision} 저장됨` }
+    try { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; edited = false; onsaved(); await refresh(); await loadRevisions(docId); status = `공유 문서 revision ${revision} 저장됨` }
     catch (e) {
       if (!contractChanged(e)) { if (e.errors?.length) problems = serverProblems(e.errors); throw e }
       const before = contract; contract = await api('contracts/deployment')
@@ -131,7 +133,7 @@
       {/if}
       {#if canEdit && !viewing}<label data-field-path="name">이름 <input name="name" autocomplete="off" aria-label="배포 문서 이름" bind:value={name} /></label>{/if}
       {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button data-problem-path={p.path} onclick={() => focusProblem(p.path)}>{fieldTitle(contract?.[kind], p.path)}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
-      {#if contract}<DeploymentForm {kind} schema={contract[kind]} value={viewing?.content ?? content} readonly={!canEdit || !!viewing} changed={differs} problems={viewing ? {} : problemMap} change={v => { content = v; problems = [] }} />{/if}
+      {#if contract}<DeploymentForm {kind} schema={contract[kind]} value={viewing?.content ?? content} readonly={!canEdit || !!viewing} changed={differs} problems={viewing ? {} : problemMap} change={v => { content = v; edited = true; problems = [] }} />{/if}
       {#if canEdit && !viewing}
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>
         <button class="primary" disabled={busy} onclick={() => action(async () => { await check(); await saveDocument() })}>공유 문서 저장</button>

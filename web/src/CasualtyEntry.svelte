@@ -1,4 +1,5 @@
 <script>
+ import {differingParts} from './hex-diff.mjs'
  // The first line of the job's page: the failure written in red ink with the
  // moment it was recorded, the node ringed only when the bench finds it at
  // fault (its gauges or logs), the expected value struck through
@@ -14,7 +15,6 @@
  // The bench's reading of the asserted node: null until it reads, so the
  // headline never blames a node on the assertion's target alone.
  const judged=$derived(finding&&finding.node===head.node?finding:null)
- const shown=value=>typeof value==='string'?value:JSON.stringify(value)
  // A running job's time ticks in whole seconds; a finished one keeps a tenth.
  const clock=ms=>ms<60000?`${Math.floor(ms/1000)}초`:`${Math.floor(ms/60000)}분 ${Math.floor((ms%60000)/1000)}초`
  const seconds=ms=>ms===null?'—':ms<60000?`${(ms/1000).toFixed(1)}초`:`${Math.floor(ms/60000)}분 ${Math.round((ms%60000)/1000)}초`
@@ -27,7 +27,7 @@
  <div class="what">
   <h2>{#if head.test&&head.node}{head.test} 테스트가 {#if judged?.abnormal}<span class="ring">{head.node}</span>{:else}{head.node}{/if}에서 실패했습니다{:else}{head.title}{/if}</h2>
   {#if evidence}
-   <p class="ev"><code>{evidence.assert}</code> · 기대 <del>{shown(evidence.expected)}</del> · 실제 <ins>{shown(evidence.actual)}</ins>{#if diff} · 차이 <ins>{diff}</ins>{/if}</p>
+   <p class="ev"><code>{evidence.assert}</code> · 기대 <del>{#each differingParts(evidence.expected,evidence.actual) as part}{#if part.differs}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</del> · 실제 <ins>{#each differingParts(evidence.actual,evidence.expected) as part}{#if part.differs}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</ins>{#if diff} · 차이 <ins>{diff}</ins>{/if}</p>
   {:else if head.reason}<p class="ev">{head.reason}</p>{/if}
   {#if judged}<p class="finding" class:bad={judged.abnormal} data-testid="{scope}-finding">{judged.text}{#if !judged.abnormal&&judged.compared}. 노드보다 기대값이나 시나리오를 먼저 확인하세요.{/if}</p>{/if}
   {#if head.tone==='fail'&&(head.phase||head.test)}

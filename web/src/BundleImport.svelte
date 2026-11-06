@@ -1,6 +1,7 @@
 <script>
   import { apiClient } from './api-client.mjs'
   import { keepFocus } from './focus.mjs'
+  import StatusMark from './StatusMark.svelte'
   let { webSession = undefined, onsaved = () => {} } = $props()
   let preview = $state(null), saved = $state([]), filename = $state(''), status = $state(''), failed = $state(false), busy = $state(false)
   let workspaceName = $state('가져온 workspace')
@@ -53,7 +54,7 @@
         <p>저장할 수 있는 문서 {preview.redactedDocuments.length}개:</p>
         <ul>{#each preview.redactedDocuments as d}<li data-import-kind={d.kind}>{d.kind} · {d.name}</li>{/each}</ul>
       {:else}
-        <p class="error" role="alert"><span aria-hidden="true">✕</span> 가져온 내용을 저장할 수 없습니다:</p>
+        <p class="error" role="alert"><StatusMark state="failed" /> 가져온 내용을 저장할 수 없습니다:</p>
         <ul>{#each preview.validation.errors as issue}<li class="error" data-import-error={issue.path}><code>{issue.path}</code> {issue.message}</li>{/each}</ul>
       {/if}
       {#each preview.changes as change}<p class="notice">{change}</p>{/each}

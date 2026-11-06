@@ -1,4 +1,6 @@
 <script>
+  import StatusMark from './StatusMark.svelte'
+  import { warnWhenUnsaved } from './unsaved.mjs'
   import { apiClient } from './api-client.mjs'
   import { formatTime } from './labels.mjs'
   import { allItems } from './pages.mjs'
@@ -33,7 +35,7 @@
   let pending = $state(false)
   let requestVersion = 0
   let saved = $state([]), savedId = $state(''), revision = $state(0), preview = $state(null)
-  let assets = $state([]), generatedGenesis = $state(null)
+  let assets = $state([]), generatedGenesis = $state(null), edited = $state(false)
   const genesisAsset = $derived(document?.genesis?.ref?.startsWith('asset:') ? document.genesis.ref.slice(6) : '')
   const genesisChoices = $derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
   const assetRefs = $derived(genesisAsset ? [genesisAsset] : [])
@@ -57,7 +59,7 @@
     try {
       const entry = await shared('documents/' + encodeURIComponent(id))
       savedId = entry.id; revision = entry.revision; selected = ''; preview = null; generatedGenesis = null
-      replace(structuredClone(entry.content)); inherited = structuredClone(entry.content)
+      replace(structuredClone(entry.content)); edited = false; inherited = structuredClone(entry.content)
       contract = await shared('contracts/chain-preset?chain=' + encodeURIComponent(entry.content.chain))
     } catch(e) { error = e.message }
   }
@@ -69,7 +71,7 @@
       preview = imported
       if (!imported.validation.valid) throw new Error(imported.validation.errors.map(e => e.message).join('; '))
       const entry = imported.redactedDocuments[0]
-      savedId = ''; revision = 0; selected = ''; generatedGenesis = null; replace(structuredClone(entry.content)); inherited = structuredClone(entry.content)
+      savedId = ''; revision = 0; selected = ''; generatedGenesis = null; replace(structuredClone(entry.content)); edited = false; inherited = structuredClone(entry.content)
       contract = await shared('contracts/chain-preset?chain=' + encodeURIComponent(entry.content.chain))
       result = imported.validation
     } catch(e) { error = e.message } finally { pending = false }
@@ -78,7 +80,7 @@
     pending = true; error = ''
     try {
       const entry = await shared(savedId ? 'documents/' + savedId : 'documents', savedId ? 'PATCH' : 'POST', { kind: 'chain-preset', name: document.id, ...draftMeta(contract), content: document, assetRefs }, revision)
-      savedId = entry.id; revision = entry.revision; onsaved(); await refreshSaved()
+      savedId = entry.id; revision = entry.revision; edited = false; onsaved(); await refreshSaved()
     } catch(e) {
       error = e.message
       if (contractChanged(e)) {
@@ -130,7 +132,9 @@
     pending = false
   }
 
+  $effect(() => warnWhenUnsaved(() => edited))
   function replace(value) {
+    edited = true
     requestVersion++
     document = value
     result = null
@@ -173,8 +177,12 @@
     <label for="chain-preset">체인 프리셋</label>
     <select id="chain-preset" bind:value={selected} onchange={choose}>
       <option value="">프리셋 선택</option>
-      {#each presets as preset (preset.id)}
-        <option value={preset.id}>{preset.chain} · {preset.id}</option>
+      {#each [...new Set(presets.map(p => p.chain))] as chain (chain)}
+        <optgroup label={chain}>
+          {#each presets.filter(p => p.chain === chain) as preset (preset.id)}
+            <option value={preset.id}>{preset.chain} · {preset.id}</option>
+          {/each}
+        </optgroup>
       {/each}
     </select>
     {#if skipped.length}
@@ -227,7 +235,7 @@
       {#if savedId}<p role="status">공유 문서 revision {revision}</p>{/if}
       {#if result}
         <div role="status" class:valid={result.valid}>
-          <strong><span aria-hidden="true">{result.valid ? '✓' : '✕'}</span> {result.valid ? '엔진 검증 통과' : '고쳐야 할 곳이 있습니다'}</strong>
+          <strong><StatusMark state={result.valid ? 'succeeded' : 'failed'} /> {result.valid ? '엔진 검증 통과' : '고쳐야 할 곳이 있습니다'}</strong>
           {#each result.errors as issue}<p><button class="link" onclick={() => showIssue(issue.path)}>{issue.path}</button> {issue.message}</p>{/each}
           {#each result.warnings as warning}<p>{warning}</p>{/each}
         </div>

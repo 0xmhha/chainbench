@@ -44,6 +44,9 @@
   const drops = $derived(live.busDrops), observedAt = $derived(live.lastObserved)
   const stale = $derived(liveStale(live, now))
   const details = { '/jobs': ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'], '/nodes': ['/nodes', '노드 상세', '노드 하나의 상태, 구성, 로그와 쓸 수 있는 제어를 확인합니다.'] }
+  // A panel mounts on its first visit and then stays, so its form is kept.
+  let visited = $state(new Set())
+  $effect.pre(() => { if (!visited.has(route)) visited = new Set([...visited, route]) })
   const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
   // The top bar names the selected workspace; names are read once per session.
   $effect(() => { if (ready && webSession) webApi(webSession)('workspaces?limit=100').then(page => { workspaceNames = Object.fromEntries(page.items.map(w => [w.id, w.name])) }).catch(() => {}) })
@@ -89,11 +92,11 @@
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       {#if ready && webSession !== null}
         {#key webSession?.user.id}
-          <div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /><DeploymentEditor {webSession} onsaved={()=>catalogRevision++} /></div>
-          <div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /></div>
+          {#if visited.has('/chains')}<div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /><DeploymentEditor {webSession} onsaved={()=>catalogRevision++} /></div>{/if}
+          {#if visited.has('/tests')}<div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /></div>{/if}
           {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} catalogRevision={catalogRevision+assetRevision} testOnly={route==='/tests'} />{/key}{/if}
-          <div hidden={route !== '/settings'}><SettingsPanel {webSession} {assetRevision} onuploaded={()=>assetRevision++} /></div>
-          <div hidden={route !== '/history'}><HistoryPanel {webSession} active={route === '/history'} /></div>
+          {#if visited.has('/settings')}<div hidden={route !== '/settings'}><SettingsPanel {webSession} {assetRevision} onuploaded={()=>assetRevision++} /></div>{/if}
+          {#if visited.has('/history')}<div hidden={route !== '/history'}><HistoryPanel {webSession} active={route === '/history'} /></div>{/if}
         {/key}
         {#if route === '/'}
           <Dashboard />

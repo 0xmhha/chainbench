@@ -8,8 +8,14 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// bindWebControlBinary accepts only the reviewed executable or the engine's
-// native-name test copy. Matching bytes at arbitrary paths are not sufficient.
+// webRetiredRemoteBinaryName is the name servers received a binary under before
+// it took the manifest's name. A network composed then still records this path,
+// inside the directory named by the binary's own checksum.
+const webRetiredRemoteBinaryName = "payload"
+
+// bindWebControlBinary accepts only the reviewed executable, the engine's
+// native-name test copy, or the retired name beside that copy. Matching bytes at
+// arbitrary paths are not sufficient.
 // Named per-node executables require their own reviewed asset binding; they
 // cannot borrow the base binary verification to authorize start or stop.
 func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader) (string, error) {
@@ -66,7 +72,8 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 		if err != nil {
 			return "", err
 		}
-		allowed = filepath.Clean(state.Binary) == filepath.Clean(native)
+		allowed = filepath.Clean(state.Binary) == filepath.Clean(native) ||
+			filepath.Clean(state.Binary) == filepath.Join(filepath.Dir(native), webRetiredRemoteBinaryName)
 	}
 	if !allowed {
 		return "", webConflict("the recorded network binary is not the reviewed binary")

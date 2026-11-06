@@ -12,7 +12,6 @@
   const statuses = $derived([...new Set((surface?.options ?? []).map(o => o.support.status))].sort())
   const counts = $derived(Object.fromEntries(statuses.map(s => [s, surface.options.filter(o => o.support.status === s).length])))
   const shown = $derived((surface?.options ?? []).filter(o => (!status || o.support.status === status) && (!search || o.spelling.includes(search))))
-  const icon = v => v === 'verified' ? '✓' : v === 'incompatible' ? '✕' : v === 'stale' ? '!' : '○'
   const time = formatTime
   async function load() {
     busy = true; error = ''
