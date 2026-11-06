@@ -64,7 +64,7 @@ func TestReport_OnAnEmptyDirectorySaysSo(t *testing.T) {
 }
 
 // U5 routed report and log through app, so both surfaces now read the same
-// session and the same log files (worklist §1l).
+// session and the same log files.
 
 // callMCP invokes a tool and returns its text content.
 func callMCP(t *testing.T, tool string, args map[string]any) string {

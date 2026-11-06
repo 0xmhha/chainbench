@@ -17,7 +17,7 @@ import (
 //
 // Every entry is either a permanent exemption (it CONSTRUCTS a Spec, which
 // requires stating its kind, or it owns its own remote notion) or a deferral
-// to the worklist task that dissolves it. The list may only shrink: an entry
+// to the follow-up that dissolves it. The list may only shrink: an entry
 // whose file no longer branches fails the test until it is removed here.
 var machineBranchAllowed = map[string]string{
 	"internal/resource":   "the module owns the server set: it constructs Specs from its entries and wires the dial. Server.IsRemote is the set's own field logic, not machine.Kind (P1.2 merged the surface and the format; R3 merged the machine spec in)",

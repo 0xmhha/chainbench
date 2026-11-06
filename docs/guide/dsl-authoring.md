@@ -583,8 +583,6 @@ Web의 실행 목록은 공급자 문서를 먼저 선택하며 계획에서 고
 살아 있는 handle, scrub 대상 비밀 필드와 saveKey binding은 공개할 수 없다. 설정 파일에는 실제 결과를 저장하지 않는다.
 개별 케이스를 편집할 때는 공급자를 동시에 제출하지 않아도 된다. 전체 실행 계획에서 순서와 공개 이름을 검사한다.
 
-[실제 주소·영수증 공유와 실패 소비자 차단 증거](../dev/prepared-sharing-evidence.json).
-
 ## 동기화 경로 metric의 출처와 대체 경로
 
 `metric`은 선택한 노드의 Prometheus 표본을 비교한다. 결과의 `metricSamples`에는 노드 번호·역할·현재 PID·조회 시각·출처(`node-machine`, `recorded-endpoint`, `derived-endpoint`)·지표 이름·값·관측 상태가 남는다. 원격 머신 조회가 실패하면 다른 로컬 HTTP 서버의 값으로 대체하지 않는다. HTTP 실패·누락 지표·무한대·NaN은 성공으로 판정하지 않는다. 직접 HTTP 클라이언트는 크기 제한을 넘는 응답도 거절한다.

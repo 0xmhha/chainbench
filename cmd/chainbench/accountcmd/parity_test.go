@@ -19,7 +19,7 @@ import (
 // These tests exist because this package exists. Until the account verbs moved
 // out of package main they could not be called from a test at all, so the CLI
 // and the MCP tool that answer the same question had never been compared. That
-// is what U1 is for (worklist §1l).
+// is what U1 is for.
 
 // node is a stand-in chain that answers a fixed set of RPC methods and records
 // what it was asked. The record is the interesting part: two surfaces that ask

@@ -1,6 +1,6 @@
 package app_test
 
-// The whole-workflow gate (worklist V6.2): one call takes DSL inputs, sets a
+// The whole-workflow gate: one call takes DSL inputs, sets a
 // chain up on a docker server, runs the specs against it, collects the
 // session, and tears the network down.
 //

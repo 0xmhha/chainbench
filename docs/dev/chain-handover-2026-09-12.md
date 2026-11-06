@@ -380,7 +380,7 @@ go-wemix 원격 HEAD `4538a9f5f2e4bcd2cb9515f8c466fabc24f73987`를 별도 임시
 받아 Go 1.25.2로 빌드했다. 기존 로컬 HEAD `1350376a680489298b3203a44d9ebddb7747f9cc`와
 다르다. 기존 외부 checkout과 체인 코드는 수정하지 않았다. 소스 2,056개 파일의 인벤토리,
 깨끗한 tracked 상태, 바이너리의 VCS revision과 SHA-256을 기록했다.
-구체적인 입력·해시·원본 증명은 [W3 증거](wemix-w3-evidence.json)에 있다.
+구체적인 입력·해시·원본 증명은 W3 증거(`git show 2b064b2e:docs/dev/wemix-w3-evidence.json`)에 있다.
 
 `TestWemixW3PartialGovernanceReproductionE2E`는 실제 `run` 핸드오프로 WEMIX 생산자가
 19번 블록까지 만든 이력을 얻고, 별도 full-sync 관측 노드에 Registry 생성 블록까지의
@@ -556,7 +556,7 @@ wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 - W1 · B1: wemix→wbft 핸드오프, producer 15 + successor 15. 프로파일과 검증된 호출은
   [`presets/chain/wemix-upgrade-15.yaml`](../../presets/chain/wemix-upgrade-15.yaml) 머리말에 그대로
   적혀 있다(`chainbench upgrade run --profile … --all-servers --docker`).
-- W2: poa(wemix) 단독 원격 브링업, 14 bp + 1 en. chainbench 워크리스트 R6.
+- W2: poa(wemix) 단독 원격 브링업, 14 bp + 1 en. chainbench 원격 트랙 R6.
 
 환경을 세우는 법은 [`../guide/config-files.md`](../guide/config-files.md) 와
 `env/docker/` 다. 신원은 `presets/keys`(5노드)이 아니라 생성한 30노드 키 세트를 쓴다
@@ -578,9 +578,8 @@ wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 - W1 은 우회할 수 없다. 노드가 죽으면 mesh 준비 게이트가 막는 것이 의도된 동작이다.
 - W2 는 브링업 순서로 줄일 수 있는 부분(fork 경합)까지 줄인 상태다.
 
-세 건의 원래 관측 기록은 [`chainbench-worklist.md`](chainbench-worklist.md) 에 있고, 이
-문서가 그 기록의 인계본이다. 워크리스트가 작업 상태의 정본이므로, 체인팀 쪽에서 진행되면
-그쪽 이슈 번호를 워크리스트 항목에 붙인다.
+이 문서가 chainbench 관측 기록의 인계본이다. 작업 상태는 [`open-work.md`](open-work.md) 가
+말하므로, 체인팀 쪽에서 진행되면 그 목록의 항목을 고친다.
 
 ## 6. W4 — ETH/LES fetcher 계량기 이름 충돌 (2026-10-14)
 
@@ -588,7 +587,7 @@ wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 공통 `CT-NODE-007`의 EN은 새 블록을 받으며 같은 높이의 블록 해시·state root도 일치하지만,
 `eth_fetcher_block_broadcasts_in`과 `eth_fetcher_block_announces_in`이 모두 0이다.
 chainbench parser 결과뿐 아니라 원본 Prometheus·expvar에도 같은 0이 있다.
-근거와 원본 해시는 [동기화 증거](sync-path-evidence.json)에 있다.
+근거와 원본 해시는 동기화 증거(`git show 2b064b2e:docs/dev/sync-path-evidence.json`)에 있다.
 
 외부 소스에서 `eth/fetcher/block_fetcher.go:50,55`와
 `les/fetcher/block_fetcher.go:52,57`이 같은 이름으로 서로 다른 meter를 만든다.
@@ -628,7 +627,7 @@ DuplicateMetric 반환을 다시 확인했다. 이것은 충돌 원인의 진단
 `c1318dd65c180a914e38345a7251ec73f3043b247221e80408085dfed0e827d1`을 고정한
 실제 진단 race는142.493초/skip0으로 통과했으며, 독립 대조와 새 프로세스 전수 조회 후
 종료 DB0·129파일의 내용·권한·소유자·mtime를 보존했다.
-[원본·출처·독립 대조](wemix-w4-latest-evidence.json). 진단 PASS는 CT-NODE-007 통과가 아니며,
+원본·출처·독립 대조(`git show 2b064b2e:docs/dev/wemix-w4-latest-evidence.json`). 진단 PASS는 CT-NODE-007 통과가 아니며,
 `issueResolved=false`, `strictCaseAccepted=false`다. 작업10과 외부 W4는 계속 열린 상태다.
 체인팀 메시지나 리뷰 요청은 보내지 않았다.
 
@@ -650,11 +649,11 @@ DuplicateMetric 반환을 다시 확인했다. 이것은 충돌 원인의 진단
 `verifyAggregatedSeal` 오류를 `ErrInvalidPrevPreparedSeals`로 바꾸는 위치를 확인했을 뿐,
 잘못된 서명이 생성/선택된 원인, 재현 확률, 메인넷 영향은 이번 로그만으로 확정하지 않았다.
 두 로그 묶음의 네 생산자와 부모/다음 높이를 엄격히 대조하고 누락 노드·다른 높이·다른 오류를 거절했다.
-[부분 L1 원본·진단·중단·보존](linux-l1-cohort-evidence.json).
+부분 L1 원본·진단·중단·보존(`git show 2b064b2e:docs/dev/linux-l1-cohort-evidence.json`).
 
 별개로 chainbench의 준비 확인 예산이 관찰 시간을 제외하던 문제를 RED→GREEN으로 고쳤다.
 실제 Linux4BP에서 정상 케이스 후 채굴을 중지한 동일 workspace가8초 deadline으로 종료2를 반환했고,
-그 뒤 모든 자료를 보존하고 DB를 회수했다. [시간 제한 증거](node-readiness-deadline-evidence.json).
+그 뒤 모든 자료를 보존하고 DB를 회수했다. 시간 제한 증거(`git show 2b064b2e:docs/dev/node-readiness-deadline-evidence.json`).
 이 수정은 seal 거절을 고치지 않는다. 전체 L1과 S1은 계속 열린 상태다.
 
 
@@ -668,9 +667,9 @@ reader 시작(index 13) 전에 실패했으며 마지막 조회의 context deadl
 
 배치 전체는 32행 30 PASS·1 BLOCKED·1 FAIL이고 보존·DB 회수 후 케이스 경계에서 신호 없이 끝냈다.
 157개 압축·10,523엔트리·2,336개 파일과 15대의 새 프로세스·열린 파일·바이너리·DB 0개를 독립 확인했다.
-[원본 행·직렬 구간·독립 증거](linux-l1-second-cohort-evidence.json).
+원본 행·직렬 구간·독립 증거(`git show 2b064b2e:docs/dev/linux-l1-second-cohort-evidence.json`).
 공식 StableNet 4d17eea0의 별도 깨끗한 소스와 Mac·Linux 빌드 출처는 확인했지만,
-새 버전의 실제 S1 재검증이나 해결로 세지 않는다([입력](upstream-pinned-build-evidence.json)).
+새 버전의 실제 S1 재검증이나 해결로 세지 않는다(입력: `git show 2b064b2e:docs/dev/upstream-pinned-build-evidence.json`).
 외부 소스 수정이나 체인팀 메시지·리뷰 요청은 수행하지 않았다.
 
 
@@ -693,7 +692,7 @@ health의 node4 chainId/blockNumber0은 실패한 조회의 기본값이며 실�
 같은 고정소스e66에서 새 workspace로 두 구성을 재실행한 결과는2공개케이스·36단언 통과다.
 그 성공은 원문의 extra 상태 명제에 대한 확인이며 패닉 해결 증거가 아니다. 실패 시도와 성공 시도를 합쳐 전부 통과로 세지 않는다.
 Linux·메인넷 영향·장시간 안정성·원인 수정은 이번 범위가 아니다.
-[버전·원본 로그·BLOCKED·새 실행·독립 보존](legacy-extra-state-evidence.json).
+버전·원본 로그·BLOCKED·새 실행·독립 보존(`git show 2b064b2e:docs/dev/legacy-extra-state-evidence.json`).
 
 ## 9. WEMIX EN의 admin_wemixInfo 패닉 (2026-10-21)
 

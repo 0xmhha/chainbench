@@ -12,7 +12,7 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins, as package main does
 )
 
-// This file is the worked example for the U track's gate (worklist §1l).
+// This file is the worked example for the U track's gate.
 //
 // The rule the track enforces is that every surface reaches a feature through
 // app. The property that rule exists for is that the surfaces answer alike, and

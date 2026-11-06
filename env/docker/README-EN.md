@@ -5,8 +5,7 @@ they disagree the Korean one is the original.
 
 These are fake servers that let you exercise chainbench's remote code paths
 without real remote hosts. Design and rationale are in
-[`docs/dev/docker-remote-design.md`](../../docs/dev/docker-remote-design.md);
-the work status is worklist §1g, track R.
+[`docs/dev/docker-remote-design.md`](../../docs/dev/docker-remote-design.md).
 
 - A container is an empty ubuntu server plus sshd. **Access looks exactly like a
   real server**: the first account in `accounts.env` (`devuser1` by default) with

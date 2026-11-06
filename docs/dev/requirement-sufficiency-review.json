@@ -215,11 +215,5 @@
       "limit": "atomic mkdir 고유 root와 실제 report 링크를 확인했다. 기존 세션 ID 형식은 첫 실행에서 유지하고 충돌에만 suffix를 붙인다"
     }
   ],
-  "newNativeEvidence": [
-    "deployment-provenance-evidence.json",
-    "requirement-execution-evidence.json",
-    "n3-allocation-evidence.json",
-    "mcp-registry-evidence.json"
-  ],
   "finalWeb14Acceptance": "pending"
 }

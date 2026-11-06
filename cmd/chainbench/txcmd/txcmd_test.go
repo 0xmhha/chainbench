@@ -17,7 +17,7 @@ import (
 
 // The tx and contract verbs had no tests while they lived in package main,
 // because a test cannot call into package main. Moving them here is what makes
-// these possible, which is the whole of U1 (worklist §1l).
+// these possible, which is the whole of U1.
 
 // node answers a fixed set of RPC methods and records what it was asked, so two
 // surfaces can be compared on the questions they put to a chain rather than on

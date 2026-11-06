@@ -2,7 +2,7 @@
 
 - 원본: `~/Work/github/packages/chainbench/tests` (셸 460개 파일, 논리 테스트 254개)
 - 대상: `~/Work/github/chainbench` (DSL 스펙 122 + 케이스 29 + Go e2e 40)
-- 방법: 양쪽을 AST 로 파싱해 그래프로 만든 뒤(1·2번 문서), 테스트 단위로 대응을 찾고 RPC 메서드·단언·검증 대상을 대조했다.
+- 방법: 양쪽을 AST 로 파싱해 그래프로 만든 뒤, 테스트 단위로 대응을 찾고 RPC 메서드·단언·검증 대상을 대조했다.
 
 ## 3.1 결론
 
@@ -285,4 +285,3 @@ wemix4 84개는 `docs/dev/wemix4-port-tracker.md` (2026-09-24 삭제) 가 대응
 잔액·5초 체인 정보·선택 RPC 분류·eth_sendTransaction1wei의 서로 다른 명제를 수행한다.
 생성한 로컬 망에서 공개4건11단언과 별도 서명/영수증/블록/nonce 대조를 통과했다.
 공용 실제 망·계정 준비와 전체254개 동등성 인수는 별도 잔여다.
-[실제 범위·원문 차이](../legacy-remote-predicates-evidence.json).

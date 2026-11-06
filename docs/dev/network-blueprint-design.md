@@ -2,7 +2,7 @@
 
 > **[현행 설계]** 체인 구성 선언·해석·물질화.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
+> 열린 작업은 [open-work.md](open-work.md) 에 있다.
 
 > 문제: 네트워크를 구성하는 정보가 **4조각으로 흩어져** 있고, 어느 조각도 전체를 말하지 못한다.
 > 그래서 genesis·config 를 "그때그때" 만들게 되고, preset 없이는 아무것도 구성할 수 없다.
@@ -10,7 +10,6 @@
 >
 > 실측: 2026-08-18. 관련: surface-unification-design(지운 문서) ·
 > family-bringup-design(지운 문서) · [[server-set]](server-set.md).
-> 작업 순서는 [[chainbench-worklist]](chainbench-worklist.md) §1g.
 
 > **경로 정정 (2026-09-11).** 실측은 2026-08-18 기준이다. 본문 §부록의 패키지 표에서
 > `internal/core/capability` 는 `internal/core/registry` 로 병합됐고(`Capability`·`LoadCatalog`·
@@ -157,7 +156,7 @@ nodekey (32B secp256k1, crypto/rand)
   └─ BLS PoP        Sign(pubkey, DST=…_POP_) → G2 96B   blst
 ```
 
-이것이 [[chainbench-worklist]] §1g 의 "raw 가 먼저" 를 실제로 가능하게 한다 —
+이것이 "raw 가 먼저" 를 실제로 가능하게 한다 —
 새 키셋을 만드는 데 **어떤 체인 바이너리도 필요 없다.**
 
 genesis 는 **검증자의 BLS 만** 소비한다(`len(Validators) == len(BLSKeys)` 강제).

@@ -523,7 +523,7 @@ func short(hash string) string {
 // see it, so N9's question ("what has to resolve before what") could only be
 // answered by reading six functions.
 //
-// The order is NOT keyring → netmap, which is how the worklist recorded it.
+// The order is NOT keyring → netmap, which is how it was once recorded.
 // `keys` takes its node count from the placement, so `place` runs first and
 // `chain up` has always run them that way; the note was written from the
 // intended design rather than from the code.

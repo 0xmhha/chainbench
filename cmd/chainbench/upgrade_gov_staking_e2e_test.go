@@ -1604,7 +1604,7 @@ func TestWemixGovernanceCredentialExpiryE2E(t *testing.T) {
 // the epoch leaves the stabilizing stage. Kept in sync with
 // internal/chains/wbft/genesis.json, which is a literal there: unlike
 // targetValidators and epochLength it is not derived from the validator set,
-// because it is a threshold for leaving a stage rather than a size (worklist R7).
+// because it is a threshold for leaving a stage rather than a size.
 const stabilizingStakersThreshold = 5
 
 // TestWemixGovernanceStabilizingE2E ports the reachable core of wemix4 GOV-010

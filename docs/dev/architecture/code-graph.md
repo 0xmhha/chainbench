@@ -159,7 +159,7 @@ flowchart TD
 > (`internal/core/nodeconfig/launchopt.go`). 그때의 설계 근거는
 > `../archive/chain-binary-flag-graph.md` (2026-09-24 삭제) §3.3 이다.
 
-그래프가 "실행 인자가 5곳에 흩어져 있다"는 주장(worklist T7.3/T7.4)을 정확한 지점으로
+그래프가 "실행 인자가 5곳에 흩어져 있다"는 주장을 정확한 지점으로
 고정했던 기록이다.
 
 | # | Site | What it contributed |

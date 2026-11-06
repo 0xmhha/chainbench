@@ -2,7 +2,7 @@
 
 > **[현행 설계]** 관심사 소유자.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
+> 열린 작업은 [open-work.md](../open-work.md) 에 있다.
 
 > [[layers]](layers.md) 는 **패키지가 어느 층인지**를 답한다. 이 문서는 그 다음 질문에 답한다 —
 > **"이 관심사의 주인이 누구인가."** 그리고 세 체인을 실제로 기동할 때 모듈을 어떻게 타는지 추적한다.
@@ -281,8 +281,7 @@ L3  core/session 이 전 과정의 스텝 스탬프를 기록                   
 
 ## 6. 착수 순서
 
-> **작업 순서와 상태는 [[chainbench-worklist]](../chainbench-worklist.md) §1g 에서 관리한다.**
-> 이 문서는 *무엇을 왜* 를 정하고, 트래커는 *언제 어디까지* 를 기록한다.
-> 순서를 여기 두면 두 곳이 갈라진다.
+> **열린 작업은 [open-work.md](../open-work.md) 에 있다.**
+> 이 문서는 *무엇을 왜* 를 정한다. 순서를 여기 두면 두 곳이 갈라진다.
 
 > 이 문서가 트래커에 더한 것: **B1(`testspec` 4분할)** — F 계열과 독립이라 병행 가능하다.

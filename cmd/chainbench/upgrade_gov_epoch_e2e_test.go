@@ -190,7 +190,7 @@ type epochInfo struct {
 //
 // The block is passed as a hex quantity, never as "latest": go-wbft reads the
 // tag's negative sentinel straight into a block number and answers "block is not
-// a wbft block", naming the wrong cause (worklist §1s B).
+// a wbft block", naming the wrong cause.
 func epochInfoAt(t *testing.T, c *rpc.Client, block uint64) epochInfo {
 	t.Helper()
 	var extra struct {

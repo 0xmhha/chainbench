@@ -17,8 +17,7 @@ import (
 
 // U2 routed the chain group through app, which is what makes these possible:
 // both surfaces now call the same entry point, so a difference between them is
-// a defect rather than the expected consequence of two implementations
-// (worklist §1l).
+// a defect rather than the expected consequence of two implementations.
 //
 // What is compared is the workspace each surface produced, not the words each
 // printed. Composing is a side effect on disk — that state is the answer, and a

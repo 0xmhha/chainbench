@@ -25,7 +25,7 @@
 ## 이 저장소가 더한 것: 단계별 상태 (2026-10-29)
 
 > 위 본문은 Confluence 를 그대로 옮긴 것이고, 이 절만 chainbench 저장소가 더했다. 공통 테스트는 지금 72개다([공통 테스트 목록](01-common-test-list.md)).
-> 근거는 이 날짜의 코드와 [`mainnet-config-worklist.md`](../../dev/architecture/mainnet-config-worklist.md) 의 상태 칸이다. 적지 않은 단계는 이번에 확인하지 않았다.
+> 근거는 이 날짜의 코드와 당시 작업 목록의 상태 칸이다. 남은 일은 [`open-work.md`](../../dev/open-work.md) 에 있다. 적지 않은 단계는 이번에 확인하지 않았다.
 
 | 순서 | 지금 상태 |
 | --- | --- |

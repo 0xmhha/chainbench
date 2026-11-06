@@ -58,7 +58,7 @@ func (d Deps) env() func(string) string {
 }
 
 // KeySetEnv is the store's — re-stated here only until the surfaces call the
-// store directly (worklist V3.3).
+// store directly.
 const KeySetEnv = store.KeySetEnv
 
 // DefaultKeySetDir is the store's answer for an unnamed key set. It is a
