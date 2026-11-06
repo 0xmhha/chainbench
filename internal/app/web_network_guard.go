@@ -37,6 +37,11 @@ func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPaylo
 		if vacant && ns.PID != 0 {
 			return webConflict("a recorded node still runs where the network must be vacant")
 		}
+		// A retry replaces a composition that stopped before starting this node.
+		// Controlling one node stays refused: it has no launch to verify.
+		if webNodeNeverLaunched(ns) {
+			continue
+		}
 		if err = verifyWebNodeProcesses(ctx, state, []string{string(ns.NodeLabel())}, lookup, p.Targets...); err != nil {
 			return err
 		}
