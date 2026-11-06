@@ -334,6 +334,19 @@ CSRF checks, redaction and audit records:
 chainbench-dashboard -addr 127.0.0.1:8787
 ```
 
+To keep the dashboard running on a Mac across logins and crashes:
+
+```bash
+make dashboard-service         # build, register with launchd, and start
+make dashboard-service-remove  # stop and unregister; the data stays
+```
+
+Run `make dashboard-service` again to serve a new build. It needs port 8787
+free, runs from this checkout, and records the current `PATH`. Data stays in
+this machine's `chainbench-out/web-ui`: a second machine runs the same command
+and starts with empty data. Other systems run `bin/chainbench-dashboard` under
+their own service manager.
+
 To require accounts, the first administrator signs up with the one-time
 `setup.token` in the data directory:
 
