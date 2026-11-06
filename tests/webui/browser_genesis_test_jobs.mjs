@@ -8,6 +8,8 @@ const owned=await launchOwnedBrowser(),browser=owned.browser
 const context=await browser.newContext({viewport:{width:1440,height:1100}}),verified=[]
 let session,releaseCatalog
 const documentList=url=>url.origin===new URL(f.url).origin&&url.pathname==='/api/v1/documents'
+// The job form's catalog lists every document; the editor's own save reads by kind and must not be held.
+const catalogList=url=>documentList(url)&&!url.searchParams.has('kind')
 async function api(path,method='GET',data,key,expected=200){
  const r=await context.request.fetch(f.url+'/api/v1/'+path,{method,headers:{'Content-Type':'application/json',...(session?{'X-CSRF-Token':session.csrfToken}:{}),...(key?{'Idempotency-Key':key}:{})},data:data===undefined?undefined:JSON.stringify(data)})
  const text=await r.text();assert.equal(r.status(),expected,`${method} ${path}: ${text}`)
@@ -43,7 +45,7 @@ try{
   await page.getByLabel('작업 매니페스트',{exact:true}).selectOption(chain)
   await page.getByLabel('작업 바이너리',{exact:true}).selectOption(chain)
   await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
-  await page.getByLabel('실행 케이스 '+original.id,{exact:true}).check()
+  await page.locator(`input[name="case"][value="${original.id}"]`).check()
   await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
   await page.getByLabel('실행 계획',{exact:true}).waitFor()
   const section=page.getByLabel('구조 DSL 편집기',{exact:true})
@@ -70,7 +72,7 @@ try{
    const gate=new Promise(resolve=>releaseCatalog=resolve)
    // The catalog reads the document list a page at a time, so match the path
    // whatever paging query it carries.
-   await page.route(documentList,async route=>{
+   await page.route(catalogList,async route=>{
     if(held)return route.continue()
     held=true
     const response=await route.fetch()
@@ -86,12 +88,12 @@ try{
    const secondResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/documents/'+original.id&&r.request().method()==='PATCH')
    await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
    const second=await secondResponse;assert.equal(second.status(),200,await second.text());saved=await second.json();assert.equal(saved.revision,3)
-   await page.waitForFunction(id=>document.querySelector(`input[aria-label="실행 케이스 ${id}"]`)?.closest('label')?.textContent.includes('r3'),original.id)
-   const staleResponse=page.waitForResponse(async response=>documentList(new URL(response.url()))&&(await response.json()).items?.find(d=>d.id===original.id)?.revision===2)
+   await page.waitForFunction(id=>document.querySelector(`input[name="case"][value="${id}"]`)?.closest('label')?.textContent.includes('r3'),original.id)
+   const staleResponse=page.waitForResponse(async response=>catalogList(new URL(response.url()))&&(await response.json()).items?.find(d=>d.id===original.id)?.revision===2)
    releaseCatalog();await delivered;await (await staleResponse).finished()
    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))
-   assert.ok((await page.getByLabel('실행 케이스 '+original.id,{exact:true}).locator('..').textContent()).includes('r3'),'late response replaced latest catalog')
-   await page.unroute(documentList);releaseCatalog=null
+   assert.ok((await page.locator(`input[name="case"][value="${original.id}"]`).locator('..').textContent()).includes('r3'),'late response replaced latest catalog')
+   await page.unroute(catalogList);releaseCatalog=null
   }
   const base={workspaceId:w.id,operation:'test.run',documentRefs:w.documents,assetRefs:[chain,asset.id],retention:'retain',arguments:{manifestId:chain,assetId:chain,serverRef:'local',caseRefs:[{id:saved.id,revision:saved.revision}]}}
   const plan=await api('plans','POST',base,undefined,201)
@@ -113,9 +115,9 @@ try{
    }
   }
   // Saving must refresh execution choices without discarding the open editor.
-  const executionCase=page.getByLabel('실행 케이스 '+saved.id,{exact:true})
+  const executionCase=page.locator(`input[name="case"][value="${saved.id}"]`)
   await page.waitForFunction(({id,revision})=>{
-   const input=document.querySelector(`input[aria-label="실행 케이스 ${id}"]`)
+   const input=document.querySelector(`input[name="case"][value="${id}"]`)
    return input?.closest('label')?.textContent.includes(`r${revision}`)
   },{id:saved.id,revision:saved.revision},{timeout:10000})
   assert.equal(await picker.inputValue(),asset.id,'catalog update discarded open editor selection')
@@ -129,7 +131,7 @@ try{
   await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
   await executionCase.check()
   await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();await page.getByLabel('실행 계획',{exact:true}).waitFor()
-  assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes(asset.id),'UI omitted selected test file')
+  assert.ok((await page.getByLabel('실행 계획',{exact:true}).textContent()).includes(asset.id),'UI omitted selected test file')
   await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/'+chain+'-test-genesis-plan.png'})
   const accepted=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
   await clickRun(page)

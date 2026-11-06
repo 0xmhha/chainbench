@@ -12,9 +12,12 @@
  const shownNodes=$derived(allNodes.filter(n=>!monitorRange.node||n===monitorRange.node))
  // Series colors are design tokens (--series-1 … --series-8 in App).
  const colors=[1,2,3,4,5,6,7,8].map(i=>`var(--series-${i})`)
- const W=640,H=160
+ // The plot is drawn at the figure's own width, so its labels keep their size.
+ let figureWidth=$state(0)
+ const H=160
  // Room around the plot for the value labels (left) and the time labels (below).
- const ML=44,MR=8,MT=6,MB=20,TICKS=4
+ const ML=44,MR=8,MT=6,MB=20,TICKS=4,FIGURE_PADDING=26,MIN_PLOT=200
+ const W=$derived(figureWidth?Math.max(MIN_PLOT,figureWidth-FIGURE_PADDING-ML-MR):640)
  // One cursor time is shared by every chart, so a moment lines up across metrics.
  let cursor=$state(null)
  // A node with no sample within two collection intervals of the cursor reads as missing.
@@ -76,14 +79,14 @@
     {@const model={...full,nodes:full.nodes.filter(n=>shownNodes.includes(n.node))}}
     {@const label=`${m.name} · ${m.source}`}
     {@const latest=model.nodes.length?latestValues(model):null}
-    <figure>
+    <figure bind:clientWidth={figureWidth}>
      <figcaption>
       <span class="name">{label}</span>
       {#if latest}<span class="latest">최근 {latest.values.map(v=>`${v.node} ${v.value}`).join(' · ')}{model.unit?` ${model.unit}`:''}{#if latest.spread!==null}<span class:lag={latest.spread>0}>{' · '}노드 간 차이 {latest.spread}</span>{/if}</span>{/if}
      </figcaption>
      {#if model.nodes.length===0}<p class="muted">이 범위에 수집된 값이 없습니다.</p>{:else}
       <svg data-testid={'metric-chart-'+m.name} data-segments={model.nodes.reduce((n,x)=>n+x.segments.length,0)} viewBox={`0 0 ${W+ML+MR} ${H+MT+MB}`} role="group" tabindex="0" aria-label={`${label} 차트. 좌우 화살표로 시점을 옮기고 Enter로 그 시점 로그를 엽니다.`}
-       onpointermove={event=>{cursor=pointerTime(model,chartX(event))}} onpointerleave={()=>{cursor=null}} onkeydown={event=>chartKey(event,model)}>
+       onpointermove={event=>{cursor=pointerTime(model,chartX(event))}} onpointerleave={()=>{cursor=null}} onkeydown={event=>chartKey(event,model)} onclick={event=>{if(event.target.tagName==='circle')return;const near=nearestPoints(model,pointerTime(model,chartX(event)),tolerance).find(p=>p.value!==null);if(near)select(near.node,near,model)}}>
        <g transform={`translate(${ML},${MT})`}>
         {#each gapBands(model,metrics.coverage) as band}<rect class="gap" x={band.x} y="0" width={band.width} height={H}><title>누락 · {gapText(band.gap).text} ({band.gap.code})</title></rect>{/each}
         <line class="base" x1="0" y1={H} x2={W} y2={H}/>
@@ -92,7 +95,8 @@
         {#each model.nodes as series (series.node)}
          <path d={series.path} data-node={series.node} fill="none" style:stroke={nodeColor(series.node,allNodes)} stroke-width="1.75"/>
          {#each series.points as point (point.time)}
-          <circle cx={point.x} cy={point.y} r="3" style:fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="-1" onclick={()=>select(series.node,point,model)}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source} · 시점 로그 보기</title></circle>
+          <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions: the chart itself takes the keys -->
+          <circle cx={point.x} cy={point.y} r="3" style:fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} onclick={()=>select(series.node,point,model)}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source} · 시점 로그 보기</title></circle>
          {/each}
         {/each}
         {#if cursor}
@@ -126,7 +130,7 @@
  .muted{font-size:var(--text-sm)}
  figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-1) var(--space-3)}.name{color:var(--accent-strong)}.latest{color:var(--text-muted);font-size:var(--text-xs);font-variant-numeric:tabular-nums}.lag{color:var(--warn)}
  svg{cursor:crosshair;overflow:visible}svg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
- .gap{fill:var(--warn-bg);opacity:.8}.base{stroke:var(--border-subtle)}.tick{fill:var(--text-faint);font:11px var(--font-mono)}.tick.y{text-anchor:end}
+ .gap{fill:var(--warn-bg);opacity:.8}.base{stroke:var(--border-subtle)}.tick{fill:var(--text-faint);font:var(--text-xs) var(--font-mono)}.tick.y{text-anchor:end}
  .cursor{stroke:var(--text-muted);stroke-dasharray:3 3;pointer-events:none}.cursor-dot{fill:var(--bg);stroke-width:2;pointer-events:none}circle:not(.cursor-dot){fill-opacity:0}circle:not(.cursor-dot):hover,circle:not(.cursor-dot):focus-visible{fill-opacity:1}
  .readout{margin:var(--space-1) 0 0;font:var(--text-xs) var(--font-mono);color:var(--text-muted)}
 </style>

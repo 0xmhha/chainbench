@@ -57,12 +57,12 @@ try {
   assert.deepEqual((await optionSelect.locator('option').evaluateAll(options=>options.map(o=>o.value).filter(Boolean))).sort(),Object.keys(single).sort())
   for(const [key,definition] of Object.entries(single)){
    await optionSelect.selectOption(key)
-   const input=page.getByLabel('/content/launch/node1/'+key,{exact:true})
+   const input=page.locator(`[name="/content/launch/node1/${key}"]`)
    const value=definition.type==='boolean'?true:key==='syncmode'||key==='gcmode'?'full':key==='datadir'?'preset-validation':key==='miner.etherbase'?'0x0000000000000000000000000000000000000001':key==='unlock'?'0x0000000000000000000000000000000000000001':key==='nat'?'none':'1'
    if(definition.type==='boolean')await input.check();else if(definition.enum)await input.selectOption(value);else await input.fill(value)
    if(key==='metrics.port'){
     await optionSelect.selectOption('metrics')
-    await page.getByLabel('/content/launch/node1/metrics',{exact:true}).check()
+    await page.locator('[name="/content/launch/node1/metrics"]').check()
    }
    const content=JSON.parse(await page.locator('.editor pre').textContent())
    assert.equal(content.launch.node1[key],value)
@@ -76,7 +76,7 @@ try {
   await page.getByText('모든 구성 필드',{exact:true}).waitFor()
   if(!(await page.locator('details.structured').evaluate(e=>e.open)))await page.getByText('모든 구성 필드',{exact:true}).click()
   await page.getByLabel('/content/topology/nodes/0 필드 추가',{exact:true}).selectOption('sync')
-  await page.getByLabel('/content/topology/nodes/0/sync',{exact:true}).selectOption('snap')
+  await page.locator('[name="/content/topology/nodes/0/sync"]').selectOption('snap')
   await page.getByRole('button',{name:'체인 구성 검증',exact:true}).click()
   await page.getByRole('status').filter({hasText:'엔진 검증 통과'}).waitFor()
   const table=JSON.parse(await page.locator('.editor pre').textContent())

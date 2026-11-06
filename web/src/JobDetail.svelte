@@ -113,7 +113,7 @@
 </script>
 
 <section class="page" aria-label="작업 상세">
-  <p class="back"><a href="/chains" onclick={e => follow(e, '/chains')}>체인 화면의 작업 목록으로</a></p>
+  <p class="back">{#if job?.operation?.startsWith('test.')}<a href="/tests" onclick={e => follow(e, '/tests')}>테스트 화면의 작업 목록으로</a>{:else}<a href="/chains" onclick={e => follow(e, '/chains')}>체인 화면의 작업 목록으로</a>{/if}</p>
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   {#if job}
     <div class="folio"><span>작업 일지 · <strong>{job.operation}</strong> · <code>{job.id.slice(0, 8)}</code></span><span>{formatTime(job.createdAt).slice(0, 10)}{#if network} · 네트워크 <code>{network.id.slice(0, 8)}</code> · 노드 {networkNodes.length}{/if}</span></div>

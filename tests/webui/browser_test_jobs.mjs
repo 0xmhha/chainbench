@@ -56,7 +56,7 @@ try{
       await page.getByLabel('작업 매니페스트',{exact:true}).selectOption(chain)
       await page.getByLabel('작업 바이너리',{exact:true}).selectOption(chain)
       await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
-      await page.getByLabel('실행 케이스 '+newest.id,{exact:true}).check()
+      await page.locator(`input[name="case"][value="${newest.id}"]`).check()
       await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
       await page.getByLabel('실행 계획',{exact:true}).waitFor()
       await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/test-plan.png'})

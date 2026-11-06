@@ -12,7 +12,9 @@
 
  const ALL='*'
  const PAGE=LOG_PAGE_MAX
- const ROW=22
+ // Rows must be large enough to tap on a touch screen.
+ let copied=$state('')
+ const ROW=globalThis.matchMedia?.('(pointer: coarse)').matches?44:22
  const SEARCH_DELAY=300
  const CONTEXT_SECONDS=30
 
@@ -130,7 +132,7 @@
   scrollTop=viewport.scrollTop
   if(viewport.scrollTop+height>=viewport.scrollHeight-ROW*5)loadMore()
  }
- async function copy(text){try{await navigator.clipboard.writeText(text)}catch{/* The clipboard may be unavailable; the line stays selectable. */}}
+ async function copy(text){try{await navigator.clipboard.writeText(text);copied='줄을 복사했습니다'}catch{copied='복사하지 못했습니다. 줄을 직접 선택하세요'}}
 </script>
 
 <section class="log-viewer" data-testid={testid} data-log-node={loadedFor||undefined} aria-label={title||'노드 로그'} onkeydown={keydown} {...attributes}>
@@ -175,7 +177,7 @@
    <ol role="none" style:height="{entries.length*ROW}px">
     {#each entries.slice(range.start,range.end) as entry, offset (range.start+offset)}
      {@const index=range.start+offset}
-     <li id="{testid}-row-{index}" role="option" aria-selected={index===selected} class:selected={index===selected} style:top="{index*ROW}px" data-log-time={entry.time} data-level={entry.level} onclick={()=>choose(index)}>
+     <li id="{testid}-row-{index}" role="option" aria-selected={index===selected} aria-setsize={total} aria-posinset={index+1} class:selected={index===selected} style:top="{index*ROW}px" data-log-time={entry.time} data-level={entry.level} onclick={()=>choose(index)}>
       <span class="level {levelTone(entry.level)}">{entry.level??''}</span>
       <time datetime={entry.time}>{clock(entry.time)}</time>
       {#if node===ALL}<span class="from">{entry.node}</span>{/if}
@@ -191,7 +193,7 @@
     <p class="meta"><span class="level {levelTone(line.level)}">{line.level??'레벨 없음'}</span> {time(line.time)}{#if node===ALL} · {line.node}{/if}</p>
     <pre>{line.text}</pre>
     <div class="actions">
-     <button type="button" onclick={()=>copy(line.text)}>줄 복사</button>
+     <button type="button" onclick={()=>copy(line.text)}>줄 복사</button>{#if copied}<span role="status">{copied}</span>{/if}
      {#if !context}<button type="button" onclick={()=>aroundLine(line)}>이 줄 전후 {CONTEXT_SECONDS}초 보기</button>{/if}
     </div>
    </div>
@@ -215,7 +217,7 @@
  .count { color: var(--text); font-weight: 600; }
  .viewport { position: relative; overflow: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg); }
  ol { position: relative; margin: 0; padding: 0; list-style: none; min-width: max-content; }
- ol > li { position: absolute; left: 0; right: 0; height: 22px; display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-3) 0 0; white-space: pre; cursor: default; font: var(--text-xs)/22px var(--font-mono); }
+ ol > li { position: absolute; left: 0; right: 0; height: var(--log-row, 22px); display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-3) 0 0; white-space: pre; cursor: default; font: var(--text-xs)/22px var(--font-mono); }
  ol > li:hover { background: var(--surface); }
  ol > li.selected { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--accent-border); }
  .level { flex: 0 0 52px; align-self: stretch; padding-left: var(--space-2); border-left: 2px solid transparent; color: var(--text-faint); font-weight: 600; }
@@ -241,4 +243,5 @@
   li > time { display: none; }
  }
  @media (pointer: coarse) { .keys { display: none; } .chip { min-height: 44px; padding: 2px 14px; } }
+ @media (pointer: coarse) { ol > li { --log-row: 44px; } }
 </style>

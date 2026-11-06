@@ -71,7 +71,7 @@ try{
   await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
   await page.getByLabel('작업 체인 구성',{exact:true}).selectOption(saved.id)
   await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();await page.getByLabel('실행 계획',{exact:true}).waitFor()
-  assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes(asset.id),'UI plan omitted selected file dependency')
+  assert.ok((await page.getByLabel('실행 계획',{exact:true}).textContent()).includes(asset.id),'UI plan omitted selected file dependency')
   await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/'+chain+'-genesis-plan.png'})
   const acceptedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
   await clickRun(page);const ar=await acceptedResponse;assert.equal(ar.status(),202,await ar.text());await waitJob((await ar.json()).id)

@@ -34,7 +34,7 @@ export function optionArguments(options, values) {
   if (value === '' || value === null || value === undefined) continue
   const n = Number(value)
   if (!Number.isInteger(n) || (option.minimum !== undefined && n < option.minimum) || (option.maximum !== undefined && n > option.maximum)) {
-   throw new Error(`${option.title}은(는) ${option.minimum}부터 ${option.maximum}까지의 정수여야 합니다.`)
+   throw new Error(`${option.title}은(는) ${rangeText(option)}정수여야 합니다.`)
   }
   out[option.name] = n
  }
@@ -55,4 +55,15 @@ export function planBlockers(form) {
  if (!form.server) missing.push('서버')
  if (form.needsCase && !form.cases) missing.push('실행할 케이스')
  return missing
+}
+
+/**
+ * rangeText reads the bounds a contract gives, which may be one or none.
+ * @param {{ minimum?: number, maximum?: number }} bounds
+ */
+function rangeText({ minimum, maximum }) {
+ if (minimum !== undefined && maximum !== undefined) return `${minimum}부터 ${maximum}까지의 `
+ if (minimum !== undefined) return `${minimum} 이상의 `
+ if (maximum !== undefined) return `${maximum} 이하의 `
+ return ''
 }

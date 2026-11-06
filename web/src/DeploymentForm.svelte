@@ -16,7 +16,10 @@
   }
   // The document's own description is already above the form, not repeated here.
   const rest = $derived({ ...(placed[kind] ? remainder(schema, placed[kind]) : schema), description: undefined })
-  const restHasValues = $derived(Object.keys(rest.properties ?? {}).some(k => value?.[k] !== undefined && !(rest.required ?? []).includes(k)))
+  const restFilled = $derived(Object.keys(rest.properties ?? {}).filter(k => value?.[k] !== undefined && !(rest.required ?? []).includes(k)))
+  // Filled values stay folded, so an imported set reads as a short summary. A
+  // refused or changed field inside still opens it, or the field could not be reached.
+  const restNeedsLook = $derived(restFilled.some(k => [...Object.keys(problems), ...changed].some(p => p.startsWith(`content.${k}`))))
 
   // set returns the content with one value replaced along keys.
   function set(keys, v) {
@@ -120,8 +123,8 @@
 {/if}
 
 {#if Object.keys(rest.properties ?? {}).length || rest.additionalProperties}
-  <details class="more" open={restHasValues || undefined}>
-    <summary>추가 설정</summary>
+  <details class="more" open={restNeedsLook || undefined}>
+    <summary>추가 설정{#if restFilled.length}{' · '}값 있음: {restFilled.join(', ')}{/if}</summary>
     <DeploymentFields schema={rest} {value} {change} {problems} {readonly} {changed} title="" />
   </details>
 {/if}
