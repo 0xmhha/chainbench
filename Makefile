@@ -16,7 +16,7 @@ GOLANGCI ?= $(BIN_DIR)/golangci-lint
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build $(CMDS) test test-race test-e2e tc-review sweep-test case-docs fixture-test cover lint lint-tool fmt fmt-check vet tidy secrets check clean
+.PHONY: help build $(CMDS) dashboard-service dashboard-service-remove dashboard-service-test test test-race test-e2e tc-review sweep-test case-docs fixture-test cover lint lint-tool fmt fmt-check vet tidy secrets check clean
 
 help: ## list the targets
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -27,6 +27,12 @@ build: $(CMDS) ## build every binary into bin/
 
 $(CMDS): ## build one binary (e.g. make chainbench)
 	$(GO) build $(LDFLAGS) -o $(BIN_DIR)/$@ ./cmd/$@
+
+dashboard-service: chainbench chainbench-dashboard ## build and keep the dashboard running on this Mac
+	bash scripts/dashboard-service.sh install
+
+dashboard-service-remove: ## stop the dashboard service and keep its data
+	bash scripts/dashboard-service.sh uninstall
 
 ## --- test ----------------------------------------------------------------
 test: ## unit and integration tests (e2e excluded)
@@ -59,6 +65,9 @@ fixture-test: ## verify owned Docker fixture selection without Docker
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_storage.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_runtime_storage.py
 	PYTHONDONTWRITEBYTECODE=1 python3 -B tests/webui/test_evidence_web14.py
+
+dashboard-service-test: ## verify the dashboard service script against stand-in system commands
+	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_dashboard_service.py
 
 case-docs: ## verify every current public case has an up-to-date command entry
 	PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/test_case_command_docs.py
@@ -126,7 +135,7 @@ tidy: ## go mod tidy
 secrets: ## scan the tree for secrets (pre-commit gate)
 	bash scripts/check-secrets.sh --all
 
-check: fmt-check vet lint test tc-review sweep-test case-docs fixture-test ## everything a commit should pass
+check: fmt-check vet lint test tc-review sweep-test case-docs fixture-test dashboard-service-test ## everything a commit should pass
 
 clean: ## remove build output
 	rm -rf $(BIN_DIR) coverage.out coverage.html
