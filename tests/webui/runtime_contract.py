@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 
-EXCLUDED = {'.git', '.ouroboros', '.codex', '.agents', '.aws', '.venv', 'venv', 'chainbench-out', 'bin', 'node_modules', '__pycache__', '.DS_Store'}
+EXCLUDED = {'.git', '.ouroboros', '.codex', '.agents', '.aws', '.impeccable', '.venv', 'venv', 'chainbench-out', 'bin', 'node_modules', '__pycache__', '.DS_Store'}
 SUFFIXES = {'.go', '.svelte', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.py', '.sh', '.txt', '.md', '.html', '.css', '.mod', '.sum'}
 RECEIPT_CRITERIA = {'WEB-%02d' % i for i in range(1, 15)}
 
