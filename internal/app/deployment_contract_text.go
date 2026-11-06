@@ -13,7 +13,7 @@ type deploymentText struct{ title, description string }
 // (kind, then keys; [] is an array item and {} a map entry). The words are the
 // screen's language; the field names stay the engine's.
 var deploymentFieldText = map[string]deploymentText{
-	"server-set":                          {"서버 풀", "노드를 놓을 수 있는 주소와, 주소마다 몇 개의 포트 칸을 쓸지 정합니다."},
+	"server-set":                          {"서버 세트", "노드를 놓을 수 있는 주소와, 주소마다 몇 개의 포트 칸을 쓸지 정합니다."},
 	"server-set.version":                  {"형식 버전", ""},
 	"server-set.pool":                     {"풀", ""},
 	"server-set.pool.hosts":               {"서버", "노드를 이 순서대로 놓습니다."},

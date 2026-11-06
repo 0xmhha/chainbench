@@ -15,7 +15,7 @@
   import BundleImport from './BundleImport.svelte'
   let { webSession = undefined, onsaved = () => {} } = $props()
   let contract = $state(null), docs = $state([]), workspaces = $state([]), credentials = $state([])
-  let edited = $state(false), writing = $state(false), kind = $state('server-set'), name = $state('서버 풀'), content = $state({}), docId = $state(''), revision = $state(0)
+  let edited = $state(false), writing = $state(false), kind = $state('server-set'), name = $state('서버 세트'), content = $state({}), docId = $state(''), revision = $state(0)
   let workspaceId = $state(''), workspaceName = $state('팀 workspace'), workspaceRevision = $state(0), setRef = $state(''), configRef = $state('')
   let selectedCredential = $state(''), serverRef = $state(''), bindings = $state({}), status = $state(''), access = $state(null), busy = $state(false)
   const role = $derived(webSession?.user.role)
@@ -52,7 +52,7 @@
   function serverProblems(errors) {
     return (errors ?? []).map(e => ({ path: fieldPath(contract?.[kind], e.path), message: e.message }))
   }
-  const kindNames = { 'server-set': '서버 풀', 'workspace-config': '대상 경로' }
+  const kindNames = { 'server-set': '서버 세트', 'workspace-config': '대상 경로' }
   const api = $derived(webApi(webSession))
   async function action(fn) { const restoreFocus = keepFocus(); busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false; await restoreFocus() } }
   async function refresh() {
@@ -110,14 +110,14 @@
 
 <section class="panel deployment" aria-label="배포 구성">
   <h2>공유 배포 구성</h2>
-  <p>팀이 함께 쓰는 서버 풀과 대상 경로, workspace를 만들고 내 SSH 자격증명을 서버에 연결합니다.</p>
+  <p>팀이 함께 쓰는 서버 세트과 대상 경로, workspace를 만들고 내 SSH 자격증명을 서버에 연결합니다.</p>
   <p data-testid="deployment-actor">{webSession?.user.username} · {role}</p>
   {#if canEdit}<BundleImport {webSession} onsaved={(saved, workspace) => action(async () => { onsaved(); await refresh(); const set = saved?.find(d => d.kind === 'server-set'); if (set) loadDocument(set.id); if (workspace) await loadWorkspace(workspace.id) })} />{/if}
   <fieldset class="editor-controls" disabled={busy}><div class="columns">
     <div>
       <h3>공유 문서</h3>
       <label>저장된 배포 문서 <select name="deployment-editor-select-1" aria-label="저장된 배포 문서" value={docId} onchange={e => loadDocument(e.target.value)}><option value="">새 문서</option>{#each docs as d}<option value={d.id}>{d.name} · {kindNames[d.kind] ?? d.kind} · revision {d.revision} · {d.id.slice(0, 6)}</option>{/each}</select></label>
-      {#if canEdit}<button onclick={() => { writing = true; newDocument('server-set') }}>새 서버 풀</button><button onclick={() => { writing = true; newDocument('workspace-config') }}>새 대상 경로</button>{/if}
+      {#if canEdit}<button onclick={() => { writing = true; newDocument('server-set') }}>새 서버 세트</button><button onclick={() => { writing = true; newDocument('workspace-config') }}>새 대상 경로</button>{/if}
       {#if revisions.length}
         <details class="revisions" open={revisions.length > 1 || undefined}>
           <summary>revision 기록 {revisions.length}개</summary>
@@ -153,7 +153,7 @@
       {#if canEdit}
         <button onclick={() => { workspaceId = ''; workspaceRevision = 0; bindings = {} }}>새 공유 workspace</button>
         <label>이름 <input name="workspace-name" aria-label="배포 workspace 이름" bind:value={workspaceName} /></label>
-        <label>서버 풀 revision <select name="set-ref" aria-label="workspace 서버 풀 revision" bind:value={setRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'server-set') as d}<option value={`${d.id}:${d.revision}`}>{docLabel(d)}</option>{/each}</select></label>
+        <label>서버 세트 revision <select name="set-ref" aria-label="workspace 서버 세트 revision" bind:value={setRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'server-set') as d}<option value={`${d.id}:${d.revision}`}>{docLabel(d)}</option>{/each}</select></label>
         <label>대상 경로 revision <select name="config-ref" aria-label="workspace 대상 경로 revision" bind:value={configRef}><option value="">revision 선택</option>{#each docs.filter(d => d.kind === 'workspace-config') as d}<option value={`${d.id}:${d.revision}`}>{docLabel(d)}</option>{/each}</select></label>
         <button disabled={busy || !setRef || !configRef} onclick={() => action(saveWorkspace)}>공유 workspace 저장</button>
         {#if workspaceId}

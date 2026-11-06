@@ -57,7 +57,7 @@
  function select(node,point,model){
   selected={node,time:point.time,value:point.value,unit:model?.unit??selected?.unit??'',source:model?.source??selected?.source??'',name:model?.name??selected?.name??''}
  }
- onMount(()=>{const timer=setInterval(()=>{if(monitorRange.preset>0)load()},5000);return()=>clearInterval(timer)})
+ onMount(()=>{const timer=setInterval(()=>{if(monitorRange.preset>0&&!document.hidden)load()},5000);return()=>clearInterval(timer)})
  // A changed range reloads the charts and the range logs of the chosen node.
  $effect(()=>{void monitorRange.preset;void monitorRange.from;void monitorRange.to;load();selected=null})
  // The range logs follow the chosen node and the monitoring range.

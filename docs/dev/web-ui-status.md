@@ -14,10 +14,7 @@ stablenet, wbft, wemix를 모두 Web에서 실제 클릭으로 끝까지 돌렸�
 
 끝나면 이 목록에서 지운다.
 
-1. 낮은 우선순위 화면 항목을 처리한다. 작업별 페이지 제목, 정적 자산 압축과 캐시, 숨은 탭의 폴링, 전역 머리줄의 체인 안내, 서버 풀과 서버 세트 용어 통일이다.
-2. `tests/repro/attach-external.sh`를 고친다. 지금 없는 `chainbench test --rpc`를 부른다. 지금 동작하는 방법은 `chainbench run --rpc <url> --chain <id> <spec>`이다.
-3. `scripts/inventory/list-adapter-functions.sh`와 `scan-binary-hardcoding.sh`를 고치거나 지운다. 지금 없는 옛 셸 파일을 읽어 오류로 끝난다.
-4. 위가 끝나면 WEB-01~14를 같은 소스로 돌린다. 지문이 하나여야 하므로 소스가 바뀌었으면 WEB-01~13도 다시 돈다.
+1. WEB-01~14를 같은 소스로 돌린다. 지문이 하나여야 하므로 소스가 바뀌었으면 WEB-01~13도 다시 돈다.
 
 ## 3. 확인하지 못한 것
 
@@ -35,7 +32,7 @@ stablenet, wbft, wemix를 모두 Web에서 실제 클릭으로 끝까지 돌렸�
 - 화면 작업은 실제 클릭으로 끝까지 가야 완료로 친다. API 호출 결과는 화면 검증이 아니다.
 - WEB-14는 전체 Go 테스트를 race로 돌려 약 3시간 걸린다. 고정 커밋 바이너리(StableNet `4d17eea`, WBFT `d535dd3`, WEMIX `4538a9f`)와 `CHAINBENCH_W4_PROOF=1`, docker 서버 경로를 넘긴다.
 - capture 전에 `selected-binaries.json`의 checksum을 확인한다. macOS는 `/private/tmp`에서 오래 쓰지 않은 파일을 지운다.
-- 서버 풀은 다른 작업과 함께 쓴다. docker를 쓰는 시험 전에 서버에 노드가 없는지 본다.
+- 서버 세트는 다른 작업과 함께 쓴다. docker를 쓰는 시험 전에 서버에 노드가 없는지 본다.
 - `docs/dev/web-ui-evidence/`의 게시 증거는 capture와 독립 재현을 함께 담은 2026-10-13 기록이다. 바꾸려면 같은 소스로 독립 재현까지 돌려야 한다.
 
 ## 5. 정해 둔 것

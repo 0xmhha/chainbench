@@ -46,7 +46,7 @@
 
 <section class="bundle" aria-label="구성 가져오기">
   <h3>구성 가져오기</h3>
-  <p>가지고 있는 설정 파일을 그대로 고르세요. <code>server-set</code>, <code>localmap</code>, <code>workspace-config</code> 를 함께 고르면 하나의 서버 풀로 합칩니다. 문서 묶음 파일도 됩니다. 미리 보기를 확인하기 전에는 아무것도 저장하지 않고, 파일의 SSH 비밀번호는 저장하지 않습니다.</p>
+  <p>가지고 있는 설정 파일을 그대로 고르세요. <code>server-set</code>, <code>localmap</code>, <code>workspace-config</code> 를 함께 고르면 하나의 서버 세트로 합칩니다. 문서 묶음 파일도 됩니다. 미리 보기를 확인하기 전에는 아무것도 저장하지 않고, 파일의 SSH 비밀번호는 저장하지 않습니다.</p>
   <label>구성 파일 <input name="bundle-import-input-1" aria-label="가져올 구성 파일" type="file" multiple accept=".json,.yaml,.yml" disabled={busy} onchange={choose} /></label>
   {#if preview}
     <div data-testid="import-preview" data-valid={preview.validation.valid}>

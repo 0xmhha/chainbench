@@ -112,7 +112,7 @@ import { formatTime } from './labels.mjs'
     finally{if(version===loadVersion)catalogLoading=false}
   }
   $effect(()=>{void catalogRevision;if(webSession)work(load)})
-  onMount(()=>{const poll=setInterval(()=>{if(actor&&loaded)refresh().catch(e=>{error=e.message})},3000);return()=>clearInterval(poll)})
+  onMount(()=>{const poll=setInterval(()=>{if(actor&&loaded&&!document.hidden)refresh().catch(e=>{error=e.message})},3000);return()=>clearInterval(poll)})
   async function observeNodes(){const result=await api(`networks/${workspaceId}/observations`);observedNetwork=result;networks=networks.map(n=>n.id===result.id?result:n)}
   // The form keeps its choices per screen for this browser tab, so coming back
   // from a job page continues where the user was. Unavailable storage only
