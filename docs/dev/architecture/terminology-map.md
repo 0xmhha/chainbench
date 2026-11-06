@@ -25,9 +25,8 @@
 네 번 모두 원인이 같다. **낱말을 믿고 코드를 안 봤다.** 그리고 그 낱말들이 실제로
 여러 뜻을 갖고 있었다.
 
-이 문서는 그런 낱말이 어디에 몇 개의 뜻으로 살고 있는지를 적는다. 작업 규칙
-(`mainnet-config-worklist.md` §진행 규칙)의 "주석을 근거로 결정하지 않는다" 를 실제로
-지키려면 무엇이 위험한지를 먼저 알아야 한다.
+이 문서는 그런 낱말이 어디에 몇 개의 뜻으로 살고 있는지를 적는다. "주석을 근거로
+결정하지 않는다" 를 실제로 지키려면 무엇이 위험한지를 먼저 알아야 한다.
 
 ## 읽는 법
 
@@ -136,13 +135,14 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 
 ## 3. `workspace`
 
-`mainnet-config-worklist.md` §용어가 정본이다. 여기서는 요약만 적는다.
+이 표가 정본이다.
 
 | 쓸 말 | 무엇인가 | 코드의 이름 |
 |---|---|---|
-| 대상 워크스페이스 | 실행 대상 머신의 `dataRoot` 아래 약속된 폴더 트리 | `resource.WorkspaceConfig`, `workspace-config.yaml` |
+| 대상 워크스페이스 | 실행 대상 머신의 `dataRoot` 아래 약속된 폴더 트리. bin, configs, genesis, keystore, keys, node, runtime, logs 여덟 칸 | `resource.WorkspaceConfig`, `workspace-config.yaml` |
 | 체인 기록 | 한 체인이 무엇으로 요청됐고, 무엇으로 구성됐고, 지금 어떤 상태인지 | `chainsetup.State`, 파일은 `chain-record.json`. 실행 이력은 옆의 `runs/<타임스탬프>/` 와 `chainstate.jsonl` 이 쌓는다 |
 | 실행 세션 | 엔진 한 번의 실행이 남긴 아티팩트 | `internal/core/session` |
+| 로컬 작업 공간 | 따로 지정하지 않았을 때 chainbench 가 자기 것을 두는 곳. 기본 `~/.chainbench` | `internal/core/home`, `control.artifactRoot` |
 | 로컬 작업 공간 | 따로 지정하지 않았을 때 chainbench 가 자기 것을 두는 곳 | `internal/core/home`, `~/.chainbench` |
 
 ---
@@ -169,7 +169,7 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 **뜻 1 의 Go 심볼은 바꾸지 않는다.** `keyring.Preset` 을 `keyring.KeyPreset` 으로
 바꾸면 패키지가 이미 말한 것을 타입 이름이 되풀이한다(Go 의 stutter). 애매한 것은
 패키지가 자격을 주지 않는 자리뿐이다 — 정의서의 enum 값, yaml 키, 그리고 산문의 맨
-낱말. 워크리스트 §2.5.3 을 본다.
+낱말. 그 셋만 고친다. 맨 낱말 `preset` 은 코드에도 문서에도 홀로 쓰지 않는다.
 
 **정의서와 코드는 한 곳에서 만난다.** 정의서가 `"source": "keyPreset"` 이라고 쓰면
 `internal/chainsetup/steps_compose.go` 의 switch 가 그것을 `store.PresetKeys` 로
@@ -290,8 +290,6 @@ func (family) PortReservation() node.Reservation { ... }
 
 3차가 무조건 이긴다. 그래서 병합을 아무리 잘해도 **마지막에 실행 명령이 달라지면
 다른 구성으로 도는 것**이고, 계획과 실제를 대조하는 자리가 필요하다(M4-c).
-
-어긋난 이름의 목록은 워크리스트 §2.5 에 있다.
 
 ---
 

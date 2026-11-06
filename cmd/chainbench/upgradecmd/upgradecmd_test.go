@@ -14,8 +14,7 @@ import (
 
 // hardfork swaps a binary at a fork block on a composed chain. It is
 // destructive enough that its refusals matter more than its happy path, and it
-// could not be reached from a test while it lived in package main (worklist
-// §1l, U1).
+// could not be reached from a test while it lived in package main.
 
 func run(t *testing.T, args ...string) (string, error) {
 	t.Helper()

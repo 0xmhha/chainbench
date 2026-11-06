@@ -150,7 +150,7 @@ func TestDocsDoNotNameFilesThatAreGone(t *testing.T) {
 			}
 			// A document may declare, once at the top, that its paths are the
 			// tree as it stood when the measurement was taken. That is how a
-			// frozen graph or a 2,900-line tracker stays honest without
+			// frozen graph stays honest without
 			// rewriting the record line by line, and this repository already
 			// writes it that way. The note has to be near the title, so it is
 			// read before the body, not buried after it.

@@ -2,7 +2,7 @@
 
 > **[현행 설계]** DSL v2 문법(T7.8 구현됨).
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
+> 열린 작업은 [open-work.md](open-work.md) 에 있다.
 
 > 지시 1(DSL 문법 신규 제안) · 지시 4(x-bar 기반 문서 대조·갭) 응답. 작성: 2026-08-11 · 기준 커밋 `2181191`.
 > 대조 대상: [`chainbench-design.md`](chainbench-design.md) §3.2·§4.3 · [`chainbench-feature-spec.md`](chainbench-feature-spec.md) ·
@@ -83,7 +83,6 @@ X-bar 도식을 다음과 같이 사상한다.
 | `chainbench-design.md` | "구현 전 확정 설계(HOW)" | 패키지 인터페이스 계약 | §3 인터페이스 · §4 데이터모델 | §6 동시성 · §8 마이그레이션 · §9 미결 |
 | `chainbench-feature-spec.md` | F1–F16 번호 | 기능 동작 계약 | 입력/동작/출력/에러 + AC | 요구↔F 추적 부록 |
 | `chainbench-component-architecture.md` (2026-09-24 삭제) | "#225 시점 실측" | 컴포넌트 계층·조립 순서 | §1b DDD · §2b 실측 · §3 카탈로그 | §0 비평 · §6 리스크 |
-| `chainbench-worklist.md` | "진행 단일 정본" | 작업 상태 | T0–T6 태스크 · 상태표기 | 폴더 트리 예상도 |
 | `chain-cli-execution-plan.md` (2026-09-24 삭제) | "기준 커밋 2424ccc" | 6-지시 → 순서화 | §4 원자 명령 표면 · §5 페이즈 | §2.4 드리프트 |
 | `chain-setup/README.md` | 12단계 파이프라인 | bring-up 절차 | 단계·2페이즈 계약·결함8 | §4 CLI |
 

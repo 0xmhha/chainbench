@@ -8,8 +8,7 @@ import (
 	"testing"
 )
 
-// The worklist carried "rewire health as a composition over inspector" as open
-// work for months. Deciding it needed only reading the two packages: they do not
+// "Rewire health as a composition over inspector" sat as open work for months. Deciding it needed only reading the two packages: they do not
 // share a substrate to compose on.
 //
 // inspector answers three questions about a target's ENVIRONMENT, before

@@ -127,7 +127,7 @@ The existing 05 continues to exercise a local signer and 1 Gwei, independently o
 actual progress. An optional RPC method is unsupported only for a typed method-not-found response;
 transport failures, malformed responses, internal errors and permission failures remain failures.
 These new cases have unit contracts; fresh owned attach evidence and actual external testnet acceptance
-are tracked separately in the worklist. The historical 2026-10-01 verification above covers only 01–05.
+are tracked separately in `docs/dev/open-work.md`. The historical 2026-10-01 verification above covers only 01–05.
 
 ### Owned attach verification on 2026-10-20
 
@@ -136,4 +136,3 @@ a 5.002-second 16→21 height observation and an actual 1 wei node-signed transa
 Independent decoding matched the signed sender/hash and receipt/block; 259 files were preserved,
 eight closed databases reclaimed and none remained. This is not a run against an external testnet.
 Actual external endpoint/account inputs and final browser acceptance remain pending.
-See [scoped evidence](../../../../docs/dev/legacy-remote-predicates-evidence.json).

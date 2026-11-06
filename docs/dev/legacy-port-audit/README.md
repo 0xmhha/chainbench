@@ -10,8 +10,7 @@
 Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외부 셸 AST 460파일의 구조 분류까지 완료했으며,
 과거 스냅숏과의 byte 동일성·내장 프로그램 분석·시나리오 동등성·실제 실행 통과를 증명한 것은 아니다.
 과거 21개 부분 포팅 표는 현재 소비자와 다시 대조해야 하며, 추가된 b 케이스의 존재만으로 닫지 않는다.
-[복구 출처·파서 제한·잔여 조건](../legacy-source-recovery-evidence.json).
-현재 WEMIX 원문은 87개이며 아래 과거 84개와 구분한다. 정본 상태는 [워크리스트 §0a](../chainbench-worklist.md)다.
+현재 WEMIX 원문은 87개이며 아래 과거 84개와 구분한다. 남은 일은 [열린 작업](../open-work.md)에 있다.
 
 ### 02·10 코드 교체·스토리지 보존의 현행 보강
 
@@ -20,7 +19,6 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 포크 경계 블록9/10, 스토리지 네 슬롯, v2 조회를 확인하며 기존 prealloc 검사도 유지한다.
 새 StableNet 4d17eea0의 실제 Mac BP4·Boho10에서 두 케이스·14단언과 독립 보존 대조가 통과했다.
 원문 기본 Boho100의 전체 환경, 다른 부분 포팅 행과254개 전체 동등성은 이번 범위가 아니다.
-[출처·보강·실제 증거와 한계](../legacy-code-state-evidence.json).
 
 ### extra-state 양방향·지연 포크의 현행 보강
 
@@ -29,7 +27,6 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 18개 거짓 통과 RED·22개 대조·관련 race·전체 검사와 새 StableNet의 두 실제 구성·36단언을 확인했다.
 첫 실제 시도는 외부 ProcessExtraSeal 패닉으로 본문 전 BLOCKED였고, 자료를 보존한 뒤 같은 소스의 새 시도를 확인했다.
 이것은 패닉 해결이나 과거 전체 환경·254개 전체 동등성이 아니다. 원문 높이100/역할 주소와 현재6/로컬EOA를 구분한다.
-[실패·성공·독립 증거와 한계](../legacy-extra-state-evidence.json).
 
 ### personal 계정 API 네 경로의 현행 보강
 
@@ -39,7 +36,6 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 전용 generated keystore가 기본이며, 첫 공용 경로 중단·키2개 격리와 다음 문구 불일치 실패는 별도 보존했다.
 이것은 원문 EN 토폴로지나 과거 대략적 바이트 offset 자체의 동일 실행, 전체254개 동등성 인수가 아니다.
 또한 API21 원문은 eth_signRawFeeDelegateTransaction의 존재 검사이며 personal API 시나리오와 구분한다.
-[원문 출처·실제·독립 검증과 차이](../legacy-personal-delegation-evidence.json).
 
 ### 공개 제네시스 전체 노드의 현행 보강
 
@@ -58,7 +54,6 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 이 단계는 원문 EN 주소 대신 BP coinbase/새 EOA를 사용하며 원문17의 배포된 Simple7702Delegate를 제외했다.
 그 배포 부분은 아래의 후속17b에서 별도로 검증했다.
 첫 중계기록0개 실패의215파일과 성공430파일도 별도 보존했다. 이것은254개 전체 동등성 인수가 아니다.
-[원문·범위 차이·실패/성공·독립 증거](../legacy-authorization-estimate-evidence.json).
 
 ### 원문17의 배포된 delegate 비용 검증 보강
 
@@ -68,7 +63,6 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 두 체인의 기존/신규4실행·42단언·실제 생성주소/코드/영수증·독립 보존 대조가 통과했다.
 같은 컴파일러 재실행과 AST44노드/43포함간선을 확인했으며 독립 컴파일러 구현의 검증은 아니다.
 원문 EN/Foundry 캐시 환경과 현재 BP4/solc-js fixture의 차이를 남겼고 전체254개를 닫지 않는다.
-[원문·컴파일 출처·실제·독립 증거](../legacy-deployed-authorization-evidence.json).
 
 ## 방법
 
@@ -87,8 +81,6 @@ Git blob bytes·실행 모드와 원본 HEAD 불변을 독립 확인했다. 외�
 
 | 파일 | 내용 |
 |---|---|
-| `01-graph-legacy-tests.md` | 레거시 셸 테스트 그래프 — 묶음 구조, 역할별 개수, RPC·단언 사용량 |
-| `02-graph-chainbench.md` | 이 프로젝트 그래프 — DSL 묶음, verb 어휘, Go 패키지·테스트 계층 |
 | `03-port-audit.md` | 테스트 단위 대응표와 판정, 누락·부분 포팅 목록 |
 
 ## 요약
@@ -124,11 +116,9 @@ effectivegasprice 3건의 노드 간 값 일치와 wbft add-validator 의 에폭
 독립 RPC18관측에서 같은 원본 서명 거래 바이트·해시와 노드의 서명 필드/복구 주소가 일치했다. 별도 secp256k1 복구 구현은 아니다.
 최초 종료 옵션 오류는 보존했고 같은 소스의 정상 종료·보존·DB 회수와 독립 대조를 마쳤다.
 원문15노드의 EN8/11 전체 환경·모든 버전 쌍·254개 전체 동등성은 아니다.
-[고정 소스·최초 실패·복구·독립 증거](../legacy-signature-compatibility-evidence.json).
 
 후속 고정 소스에서는 영수증 송수신자6개를 공개 DSL에도 직접 넣었다. 네 거짓 통과 RED와23대조를 확인했고,
 새 Linux 실제1건/42단언·독립 RPC18관측·정상 종료·파일 보존/DB 회수를 통과했다. 이전36단언 자료는 그대로다.
-[공개 영수증 판정의 새 증거](../legacy-signature-receipt-evidence.json).
 
 ### 2026-10-20 장애 체크포인트·소각 환급·수수료 관측
 
@@ -138,12 +128,11 @@ effectivegasprice 3건의 노드 간 값 일치와 wbft add-validator 의 에폭
 
 소각·환급7건은 원래 proof의 요청자만 실제 생성 계정으로 묶고, 원장·담보·정확 이벤트를 검사한다.
 두 무효 청구는 실제 채굴 실패와 NoRefundAvailable 선택자를 확인했다. 실제143단언과 독립 보존을 통과했으며,
-BP4/Boho0/축약 만료와 원문7노드/Boho100의 설정 차이는 유지한다. [소각·환급 증거](../burn-refund-evidence.json).
+BP4/Boho0/축약 만료와 원문7노드/Boho100의 설정 차이는 유지한다.
 
 일반 계정의 높은 요청 tip을 헤더 tip과 구분한 새 관측에서 원문 max 계산식과 현행 헤더 대체 계산의 차이를 확인했다.
 같은 거래·포함 블록·비인가 조회와 실제 snap 수신 영수증을 대조했다. 새 검증기를 포함한 성공 시도와
 앞선 세 실패를 분리 보존했다. 원문 기준의 선택은 사용자 응답 대기이며 공개02나 전체254개 완료를 뜻하지 않는다.
-[관측·실패·남은 기준](../regular-egp-observation-evidence.json).
 
 ### 2026-10-20 후속: 장애 원문 시간 제한과 동적 현재 높이
 
@@ -170,4 +159,3 @@ API21의 과거 personal 서명 설명은 eth RPC 등록 smoke로 정정했다. 
 새 공유 관측과 모든 대상 선택 계약, 기존 주소 의미를 확인하고 생성 BP4의 실제4건11단언을 통과했다.
 독립 서명/포함 블록/nonce·10변조 거절·259파일 보존·DB8회수/0남음도 확인했다.
 원문의 외부 망과 현재 소유한 로컬 attach fixture를 구분하며 실제 테스트넷·전체254개 인수는 남긴다.
-[원문·구현·실제·독립 증거와 감사 실패 기록](../legacy-remote-predicates-evidence.json).

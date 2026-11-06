@@ -72,7 +72,7 @@ def newest_mtime(path):
 
 
 def evidence_text(repository, entries, extras):
-    # Follow-up proofs live beside worklists, not only in web-ui-evidence.
+    # Proofs are recorded across docs/, not only in web-ui-evidence.
     # Handoff prose also cites runtimes; losing that reference must not make
     # the referenced source, logs or receipts disposable.
     roots = [repository / 'chainbench-out', repository / 'docs']

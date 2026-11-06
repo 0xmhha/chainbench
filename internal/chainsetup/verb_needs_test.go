@@ -55,7 +55,7 @@ func TestEveryVerbDeclaresWhatItNeeds(t *testing.T) {
 
 // TestVerbNeedsNamesNoGhost is the reverse: an entry for a verb that no longer
 // exists means the table is describing a surface that is gone, which is how the
-// worklist and the layer table each rotted before a check was put on them.
+// layer table rotted before a check was put on it.
 func TestVerbNeedsNamesNoGhost(t *testing.T) {
 	typ := reflect.TypeOf(&Workspace{})
 	have := map[string]bool{}

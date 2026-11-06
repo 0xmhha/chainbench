@@ -155,9 +155,9 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 > 위 본문은 Confluence 를 그대로 옮긴 것이고, 이 절만 chainbench 저장소가 더했다.
 
 [03-separate-implementation-items.md](03-separate-implementation-items.md) §2 "실행 도구에
-추가해야 하는 것" 여덟 가지가 실제로 어디서 추적되는지는
-[`docs/dev/architecture/mainnet-config-worklist.md` §8](../../dev/architecture/mainnet-config-worklist.md)
-의 대응표에 있다. 여섯은 R2~R6 이 덮는다. 그 표가 어느 항목도 아니라고 적은 둘은 그 뒤에
+추가해야 하는 것" 여덟 가지 가운데 여섯은 R2~R6 이 덮는다. 로컬 서명 전송은 R4, 기능 사전 확인은
+R3, 외부 주소 프로필은 R2, 거부 판정 강화는 R5, 세 체인 일괄 실행은 R6 이고, 실행 결과 기록은
+R6 이 일부만 덮는다. 남은 일은 [`open-work.md`](../../dev/open-work.md) 에 있다. 나머지 둘은 그 뒤에
 구현됐다. 동기화 경로 관찰은 2026-09-29 에 지표로 보게 됐고(03 §2), 준비물 공유는 2026-10-20 에
 `prepared.exports`·`prepared.imports` 로 들어왔다([DSL 작성 가이드](../../guide/dsl-authoring.md)).
 항목마다 지금 상태는 03 §2 의 "지금 상태" 칸에 적는다.

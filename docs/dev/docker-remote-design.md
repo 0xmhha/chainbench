@@ -1,7 +1,7 @@
 # 로컬 docker 를 원격 서버처럼 — 주소 변환 boundary 설계
 
-> **등급: [현행 설계]** — 분석·준비 단계에 쓴 문서다. 아래 경로 정정대로 지금은 구현되어 있고, 작업 상태는
-> worklist §1g R 트랙이 정본이다. 참조 구현: `~/Work/github/packages/wemix-bp-test` (동작 검증 완료된 선례).
+> **등급: [현행 설계]** — 분석·준비 단계에 쓴 문서다. 아래 경로 정정대로 지금은 구현되어 있다.
+> 참조 구현: `~/Work/github/packages/wemix-bp-test` (동작 검증 완료된 선례).
 
 > **경로 정정 (2026-09-11).** 이 설계는 구현됐다 — `--docker` 플래그가 `chain up`·`run` 양쪽에
 > 있고, 주소 치환은 `internal/resource/localmap.go` 가 소유한다(본문의 `internal/config/localmap.go`
@@ -123,7 +123,7 @@ MCP 도구도 같은 옵션을 받는다(K8 선례: 두 표면은 같은 유스�
 - **생성 스크립트 하나**가 compose 파일 + 서버 세트 v2(`server-set.yaml`
   실주소 기재) + `localmap.yaml` 을 함께 만든다. 손으로 쓰는 파일 0.
 
-## 5. 작업 단위 (worklist §1g R 트랙)
+## 5. 작업 단위
 
 | # | 작업 | 게이트 |
 |---|---|---|

@@ -13,8 +13,7 @@ import (
 
 // U3 routed the keyring group through app, which is what makes these possible:
 // both surfaces now call the same entry point, so a difference between them is
-// a defect rather than the expected consequence of two implementations
-// (worklist §1l).
+// a defect rather than the expected consequence of two implementations.
 
 // callMCP invokes a tool and returns its text content.
 func callMCP(t *testing.T, tool string, args map[string]any) string {

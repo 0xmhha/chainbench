@@ -2,7 +2,7 @@
 
 > **[현행 설계]** 서버 세트.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
+> 열린 작업은 [open-work.md](open-work.md) 에 있다.
 
 > 노드가 **어디서** 뜨고 **어떤 포트로** 듣는지를 결정하는 단일 출처.
 > 실제 파일은 **git 에 절대 올라가지 않는다**(gitignore). 추적되는 것은 템플릿
@@ -223,10 +223,10 @@ put every address under `pool.hosts`, move `slots` and `ports` up to `pool`, and
 ## 7. 아직 서버 세트를 읽지 않는 경로
 
 `core/config` 의 `ports.base_*` 와 이를 쓰는 `core/bringup`(레거시 `setup` 명령)은
-여전히 자체 기본값을 쓴다. 이 스택은 netcompose 전환이 라이브 검증되면 삭제된다
-([[chainbench-worklist]] §1f b-5·b-6). 그 전까지 `setup` 과 `net`/`run` 은 서로 다른
+여전히 자체 기본값을 쓴다. 이 스택은 netcompose 전환이 라이브 검증되면 삭제된다.
+그 전까지 `setup` 과 `net`/`run` 은 서로 다른
 포트 대역을 쓴다 — 같은 머신에서 둘을 동시에 띄우면 충돌하지 않는다는 뜻이기도 하다.
 
-> **정정 (2026-10-29).** 위 문단은 이력이다. `core/config`, `core/bringup`, `setup`·`net` 명령은 모두 없어졌다
-> (worklist §0a 12번). 지금 구성 경로는 `chain up` 과 `run` 이고, 둘 다 서버 세트나 내장 풀
+> **정정 (2026-10-29).** 위 문단은 이력이다. `core/config`, `core/bringup`, `setup`·`net` 명령은 모두 없어졌다.
+> 지금 구성 경로는 `chain up` 과 `run` 이고, 둘 다 서버 세트나 내장 풀
 > (`resource.Builtin`)에서 포트를 받는다.

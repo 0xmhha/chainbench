@@ -1,7 +1,6 @@
 # 대시보드 metric 시각화 — 자체 동작 설계와 레퍼런스 코드베이스
 
 > **등급: [현행 설계]** — Web UI의 노드 지표 수집·차트·시점 로그가 `internal/app/web_monitor.go`와 `web/src/NodeMetrics.svelte`에 일부 구현되었다. 원격 노드 로그는 운영자가 시작한 `network.monitor` 작업이 수집한다. 히스토리 Run은 job 구간의 archive를 보여 주고, 관리자 삭제는 그 실행 소유 구간만 지운다. 착수 시점의 컨텍스트를 이 문서가 보존한다.
-> 작업 상태는 worklist §1g D 트랙이 정본이다.
 
 `chainbench-dashboard` 의 디버깅 지원 1단계는 노드 metric 을 받아 인포그래픽으로
 보여주는 것이다. 이 문서는 (1) 외부 스택 없이 자체 동작한다는 결정과 그 근거,
@@ -115,6 +114,6 @@ Netdata(UI 가 비공개 사유 라이선스).
 
 | 단계 | 내용 | 비고 |
 |---|---|---|
-| **D1** | metric 인포그래픽 — §3 구조 구현 | 이 문서의 범위. worklist §1g D 트랙 |
+| **D1** | metric 인포그래픽 — §3 구조 구현 | 이 문서의 범위 |
 | D2 | 완료 세션 화면 — `/api/sessions`·chainstate API 는 있는데 화면 소비자가 없다 | 순수 프론트 작업 |
 | D3 | 로그 연계 — 이벤트/차트의 시점에서 해당 노드 로그로 점프 | collector 의 tail 배관 재사용 |

@@ -2,8 +2,8 @@
 
 > **[현행 설계]** 레이어·상태·이름 세 규칙.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
-> 모듈 경계·표면 경로는 2026-08-25 재편이 덮는다: [[architecture-v2]](architecture-v2.md) (worklist §1h).
+> 열린 작업은 [open-work.md](../open-work.md) 에 있다.
+> 모듈 경계·표면 경로는 2026-08-25 재편이 덮는다: [[architecture-v2]](architecture-v2.md).
 
 > 목적: 코드 복잡도를 **규칙으로** 낮춘다. 레이어를 명시하고, 의존을 단방향으로 고정하고,
 > 상태를 쓸 수 있는 곳을 한정한다.
@@ -488,9 +488,8 @@ func TestLayering(t *testing.T) { ... }
 
 ## 8. 정리 순서
 
-> **작업 순서와 상태는 [[chainbench-worklist]](../chainbench-worklist.md) §1g 에서 관리한다.**
-> 이 문서는 *무엇을 왜* 를 정하고, 트래커는 *언제 어디까지* 를 기록한다.
-> 순서를 여기 두면 두 곳이 갈라진다.
+> **열린 작업은 [open-work.md](../open-work.md) 에 있다.**
+> 이 문서는 *무엇을 왜* 를 정한다. 순서를 여기 두면 두 곳이 갈라진다.
 
 > A1(레이어 검사 테스트)·A2(상태 쓰기 허용목록 테스트)가 이 문서를 실행 가능하게 만든다 —
 > 그것이 없으면 "상향 의존 1건"은 오늘의 측정일 뿐 내일의 보증이 아니며, 측정 자체가

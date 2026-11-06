@@ -14,7 +14,7 @@ import (
 
 // These verbs act on a composed network: what it is doing, stopping it, and
 // removing what it left. They could not be tested at all while they lived in
-// package main (worklist §1l, U1).
+// package main.
 
 func run(t *testing.T, args ...string) (string, error) {
 	t.Helper()

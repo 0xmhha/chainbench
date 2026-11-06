@@ -2,7 +2,7 @@
 
 > **[제품 목표·확정 방향]** 사용자가 2026-09-02에 확인한 목표를 정리한다.
 > 요구와 동작 계약은 `chainbench-requirements-review.md`와 `chainbench-feature-spec.md`가,
-> 작업 순서와 상태는 `chainbench-worklist.md`가 이긴다.
+> 열린 작업은 `open-work.md`가 말한다.
 
 ## 1. 핵심 명제
 
@@ -197,18 +197,18 @@ FATAL       → 강제 조치가 필요하므로 즉시 종료
 **2026-10-13 행동 증명 보강:** R14는 실제 엔진의 실행 순서·동시 수행 상한·실패 뒤 계속 실행을 확인하고,
 마지막 정의를 누락하는 생산 코드 변이를 거절했다. R15는 동일 DSL의 CLI·MCP 공개 계획 계약을 대조한다.
 R19는 동일 초와 동시 생성에서 세션을 원자적으로 분리하고 이전 DSL·verdict·root report의 불변성을 지킨다.
-[실제 노드 증거](requirement-execution-evidence.json)는 CLI 단일·다중과 MCP 실행을 포함한다.
-이후 R11도 배포자·실제 nonce·예상/receipt 주소·transaction·bytecode SHA256을 steps에 보존하도록 보강했다. 세 체인 실제 배포·disk recording과 종료 DB 회수는 [배포 증거](deployment-provenance-evidence.json)에 남겼다.
+실제 노드 검증은 CLI 단일·다중과 MCP 실행을 포함한다.
+이후 R11도 배포자·실제 nonce·예상/receipt 주소·transaction·bytecode SHA256을 steps에 보존하도록 보강했다. 세 체인 실제 배포·disk recording과 종료 DB 회수를 확인했다.
 [19개 충분성 검토](requirement-sufficiency-review.json)는 각 요구의 추가 테스트와 assertion·생산 경로·검증 한계를 함께 기록한다. 연결 검사도 Go AST의 실제 테스트 선언을 사용한다.
-검토·보강의 완료는 남은 메인넷·공통 TC·업그레이드와 최신 고정 소스 Web 인수를 완료했다는 뜻이 아니다. 그 상태는 worklist §0a가 관리한다.
+검토·보강의 완료는 남은 메인넷·공통 TC·업그레이드와 최신 고정 소스 Web 인수를 완료했다는 뜻이 아니다. 남은 일은 [열린 작업](open-work.md)에 있다.
 
 ## 13. 현재 상태와 목표 구분
 
 현재 코드에는 단계형 chainsetup, node record, per-node binary, process ledger, workspace resume, DSL schema
-drift 검사와 일부 collector/session 기능이 있다. 정확한 상태는 worklist가 관리한다.
+drift 검사와 일부 collector/session 기능이 있다. 남은 일은 [열린 작업](open-work.md)이 말한다.
 
 **2026-09-12 정정.** 이 절은 세 가지를 "목표이며 구현 완료로 간주하지 않는다"고 적고 있었는데,
-셋 다 들어갔다. 이 문서는 [제품 목표·확정 방향] 등급이라 낡은 채로 두면 worklist보다 오래
+셋 다 들어갔다. 이 문서는 [제품 목표·확정 방향] 등급이라 낡은 채로 두면 오래
 인용되므로 여기서 고친다.
 
 | 미완이라 적혀 있던 것 | 실제 | 확인 |
@@ -217,7 +217,7 @@ drift 검사와 일부 collector/session 기능이 있다. 정확한 상태는 w
 | 위 상태 모델의 Node Monitor (R18) | 들어갔다. 모니터링 트랙이 머지됐고 이슈 16건 중 14건이 그 커밋에서 해소됐다 | `9b6b0930`, `dev/monitoring-issue-review-2026-09-10.md` (2026-09-24 삭제) |
 | 19번의 완전한 산출물 구조와 전체 report (R13·R19) | 들어갔다. 여러 세션을 하나의 집계로 합친다 — 스펙마다 실행이 하나씩 생기는 모양에서 최신 세션 하나만 읽으면 배치가 통과했는지 답하지 못한다 | `chainbench report --all`, `report.Combine` |
 
-남은 것은 이 절이 아니라 worklist가 말한다.
+남은 것은 이 절이 아니라 [열린 작업](open-work.md)이 말한다.
 
 ## 14. 완료 판단 원칙
 

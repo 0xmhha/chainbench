@@ -12,7 +12,7 @@
 | gstable 단독 | [case-4-stablenet.md](case-4-stablenet.md) | ✅ **동작 확인** (라이브·CI 게이트) |
 
 > 자동화가 남아 있던 시절의 인수인계는 `../archive/chain-setup-next-automation.md` (2026-09-24 삭제)
-> 에 있다 — **그 남은 일은 끝났다.** 지금 남은 일은 [`../chainbench-worklist.md`](../chainbench-worklist.md) 가 말한다.
+> 에 있다 — **그 남은 일은 끝났다.** 지금 남은 일은 [`../open-work.md`](../open-work.md) 가 말한다.
 
 점검용 CLI: `chainbench chain`. 케이스별 절차를 **단계 단위로 실행·중단·검증**한다 — [§4](#4-cli-로-직접-점검) 참조.
 
