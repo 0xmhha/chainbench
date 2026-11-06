@@ -156,7 +156,7 @@ func validateWebTestInputs(spec dsl.Spec) error {
 		return errors.New("test file references require registered immutable assets")
 	}
 	if spec.EnvKeys != nil && (spec.EnvKeys.Source != "" && spec.EnvKeys.Source != "keyPreset" || spec.EnvKeys.Ref != "" && spec.EnvKeys.Ref != "presets/keys") {
-		return errors.New("this test adapter uses the reviewed key preset; other key sources require their own pinned contract")
+		return errors.New("이 케이스는 키를 새로 만들거나 다른 키 세트를 씁니다. Web은 검토한 키 프리셋만 실행하므로 CLI로 실행하세요")
 	}
 	// Minted accounts live in memory over the read-only accepted key set; a
 	// key file is a path on this server, which only an attach job replaces
