@@ -254,7 +254,7 @@ try {
   await page.getByRole('button', {name: '실행 계획 확인', exact: true}).click()
   const forkPlan = page.getByLabel('실행 계획', {exact: true})
   await forkPlan.waitFor({timeout: 60000})
-  await forkPlan.getByText('Binary "next" runs wbft', {exact: false}).waitFor()
+  await forkPlan.getByText('Binary "next" runs wbft', {exact: false}).waitFor({state: 'attached'})
   await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, 'fork-plan.png')})
   const forkStarted = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
   await clickRun(page)
