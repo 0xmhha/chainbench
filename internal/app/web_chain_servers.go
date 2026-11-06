@@ -197,6 +197,26 @@ func webNodeNeverLaunched(ns node.Record) bool {
 	return ns.PID == 0 && len(ns.Args) == 0
 }
 
+// webPlanSummary reads a plan in the terms an operator reviews it by. A node
+// whose address no selected server claims is shown by that address.
+func webPlanSummary(chain, binary string, cases []string, servers []resource.Server, placement *node.Map) *WebPlanSummary {
+	out := &WebPlanSummary{Chain: chain, Binary: filepath.Base(binary), Cases: cases}
+	if placement == nil {
+		return out
+	}
+	for _, entry := range placement.Placements() {
+		name := entry.Host
+		for _, server := range servers {
+			if server.Host == entry.Host {
+				name = server.Name
+				break
+			}
+		}
+		out.Nodes = append(out.Nodes, WebPlanNode{Label: string(entry.Label), Role: string(entry.Role), Server: name})
+	}
+	return out
+}
+
 // webPlacedServers names the servers that receive a node, in server order.
 func webPlacedServers(servers []resource.Server, placement *node.Map) []string {
 	out := make([]string, 0, len(servers))

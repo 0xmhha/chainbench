@@ -1,4 +1,5 @@
 <script>
+ import { scrollMotion } from './nav.mjs'
  // A recorded run as a page of the log: the folio, the first line in its
  // ink (the failing test and its evidence, or how the run ended), the cause
  // bench the job detail uses, and the record's facts as a ledger below.
@@ -32,7 +33,7 @@
 
  const ANCHOR='history-cause'
  const PHASES='history-phases'
- function reveal(id=ANCHOR){document.getElementById(id)?.scrollIntoView({block:'start',behavior:'smooth'})}
+ function reveal(id=ANCHOR){document.getElementById(id)?.scrollIntoView({block:'start',behavior: scrollMotion()})}
 
  // The bench needs the run's node names; the metric series of the run's own
  // window name them. A failure here only leaves the bench without nodes.

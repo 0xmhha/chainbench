@@ -13,7 +13,7 @@
 <section class="readings" data-testid="readings" aria-label="{node} 계기 기록">
  <h3>{node} 계기 기록 <small>{Math.round(every)}초마다</small></h3>
  {#if rows.length}
-  <div class="table-wrap"><table>
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex: a wide table must scroll by keyboard --><div class="table-wrap" tabindex="0" role="region" aria-label="계기 기록 표"><table>
    <thead><tr><th>시각</th>{#each gauges as g}<th title={g.label}>{g.short}</th>{/each}</tr></thead>
    <tbody>{#each rows as row (row.time)}<tr><td>{formatTime(row.time).slice(11)}</td>{#each row.cells as c}<td class:ab={c.abnormal} class:gap={c.value===null} title={c.abnormal?'다른 모든 노드와 다른 값':''}>{c.value??'—'}</td>{/each}</tr>{/each}</tbody>
   </table></div>

@@ -7,7 +7,7 @@
   import { sharedJobStream } from './job-stream.svelte.js'
   import { jobSummary, failureHeadline, jobDuration, jobElapsed, phaseRows, readFocus, focusSearch, nodeInMessage } from './job-view.mjs'
   import { formatTime } from './labels.mjs'
-  import { follow } from './nav.mjs'
+  import { follow, scrollMotion } from './nav.mjs'
   import JobCard from './JobCard.svelte'
   import RerunPlan from './RerunPlan.svelte'
   import { recordName } from './dashboard-view.mjs'
@@ -24,12 +24,14 @@
   // The live feed carries every committed change; the first read covers the
   // moment before it connects and names a job that does not exist.
   const job = $derived(live.snapshot?.jobs.find(j => j.id === jobId) ?? fetched)
+  // Each snapshot brings a new job object; the network is read once per workspace.
+  const jobWorkspace = $derived(job?.workspaceId)
   const summary = $derived(job ? jobSummary(job) : null)
   async function load() { error = ''; try { fetched = await client.request('jobs/' + jobId, { decode: decodeJob }) } catch (e) { error = e.message } }
   // The failed phase is read against the logs of the network the job worked
   // on, and every test run the job produced is shown as its own timeline.
   const PAD_MS = 5000
-  let network = $state(null), runs = $state([]), runsLoaded = $state(false), runsError = $state('')
+  let network = $state(null), networkRead = $state(false), runs = $state([]), runsLoaded = $state(false), runsError = $state('')
   const rows = $derived(phaseRows(job?.phases))
   const failedRow = $derived(rows.find(r => r.open) ?? null)
   const phaseSpan = $derived.by(() => {
@@ -82,7 +84,7 @@
   // switches the logs to it.
   let opened = $state({})
   const verdicts = run => { const c = run.summary?.counts; return c ? `통과 ${c.pass ?? 0} · 실패 ${c.fail ?? 0} · 막힘 ${c.blocked ?? 0} · 건너뜀 ${c.skip ?? 0}` : '' }
-  function reveal(id) { document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }
+  function reveal(id) { document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: scrollMotion() }) }
   function showTest() { focus.test = head.test; focus.node = ''; focus.at = ''; reveal('cause') }
   function showNode() {
     if (head.test) focus.test = head.test
@@ -91,9 +93,9 @@
   }
 
   $effect(() => {
-    const workspace = job?.workspaceId
+    const workspace = jobWorkspace
     if (!workspace || !webSession) return
-    client.request('networks', { decode: decodeNetworkPage }).then(page => { network = page.items.find(n => n.workspaceId === workspace) ?? null }).catch(() => { network = null })
+    client.request('networks', { decode: decodeNetworkPage }).then(page => { network = page.items.find(n => n.workspaceId === workspace) ?? null }).catch(() => { network = null }).finally(() => { networkRead = true })
   })
   // Runs are read again only when the job's list of run ids changes, not on
   // every live update of the job.
@@ -125,7 +127,8 @@
     <!-- The owner can run a finished job again from its recorded input, after review. -->
     {#if job.terminal && webSession?.user && job.actorId === webSession.user.id && webSession.user.role !== 'viewer'}<RerunPlan {job} {webSession} />{/if}
     <!-- A failing test run is the cause a reader came for, so it comes first. -->
-    {#if firstRun}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} bind:finding />{/if}
+    <!-- The bench reads logs per node, so it waits for the node list instead of reading twice. -->
+    {#if firstRun && networkRead}<RunBench run={firstRun} nodes={networkNodes} networkId={network?.id} bind:test={focus.test} bind:node={focus.node} bind:at={focus.at} bind:finding />{/if}
     {#if !runsLoaded && job.runIds?.length}<p class="muted">테스트 실행 기록을 불러오는 중…</p>{/if}
     {#if runsError}<p class="error" role="alert">테스트 실행 기록을 읽지 못했습니다. {runsError}</p>{/if}
 
@@ -140,7 +143,7 @@
       </section>
     {/if}
 
-    {#if rows.length}<PhaseWatches {rows} />{/if}
+    {#if rows.length && !runsPending}<PhaseWatches {rows} />{/if}
 
     <!-- The job's other runs wait folded; each reads its logs and metrics only once opened. -->
     {#each [...failingRuns, ...passingRuns].filter(r => r !== firstRun) as run (run.id)}
@@ -163,8 +166,10 @@
     </details>
     <JobCard {job} {webSession} compact onchanged={load} />
   {:else if !error}<p class="muted">작업을 불러오는 중…</p>{/if}
+  {#if !runsPending}
   <p class="muted note" data-testid="job-continues">이 작업은 서버에서 실행됩니다. 브라우저를 닫거나 다른 화면으로 가도 계속되며, 다시 열면 기록된 상태를 보여 줍니다.</p>
   <p class="muted note" data-testid="job-stream">실시간 연결: {live.connection}{live.gap ? ' · ' + live.gap : ''}</p>
+  {/if}
 </section>
 
 <style>

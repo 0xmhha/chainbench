@@ -12,3 +12,8 @@ export function follow(event, path) {
  event.preventDefault()
  go(path)
 }
+
+// scrollMotion honours the reader's reduced-motion setting for a scripted scroll.
+export function scrollMotion() {
+ return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+}

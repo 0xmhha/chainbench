@@ -43,7 +43,7 @@
  function resetCursors(){const c=cursorDefaults({events,start:start??from,end:end??to,at,from,to});a=c.a;b=c.b}
  function moveB(v){b=v;at=v}
  function reset(){at='';resetCursors()}
- $effect(()=>{void networkId;void node;void from;void to;void nodes.length;if(networkId&&from&&to)load()})
+ $effect(()=>{void networkId;void node;void from;void to;void nodes.length;if(!networkId||!from||!to)return;const pending=setTimeout(load);return()=>clearTimeout(pending)})
 </script>
 
 {#if error}<p class="error" role="alert">원인 영역의 지표나 로그를 불러오지 못했습니다. {error}</p>{/if}

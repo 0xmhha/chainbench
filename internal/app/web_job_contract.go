@@ -69,7 +69,24 @@ type WebPreparedJob struct {
 	Changes        []string             `json:"changes"`
 	RequiredAccess []string             `json:"requiredAccess"`
 	ChainSurfaces  []WebChainSurfaceRef `json:"chainSurfaces,omitempty"`
+	Summary        *WebPlanSummary      `json:"summary,omitempty"`
 	Payload        json.RawMessage      `json:"payload"`
+}
+
+// WebPlanSummary says what a plan will run and where, in the terms an operator
+// reviews it by. It is display only: the fingerprint binds the plan.
+type WebPlanSummary struct {
+	Chain  string        `json:"chain"`
+	Binary string        `json:"binary"`
+	Cases  []string      `json:"cases,omitempty"`
+	Nodes  []WebPlanNode `json:"nodes,omitempty"`
+}
+
+// WebPlanNode is one planned node and the server it lands on.
+type WebPlanNode struct {
+	Label  string `json:"label"`
+	Role   string `json:"role"`
+	Server string `json:"server"`
 }
 
 type WebPlan struct {
@@ -86,6 +103,7 @@ type WebPlan struct {
 	RequiredAccess    []string                `json:"requiredAccess"`
 	Validation        map[string]any          `json:"validation"`
 	ChainSurfaces     []WebChainSurfaceRef    `json:"chainSurfaces"`
+	Summary           *WebPlanSummary         `json:"summary,omitempty"`
 }
 
 type WebJobPhase struct {
@@ -130,11 +148,13 @@ type WebJob struct {
 	RequestID      string   `json:"requestId,omitempty"`
 	// Reconciliation is the latest read-only check of an interrupted job's
 	// machines.
-	Reconciliation      *WebReconciliation `json:"reconciliation,omitempty"`
-	RunIDs              []string           `json:"runIds"`
-	PartialEffects      []string           `json:"partialEffects"`
-	UnresolvedResources []string           `json:"unresolvedResources"`
-	Error               map[string]string  `json:"error,omitempty"`
+	Reconciliation *WebReconciliation `json:"reconciliation,omitempty"`
+	RunIDs         []string           `json:"runIds"`
+	// Cases names the test cases a job runs, so a list of jobs can be read.
+	Cases               []string          `json:"cases,omitempty"`
+	PartialEffects      []string          `json:"partialEffects"`
+	UnresolvedResources []string          `json:"unresolvedResources"`
+	Error               map[string]string `json:"error,omitempty"`
 }
 
 type WebJobResult struct {

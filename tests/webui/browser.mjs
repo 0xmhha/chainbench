@@ -12,7 +12,7 @@ async function api(endpoint, body) {
 }
 async function validate(content,valid=true){const result=await api('documents/validate',{kind:'chain-preset',name:content.id,contractVersion:'2',content});assert.equal(result.valid,valid,JSON.stringify(result));return result}
 function observed(id,messages){scenarios.push({id,observedAt:new Date().toISOString(),assertions:messages.map(message=>({message,passed:true}))})}
-const browser = await chromium.launch({ headless: true, channel: process.env.WEBUI_BROWSER_CHANNEL ?? 'chrome' })
+const browser = await chromium.launch({ headless: process.env.WEBUI_BROWSER_HEADED !== '1', channel: process.env.WEBUI_BROWSER_CHANNEL ?? 'chrome' })
 try {
  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } }), failures=[]
  page.on('pageerror', error => failures.push(error.message))

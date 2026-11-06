@@ -14,14 +14,18 @@
   const summary = $derived(jobSummary(job))
   const owner = $derived(webSession && (job.actorId === webSession.user.id || webSession.user.role === 'administrator'))
   const outcomes = { absent: '남은 노드 없음, 자원 해제', present: '노드가 남아 있어 보존 네트워크로 유지', unverified: '일부를 확인하지 못해 계속 잠금' }
+  // A test job reads by its cases; others by what they do.
+  const dispositions = { cleaned: '정리됨', retained: '보존', unknown: '확인 필요', cleanup_failed: '정리 실패' }
+  const title = $derived(job.cases?.length ? job.cases.join(', ') : job.operation)
+  const shortId = $derived(job.id.slice(0, 8))
   let busy = $state(false), error = $state(''), asking = $state(false)
   async function work(fn) { busy = true; error = ''; try { await fn(); onchanged() } catch (e) { error = e.message } finally { busy = false } }
 </script>
 
 <article data-job-id={job.id}>
-  {#if !compact}<div class="heading"><strong>{job.operation}</strong><StatusBadge state={job.state} /></div>
-  <p>{#if link}<a href={'/jobs/' + job.id} onclick={e => follow(e, '/jobs/' + job.id)}><code>{job.id}</code></a>{:else}<code>{job.id}</code>{/if} · {formatTime(job.createdAt)} · 노드 처리: {job.nodeDisposition}</p>
-  <ol>{#each job.phases as phase}<li>{phase.name} · <StatusBadge state={phase.state} />{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>{/if}
+  {#if !compact}<div class="heading"><strong>{title}</strong><StatusBadge state={job.state} /></div>
+  <p>{#if link}<a href={'/jobs/' + job.id} onclick={e => follow(e, '/jobs/' + job.id)}><code title={job.id}>{shortId}</code></a>{:else}<code title={job.id}>{shortId}</code>{/if} · {formatTime(job.createdAt)} · 노드 처리: {dispositions[job.nodeDisposition] ?? ''} {job.nodeDisposition}</p>
+  <ol>{#each job.phases as phase}<li>{phase.name} · <StatusBadge state={phase.state} />{#if phase.message && phase.message !== job.error?.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>{/if}
   <!-- runIds name the engine sessions; each opens its archived record in History. -->
   {#if job.runIds?.length}<p class="sessions">실행 기록{#each job.runIds as id (id)}<a class="session-link" href={'/history?run=' + encodeURIComponent(id)} title={id} onclick={e => follow(e, '/history?run=' + encodeURIComponent(id))}>{runLabel(id)}</a>{/each}</p>{/if}
   {#if job.error && !compact}<p class:error={job.state !== 'cancelled'}>{job.error.message}</p>{/if}

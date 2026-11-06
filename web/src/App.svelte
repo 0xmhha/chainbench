@@ -50,6 +50,9 @@
   $effect.pre(() => { if (!visited.has(route)) visited = new Set([...visited, route]) })
   // Running comes first once something is set up; defining it is the rarer task.
   const savedSetup = $derived(Object.keys(workspaceNames).length > 0)
+  let savedCases = $state(false)
+  const runFirst = $derived(route === '/tests' ? savedCases : savedSetup)
+  $effect(() => { void catalogRevision; if (ready && webSession) webApi(webSession)('documents?kind=case&limit=1').then(page => { savedCases = page.items.length > 0 }).catch(() => {}) })
   const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
   // Tabs stay apart: a job or a node is named, not only its kind of page.
   const pageTitle = $derived(parsed.jobId ? `작업 ${parsed.jobId.slice(0, JOB_TITLE_LENGTH)}` : parsed.nodeId ? `노드 ${parsed.nodeId}` : current[1])
@@ -98,10 +101,10 @@
       {#if ready && webSession !== null}
         {#key webSession?.user.id}
           {#snippet jobPanel()}{#key route}<JobPanel {webSession} catalogRevision={catalogRevision+assetRevision} testOnly={route==='/tests'} />{/key}{/snippet}
-          {#if route==='/chains'&&savedSetup}{@render jobPanel()}{/if}
+          {#if (route==='/tests'||route==='/chains')&&runFirst}{@render jobPanel()}{/if}
           {#if visited.has('/chains')}<div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /><DeploymentEditor {webSession} onsaved={()=>catalogRevision++} /></div>{/if}
           {#if visited.has('/tests')}<div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /></div>{/if}
-          {#if route==='/tests'||(route==='/chains'&&!savedSetup)}{@render jobPanel()}{/if}
+          {#if (route==='/tests'||route==='/chains')&&!runFirst}{@render jobPanel()}{/if}
           {#if visited.has('/settings')}<div hidden={route !== '/settings'}><SettingsPanel {webSession} {assetRevision} onuploaded={()=>assetRevision++} /></div>{/if}
           {#if visited.has('/history')}<div hidden={route !== '/history'}><HistoryPanel {webSession} active={route === '/history'} /></div>{/if}
         {/key}

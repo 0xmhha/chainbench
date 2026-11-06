@@ -3624,6 +3624,40 @@ components:
       - workspaceId
       - operation
       - documentRefs
+    PlanSummary:
+      type: object
+      description: What a plan runs and where, for review. Display only; the fingerprint binds the plan.
+      properties:
+        chain:
+          type: string
+        binary:
+          type: string
+        cases:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanNode'
+      additionalProperties: false
+      required:
+      - chain
+      - binary
+    PlanNode:
+      type: object
+      properties:
+        label:
+          type: string
+        role:
+          type: string
+        server:
+          type: string
+      additionalProperties: false
+      required:
+      - label
+      - role
+      - server
     Plan:
       type: object
       properties:
@@ -3655,6 +3689,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ChainSurfaceRef'
+        summary:
+          $ref: '#/components/schemas/PlanSummary'
       additionalProperties: false
       required:
       - id
@@ -3853,6 +3889,11 @@ components:
             message: *id001
           additionalProperties: false
           required: [checkedAt, outcome, nodes]
+        cases:
+          type: array
+          description: Names of the test cases the job runs.
+          items:
+            type: string
         runIds:
           type: array
           description: Engine session references such as web:<process>/<run>; each one is accepted by GET /api/v1/history/{runId}

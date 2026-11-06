@@ -1,4 +1,5 @@
 <script>
+ import { scrollMotion } from './nav.mjs'
  // One recorded test run read on the cause bench: the recorder strip over the
  // chosen test's window, the node's logs beside its gauge readings, then the
  // test ledger. The job detail and the history detail read a run the same way.
@@ -41,7 +42,7 @@
  <section class="cause" id={anchor} aria-label="원인 영역">
   <CauseBench networkId={network} nodes={benchNodes} bind:node={()=>shownNode,v=>{node=v}} bind:at from={span.from} to={span.to} start={chosen.startedAt} end={chosen.finishedAt} tests={rows} chosen={chosen.id} onchoose={choose} onfinding={found} logTitle={`${nodeName} 로그 · ${chosen.id} 구간${span.exact?`(앞뒤 ${PAD_SECONDS}초)`:'(실행 전체)'} · 오류·경고 먼저`} {logTestid} />
  </section>
- <TestLedger {rows} chosen={chosen.id} onchoose={choose} onnode={n=>{node=n;document.getElementById(anchor)?.scrollIntoView({block:'start',behavior:'smooth'})}} nodes={benchNodes} />
+ <TestLedger {rows} chosen={chosen.id} onchoose={choose} onnode={n=>{node=n;document.getElementById(anchor)?.scrollIntoView({block:'start',behavior: scrollMotion()})}} nodes={benchNodes} />
 {:else if !rows.length&&runSpan&&network&&benchNodes.length}
  <section class="cause" id={anchor} aria-label="실행 구간 로그">
   <CauseBench networkId={network} nodes={benchNodes} bind:node={()=>shownNode,v=>{node=v}} bind:at from={runSpan.from} to={runSpan.to} start={observations.from} end={observations.to} logTitle={`${nodeName} 로그 · 실행 구간 전체 · 오류·경고 먼저`} {logTestid} />

@@ -31,8 +31,8 @@
         {#each row.failedAsserts as a}{@const diff=assertDiff(a.expected,a.actual)}<tr>
          <td data-label="단언"><code>{a.assert}</code></td>
          <td data-label="노드">{#if a.on&&nodes.includes(a.on)}<button type="button" class="link" onclick={()=>onnode(a.on)}>{a.on}</button>{:else}{a.on||'—'}{/if}</td>
-         <td data-label="기대"><code class="struck">{shown(a.expected)}</code></td>
-         <td data-label="실제"><code class="actual">{shown(a.actual)}</code>{#if diff}<small class="diff">차이 {diff}</small>{/if}</td>
+         <td data-label="기대"><!-- svelte-ignore a11y_no_noninteractive_tabindex: a long value must scroll by keyboard --><code class="struck" tabindex="0" role="region" aria-label="기대값">{shown(a.expected)}</code></td>
+         <td data-label="실제"><!-- svelte-ignore a11y_no_noninteractive_tabindex: a long value must scroll by keyboard --><code class="actual" tabindex="0" role="region" aria-label="실제값">{shown(a.actual)}</code>{#if diff}<small class="diff">차이 {diff}</small>{/if}</td>
         </tr>{/each}
        </tbody></table>
       {/if}
