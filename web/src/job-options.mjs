@@ -57,7 +57,10 @@ export function planBlockers(form) {
  return missing
 }
 
-// rangeText reads the bounds a contract gives, which may be one or none.
+/**
+ * rangeText reads the bounds a contract gives, which may be one or none.
+ * @param {{ minimum?: number, maximum?: number }} bounds
+ */
 function rangeText({ minimum, maximum }) {
  if (minimum !== undefined && maximum !== undefined) return `${minimum}부터 ${maximum}까지의 `
  if (minimum !== undefined) return `${minimum} 이상의 `
