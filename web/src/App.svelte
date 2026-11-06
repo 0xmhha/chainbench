@@ -48,7 +48,7 @@
   // The top bar names the selected workspace; names are read once per session.
   $effect(() => { if (ready && webSession) webApi(webSession)('workspaces?limit=100').then(page => { workspaceNames = Object.fromEntries(page.items.map(w => [w.id, w.name])) }).catch(() => {}) })
   onMount(() => {
-    const change = () => { path = window.location.pathname; error = '' }
+    const change = () => { const moved = path !== window.location.pathname; path = window.location.pathname; error = ''; if (moved) { window.scrollTo(0, 0); document.getElementById('content')?.focus({ preventScroll: true }) } }
     window.addEventListener('popstate', change)
     const clock = setInterval(() => { now = Date.now() }, 1000)
     return () => { window.removeEventListener('popstate', change); clearInterval(clock) }
@@ -81,7 +81,7 @@
         <span class="account">{webSession?.accountsEnabled === false ? '로컬 사용' : webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span>
       </span>
     </header>
-    <main id="content">
+    <main id="content" tabindex="-1">
       <!-- The job detail opens with its own folio and casualty entry, so the shared
            title stays for screen readers only rather than saying it twice. -->
       <header class="page-heading" class:sr-only={route === '/jobs'}><h1>{current[1]}</h1><p>{current[2]}</p></header>

@@ -32,7 +32,7 @@ try{
  await page.locator('#saved-chain-document').selectOption(preset.id)
  const chainSection=page.locator('section[aria-labelledby="chain-heading"]')
  await chainSection.getByText('모든 구성 필드',{exact:true}).click()
- await chainSection.getByLabel('/content/id',{exact:true}).fill('catalog-preset-updated')
+ await chainSection.locator('[name="/content/id"]').fill('catalog-preset-updated')
  const changedPreset=await save(page,'공유 체인 구성 저장','documents/'+preset.id)
  assert.equal(changedPreset.revision,2)
  await page.waitForFunction(id=>document.querySelector(`select[aria-label="작업 체인 구성"] option[value="${id}"]`)?.textContent.includes('r2'),preset.id)

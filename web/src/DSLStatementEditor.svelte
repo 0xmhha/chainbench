@@ -65,7 +65,7 @@
     <nav aria-label="statement 트리">
       <button class="item" class:selected={selected === ''} aria-current={selected === '' ? 'true' : undefined} data-tree-path="" onclick={() => selected = ''} onkeydown={e => key(e, '')}>케이스 설정</button>
       {#each lists as l (l.path)}
-        <h4>{l.label}</h4>
+        <h3>{l.label}</h3>
         <ul>{#each l.items as item (item.path)}<li>
           <button class="item" class:selected={selected === item.path} class:invalid={errors.some(e => statementOf(document, e.path ?? '') === item.path)} aria-current={selected === item.path ? 'true' : undefined} data-tree-path={item.path} onclick={() => selected = item.path} onkeydown={e => key(e, item.path)}>{indexOf(item.path) + 1}. {item.summary}</button>
         </li>{/each}</ul>
@@ -93,7 +93,7 @@
   .summary { padding: var(--space-3) var(--space-4); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-bg); color: var(--danger); }
   .summary h3 { margin: 0 0 var(--space-2); color: var(--danger); } .summary button { min-height: 0; padding: 0; border: 0; background: none; color: var(--danger); text-decoration: underline; font-family: var(--font-mono); }
   .columns { display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: var(--space-4); margin-top: var(--space-4); }
-  nav { border-right: 1px solid var(--border-subtle); padding-right: var(--space-3); } nav ul { list-style: none; padding: 0; margin: 0; } h4 { margin: var(--space-3) 0 var(--space-1); }
+  nav { border-right: 1px solid var(--border-subtle); padding-right: var(--space-3); } nav ul { list-style: none; padding: 0; margin: 0; } h3 { margin: var(--space-3) 0 var(--space-1); }
   .item { display: block; width: 100%; text-align: left; white-space: normal; background: none; border-color: transparent; overflow-wrap: anywhere; }
   .item.selected { background: var(--surface-raised); border-color: var(--accent); } .item.invalid { color: var(--danger); }
   .add, .toolbar button { margin: var(--space-1) var(--space-1) 0 0; }

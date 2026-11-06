@@ -75,7 +75,7 @@ try{
  const verdict=page.getByTestId('surface-verification').locator('.status')
  await verdict.waitFor({timeout:30000})
  observed.statusBadge=(await verdict.textContent()).trim()
- assert.match(observed.statusBadge,/^[✓✕●◐!○?] \S+/)
+ assert.match(observed.statusBadge,/\S+/);assert.equal(await verdict.locator('svg').count(),1,'a state needs its icon')
  fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:owned.browser.version(),...observed,seedAcceptanceAwarded:false},null,2))
 }catch(error){
  if(page){await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});fs.writeFileSync(out+'/failure.txt',(await page.locator('[role=alert],[role=status]').allTextContents().catch(()=>[])).join('\n'))}

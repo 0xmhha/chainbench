@@ -37,3 +37,10 @@ test('a plan that cannot start names what is still missing', () => {
  assert.deepEqual(planBlockers({ ...ready, manifest: false, server: false, cases: false }), ['매니페스트', '서버', '실행할 케이스'])
  assert.deepEqual(planBlockers({ workspace: true, server: true, needsBinary: false }), [], 'log collection needs no binary')
 })
+
+test('a refused option names only the bounds the contract gives', () => {
+ const refusal = bounds => { try { optionArguments([{ name: 'n', title: '횟수', type: 'integer', ...bounds }], { n: '1.5' }) } catch (e) { return e.message } }
+ assert.equal(refusal({ minimum: 1, maximum: 9 }), '횟수은(는) 1부터 9까지의 정수여야 합니다.')
+ assert.equal(refusal({ minimum: 1 }), '횟수은(는) 1 이상의 정수여야 합니다.')
+ assert.equal(refusal({}), '횟수은(는) 정수여야 합니다.')
+})

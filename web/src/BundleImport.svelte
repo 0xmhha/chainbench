@@ -1,11 +1,12 @@
 <script>
   import { apiClient } from './api-client.mjs'
+  import { keepFocus } from './focus.mjs'
   let { webSession = undefined, onsaved = () => {} } = $props()
-  let preview = $state(null), saved = $state([]), filename = $state(''), status = $state(''), busy = $state(false)
+  let preview = $state(null), saved = $state([]), filename = $state(''), status = $state(''), failed = $state(false), busy = $state(false)
   let workspaceName = $state('가져온 workspace')
   const client = $derived(apiClient(webSession))
   function api(path, method, data) { return client.request(path, { method, body: data }) }
-  async function work(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
+  async function work(fn) { const restoreFocus = keepFocus(); busy = true; status = ''; failed = false; try { await fn() } catch (error) { status = error.message; failed = true } finally { busy = false; await restoreFocus() } }
   const formatOf = name => /\.(ya?ml)$/i.test(name) ? 'yaml' : 'json'
   async function choose(event) {
     const files = [...event.currentTarget.files]
@@ -52,19 +53,19 @@
         <p>저장할 수 있는 문서 {preview.redactedDocuments.length}개:</p>
         <ul>{#each preview.redactedDocuments as d}<li data-import-kind={d.kind}>{d.kind} · {d.name}</li>{/each}</ul>
       {:else}
-        <p class="error"><span aria-hidden="true">✕</span> 가져온 내용을 저장할 수 없습니다:</p>
+        <p class="error" role="alert"><span aria-hidden="true">✕</span> 가져온 내용을 저장할 수 없습니다:</p>
         <ul>{#each preview.validation.errors as issue}<li class="error" data-import-error={issue.path}><code>{issue.path}</code> {issue.message}</li>{/each}</ul>
       {/if}
       {#each preview.changes as change}<p class="notice">{change}</p>{/each}
       {#if servers.length}<p class="notice">저장한 뒤 서버 {servers.length}대에 내 SSH 자격증명을 연결해야 합니다: {servers.length > 4 ? `${servers[0]} ~ ${servers.at(-1)}` : servers.join(', ')}</p>{/if}
-      <button disabled={busy || !preview.validation.valid || saved.length > 0} onclick={commit}>가져온 문서 저장</button>
+      <button class="primary" disabled={busy || !preview.validation.valid || saved.length > 0} onclick={commit}>가져온 문서 저장</button>
     </div>
   {/if}
   {#if set && config}
     <label>Workspace 이름 <input name="workspace-name" aria-label="가져온 workspace 이름" bind:value={workspaceName} /></label>
-    <button disabled={busy} onclick={createWorkspace}>가져온 문서로 workspace 만들기</button>
+    <button class="primary" disabled={busy} onclick={createWorkspace}>가져온 문서로 workspace 만들기</button>
   {/if}
-  {#if status}<p role="status" data-testid="import-status">{status}</p>{/if}
+  {#if status}<p role={failed ? 'alert' : 'status'} class:error={failed} data-testid="import-status">{status}</p>{/if}
 </section>
 
 <style>

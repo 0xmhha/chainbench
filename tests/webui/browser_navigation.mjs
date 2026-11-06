@@ -58,7 +58,7 @@ try{
  await page.getByLabel('작업 종류',{exact:true}).selectOption('test.run')
  await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
  await page.getByLabel('작업 종료 후 처리',{exact:true}).selectOption('cleanup')
- await page.getByLabel('실행 케이스 '+long.id,{exact:true}).check()
+ await page.locator(`input[name="case"][value="${long.id}"]`).check()
  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
  const run=page.getByRole('button',{name:/^(검토한 계획 실행|테스트 실행)$/})
  await run.waitFor({timeout:60000});await page.waitForFunction(()=>![...document.querySelectorAll('button')].find(b=>['검토한 계획 실행','테스트 실행'].includes(b.textContent))?.disabled,null,{timeout:60000})

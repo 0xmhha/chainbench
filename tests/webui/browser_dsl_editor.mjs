@@ -100,7 +100,7 @@ try{
  const authAdd=page.getByLabel(attachPath+'/endpoints/1/auth 필드 추가',{exact:true})
  if(await authAdd.count())assert.ok(!(await authAdd.locator('option').allTextContents()).some(text=>text.trim()==='header'),'jwt offers ignored header')
  await page.locator('[data-tree-path="/content/steps/0"]').click()
- const on=page.getByLabel('/content/steps/0/on',{exact:true})
+ const on=page.locator('[name="/content/steps/0/on"]')
  const names=await page.locator('[id="/content/steps/0/on-suggestions"] option').evaluateAll(options=>options.map(option=>option.value))
  assert.ok(names.includes('en1')&&names.includes('bp1')&&names.includes('node2'),JSON.stringify(names))
  await on.fill('en1')
@@ -122,9 +122,9 @@ try{
  await page.getByLabel('/content/steps/0 필드 추가',{exact:true}).selectOption('alternatives')
  const metricPath='/content/steps/0/alternatives'
  await page.getByLabel(metricPath+' 항목 추가',{exact:true}).click()
- await page.getByLabel(metricPath+'/0',{exact:true}).fill('eth_fetcher_block_announces_in')
+ await page.locator(`[name="${metricPath}/0"]`).fill('eth_fetcher_block_announces_in')
  await page.getByLabel(metricPath+' 항목 추가',{exact:true}).click()
- await page.getByLabel(metricPath+'/1',{exact:true}).fill('eth_fetcher_block_announces_in')
+ await page.locator(`[name="${metricPath}/1"]`).fill('eth_fetcher_block_announces_in')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await summary.filter({hasText:'alternatives'}).waitFor({timeout:15000})
  await page.getByLabel(metricPath+'/1 삭제',{exact:true}).click()
@@ -151,10 +151,10 @@ try{
  await page.locator('[data-tree-path="/content/steps/1"]').click()
  const listPath='/content/steps/1/accessList'
  await page.getByLabel(listPath+' 항목 추가',{exact:true}).click()
- await page.getByLabel(listPath+'/0/address',{exact:true}).fill('$created')
+ await page.locator(`[name="${listPath}/0/address"]`).fill('$created')
  await page.getByLabel(listPath+'/0/storageKeys 항목 추가',{exact:true}).click()
  const slot='0x'+'0'.repeat(63)+'1'
- await page.getByLabel(listPath+'/0/storageKeys/0',{exact:true}).fill(slot)
+ await page.locator(`[name="${listPath}/0/storageKeys/0"]`).fill(slot)
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
  await page.screenshot({path:out+'/access-list-editor.png',fullPage:true})
@@ -174,17 +174,17 @@ try{
  await page.locator('[data-tree-path="/content/steps/1"]').click()
  const gasPath='/content/steps/1/gas'
  await page.getByLabel(gasPath+' 형식',{exact:true}).selectOption('0')
- const gasInput=page.getByLabel(gasPath,{exact:true})
+ const gasInput=page.locator(`[name="${gasPath}"]`)
  assert.equal(await gasInput.getAttribute('step'),'1')
  assert.equal(await gasInput.getAttribute('max'),'9007199254740991')
  for(const bad of ['1.5','9007199254740992']){
   await gasInput.fill(bad)
   await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
-  await page.locator(`[aria-label="${gasPath}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  await page.locator(`[name="${gasPath}"][aria-invalid="true"]`).waitFor({timeout:15000})
  }
  await page.screenshot({path:out+'/numeric-validation.png',fullPage:true})
  await page.getByLabel(gasPath+' 형식',{exact:true}).selectOption('1')
- await page.getByLabel(gasPath,{exact:true}).fill('18446744073709551615')
+ await page.locator(`[name="${gasPath}"]`).fill('18446744073709551615')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
  await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
@@ -205,14 +205,14 @@ try{
  for(const [field,bads] of [['blocks',['0','1.5']],['fillPercent',['0','1.5','101']]]){
   const path='/content/steps/1/'+field
   await page.getByLabel(path+' 형식',{exact:true}).selectOption('0')
-  const input=page.getByLabel(path,{exact:true})
+  const input=page.locator(`[name="${path}"]`)
   assert.equal(await input.getAttribute('step'),'1')
   assert.equal(await input.getAttribute('min'),'1')
   if(field==='fillPercent')assert.equal(await input.getAttribute('max'),'100')
   for(const bad of bads){
    await input.fill(bad)
    await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
-   await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+   await page.locator(`[name="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
   }
   await input.fill(field==='blocks'?'2':'50')
  }
@@ -241,28 +241,28 @@ try{
   await page.locator(`[data-tree-path="/content/steps/${step}"]`).click()
   const path=`/content/steps/${step}/${field}`
   await page.getByLabel(path+' 형식',{exact:true}).selectOption('0')
-  const input=page.getByLabel(path,{exact:true})
+  const input=page.locator(`[name="${path}"]`)
   assert.equal(await input.getAttribute('step'),'1')
   assert.equal(await input.getAttribute('min'),zeroAllowed?'0':'1')
   assert.equal(await input.getAttribute('max'),'9007199254740991')
   await input.fill('1.5')
   await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
-  await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
-  if(!zeroAllowed){await input.fill('0');await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click();await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})}
+  await page.locator(`[name="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  if(!zeroAllowed){await input.fill('0');await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click();await page.locator(`[name="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})}
   await input.fill(good)
  }
  await page.locator('[data-tree-path="/content/steps/0"]').click()
  const indexPath='/content/steps/0/index'
  await page.getByLabel(indexPath+' 형식',{exact:true}).selectOption('1')
- await page.getByLabel(indexPath,{exact:true}).fill('18446744073709551615')
+ await page.locator(`[name="${indexPath}"]`).fill('18446744073709551615')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await summary.filter({hasText:'index'}).waitFor({timeout:15000})
- await page.getByLabel(indexPath,{exact:true}).fill('0X01')
+ await page.locator(`[name="${indexPath}"]`).fill('0X01')
  controlCase.steps[0].index='0X01'
  await page.locator('[data-tree-path="/content/steps/1"]').click()
  const advancePath='/content/steps/1/maxAdvance'
  await page.getByLabel(advancePath+' 형식',{exact:true}).selectOption('1')
- await page.getByLabel(advancePath,{exact:true}).fill('18446744073709551615')
+ await page.locator(`[name="${advancePath}"]`).fill('18446744073709551615')
  controlCase.steps[1].maxAdvance='18446744073709551615'
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
@@ -286,11 +286,11 @@ try{
  for(const [step,field,good] of [[0,'timeout','1m0.5s'],[0,'pollInterval','1.5ms'],[1,'within','+2s'],[2,'timeout','250µs']]){
   await page.locator(`[data-tree-path="/content/steps/${step}"]`).click()
   const path=`/content/steps/${step}/${field}`
-  const input=page.getByLabel(path,{exact:true})
+  const input=page.locator(`[name="${path}"]`)
   for(const bad of ['0s','-1ms','invalid','9223372036854775808ns']){
    await input.fill(bad)
    await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
-   await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+   await page.locator(`[name="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
   }
   await input.fill(good)
   durationCase.steps[step][field]=good
@@ -321,7 +321,7 @@ try{
  const feePath='/content/steps/1/feePayer'
  const feeFields=page.getByLabel('/content/steps/1 필드 추가',{exact:true})
  await feeFields.selectOption('feePayer')
- const payer=page.getByLabel(feePath,{exact:true})
+ const payer=page.locator(`[name="${feePath}"]`)
  assert.equal(await payer.evaluate(e=>e.tagName),'SELECT')
  assert.deepEqual(await payer.locator('option').evaluateAll(options=>options.filter(o=>o.value).map(o=>o.value)),['sponsor'])
  await payer.selectOption('sponsor')
@@ -332,7 +332,7 @@ try{
  conflicting.steps[1].feePayerKey='$key'
  await upload.setInputFiles(file('conflicting-fee.json',conflicting))
  await page.locator('[data-tree-path="/content/steps/1"]').click()
- assert.equal(await page.getByLabel('/content/steps/1/feePayerKey',{exact:true}).inputValue(),'$key','invalid imported key was discarded')
+ assert.equal(await page.locator('[name="/content/steps/1/feePayerKey"]').inputValue(),'$key','invalid imported key was discarded')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByTestId('dsl-error-summary').filter({hasText:/feePayer.*feePayerKey/}).waitFor({timeout:15000})
  await page.screenshot({path:out+'/delegation-conflict.png',fullPage:true})
@@ -383,20 +383,20 @@ try{
  await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('enabled')
  await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
  await page.getByLabel(valuesPath+'/enabled 형식',{exact:true}).selectOption('2')
- await page.getByLabel(valuesPath+'/enabled',{exact:true}).check()
+ await page.locator(`[name="${valuesPath}/enabled"]`).check()
  assert.equal(await page.getByLabel(valuesPath+'/payload/items/2 형식',{exact:true}).inputValue(),'3','null rendered as a string')
  await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('chainId')
  await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
  const chainPath=valuesPath+'/chainId'
  assert.equal(await page.getByLabel(chainPath+' 형식',{exact:true}).inputValue(),'0')
- const expectedID=page.getByLabel(chainPath,{exact:true})
+ const expectedID=page.locator(`[name="${chainPath}"]`)
  assert.equal(await expectedID.getAttribute('step'),'1')
  assert.equal(await expectedID.getAttribute('max'),'9007199254740991')
  await expectedID.fill('1.5')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByTestId('dsl-error-summary').filter({hasText:'chainId'}).waitFor({timeout:15000})
  await page.getByLabel(chainPath+' 형식',{exact:true}).selectOption('1')
- await page.getByLabel(chainPath,{exact:true}).fill('8283')
+ await page.locator(`[name="${chainPath}"]`).fill('8283')
 
  await page.locator('[data-tree-path="/content/steps/0"]').click()
  const initialNames=await page.locator('[id="/content/steps/0/target-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))
@@ -425,7 +425,7 @@ try{
  await page.getByLabel('/content/prepared/exports 항목 이름',{exact:true}).fill('head')
  await page.locator('[data-field-path="/content/prepared/exports"] > fieldset > button').click()
  assert.ok((await page.locator('[id="/content/prepared/exports/head-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))).includes('$head'))
- await page.getByLabel('/content/prepared/exports/head',{exact:true}).fill('$head')
+ await page.locator('[name="/content/prepared/exports/head"]').fill('$head')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
  await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
@@ -438,10 +438,10 @@ try{
  await page.getByLabel('/content/prepared 필드 추가',{exact:true}).selectOption('imports')
  await page.getByLabel('/content/prepared/imports 항목 이름',{exact:true}).fill('head')
  await page.locator('[data-field-path="/content/prepared/imports"] > fieldset > button').click()
- const producerSelect=page.getByLabel('/content/prepared/imports/head/case',{exact:true})
+ const producerSelect=page.locator('[name="/content/prepared/imports/head/case"]')
  assert.deepEqual(await producerSelect.locator('option').evaluateAll(options=>options.filter(o=>o.value).map(o=>o.value)),['prepared-producer'])
  await producerSelect.selectOption('prepared-producer')
- await page.getByLabel('/content/prepared/imports/head/name',{exact:true}).selectOption('head')
+ await page.locator('[name="/content/prepared/imports/head/name"]').selectOption('head')
  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
  await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
  await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()

@@ -18,6 +18,8 @@
  const forbidden=$derived(forbiddenFields(current,value))
  const optional=$derived(Object.keys(properties).filter(k=>!forbidden.has(k)&&!(value && Object.hasOwn(value,k))))
  const refs=$derived([...suggestions.before].find(([prefix])=>path.startsWith(prefix+'/'))?.[1]??[])
+ // Long prose gets room; decided once, so typing past the length keeps focus.
+ let wide=$state(label==='description'||String(value??'').length>80)
  function update(k,v){onchange({...value,[k]:v})}
  function remove(k){const next={...value};delete next[k];onchange(next)}
  function item(i,v){const next=[...value];next[i]=v;onchange(next)}
@@ -33,16 +35,16 @@
   <span>{label}: <strong>{String(value??current.const)}</strong></span>
   {#if value!==current.const}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}. 지원하는 형식을 고르세요.</p>{/if}
  {:else if current.enum}
-  <label>{label} <select name={path} aria-label={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
+  <label>{label} <select name={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
   {#if !current.enum.includes(value)}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}</p>{/if}
  {:else if type==='string'&&path.startsWith('/content/prepared/imports/')&&(label==='case'||label==='name')}
   {@const options=label==='case'?(suggestions.preparedCases??[]):(suggestions.preparedNames?.[path.split('/')[4]]??[])}
-  <label>{label==='case'?'준비 케이스':'공개된 준비물'} <select name={path} aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+  <label>{label==='case'?'준비 케이스':'공개된 준비물'} <select name={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
    {#if !value}<option value="">선택</option>{:else if !options.includes(value)}<option value={value}>가져온 참조 · {value}</option>{/if}
    {#each options as option}<option value={option}>{option}</option>{/each}
   </select></label>
  {:else if label==='feePayer' && type==='string'}
-  <label>{label} <select name={path} aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+  <label>{label} <select name={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
    {#if !value}<option value="">대납 계정 선택</option>{:else if !(suggestions.accounts??[]).includes(value)}<option value={value}>가져온 계정 · {value}</option>{/if}
    {#each suggestions.accounts??[] as account}<option value={account}>{account}</option>{/each}
   </select></label>
@@ -78,14 +80,15 @@
    <button aria-label={`${path} 항목 추가`} onclick={()=>onchange([...(value??[]),initial(current.items??{},root)])}>{label} 항목 추가</button>
   </fieldset>
  {:else if type==='boolean'}
-  <label><input name={path} aria-label={path} {...invalid} type="checkbox" checked={value} onchange={e=>onchange(e.target.checked)} /> {label}</label>
+  <label><input name={path} {...invalid} type="checkbox" checked={value} onchange={e=>onchange(e.target.checked)} /> {label}</label>
  {:else if type==='number'||type==='integer'}
-  <label>{label} <input name={path} aria-label={path} {...invalid} type="number" value={value} min={current.minimum} max={current.maximum} step={type==='integer'?1:'any'} oninput={e=>{if(e.target.value!=='')onchange(Number(e.target.value))}} /></label>
+  <label>{label} <input name={path} {...invalid} type="number" value={value} min={current.minimum} max={current.maximum} step={type==='integer'?1:'any'} oninput={e=>onchange(e.target.value===''?undefined:Number(e.target.value))} /></label>
  {:else if type==='null'}
   <span>{label}: null</span>
  {:else}
   {@const problem=valueProblem(current,value)}
-  <label>{label} <input name={path} aria-label={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)} /></label>
+  {#if wide}<label>{label} <textarea name={path} rows="4" value={value??''} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)}></textarea></label>
+  {:else}<label>{label} <input name={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem||fieldError?'true':undefined} aria-describedby={problem?`${path}-problem`:fieldError?errorId:undefined} oninput={e=>onchange(e.target.value)} /></label>{/if}
   {#if problem}<p id={`${path}-problem`} role="alert">{problem}</p>{/if}
   <datalist id={`${path}-suggestions`}>{#each fieldSuggestions(current,label,path,suggestions.nodes,refs) as option}<option value={option}></option>{/each}</datalist>
  {/if}
@@ -95,4 +98,4 @@
  {#if fieldError}<p id={errorId} class="field-error" data-error-path={path}>{fieldError}</p>{/if}
  {#if current.description}<small>{current.description}</small>{/if}
 </div>
-<style>.field{min-width:0;flex:1}fieldset{margin:var(--space-2) 0;padding:var(--space-2) 0 var(--space-2) var(--space-3);border-top:0;border-left:1px solid var(--border-subtle)}.row{display:flex;align-items:start;gap:var(--space-2);padding:var(--space-1) 0;flex-wrap:wrap}label{margin:var(--space-1) 0}small{display:block}p{color:var(--danger)}</style>
+<style>@media (pointer:coarse){.row>button{min-width:44px}}textarea{width:100%;resize:vertical}.field{min-width:0;flex:1}fieldset{margin:var(--space-2) 0;padding:var(--space-2) 0 var(--space-2) var(--space-3);border-top:0;border-left:1px solid var(--border-subtle)}.row{display:flex;align-items:start;gap:var(--space-2);padding:var(--space-1) 0;flex-wrap:wrap}label{margin:var(--space-1) 0}small{display:block}p{color:var(--danger)}</style>

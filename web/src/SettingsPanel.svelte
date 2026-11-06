@@ -15,7 +15,7 @@
 {#if access && role !== 'viewer'}<CredentialManager {webSession} kinds={access.credentialKinds} />{/if}
 {#if access && role === 'administrator'}
   {#if webSession.accountsEnabled !== false}<UserManager {webSession} roles={access.roles} />{/if}
-  <AuditPanel {webSession} />
 {/if}
 <AssetManager {webSession} {onuploaded} />
 <ManifestManager {webSession} {assetRevision} />
+{#if access && role === 'administrator'}<AuditPanel {webSession} />{/if}

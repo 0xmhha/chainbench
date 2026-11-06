@@ -67,10 +67,10 @@ try {
   const base = {schemaVersion: '2', kind: 'case', id: 'browser', chainPreset: {chain: 'stablenet', binaries: {default: 'gstable'}, topology: {bp: 4}}, steps: [{do: 'read', source: 'blockNumber', on: 'node1', save: 'head'}, {expect: 'blockNumber', onEach: ['node1', 'node2'], compare: 'GreaterOrEqual', is: '$head'}, {expect: 'chainId', is: '8283'}]}
   assert.equal((await upload(base)).status(), 200)
   const before = (await api('test-cases/import', 'POST', {content: base})).semanticFingerprint
-  await page.getByLabel('/content/id', {exact: true}).fill('browser-edited')
+  await page.locator('[name="/content/id"]').fill('browser-edited')
   // A statement is edited after choosing it in the statement tree.
   await page.locator('[data-tree-path="/content/steps/0"]').click()
-  await page.getByLabel('/content/steps/0/on', {exact: true}).fill('bp1')
+  await page.locator('[name="/content/steps/0/on"]').fill('bp1')
   assert.equal(await page.getByRole('button', {name: '테스트 시나리오 내보내기', exact: true}).isDisabled(), true)
   await page.getByRole('button', {name: '테스트 시나리오 검증', exact: true}).click()
   await status.filter({hasText: '엔진 검증 통과'}).waitFor()
@@ -91,7 +91,7 @@ try {
   const retained = {...legacy, id: 'legacy-config-browser', chain: {...legacy.chain, config: 'site.toml'}}
   assert.equal((await upload(retained)).status(), 200)
   await status.filter({hasText: 'Retained v1:'}).waitFor()
-  await page.getByLabel('/content/chain/config', {exact: true}).fill('edited-site.toml')
+  await page.locator('[name="/content/chain/config"]').fill('edited-site.toml')
   await page.getByRole('button', {name: '테스트 시나리오 검증', exact: true}).click()
   await status.filter({hasText: '엔진 검증 통과'}).waitFor()
   const retainedExport = await exportDoc('retained-v1.json')
@@ -209,7 +209,7 @@ try {
   // build, which the engine refuses to run twice on one machine.
   await page.getByLabel('작업 종료 후 처리', {exact: true}).selectOption('cleanup')
   for (const [i, doc] of cases.entries()) {
-    await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
+    await page.locator(`input[name="case"][value="${doc.id}"]`).check()
     await page.getByTestId('case-order-' + doc.id).filter({hasText: String(i + 1)}).waitFor()
   }
   await page.getByRole('button', {name: '실행 계획 확인', exact: true}).click()
@@ -245,7 +245,7 @@ try {
   await page.getByLabel('작업 매니페스트', {exact: true}).selectOption('wemix')
   await page.getByLabel('작업 바이너리', {exact: true}).selectOption('wemix')
   await page.getByLabel('작업 서버 이름', {exact: true}).selectOption('local')
-  await page.getByLabel('실행 케이스 ' + forkDoc.id, {exact: true}).check()
+  await page.locator(`input[name="case"][value="${forkDoc.id}"]`).check()
   await page.getByLabel('테스트 바이너리 next', {exact: true}).selectOption('wbft')
   // Removing nodes is never carried over from the previous job's draft; the
   // fork network is cleaned only because it is chosen here.
@@ -319,7 +319,7 @@ try {
   }
   const targetDone = await runJob('attach-target', async () => {
     await page.getByLabel('작업 종류', {exact: true}).selectOption('test.run')
-    await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).check()
+    await page.locator(`input[name="case"][value="${target.id}"]`).check()
   }, 9000)
   // A case naming a key file is refused until the caller binds one of their
   // own account keys; the key never travels in the case or the plan.
@@ -341,8 +341,8 @@ try {
   const attachDone = await runJob('attach', async () => {
     await page.getByLabel('작업 종류', {exact: true}).selectOption('test.attach')
     await page.getByTestId('attach-explanation').waitFor()
-    assert.equal(await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).count(), 0, 'a composing case is offered to an attach job')
-    for (const doc of attachDocs) await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
+    assert.equal(await page.locator(`input[name="case"][value="${target.id}"]`).count(), 0, 'a composing case is offered to an attach job')
+    for (const doc of attachDocs) await page.locator(`input[name="case"][value="${doc.id}"]`).check()
     await page.getByLabel('테스트 계정 키 payer', {exact: true}).selectOption(payer.id)
   }, 9000)
   const plan = JSON.stringify(await api('jobs/' + attachDone.id))

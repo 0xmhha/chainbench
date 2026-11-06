@@ -1,5 +1,6 @@
 <script>
   import { webApi } from './web-api.mjs'
+  import { keepFocus } from './focus.mjs'
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
  import StatementEditor from './DSLStatementEditor.svelte'
@@ -10,7 +11,7 @@
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
  const role=$derived(webSession?.user.role)
  let contract=$state(null),vocabulary=$state(null),document=$state(null),original=$state(null),presets=$state({})
- let status=$state(''),valid=$state(false),busy=$state(false),fingerprint=$state('')
+ let status=$state(''),failed=$state(false),valid=$state(false),busy=$state(false),fingerprint=$state('')
  let savedCases=$state([]),savedId=$state(''),revision=$state(0),presetRefs=$state([])
  let assets=$state([]),genesisBackup=$state(null)
  const genesisAssets=$derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
@@ -51,7 +52,7 @@
   const catalogue=await api('chain-presets')
   for(const id of unknown){const known=catalogue.find(p=>p.id===id);if(known)presets={...presets,[id]:known.content}}
  }
- async function work(fn){busy=true;try{await fn()}catch(e){valid=false;status=e.message;errorList=(e.errors??[]).filter(x=>x.path?.startsWith('/content'))}finally{busy=false}}
+ async function work(fn){const restoreFocus=keepFocus();busy=true;failed=false;try{await fn()}catch(e){valid=false;failed=true;status=e.message;errorList=(e.errors??[]).filter(x=>x.path?.startsWith('/content'))}finally{busy=false;await restoreFocus()}}
  $effect(()=>{if(webSession)work(async()=>{vocabulary=await api('vocabulary');contract=await api('contracts/dsl');await refreshSaved();status='DSL 계약을 읽었습니다'})})
  $effect(()=>{assetRevision;if(webSession)allItems(api,'assets').then(v=>{assets=v}).catch(e=>{status=e.message})})
  async function upload(event){await work(async()=>{const file=event.target.files[0];if(!file)return;const parsed=JSON.parse(await file.text());await fillSharedPresets(parsed);savedId='';revision=0;presetRefs=[];genesisBackup=null;editorKey++;original=structuredClone(parsed);document=structuredClone(parsed);valid=false;fingerprint='';const prepared=await api('test-cases/import','POST',{content:parsed,presets});document=prepared.content;valid=true;fingerprint=prepared.semanticFingerprint;importDiff=prepared.migrated?declarationDiff(parsed,prepared.content):[];errorList=[];status=prepared.migrationMessage??(prepared.migrated?'v1을 옮겼습니다. 실행 의미는 그대로입니다':'가져왔습니다. 엔진 검증 통과')})}
@@ -96,9 +97,9 @@
    </fieldset>
    {#if importDiff.length}<details open data-testid="import-diff"><summary>v1 가져오기에서 바뀐 곳 {importDiff.length}개</summary><ul>{#each importDiff as d}<li><code>{d.path}</code> · {({added:'추가됨',removed:'없어짐',changed:'바뀜'})[d.kind]}</li>{/each}</ul></details>{/if}
    <button disabled={busy} onclick={validate}>테스트 시나리오 검증</button>
+   <button class="primary" disabled={!valid||busy} onclick={save}>공유 테스트 저장</button>
    <button disabled={!valid||busy} onclick={()=>download(document,'test-case.json')}>테스트 시나리오 내보내기</button>
    {#if savedId}<button disabled={busy} onclick={()=>work(async()=>download(await api('documents/'+encodeURIComponent(savedId)+'/bundle'),'test-case.bundle.json'))}>저장한 테스트 묶음 내보내기</button>{/if}
-   <button disabled={!valid||busy} onclick={save}>공유 테스트 저장</button>
    <button disabled={busy} onclick={duplicate}>케이스 복제</button>
    {#if original}<button onclick={()=>download(original,'original-test.json')}>가져온 원본 내보내기</button>{/if}
    {#if presetRefs.length}<p data-testid="dsl-preset-refs">고정한 프리셋: {presetRefs.map(r=>r.id+' · revision '+r.revision).join(', ')}</p>{/if}
@@ -107,6 +108,6 @@
   {/if}
   {:else}<p>읽기 전용 계정입니다</p>{#if document}<pre>{JSON.stringify(document,null,2)}</pre><button onclick={()=>download(document,'test-case.json')}>테스트 시나리오 내보내기</button>{/if}{/if}
  {/if}
- <p role="status" aria-label="DSL 상태">{busy?'처리 중…':status}</p>
+ <p role={failed?'alert':'status'} class:error={failed&&!busy} aria-label="DSL 상태">{busy?'처리 중…':status}</p>
 </section>
 <style>.document-fields{border:0;padding:0;margin:0;min-width:0}p{color:var(--text-muted)}label{margin:var(--space-2) 0}button{margin:var(--space-1)}pre{max-height:18rem;overflow:auto;background:var(--bg);padding:var(--space-2);border-radius:var(--radius-sm)}</style>

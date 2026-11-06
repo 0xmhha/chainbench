@@ -1,4 +1,6 @@
 <script>
+  import { follow } from './nav.mjs'
+  import { keepFocus } from './focus.mjs'
   import { apiClient } from './api-client.mjs'
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
@@ -51,7 +53,7 @@
   }
   const kindNames = { 'server-set': '서버 풀', 'workspace-config': '대상 경로' }
   const api = $derived(webApi(webSession))
-  async function action(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
+  async function action(fn) { const restoreFocus = keepFocus(); busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false; await restoreFocus() } }
   async function refresh() {
     docs = (await allItems(api, 'documents')).filter(d => d.kind === 'server-set' || d.kind === 'workspace-config')
     workspaces = await allItems(api, 'workspaces')
@@ -104,6 +106,7 @@
   <h2>공유 배포 구성</h2>
   <p>팀이 함께 쓰는 서버 풀과 대상 경로, workspace를 만들고 내 SSH 자격증명을 서버에 연결합니다.</p>
   <p data-testid="deployment-actor">{webSession?.user.username} · {role}</p>
+  {#if canEdit}<BundleImport {webSession} onsaved={(saved, workspace) => action(async () => { onsaved(); await refresh(); const set = saved?.find(d => d.kind === 'server-set'); if (set) loadDocument(set.id); if (workspace) await loadWorkspace(workspace.id) })} />{/if}
   <fieldset class="editor-controls" disabled={busy}><div class="columns">
     <div>
       <h3>공유 문서</h3>
@@ -131,12 +134,11 @@
       {#if contract}<DeploymentForm {kind} schema={contract[kind]} value={viewing?.content ?? content} readonly={!canEdit || !!viewing} changed={differs} problems={viewing ? {} : problemMap} change={v => { content = v; problems = [] }} />{/if}
       {#if canEdit && !viewing}
         <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>
-        <button disabled={busy} onclick={() => action(async () => { await check(); await saveDocument() })}>공유 문서 저장</button>
+        <button class="primary" disabled={busy} onclick={() => action(async () => { await check(); await saveDocument() })}>공유 문서 저장</button>
       {/if}
       {#if docId}<p>revision {revision}</p><button disabled={busy} onclick={() => action(exportDocument)}>공유 문서 내보내기</button>{/if}
     </div>
     <div>
-      {#if canEdit}<BundleImport {webSession} onsaved={(saved, workspace) => action(async () => { onsaved(); await refresh(); const set = saved?.find(d => d.kind === 'server-set'); if (set) loadDocument(set.id); if (workspace) await loadWorkspace(workspace.id) })} />{/if}
       <h3>공유 workspace</h3>
       {#if workspaceId}<button disabled={busy} onclick={() => action(exportWorkspace)}>workspace 묶음 내보내기</button>{/if}
       <label>저장된 workspace <select name="deployment-editor-select-2" aria-label="저장된 배포 workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">새 workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
@@ -148,13 +150,13 @@
         <button disabled={busy || !setRef || !configRef} onclick={() => action(saveWorkspace)}>공유 workspace 저장</button>
         {#if workspaceId}
           <h3>내 SSH 자격증명 연결</h3>
-          <p>자격증명 등록과 폐기는 <a href="/settings">설정</a>에서 합니다. 여기서는 이 workspace의 서버에 내 자격증명을 연결합니다. 연결은 나에게만 보입니다.</p>
+          <p>자격증명 등록과 폐기는 <a href="/settings" onclick={e => follow(e, '/settings')}>설정</a>에서 합니다. 여기서는 이 workspace의 서버에 내 자격증명을 연결합니다. 연결은 나에게만 보입니다.</p>
           <label>대상 서버 <select name="server-ref" aria-label="연결 서버" bind:value={serverRef}><option value="">서버 선택</option>{#each hosts as h}<option value={hostName(h)}>{hostName(h)}</option>{/each}</select></label>
           <label>내 자격증명 <select name="selected-credential" aria-label="연결 자격증명" bind:value={selectedCredential}><option value="">내 자격증명 선택</option>{#each credentials.filter(c => c.kind !== 'account-key' && !c.revoked) as c}<option value={c.id}>{c.label}</option>{/each}</select></label>
           <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { bindings = await api(`workspaces/${workspaceId}/credential-bindings`, 'PUT', { serverRef, credentialId: selectedCredential }); status = '내 SSH 연결 저장됨' })}>내 자격증명 연결</button>
           <button disabled={busy || !selectedCredential || !hosts.length} onclick={() => action(bindAll)}>모든 서버에 연결</button>
           <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { access = await api(`credentials/${selectedCredential}/check`, 'POST', { workspaceId, serverRef }); status = access.allowedOperations.includes('deploy') ? 'SSH 배포 접근 확인됨' : access.reason ?? '접근 거절' })}>SSH 접근 확인</button>
-          <p data-testid="personal-bindings">내 연결: {Object.keys(bindings).join(', ') || '없음'}</p>
+          <p data-testid="personal-bindings">내 연결: {Object.keys(bindings).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') || '없음'}</p>
           {#if access}<p data-testid="ssh-access">인증 {access.authenticated ? '성공' : '실패'} · 배포 {access.allowedOperations.includes('deploy') ? '허용' : '거절'} · {access.hostIdentity}</p>{/if}
         {/if}
       {/if}

@@ -90,7 +90,7 @@ try{
  const reviewed=await responsePromise;assert.equal(reviewed.status(),201,await reviewed.text())
  assert.equal(reviewed.request().postDataJSON().arguments.replacementAssetId,asset.id)
  assert.equal(Object.hasOwn(reviewed.request().postDataJSON().arguments,'configOverrides'),false,'binary-only UI changed config')
- await page.getByLabel('실행 계획',{exact:true}).waitFor();assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes(asset.checksum))
+ await page.getByLabel('실행 계획',{exact:true}).waitFor();assert.ok((await page.getByLabel('실행 계획',{exact:true}).textContent()).includes(asset.checksum))
  await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/binary-plan.png'})
  const acceptedPromise=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
  await clickRun(page)

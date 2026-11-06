@@ -44,7 +44,7 @@ try{
    await page.getByLabel('작업 체인 구성',{exact:true}).selectOption(first.id)
    await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
    await page.getByLabel('실행 계획',{exact:true}).waitFor()
-   const review=await page.getByLabel('실행 계획',{exact:true}).innerText();assert.ok(review.includes(first.id)&&review.includes('r2')&&review.includes('maxpeers=40'),'review omitted actual preset snapshot')
+   const review=await page.getByLabel('실행 계획',{exact:true}).textContent();assert.ok(review.includes(first.id)&&review.includes('r2')&&review.includes('maxpeers=40'),'review omitted actual preset snapshot')
    await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/preset-plan.png'})
    const response=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
    await clickRun(page)
