@@ -35,7 +35,7 @@ try{
  await input.setInputFiles({name:'team.bundle.json',mimeType:'application/json',buffer:bundle([{kind:'server-set',name:'bundle pool',content:set},{kind:'workspace-config',name:'bundle paths',content:config}])})
  const preview=page.locator('[data-testid="import-preview"][data-valid="true"]');await preview.waitFor({timeout:15000})
  assert.equal(await preview.locator('[data-import-kind]').count(),2)
- await page.getByText('다음 서버에 내 SSH 자격증명을 연결해야 합니다: /documents/0/ssh.password').waitFor()
+ await page.getByText(/SSH 값\(.*공유 문서에 넣지 않았습니다/).first().waitFor()
  await page.getByRole('button',{name:'가져온 문서 저장',exact:true}).click()
  await page.getByTestId('import-status').filter({hasText:'공유 문서 revision 2개를 저장했습니다'}).waitFor({timeout:15000})
  await page.getByLabel('가져온 workspace 이름',{exact:true}).fill('bundle workspace')

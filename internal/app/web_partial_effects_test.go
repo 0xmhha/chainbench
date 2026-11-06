@@ -44,3 +44,16 @@ var errFakeInspection = errFake("target unreachable")
 type errFake string
 
 func (e errFake) Error() string { return string(e) }
+
+// A binary reaches its servers during genesis, so a failure there has changed them.
+func TestFailureDispositionFollowsWhatReachedTheTarget(t *testing.T) {
+	cases := map[string]string{
+		"new": "retained", "place": "retained", "keys": "retained",
+		"genesis": "unknown", "deploy": "unknown", "init": "unknown", "start": "unknown",
+	}
+	for phase, want := range cases {
+		if got := webFailureDisposition(phase); got != want {
+			t.Errorf("webFailureDisposition(%q) = %q, want %q", phase, got, want)
+		}
+	}
+}
