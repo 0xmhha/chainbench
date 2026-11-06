@@ -14,11 +14,10 @@ stablenet, wbft, wemix를 모두 Web에서 실제 클릭으로 끝까지 돌렸�
 
 끝나면 이 목록에서 지운다.
 
-1. `generate` 키를 쓰는 케이스 220건 중 15건을 Web에서 돌릴지 정한다. 지금은 Web이 검토한 키 스냅숏만 읽으므로 CLI로만 돌릴 수 있다. 넣으려면 Web의 키 처리 구조를 바꿔야 한다.
-2. 낮은 우선순위 화면 항목을 처리한다. 작업별 페이지 제목, 정적 자산 압축과 캐시, 숨은 탭의 폴링, 전역 머리줄의 체인 안내, 서버 풀과 서버 세트 용어 통일이다.
-3. `tests/repro/attach-external.sh`를 고친다. 지금 없는 `chainbench test --rpc`를 부른다. 지금 동작하는 방법은 `chainbench run --rpc <url> --chain <id> <spec>`이다.
-4. `scripts/inventory/list-adapter-functions.sh`와 `scan-binary-hardcoding.sh`를 고치거나 지운다. 지금 없는 옛 셸 파일을 읽어 오류로 끝난다.
-5. 위가 끝나면 WEB-01~14를 같은 소스로 돌린다. 지문이 하나여야 하므로 소스가 바뀌었으면 WEB-01~13도 다시 돈다.
+1. 낮은 우선순위 화면 항목을 처리한다. 작업별 페이지 제목, 정적 자산 압축과 캐시, 숨은 탭의 폴링, 전역 머리줄의 체인 안내, 서버 풀과 서버 세트 용어 통일이다.
+2. `tests/repro/attach-external.sh`를 고친다. 지금 없는 `chainbench test --rpc`를 부른다. 지금 동작하는 방법은 `chainbench run --rpc <url> --chain <id> <spec>`이다.
+3. `scripts/inventory/list-adapter-functions.sh`와 `scan-binary-hardcoding.sh`를 고치거나 지운다. 지금 없는 옛 셸 파일을 읽어 오류로 끝난다.
+4. 위가 끝나면 WEB-01~14를 같은 소스로 돌린다. 지문이 하나여야 하므로 소스가 바뀌었으면 WEB-01~13도 다시 돈다.
 
 ## 3. 확인하지 못한 것
 
@@ -42,6 +41,8 @@ stablenet, wbft, wemix를 모두 Web에서 실제 클릭으로 끝까지 돌렸�
 ## 5. 정해 둔 것
 
 wemix 노드 종료는 wemix팀 몫이다. wemix 노드는 블록을 만들 때 네 노드가 함께 띄운 etcd에 기록하므로, 네 노드를 한꺼번에 멈추면 노드 하나가 15초 유예를 거의 다 쓸 수 있다. go-wemix 자체에서 생기는 문제는 엔진에서 우회하지 않는다. 원인이 go-wemix임을 로그로 보였다면 인수 확인에서 통과로 처리하고, 근거와 테스트 이름을 이 문서에 적는다. 유예를 넘겨 SIGKILL이 나면 그때 다시 본다.
+
+`generate` 키를 쓰는 케이스는 CLI로 실행한다. 220건 중 15건이다. Web은 검토해서 고정한 키 스냅숏만 읽으므로 실행 전에 본 내용대로 돌고, 이 케이스는 CLI로 실행하라고 안내하며 거절한다.
 
 ## 6. 지금도 지키는 원칙
 
