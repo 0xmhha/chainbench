@@ -1,4 +1,7 @@
 <script>
+  import StatusMark from './StatusMark.svelte'
+  const BINDINGS_SHOWN = 4 // More than this folds, so a server set of 15 stays one line.
+  const sortedBindings = c => [...c.bindings].sort((a, b) => a.workspaceId.localeCompare(b.workspaceId) || a.serverRef.localeCompare(b.serverRef, undefined, { numeric: true }))
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
   import ConfirmAction from './ConfirmAction.svelte'
@@ -36,18 +39,18 @@
     <ul class="credentials">{#each items as c (c.id)}
       <li data-testid="credential-row">
         <div class="row-head"><strong>{c.label}</strong><span>{kindName(c.kind)}</span>
-          <span class="state" class:revoked={c.revoked}><span aria-hidden="true">{c.revoked ? '⊘' : '●'}</span> {c.revoked ? '폐기됨' : '사용 가능'}</span>
+          <span class="state" class:revoked={c.revoked}><StatusMark state={c.revoked ? 'cancelled' : 'succeeded'} /> {c.revoked ? '폐기됨' : '사용 가능'}</span>
           <span>진행 중 작업 {c.activeJobs.length}개</span>
           {#if !c.revoked}<button disabled={busy} onclick={() => { pendingRevoke = c.id }}>{c.label} 폐기</button>{/if}
         </div>
         {#if pendingRevoke === c.id && !c.revoked}<ConfirmAction label="자격증명 폐기 확인" message={revokeMessage(c)} confirmLabel={`${c.label} 폐기 확정`} {busy} onconfirm={() => work(() => revoke(c))} oncancel={() => { pendingRevoke = '' }} />{/if}
         {#if c.bindings.length === 0}<p class="muted">연결한 서버가 없습니다.</p>{:else}
-          <ul>{#each c.bindings as b}{@const access = checks[`${c.id}/${b.workspaceId}/${b.serverRef}`]}
+          <details open={c.bindings.length <= BINDINGS_SHOWN || undefined}><summary>연결한 서버 {c.bindings.length}대</summary><ul>{#each sortedBindings(c) as b}{@const access = checks[`${c.id}/${b.workspaceId}/${b.serverRef}`]}
             <li>{workspaceName(b.workspaceId)} · {b.serverRef}
               {#if !c.revoked}<button disabled={busy} onclick={() => work(() => check(c, b))}>{b.serverRef} 접근 확인</button>{/if}
               {#if access}<span data-testid="credential-access">인증 {access.authenticated ? '성공' : '실패'} · 배포 {access.allowedOperations.includes('deploy') ? '허용' : '거절'}{access.reason ? ` · ${access.reason}` : ''}</span>{/if}
             </li>
-          {/each}</ul>
+          {/each}</ul></details>
         {/if}
       </li>
     {/each}</ul>

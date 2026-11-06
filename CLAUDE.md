@@ -2,8 +2,8 @@
 
 ## Web UI status
 
-The Web UI renewal is finished. WEB-01..13 passed on 22ac4c35; WEB-14 runs last
-and is still owed. UI work counts as done only when real clicks go end to end.
+The Web UI renewal is finished. WEB-01..13 passed on 22ac4c35 but later changes
+owe a rerun; WEB-14 runs last. UI work counts as done only when real clicks go end to end.
 Read `docs/dev/web-ui-status.md` first: what is done, what is still to decide,
 what was not verified, and the principles still in force. Screen rules are in
 `web/DESIGN.md`, users and scenes in `web/PRODUCT.md`, the API contract in
